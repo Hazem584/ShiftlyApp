@@ -5,6 +5,10 @@ class ShiftlyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Shiftly',
+      home: Scaffold(body: Center(child: Text('Hello, Shiftly!'))),
+    );
   }
 }
