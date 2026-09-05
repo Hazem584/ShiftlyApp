@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/features/home/presentation/home_screen.dart';
 
 class ShiftlyApp extends StatelessWidget {
   const ShiftlyApp({super.key});
@@ -8,7 +9,7 @@ class ShiftlyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Shiftly',
-      home: Scaffold(body: Center(child: Text('Hello, Shiftly!'))),
+      home: Scaffold(body: HomeScreen()),
     );
   }
 }

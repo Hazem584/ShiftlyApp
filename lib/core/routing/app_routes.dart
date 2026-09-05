@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/routing/route_not_found_screen.dart';
-import 'package:shiftly/features/home/home_screen.dart';
+import 'package:shiftly/features/home/presentation/home_screen.dart';
 
 class AppRoutes {
   const AppRoutes._();
