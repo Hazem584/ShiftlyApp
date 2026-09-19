@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
+import 'package:shiftly/core/widgets/screen_header.dart';
+import 'package:shiftly/core/theme/app_theme.dart';
 
 class FeaturePlaceholder extends StatelessWidget {
   const FeaturePlaceholder({
@@ -14,11 +16,23 @@ class FeaturePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)),
-    body: EmptyState(
-      icon: icon,
-      title: '$title is coming next',
-      message: message,
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
+        child: Column(
+          children: [
+            ScreenHeader(title: title, subtitle: 'Shift Lab manager workspace'),
+            const SizedBox(height: AppSpacing.xl),
+            Expanded(
+              child: EmptyState(
+                icon: icon,
+                title: '$title is coming next',
+                message: message,
+              ),
+            ),
+          ],
+        ),
+      ),
     ),
   );
 }

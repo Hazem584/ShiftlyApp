@@ -9,11 +9,13 @@ Shiftly is a Flutter shift-management app for **Shift Lab**. Sprint 1 delivers t
 - Repository-backed dashboard with loading, loaded, empty, and error states
 - Searchable employee directory and employee details
 - Validated add-employee flow with immediate in-session updates
+- Reference-based mobile design system with responsive dashboard, employee, and form layouts
+- Presentation-only Attendance & Leave workspace with metrics, recent records, segmented views, and a leave-request sheet
 - Feature-first architecture using repository interfaces and Cubits
 - Bundled Cairo variable font under the SIL Open Font License
 - Widget and unit coverage for startup, routing, dashboard states, search, form validation, adding employees, repositories, and Cubits
 
-Attendance, Requests, and Profile intentionally show polished placeholders; their full workflows are outside Sprint 1.
+Attendance currently uses presentation-only mock content. Requests and Profile intentionally remain polished placeholders; backend-connected workflows are outside the current UI sprint.
 
 ## Requirements
 

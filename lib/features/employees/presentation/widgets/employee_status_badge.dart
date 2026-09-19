@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/models/employee.dart';
+import 'package:shiftly/core/theme/app_colors.dart';
 
 class EmployeeStatusBadge extends StatelessWidget {
   const EmployeeStatusBadge({required this.status, super.key});
@@ -8,16 +9,10 @@ class EmployeeStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      AttendanceStatus.present => ('Present', const Color(0xFF15803D)),
-      AttendanceStatus.absent => (
-        'Absent',
-        Theme.of(context).colorScheme.error,
-      ),
-      AttendanceStatus.late => ('Late', const Color(0xFFB45309)),
-      AttendanceStatus.notStarted => (
-        'Not started',
-        Theme.of(context).colorScheme.outline,
-      ),
+      AttendanceStatus.present => ('Present', AppColors.success),
+      AttendanceStatus.absent => ('Absent', AppColors.error),
+      AttendanceStatus.late => ('Late', AppColors.warning),
+      AttendanceStatus.notStarted => ('Not started', AppColors.textSecondary),
     };
     return DecoratedBox(
       decoration: BoxDecoration(

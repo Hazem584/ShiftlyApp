@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/models/shift.dart';
 import 'package:shiftly/core/models/work_location.dart';
+import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 
@@ -95,7 +97,13 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   Widget build(BuildContext context) {
     final repository = context.read<EmployeeRepository>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Add employee')),
+      appBar: AppBar(
+        title: const Text('Add New Employee'),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.borderColor),
+        ),
+      ),
       body: SafeArea(
         top: false,
         child: Form(
@@ -103,11 +111,21 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
           onChanged: _revalidate,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
             children: [
+              const Text(
+                'Add a new member to your Shift Lab team.',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: AppSpacing.l),
               Text(
                 'Personal information',
                 style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 3),
+              const Text(
+                'Basic contact details for this employee',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -160,6 +178,11 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
                 'Work details',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
+              const SizedBox(height: 3),
+              const Text(
+                'Role, workplace, shift, and employment status',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              ),
               const SizedBox(height: 14),
               TextFormField(
                 key: const Key('job-title-field'),
@@ -176,6 +199,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<WorkLocation>(
+                isExpanded: true,
                 initialValue: _initialLocation,
                 decoration: const InputDecoration(
                   labelText: 'Workplace / location',
@@ -197,6 +221,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<Shift>(
+                isExpanded: true,
                 initialValue: _initialShift,
                 decoration: const InputDecoration(
                   labelText: 'Assigned shift',
@@ -231,6 +256,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<EmploymentStatus>(
+                isExpanded: true,
                 initialValue: EmploymentStatus.active,
                 decoration: const InputDecoration(
                   labelText: 'Employment status',
