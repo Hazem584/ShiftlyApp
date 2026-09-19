@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:shiftly/core/routing/app_routes.dart';
+import 'package:go_router/go_router.dart';
 
 class RouteNotFoundScreen extends StatelessWidget {
   final String? routeName;
@@ -20,7 +20,7 @@ class RouteNotFoundScreen extends StatelessWidget {
               const Icon(Icons.search_off_outlined, size: 56),
               const SizedBox(height: 16),
               Text(
-                "No route found",
+                'Page not found',
                 style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
               ),
@@ -30,9 +30,8 @@ class RouteNotFoundScreen extends StatelessWidget {
               ],
               const SizedBox(height: 20),
               FilledButton(
-                onPressed: () => Navigator.of(context)
-                    .pushNamedAndRemoveUntil(AppRoutes.root, (route) => false),
-                child: Text("Go to Home"),
+                onPressed: () => context.go('/dashboard'),
+                child: const Text('Go to dashboard'),
               ),
             ],
           ),

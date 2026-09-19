@@ -1,29 +1,51 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/app.dart';
+import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const ShiftlyApp());
+  testWidgets('application starts on the manager dashboard', (tester) async {
+    await tester.pumpWidget(
+      ShiftlyApp(
+        employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Good morning, Manager'), findsOneWidget);
+    expect(find.textContaining('Shift Lab'), findsOneWidget);
+    expect(find.byType(NavigationBar), findsOneWidget);
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('bottom navigation changes and preserves the selected tab', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ShiftlyApp(
+        employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Employees').last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('employee-search')), findsOneWidget);
+    await tester.tap(find.text('Attendance').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Attendance is coming next'), findsOneWidget);
+    await tester.tap(find.text('Employees').last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('employee-search')), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('manager shell fits a compact mobile viewport', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      ShiftlyApp(
+        employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(NavigationBar), findsOneWidget);
   });
 }

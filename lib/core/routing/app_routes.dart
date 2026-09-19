@@ -1,23 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:shiftly/core/routing/route_not_found_screen.dart';
-import 'package:shiftly/features/home/presentation/home_screen.dart';
-
-class AppRoutes {
-  const AppRoutes._();
-
-  static const String root = '/';
-  static const String home = '/home';
-
-  static Route<dynamic> onGenerateRoute(RouteSettings routeSettings) {
-    switch (routeSettings.name) {
-      case home:
-        return MaterialPageRoute(builder: (_) => HomeScreen());
-
-      default:
-        return MaterialPageRoute(
-          settings: routeSettings,
-          builder: (_) => RouteNotFoundScreen(routeName: routeSettings.name),
-        );
-    }
-  }
+abstract final class AppRoutes {
+  static const dashboard = '/dashboard';
+  static const employees = '/employees';
+  static const addEmployee = '/employees/add';
+  static String employeeDetails(String id) => '/employees/$id';
+  static const attendance = '/attendance';
+  static const requests = '/requests';
+  static const profile = '/profile';
 }

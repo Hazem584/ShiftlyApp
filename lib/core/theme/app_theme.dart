@@ -11,8 +11,9 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Cairo',
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: Colors.white,
+      scaffoldBackgroundColor: const Color(0xFFF7F9F8),
       textTheme: const TextTheme(
         headlineSmall: TextStyle(fontWeight: FontWeight.w700),
         titleMedium: TextStyle(fontWeight: FontWeight.w600),
@@ -41,9 +42,22 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
-        elevation: 2,
+        elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
+          side: BorderSide(color: colorScheme.outlineVariant),
           borderRadius: BorderRadius.circular(AppRadii.l),
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        height: 72,
+        indicatorColor: colorScheme.primaryContainer,
+        labelTextStyle: WidgetStatePropertyAll(
+          TextStyle(
+            fontFamily: 'Cairo',
+            fontSize: 11,
+            color: colorScheme.onSurface,
+          ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
