@@ -1,17 +1,42 @@
-# shiftly
+# Shiftly
 
-A new Flutter project.
+Shiftly is a Flutter shift-management app for **Shift Lab**. Sprint 1 delivers the manager-facing mobile foundation with mock, session-only data.
 
-## Getting Started
+## Sprint 1 features
 
-This project is a starting point for a Flutter application.
+- Material 3 app using `MaterialApp.router` and `go_router`
+- Five-tab manager shell: Dashboard, Employees, Attendance, Requests, and Profile
+- Repository-backed dashboard with loading, loaded, empty, and error states
+- Searchable employee directory and employee details
+- Validated add-employee flow with immediate in-session updates
+- Feature-first architecture using repository interfaces and Cubits
+- Bundled Cairo variable font under the SIL Open Font License
+- Widget and unit coverage for startup, routing, dashboard states, search, form validation, adding employees, repositories, and Cubits
 
-A few resources to get you started if this is your first Flutter project:
+Attendance, Requests, and Profile intentionally show polished placeholders; their full workflows are outside Sprint 1.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Requirements
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter 3.35 or newer
+- Dart 3.13 or newer
+
+## Run locally
+
+```sh
+flutter pub get
+flutter run
+```
+
+The app opens directly in the Manager experience. No backend, authentication, Firebase project, secrets, or environment configuration is required.
+
+## Verify
+
+```sh
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+```
+
+## Architecture
+
+Shared models and design primitives live under `lib/core`. Each feature owns its data contracts, mock implementations, state, screens, and reusable widgets. Repository interfaces keep widgets independent of the mock data source so a future API implementation can replace it without rebuilding the UI.
