@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/widgets/surface_card.dart';
 
 class SummaryCard extends StatelessWidget {
   const SummaryCard({
@@ -6,49 +8,53 @@ class SummaryCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    this.caption,
     super.key,
   });
   final String label;
   final int value;
   final IconData icon;
   final Color color;
+  final String? caption;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return SurfaceCard(
+      padding: const EdgeInsets.all(15),
+      child: SizedBox(
+        height: 88,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: .12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(icon, color: color, size: 21),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 const Spacer(),
-                Text(
-                  '$value',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
+                Icon(icon, color: color, size: 23),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+            const Spacer(),
+            Text('$value', style: Theme.of(context).textTheme.headlineSmall),
+            if (caption != null)
+              Text(
+                caption!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
               ),
-            ),
           ],
         ),
       ),
