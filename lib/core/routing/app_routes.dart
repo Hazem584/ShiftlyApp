@@ -4,6 +4,6 @@ abstract final class AppRoutes {
   static const addEmployee = '/employees/add';
   static String employeeDetails(String id) => '/employees/$id';
   static const attendance = '/attendance';
-  static const requests = '/requests';
+  static const attendanceLeaveRequests = '/attendance?tab=leaveRequests';
   static const profile = '/profile';
 }

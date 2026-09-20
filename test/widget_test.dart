@@ -19,9 +19,14 @@ void main() {
   testWidgets('application starts on the manager dashboard', (tester) async {
     await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
-    expect(find.textContaining('Good morning, Manager'), findsOneWidget);
+    expect(find.textContaining('Good morning'), findsOneWidget);
     expect(find.text('Shift Lab'), findsOneWidget);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byKey(const Key('manager-bottom-navigation')), findsOneWidget);
+    expect(find.byKey(const Key('nav-0')), findsOneWidget);
+    expect(find.byKey(const Key('nav-1')), findsOneWidget);
+    expect(find.byKey(const Key('nav-2')), findsOneWidget);
+    expect(find.byKey(const Key('nav-3')), findsOneWidget);
+    expect(find.byKey(const Key('nav-4')), findsNothing);
   });
 
   testWidgets('bottom navigation changes and preserves the selected tab', (
@@ -32,12 +37,17 @@ void main() {
     await tester.tap(find.text('Employees').last);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('employee-search')), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('employee-search')), 'Mariam');
     await tester.tap(find.text('Attendance').last);
     await tester.pumpAndSettle();
     expect(find.text('Attendance & Leave'), findsOneWidget);
     await tester.tap(find.text('Employees').last);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('employee-search')), findsOneWidget);
+    expect(find.text('Mariam'), findsOneWidget);
+    await tester.tap(find.text('Profile').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Manager Profile'), findsOneWidget);
   });
 
   testWidgets('manager shell fits a compact mobile viewport', (tester) async {
@@ -47,7 +57,10 @@ void main() {
       await tester.pumpWidget(_testApp());
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: 'Layout failed at $size');
-      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(
+        find.byKey(const Key('manager-bottom-navigation')),
+        findsOneWidget,
+      );
     }
   });
 }

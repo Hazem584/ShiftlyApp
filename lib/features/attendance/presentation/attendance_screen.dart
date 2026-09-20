@@ -1,19 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/models/attendance_request.dart';
+import 'package:shiftly/core/models/leave_request.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 
 class AttendanceScreen extends StatefulWidget {
-  const AttendanceScreen({super.key});
+  const AttendanceScreen({this.initialTab = 0, super.key});
+  final int initialTab;
 
   @override
   State<AttendanceScreen> createState() => _AttendanceScreenState();
 }
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
-  int _selectedTab = 0;
+  late int _selectedTab;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTab = widget.initialTab;
+  }
+
+  @override
+  void didUpdateWidget(covariant AttendanceScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTab != widget.initialTab) {
+      _selectedTab = widget.initialTab;
+    }
+  }
 
   static const _records = [
     _AttendanceItem(
@@ -59,24 +78,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     ),
   ];
 
-  Future<void> _requestLeave() async {
-    final submitted = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => const _LeaveRequestSheet(),
-    );
-    if (submitted == true && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Leave request submitted')));
-    }
-  }
-
   @override
   Widget build(BuildContext context) => Scaffold(
     body: SafeArea(
@@ -89,10 +90,53 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             subtitle: 'Track attendance and manage leave requests',
           ),
           const SizedBox(height: AppSpacing.m),
-          FilledButton.icon(
-            onPressed: _requestLeave,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Request Leave'),
+          BlocBuilder<LeaveRequestsCubit, LeaveRequestsState>(
+            builder: (context, state) {
+              final pending = state is LeaveRequestsLoaded
+                  ? state.pendingCount
+                  : 0;
+              return SurfaceCard(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.approval_outlined,
+                      color: AppColors.orange,
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'Manager review queue',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.warningSoft,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        child: Text(
+                          '$pending pending',
+                          key: const Key('pending-request-count'),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.m),
           SizedBox(
@@ -134,9 +178,21 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           SegmentedButton<int>(
             showSelectedIcon: false,
             segments: const [
-              ButtonSegment(value: 0, label: Text('Attendance')),
-              ButtonSegment(value: 1, label: Text('Leave Requests')),
-              ButtonSegment(value: 2, label: Text('Calendar')),
+              ButtonSegment(
+                value: 0,
+                label: Text('Attendance', key: Key('attendance-tab-records')),
+              ),
+              ButtonSegment(
+                value: 1,
+                label: Text(
+                  'Leave Requests',
+                  key: Key('attendance-tab-requests'),
+                ),
+              ),
+              ButtonSegment(
+                value: 2,
+                label: Text('Calendar', key: Key('attendance-tab-calendar')),
+              ),
             ],
             selected: {_selectedTab},
             onSelectionChanged: (value) =>
@@ -166,11 +222,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               const SizedBox(height: 10),
             ],
           ] else if (_selectedTab == 1)
-            const EmptyState(
-              icon: Icons.event_note_outlined,
-              title: 'No open leave requests',
-              message: 'New leave requests will appear here for review.',
-            )
+            const _LeaveRequestsPanel()
           else
             const EmptyState(
               icon: Icons.calendar_month_outlined,
@@ -182,6 +234,296 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     ),
   );
 }
+
+class _LeaveRequestsPanel extends StatelessWidget {
+  const _LeaveRequestsPanel();
+
+  @override
+  Widget build(BuildContext context) =>
+      BlocBuilder<LeaveRequestsCubit, LeaveRequestsState>(
+        builder: (context, state) => switch (state) {
+          LeaveRequestsLoading() => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 48),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          LeaveRequestsError(:final message) => EmptyState(
+            icon: Icons.cloud_off_outlined,
+            title: 'Could not load requests',
+            message: message,
+            action: FilledButton(
+              onPressed: context.read<LeaveRequestsCubit>().load,
+              child: const Text('Retry'),
+            ),
+          ),
+          LeaveRequestsLoaded(:final requests, :final updatingId) =>
+            requests.isEmpty
+                ? const EmptyState(
+                    icon: Icons.event_available_outlined,
+                    title: 'All caught up',
+                    message:
+                        'New employee requests will appear here for review.',
+                  )
+                : Column(
+                    key: const Key('leave-request-list'),
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Employee requests',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                          Text(
+                            '${requests.length} total',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.s),
+                      for (final request in requests) ...[
+                        _RequestCard(
+                          request: request,
+                          updating: updatingId == request.id,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ],
+                  ),
+        },
+      );
+}
+
+class _RequestCard extends StatelessWidget {
+  const _RequestCard({required this.request, required this.updating});
+  final LeaveRequest request;
+  final bool updating;
+
+  Future<void> _decide(BuildContext context, RequestStatus status) async {
+    if (status == RequestStatus.rejected) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Reject request?'),
+          content: Text(
+            'Reject ${request.employeeName}’s request? This updates the current session.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              key: const Key('confirm-reject'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Reject'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+    final success = await context.read<LeaveRequestsCubit>().decide(
+      request.id,
+      status,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Request ${status == RequestStatus.approved ? 'approved' : 'rejected'}'
+              : 'Could not update request',
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pending = request.status == RequestStatus.pending;
+    return SurfaceCard(
+      key: Key('request-${request.id}'),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: AppColors.selected,
+                foregroundColor: AppColors.ink,
+                child: Text(
+                  request.employeeInitials,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.employeeName,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      _typeLabel(request.type),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _RequestStatusBadge(status: request.status),
+            ],
+          ),
+          const SizedBox(height: 13),
+          _RequestDetail(
+            icon: Icons.calendar_today_outlined,
+            text: _dateRange(request),
+          ),
+          const SizedBox(height: 7),
+          _RequestDetail(icon: Icons.notes_rounded, text: request.reason),
+          const SizedBox(height: 7),
+          _RequestDetail(
+            icon: Icons.schedule_rounded,
+            text: 'Submitted ${_dateTime(request.submittedAt)}',
+          ),
+          if (pending) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    key: Key('reject-${request.id}'),
+                    onPressed: updating
+                        ? null
+                        : () => _decide(context, RequestStatus.rejected),
+                    icon: const Icon(Icons.close_rounded, size: 17),
+                    label: const Text('Reject'),
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: FilledButton.icon(
+                    key: Key('approve-${request.id}'),
+                    onPressed: updating
+                        ? null
+                        : () => _decide(context, RequestStatus.approved),
+                    icon: updating
+                        ? const SizedBox.square(
+                            dimension: 15,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.check_rounded, size: 17),
+                    label: const Text('Approve'),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 10),
+            Text(
+              'Reviewed ${_dateTime(request.reviewedAt!)}',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RequestDetail extends StatelessWidget {
+  const _RequestDetail({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Icon(icon, size: 15, color: AppColors.textSecondary),
+      const SizedBox(width: 7),
+      Expanded(
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+      ),
+    ],
+  );
+}
+
+class _RequestStatusBadge extends StatelessWidget {
+  const _RequestStatusBadge({required this.status});
+  final RequestStatus status;
+  @override
+  Widget build(BuildContext context) {
+    final (label, color, background) = switch (status) {
+      RequestStatus.pending => (
+        'Pending',
+        AppColors.warning,
+        AppColors.warningSoft,
+      ),
+      RequestStatus.approved => (
+        'Approved',
+        AppColors.success,
+        AppColors.successSoft,
+      ),
+      RequestStatus.rejected => (
+        'Rejected',
+        AppColors.error,
+        const Color(0xFFFFE5E3),
+      ),
+    };
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _typeLabel(LeaveRequestType type) => switch (type) {
+  LeaveRequestType.leave => 'Leave request',
+  LeaveRequestType.earlyDeparture => 'Early departure',
+};
+
+String _dateRange(LeaveRequest request) {
+  final start =
+      '${request.startDate.day}/${request.startDate.month}/${request.startDate.year}';
+  final end =
+      '${request.endDate.day}/${request.endDate.month}/${request.endDate.year}';
+  return request.startDate == request.endDate ? start : '$start – $end';
+}
+
+String _dateTime(DateTime value) =>
+    '${value.day}/${value.month}/${value.year} at ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 
 class _AttendanceMetric extends StatelessWidget {
   const _AttendanceMetric({

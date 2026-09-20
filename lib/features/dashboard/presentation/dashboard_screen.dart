@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/models/attendance_record.dart';
+import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
@@ -10,6 +11,8 @@ import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/summary_card.dart';
+import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:shiftly/features/profile/presentation/profile_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -142,7 +145,7 @@ class _DashboardContent extends StatelessWidget {
               child: _QuickAction(
                 icon: Icons.approval_outlined,
                 label: 'Requests',
-                onTap: () => context.go('/requests'),
+                onTap: () => context.go(AppRoutes.attendanceLeaveRequests),
               ),
             ),
           ],
@@ -249,7 +252,7 @@ class _DashboardContent extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: () => context.go('/requests'),
+                onPressed: () => context.go(AppRoutes.attendanceLeaveRequests),
                 tooltip: 'Review requests',
                 icon: const Icon(Icons.arrow_forward_rounded),
               ),
@@ -301,11 +304,15 @@ class _TopBar extends StatelessWidget {
           child: Icon(Icons.notifications_none_rounded),
         ),
       ),
-      const CircleAvatar(
-        radius: 19,
-        backgroundColor: AppColors.ink,
-        foregroundColor: Colors.white,
-        child: Text('M'),
+      BlocBuilder<ProfileCubit, ProfileState>(
+        builder: (context, state) => state is ProfileLoaded
+            ? ProfileAvatar(profile: state.profile, radius: 19)
+            : const CircleAvatar(
+                radius: 19,
+                backgroundColor: AppColors.ink,
+                foregroundColor: Colors.white,
+                child: Text('M'),
+              ),
       ),
     ],
   );

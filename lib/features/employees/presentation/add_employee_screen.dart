@@ -111,179 +111,243 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
           onChanged: _revalidate,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
+            key: const Key('add-employee-form'),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
             children: [
-              const Text(
-                'Add a new member to your Shift Lab team.',
-                style: TextStyle(color: AppColors.textSecondary),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.selected,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(
+                      Icons.person_add_alt_1_rounded,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'New team member',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Add their contact details and work assignment.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.l),
-              Text(
-                'Personal information',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 3),
-              const Text(
-                'Basic contact details for this employee',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              const _SectionTitle(
+                title: 'Personal information',
+                subtitle: 'Basic contact details for this employee',
               ),
               const SizedBox(height: 14),
-              TextFormField(
-                key: const Key('full-name-field'),
-                controller: _name,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Full name',
-                  prefixIcon: Icon(Icons.person_outline_rounded),
-                ),
-                validator: (value) => (value?.trim().length ?? 0) < 3
-                    ? 'Enter the employee’s full name'
-                    : null,
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                key: const Key('phone-field'),
-                controller: _phone,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Phone number',
-                  prefixIcon: Icon(Icons.phone_outlined),
-                ),
-                validator: (value) =>
-                    (value?.replaceAll(RegExp(r'\D'), '').length ?? 0) < 8
-                    ? 'Enter a valid phone number'
-                    : null,
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                key: const Key('email-field'),
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Email address',
-                  prefixIcon: Icon(Icons.email_outlined),
-                ),
-                validator: (value) {
-                  final email = value?.trim() ?? '';
-                  return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)
-                      ? null
-                      : 'Enter a valid email address';
-                },
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Work details',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 3),
-              const Text(
-                'Role, workplace, shift, and employment status',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                key: const Key('job-title-field'),
-                controller: _jobTitle,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.done,
-                decoration: const InputDecoration(
-                  labelText: 'Job title',
-                  prefixIcon: Icon(Icons.badge_outlined),
-                ),
-                validator: (value) => (value?.trim().length ?? 0) < 2
-                    ? 'Enter a job title'
-                    : null,
-              ),
-              const SizedBox(height: 14),
-              DropdownButtonFormField<WorkLocation>(
-                isExpanded: true,
-                initialValue: _initialLocation,
-                decoration: const InputDecoration(
-                  labelText: 'Workplace / location',
-                  prefixIcon: Icon(Icons.location_on_outlined),
-                ),
-                items: repository.availableLocations
-                    .map(
-                      (location) => DropdownMenuItem(
-                        value: location,
-                        child: Text(
-                          location.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) =>
-                    setState(() => _location = value ?? _location),
-              ),
-              const SizedBox(height: 14),
-              DropdownButtonFormField<Shift>(
-                isExpanded: true,
-                initialValue: _initialShift,
-                decoration: const InputDecoration(
-                  labelText: 'Assigned shift',
-                  prefixIcon: Icon(Icons.schedule_rounded),
-                ),
-                items: repository.availableShifts
-                    .map(
-                      (shift) => DropdownMenuItem(
-                        value: shift,
-                        child: Text(
-                          '${shift.name} • ${shift.timeRange}',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() => _shift = value ?? _shift),
-              ),
-              const SizedBox(height: 14),
-              InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(12),
-                child: InputDecorator(
+              _LabeledControl(
+                label: 'Full name',
+                child: TextFormField(
+                  key: const Key('full-name-field'),
+                  controller: _name,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
                   decoration: const InputDecoration(
-                    labelText: 'Start date',
-                    prefixIcon: Icon(Icons.calendar_today_outlined),
+                    hintText: 'Enter full name',
                   ),
-                  child: Text(
-                    '${_startDate.day}/${_startDate.month}/${_startDate.year}',
+                  validator: (value) => (value?.trim().length ?? 0) < 3
+                      ? 'Enter the employee’s full name'
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 13),
+              _LabeledControl(
+                label: 'Phone number',
+                child: TextFormField(
+                  key: const Key('phone-field'),
+                  controller: _phone,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter phone number',
+                  ),
+                  validator: (value) =>
+                      (value?.replaceAll(RegExp(r'\D'), '').length ?? 0) < 8
+                      ? 'Enter a valid phone number'
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 13),
+              _LabeledControl(
+                label: 'Email address',
+                child: TextFormField(
+                  key: const Key('email-field'),
+                  controller: _email,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter email address',
+                  ),
+                  validator: (value) =>
+                      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                          .hasMatch(value?.trim() ?? '')
+                      ? null
+                      : 'Enter a valid email address',
+                ),
+              ),
+              const SizedBox(height: AppSpacing.l),
+              const _SectionTitle(
+                title: 'Work details',
+                subtitle: 'Role, workplace, shift, and employment status',
+              ),
+              const SizedBox(height: 14),
+              _LabeledControl(
+                label: 'Job title',
+                child: TextFormField(
+                  key: const Key('job-title-field'),
+                  controller: _jobTitle,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.done,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter job title',
+                  ),
+                  validator: (value) => (value?.trim().length ?? 0) < 2
+                      ? 'Enter a job title'
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 13),
+              _LabeledControl(
+                label: 'Workplace / location',
+                child: DropdownButtonFormField<WorkLocation>(
+                  isExpanded: true,
+                  initialValue: _initialLocation,
+                  decoration: const InputDecoration(),
+                  items: repository.availableLocations
+                      .map(
+                        (location) => DropdownMenuItem(
+                          value: location,
+                          child: Text(
+                            location.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _submitting
+                      ? null
+                      : (value) =>
+                            setState(() => _location = value ?? _location),
+                ),
+              ),
+              const SizedBox(height: 13),
+              _LabeledControl(
+                label: 'Assigned shift',
+                child: DropdownButtonFormField<Shift>(
+                  isExpanded: true,
+                  initialValue: _initialShift,
+                  decoration: const InputDecoration(),
+                  items: repository.availableShifts
+                      .map(
+                        (shift) => DropdownMenuItem(
+                          value: shift,
+                          child: Text(
+                            '${shift.name} • ${shift.timeRange}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _submitting
+                      ? null
+                      : (value) => setState(() => _shift = value ?? _shift),
+                ),
+              ),
+              const SizedBox(height: 13),
+              _LabeledControl(
+                label: 'Start date',
+                child: InkWell(
+                  onTap: _submitting ? null : _pickDate,
+                  borderRadius: BorderRadius.circular(AppRadii.m),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
+                    ),
+                    child: Text(
+                      '${_startDate.month.toString().padLeft(2, '0')}/${_startDate.day.toString().padLeft(2, '0')}/${_startDate.year}',
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
-              DropdownButtonFormField<EmploymentStatus>(
-                isExpanded: true,
-                initialValue: EmploymentStatus.active,
-                decoration: const InputDecoration(
-                  labelText: 'Employment status',
-                  prefixIcon: Icon(Icons.work_outline_rounded),
+              const SizedBox(height: 13),
+              _LabeledControl(
+                label: 'Employment status',
+                child: DropdownButtonFormField<EmploymentStatus>(
+                  isExpanded: true,
+                  initialValue: EmploymentStatus.active,
+                  decoration: const InputDecoration(),
+                  items: EmploymentStatus.values
+                      .map(
+                        (status) => DropdownMenuItem(
+                          value: status,
+                          child: Text(_statusLabel(status)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _submitting
+                      ? null
+                      : (value) => setState(() => _status = value ?? _status),
                 ),
-                items: EmploymentStatus.values
-                    .map(
-                      (status) => DropdownMenuItem(
-                        value: status,
-                        child: Text(_statusLabel(status)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) =>
-                    setState(() => _status = value ?? _status),
               ),
               const SizedBox(height: 28),
-              FilledButton.icon(
-                key: const Key('submit-employee'),
-                onPressed: _valid && !_submitting ? _submit : null,
-                icon: _submitting
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.person_add_alt_1_rounded),
-                label: Text(_submitting ? 'Adding employee…' : 'Add employee'),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _submitting ? null : context.pop,
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      key: const Key('submit-employee'),
+                      onPressed: _valid && !_submitting ? _submit : null,
+                      icon: _submitting
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.person_add_alt_1_rounded,
+                              size: 19,
+                            ),
+                      label: Text(
+                        _submitting ? 'Adding employee…' : 'Add Employee',
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -297,4 +361,40 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
     EmploymentStatus.onLeave => 'On leave',
     EmploymentStatus.inactive => 'Inactive',
   };
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, required this.subtitle});
+  final String title;
+  final String subtitle;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(title, style: Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height: 2),
+      Text(
+        subtitle,
+        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+      ),
+    ],
+  );
+}
+
+class _LabeledControl extends StatelessWidget {
+  const _LabeledControl({required this.label, required this.child});
+  final String label;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+      ),
+      const SizedBox(height: 6),
+      child,
+    ],
+  );
 }

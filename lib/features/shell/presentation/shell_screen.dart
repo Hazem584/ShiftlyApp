@@ -13,45 +13,106 @@ class ShellScreen extends StatelessWidget {
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: DecoratedBox(
+        key: const Key('manager-bottom-navigation'),
         decoration: const BoxDecoration(
           color: AppColors.surface,
           border: Border(top: BorderSide(color: AppColors.borderColor)),
         ),
         child: SafeArea(
           top: false,
-          child: NavigationBar(
-            selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: (index) => navigationShell.goBranch(
-              index,
-              initialLocation: index == navigationShell.currentIndex,
+          child: SizedBox(
+            height: 68,
+            child: Row(
+              children: [
+                _Destination(
+                  icon: Icons.home_rounded,
+                  label: AppStrings.dashboard,
+                  index: 0,
+                  shell: navigationShell,
+                ),
+                _Destination(
+                  icon: Icons.groups_rounded,
+                  label: AppStrings.employees,
+                  index: 1,
+                  shell: navigationShell,
+                ),
+                _Destination(
+                  icon: Icons.schedule_rounded,
+                  label: AppStrings.attendance,
+                  index: 2,
+                  shell: navigationShell,
+                ),
+                _Destination(
+                  icon: Icons.person_rounded,
+                  label: AppStrings.profile,
+                  index: 3,
+                  shell: navigationShell,
+                ),
+              ],
             ),
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded),
-                label: AppStrings.dashboard,
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.group_outlined),
-                selectedIcon: Icon(Icons.group_rounded),
-                label: AppStrings.employees,
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.schedule_outlined),
-                selectedIcon: Icon(Icons.schedule_rounded),
-                label: AppStrings.attendance,
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.chat_bubble_outline_rounded),
-                selectedIcon: Icon(Icons.chat_bubble_rounded),
-                label: AppStrings.requests,
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline_rounded),
-                selectedIcon: Icon(Icons.person_rounded),
-                label: AppStrings.profile,
-              ),
-            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Destination extends StatelessWidget {
+  const _Destination({
+    required this.icon,
+    required this.label,
+    required this.index,
+    required this.shell,
+  });
+  final IconData icon;
+  final String label;
+  final int index;
+  final StatefulNavigationShell shell;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = shell.currentIndex == index;
+    return Expanded(
+      child: Semantics(
+        selected: selected,
+        button: true,
+        label: label,
+        child: InkResponse(
+          key: Key('nav-$index'),
+          onTap: () => shell.goBranch(index, initialLocation: selected),
+          radius: 34,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.selected : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedScale(
+                  scale: selected ? 1 : .92,
+                  duration: const Duration(milliseconds: 220),
+                  child: Icon(
+                    icon,
+                    size: 21,
+                    color: selected ? AppColors.ink : AppColors.lighterGray,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: selected ? AppColors.ink : AppColors.textSecondary,
+                    fontSize: 10,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

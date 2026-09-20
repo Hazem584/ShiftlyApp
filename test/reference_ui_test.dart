@@ -14,7 +14,7 @@ ShiftlyApp _appWith(MockEmployeeRepository employees) => ShiftlyApp(
 );
 
 void main() {
-  testWidgets('attendance reference UI and leave sheet render on mobile', (
+  testWidgets('attendance manager request UI renders on mobile', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -30,10 +30,21 @@ void main() {
     expect(find.text('Attendance Rate'), findsOneWidget);
     expect(find.text('Recent Attendance'), findsOneWidget);
 
-    await tester.tap(find.text('Request Leave'));
+    await tester.tap(find.byKey(const Key('attendance-tab-requests')));
     await tester.pumpAndSettle();
-    expect(find.text('Leave type'), findsOneWidget);
-    expect(find.text('Submit Request'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Mariam Hassan'),
+      250,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('attendance-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('Mariam Hassan'), findsOneWidget);
+    expect(find.text('Early departure'), findsOneWidget);
+    expect(find.text('Request Leave'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -103,5 +114,35 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.textContaining('Alexandria Very Long'), findsOneWidget);
+  });
+
+  testWidgets('add employee form fits all requested mobile viewports', (
+    tester,
+  ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    for (final size in const [Size(360, 800), Size(390, 844), Size(412, 915)]) {
+      await tester.binding.setSurfaceSize(size);
+      await tester.pumpWidget(
+        _appWith(MockEmployeeRepository(delay: Duration.zero)),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Employees').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Add New Employee'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'Top failed at $size');
+      await tester.drag(
+        find.byKey(const Key('add-employee-form')),
+        const Offset(0, -900),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('submit-employee')),
+        findsOneWidget,
+        reason: 'Submit action missing at $size',
+      );
+      expect(tester.takeException(), isNull, reason: 'Bottom failed at $size');
+    }
   });
 }

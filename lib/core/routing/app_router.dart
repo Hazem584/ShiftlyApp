@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/routing/route_not_found_screen.dart';
 import 'package:shiftly/features/attendance/presentation/attendance_screen.dart';
@@ -6,7 +7,6 @@ import 'package:shiftly/features/employees/presentation/add_employee_screen.dart
 import 'package:shiftly/features/employees/presentation/employee_details_screen.dart';
 import 'package:shiftly/features/employees/presentation/employees_screen.dart';
 import 'package:shiftly/features/profile/presentation/profile_screen.dart';
-import 'package:shiftly/features/requests/presentation/requests_screen.dart';
 import 'package:shiftly/features/shell/presentation/shell_screen.dart';
 
 GoRouter createAppRouter() => GoRouter(
@@ -49,15 +49,12 @@ GoRouter createAppRouter() => GoRouter(
           routes: [
             GoRoute(
               path: '/attendance',
-              builder: (_, _) => const AttendanceScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/requests',
-              builder: (_, _) => const RequestsScreen(),
+              builder: (_, state) => AttendanceScreen(
+                key: ValueKey(state.uri.queryParameters['tab']),
+                initialTab: state.uri.queryParameters['tab'] == 'leaveRequests'
+                    ? 1
+                    : 0,
+              ),
             ),
           ],
         ),

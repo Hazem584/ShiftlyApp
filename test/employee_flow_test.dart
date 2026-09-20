@@ -75,6 +75,16 @@ void main() {
       find.byKey(const Key('email-field')),
       'salma@shiftlab.com',
     );
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('job-title-field')),
+      250,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('add-employee-form')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.enterText(
       find.byKey(const Key('job-title-field')),
       'Designer',
