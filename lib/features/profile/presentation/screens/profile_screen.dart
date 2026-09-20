@@ -1,9 +1,73 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/features/profile/presentation/widgets/profile_content.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/empty_state.dart';
+import 'package:shiftly/core/widgets/screen_header.dart';
+import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:shiftly/features/profile/presentation/widgets/profile_edit_form.dart';
+import 'package:shiftly/features/profile/presentation/widgets/profile_header.dart';
+import 'package:shiftly/features/profile/presentation/widgets/profile_information_section.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const ProfileContent();
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _editing = false;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: BlocBuilder<ProfileCubit, ProfileState>(
+        builder: (context, state) => switch (state) {
+          ProfileLoading() => const Center(child: CircularProgressIndicator()),
+          ProfileError(:final message) => EmptyState(
+            icon: Icons.cloud_off_outlined,
+            title: 'Could not load profile',
+            message: message,
+            action: FilledButton(
+              onPressed: context.read<ProfileCubit>().load,
+              child: const Text('Retry'),
+            ),
+          ),
+          ProfileLoaded(:final profile, :final saving) =>
+            _editing
+                ? ProfileEditForm(
+                    key: const Key('profile-editor'),
+                    profile: profile,
+                    saving: saving,
+                    onCancel: () => setState(() => _editing = false),
+                    onSaved: () => setState(() => _editing = false),
+                  )
+                : ListView(
+                    key: const Key('profile-content'),
+                    padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
+                    children: [
+                      ScreenHeader(
+                        title: 'Manager Profile',
+                        subtitle: 'Your personal and workplace information',
+                        action: FilledButton.icon(
+                          key: const Key('edit-profile'),
+                          onPressed: () => setState(() => _editing = true),
+                          icon: const Icon(Icons.edit_outlined, size: 17),
+                          label: const Text('Edit'),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(82, 44),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.l),
+                      ProfileHeader(profile: profile),
+                      const SizedBox(height: AppSpacing.m),
+                      ProfileInformationSection(profile: profile),
+                    ],
+                  ),
+        },
+      ),
+    ),
+  );
 }
