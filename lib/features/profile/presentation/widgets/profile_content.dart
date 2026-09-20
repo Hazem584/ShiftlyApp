@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -11,14 +12,14 @@ import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+class ProfileContent extends StatefulWidget {
+  const ProfileContent({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileContent> createState() => _ProfileContentState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileContentState extends State<ProfileContent> {
   bool _editing = false;
 
   @override
@@ -289,9 +290,7 @@ class _ProfileEditorState extends State<_ProfileEditor> {
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open that image.')),
-        );
+        ToastService.error(context, message: 'Could not open that image.');
       }
     } finally {
       if (mounted) setState(() => _picking = false);
@@ -312,13 +311,9 @@ class _ProfileEditorState extends State<_ProfileEditor> {
     if (!mounted) return;
     if (saved) {
       widget.onSaved();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profile updated successfully')),
-      );
+      ToastService.success(context, message: 'Profile updated successfully');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not update profile.')),
-      );
+      ToastService.error(context, message: 'Could not update profile.');
     }
   }
 

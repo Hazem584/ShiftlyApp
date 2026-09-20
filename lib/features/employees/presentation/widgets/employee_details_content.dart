@@ -8,8 +8,8 @@ import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_status_badge.dart';
 
-class EmployeeDetailsScreen extends StatelessWidget {
-  const EmployeeDetailsScreen({required this.employeeId, super.key});
+class EmployeeDetailsContent extends StatelessWidget {
+  const EmployeeDetailsContent({required this.employeeId, super.key});
   final String employeeId;
 
   @override

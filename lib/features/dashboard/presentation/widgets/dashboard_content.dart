@@ -12,10 +12,10 @@ import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/summary_card.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
-import 'package:shiftly/features/profile/presentation/profile_screen.dart';
+import 'package:shiftly/features/profile/presentation/widgets/profile_content.dart';
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+class DashboardContentHost extends StatelessWidget {
+  const DashboardContentHost({super.key});
 
   @override
   Widget build(BuildContext context) => Scaffold(

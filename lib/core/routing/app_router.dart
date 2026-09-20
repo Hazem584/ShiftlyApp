@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/routing/route_not_found_screen.dart';
-import 'package:shiftly/features/attendance/presentation/attendance_screen.dart';
-import 'package:shiftly/features/dashboard/presentation/dashboard_screen.dart';
-import 'package:shiftly/features/employees/presentation/add_employee_screen.dart';
-import 'package:shiftly/features/employees/presentation/employee_details_screen.dart';
-import 'package:shiftly/features/employees/presentation/employees_screen.dart';
-import 'package:shiftly/features/profile/presentation/profile_screen.dart';
-import 'package:shiftly/features/shell/presentation/shell_screen.dart';
+import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
+import 'package:shiftly/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
+import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
+import 'package:shiftly/features/employees/presentation/screens/employees_screen.dart';
+import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
+import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
 
 GoRouter createAppRouter() => GoRouter(
   initialLocation: '/dashboard',

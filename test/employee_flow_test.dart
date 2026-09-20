@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/app.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 
 Future<void> _openEmployees(WidgetTester tester) async {
@@ -107,5 +108,6 @@ void main() {
       ),
       findsOneWidget,
     );
+    ToastService.dismissAll();
   });
 }

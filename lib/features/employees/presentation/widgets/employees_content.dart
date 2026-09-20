@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -10,15 +11,13 @@ import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_status_badge.dart';
 
-class EmployeesScreen extends StatelessWidget {
-  const EmployeesScreen({super.key});
+class EmployeesContent extends StatelessWidget {
+  const EmployeesContent({super.key});
 
   Future<void> _openAddEmployee(BuildContext context) async {
     final added = await context.push<bool>('/employees/add');
     if (added == true && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Employee added successfully')),
-      );
+      ToastService.success(context, message: 'Employee added successfully');
     }
   }
 
@@ -66,12 +65,10 @@ class EmployeesScreen extends StatelessWidget {
                   SizedBox.square(
                     dimension: 52,
                     child: OutlinedButton(
-                      onPressed: () => ScaffoldMessenger.of(context)
-                          .showSnackBar(
-                            const SnackBar(
-                              content: Text('More filters are coming soon'),
-                            ),
-                          ),
+                      onPressed: () => ToastService.info(
+                        context,
+                        message: 'More filters are coming soon',
+                      ),
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.zero,
                         backgroundColor: AppColors.surface,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/models/shift.dart';
 import 'package:shiftly/core/models/work_location.dart';
@@ -9,14 +10,14 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 
-class AddEmployeeScreen extends StatefulWidget {
-  const AddEmployeeScreen({super.key});
+class AddEmployeeForm extends StatefulWidget {
+  const AddEmployeeForm({super.key});
 
   @override
-  State<AddEmployeeScreen> createState() => _AddEmployeeScreenState();
+  State<AddEmployeeForm> createState() => _AddEmployeeFormState();
 }
 
-class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
+class _AddEmployeeFormState extends State<AddEmployeeForm> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _phone = TextEditingController();
@@ -85,10 +86,9 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not add employee. Please try again.'),
-        ),
+      ToastService.error(
+        context,
+        message: 'Could not add employee. Please try again.',
       );
     }
   }

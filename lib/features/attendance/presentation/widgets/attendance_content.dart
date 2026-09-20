@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/models/attendance_request.dart';
 import 'package:shiftly/core/models/leave_request.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
@@ -9,15 +10,15 @@ import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 
-class AttendanceScreen extends StatefulWidget {
-  const AttendanceScreen({this.initialTab = 0, super.key});
+class AttendanceContent extends StatefulWidget {
+  const AttendanceContent({this.initialTab = 0, super.key});
   final int initialTab;
 
   @override
-  State<AttendanceScreen> createState() => _AttendanceScreenState();
+  State<AttendanceContent> createState() => _AttendanceContentState();
 }
 
-class _AttendanceScreenState extends State<AttendanceScreen> {
+class _AttendanceContentState extends State<AttendanceContent> {
   late int _selectedTab;
 
   @override
@@ -27,7 +28,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   @override
-  void didUpdateWidget(covariant AttendanceScreen oldWidget) {
+  void didUpdateWidget(covariant AttendanceContent oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialTab != widget.initialTab) {
       _selectedTab = widget.initialTab;
@@ -331,15 +332,15 @@ class _RequestCard extends StatelessWidget {
       status,
     );
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? 'Request ${status == RequestStatus.approved ? 'approved' : 'rejected'}'
-              : 'Could not update request',
-        ),
-      ),
-    );
+    if (success) {
+      ToastService.success(
+        context,
+        message:
+            'Request ${status == RequestStatus.approved ? 'approved' : 'rejected'}',
+      );
+    } else {
+      ToastService.error(context, message: 'Could not update request');
+    }
   }
 
   @override
@@ -713,9 +714,7 @@ class _LeaveRequestSheetState extends State<_LeaveRequestSheet> {
   void _submit() {
     if (!(_key.currentState?.validate() ?? false)) return;
     if (_start == null || _end == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a start and end date')),
-      );
+      ToastService.warning(context, message: 'Select a start and end date');
       return;
     }
     Navigator.of(context).pop(true);

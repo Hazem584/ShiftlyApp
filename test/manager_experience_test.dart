@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/app.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
@@ -94,6 +95,7 @@ void main() {
     expect(find.byKey(const Key('approve-leave-1')), findsNothing);
     expect(find.text('Approved'), findsAtLeastNWidgets(1));
     expect(find.text('1 pending'), findsOneWidget);
+    ToastService.dismissAll();
   });
 
   testWidgets('manager confirms rejecting a pending request', (tester) async {
@@ -114,6 +116,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Request rejected'), findsOneWidget);
     expect(find.byKey(const Key('reject-leave-2')), findsNothing);
+    ToastService.dismissAll();
   });
 
   testWidgets('profile edit can be cancelled and validates input', (
@@ -170,5 +173,6 @@ void main() {
     await tester.tap(find.text('Dashboard').last);
     await tester.pumpAndSettle();
     expect(find.textContaining('Good morning'), findsOneWidget);
+    ToastService.dismissAll();
   });
 }
