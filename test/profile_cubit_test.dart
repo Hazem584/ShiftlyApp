@@ -12,19 +12,19 @@ import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 ManagerProfile _profile({
   String? avatarUrl,
   String name = 'Mona Ibrahim',
+  String email = 'mona@example.com',
   String? phone = '+20123456789',
-}) =>
-    ManagerProfile(
-      id: 'profile-id',
-      fullName: name,
-      role: 'Manager',
-      email: 'mona@example.com',
-      phone: phone,
-      workplace: 'Shift Lab',
-      avatarUrl: avatarUrl,
-      createdAt: DateTime.utc(2026),
-      updatedAt: DateTime.utc(2026),
-    );
+}) => ManagerProfile(
+  id: 'profile-id',
+  fullName: name,
+  role: 'Manager',
+  email: email,
+  phone: phone,
+  workplace: 'Shift Lab',
+  avatarUrl: avatarUrl,
+  createdAt: DateTime.utc(2026),
+  updatedAt: DateTime.utc(2026),
+);
 
 ProfileImageSelection _png() => ProfileImageSelection(
   fileName: 'avatar.png',
@@ -140,6 +140,23 @@ void main() {
     expect(synchronized?.phone, isNull);
   });
 
+  test(
+    'successful edit changes a phone and preserves an already-null phone',
+    () async {
+      final repository = _Repository();
+      final cubit = await _loaded(repository);
+
+      await cubit.update(fullName: 'Mona Ibrahim', phone: ' +201111111111 ');
+      expect(repository.lastPhone, '+201111111111');
+      expect((cubit.state as ProfileLoaded).profile.phone, '+201111111111');
+
+      repository.profile = _profile(phone: null);
+      await cubit.load();
+      await cubit.update(fullName: 'Mona Ibrahim', phone: null);
+      expect((cubit.state as ProfileLoaded).profile.phone, isNull);
+    },
+  );
+
   test('failed edit retains the previous profile', () async {
     final repository = _Repository()
       ..updateError = const ApiException(message: 'safe failure');
@@ -253,7 +270,13 @@ void main() {
   });
 
   test('session binding isolates logout and a different user login', () async {
-    final repository = _Repository()..profile = _profile(name: 'User A');
+    final repository = _Repository()
+      ..profile = _profile(
+        name: 'User A',
+        email: 'a@example.com',
+        phone: '+201000000001',
+        avatarUrl: 'https://cdn.example/a.png',
+      );
     final cubit = ProfileCubit(repository);
     addTearDown(cubit.close);
     const scopeA = ProfileSessionScope(userId: 'a', workspaceId: 'one');
@@ -266,12 +289,17 @@ void main() {
     cubit.bindSession(null);
     expect(cubit.state, isA<ProfileLoading>());
 
-    repository.profile = _profile(name: 'User B', phone: null);
+    repository.profile = _profile(
+      name: 'User B',
+      email: 'b@example.com',
+      phone: null,
+    );
     cubit.bindSession(scopeB);
     expect(cubit.state, isA<ProfileLoading>());
     await Future<void>.delayed(Duration.zero);
     final profile = (cubit.state as ProfileLoaded).profile;
     expect(profile.fullName, 'User B');
+    expect(profile.email, 'b@example.com');
     expect(profile.phone, isNull);
     expect(profile.avatarUrl, isNull);
   });
@@ -328,37 +356,46 @@ void main() {
     expect(synchronized.last, 'User B');
   });
 
-  test('same scope emissions do not reload but workspace changes do', () async {
-    final repository = _Repository();
-    final cubit = ProfileCubit(repository);
-    addTearDown(cubit.close);
-    const first = ProfileSessionScope(userId: 'a', workspaceId: 'one');
+  test(
+    'same-scope refresh and profile synchronization do not reload',
+    () async {
+      final repository = _Repository();
+      const first = ProfileSessionScope(userId: 'a', workspaceId: 'one');
+      const second = ProfileSessionScope(userId: 'a', workspaceId: 'two');
+      var emittedScope = first;
+      late final ProfileCubit cubit;
+      cubit = ProfileCubit(
+        repository,
+        onProfileChanged: (_) => cubit.bindSession(emittedScope),
+      );
+      addTearDown(cubit.close);
 
-    cubit.bindSession(first);
-    await Future<void>.delayed(Duration.zero);
-    cubit.bindSession(first);
-    cubit.bindSession(first);
-    await Future<void>.delayed(Duration.zero);
-    expect(repository.loadCalls, 1);
+      cubit.bindSession(first);
+      await Future<void>.delayed(Duration.zero);
+      cubit.bindSession(first);
+      cubit.bindSession(first);
+      await cubit.update(fullName: 'Updated', phone: null);
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.loadCalls, 1);
 
-    repository.profile = ManagerProfile(
-      id: 'profile-id',
-      fullName: 'Mona Ibrahim',
-      role: 'Employee',
-      email: 'mona@example.com',
-      phone: null,
-      workplace: 'Second Workspace',
-      createdAt: DateTime.utc(2026),
-      updatedAt: DateTime.utc(2026),
-    );
-    cubit.bindSession(
-      const ProfileSessionScope(userId: 'a', workspaceId: 'two'),
-    );
-    await Future<void>.delayed(Duration.zero);
+      repository.profile = ManagerProfile(
+        id: 'profile-id',
+        fullName: 'Mona Ibrahim',
+        role: 'Employee',
+        email: 'mona@example.com',
+        phone: null,
+        workplace: 'Second Workspace',
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026),
+      );
+      emittedScope = second;
+      cubit.bindSession(second);
+      await Future<void>.delayed(Duration.zero);
 
-    expect(repository.loadCalls, 2);
-    final profile = (cubit.state as ProfileLoaded).profile;
-    expect(profile.role, 'Employee');
-    expect(profile.workplace, 'Second Workspace');
-  });
+      expect(repository.loadCalls, 2);
+      final profile = (cubit.state as ProfileLoaded).profile;
+      expect(profile.role, 'Employee');
+      expect(profile.workplace, 'Second Workspace');
+    },
+  );
 }

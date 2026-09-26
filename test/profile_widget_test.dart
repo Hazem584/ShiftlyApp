@@ -10,10 +10,7 @@ import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 
-ManagerProfile _profile({
-  String? avatarUrl,
-  String? phone,
-}) => ManagerProfile(
+ManagerProfile _profile({String? avatarUrl, String? phone}) => ManagerProfile(
   id: 'profile-id',
   fullName: 'Backend User',
   role: 'Operations Manager',
@@ -134,38 +131,40 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
   });
 
-  testWidgets('clearing phone sends null and shows the fallback', (tester) async {
-    final repository = await _openProfile(
-      tester,
-      selection: ProfileImageSelection(fileName: 'unused', bytes: Uint8List(0)),
-      phone: '+201234567890',
-    );
-    await _edit(tester);
-    await tester.enterText(
-      find.byKey(const Key('profile-phone-field')),
-      '',
-    );
-    await _save(tester);
-    await tester.pumpAndSettle();
-
-    expect(repository.lastPhone, isNull);
-    expect(repository.profile.phone, isNull);
-    expect(find.text('Not provided'), findsOneWidget);
-  });
-
-  testWidgets('failed phone clearing retains the previous profile value', (
+  testWidgets('clearing phone sends null and shows the fallback', (
     tester,
   ) async {
     final repository = await _openProfile(
       tester,
       selection: ProfileImageSelection(fileName: 'unused', bytes: Uint8List(0)),
       phone: '+201234567890',
-    )..updateError = const ApiException(message: 'Could not save phone.');
-    await _edit(tester);
-    await tester.enterText(
-      find.byKey(const Key('profile-phone-field')),
-      '',
     );
+    await _edit(tester);
+    await tester.enterText(find.byKey(const Key('profile-phone-field')), '');
+    await _save(tester);
+    await tester.pumpAndSettle();
+
+    expect(repository.lastPhone, isNull);
+    expect(repository.profile.phone, isNull);
+    expect(find.text('Not provided'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 4));
+  });
+
+  testWidgets('failed phone clearing retains the previous profile value', (
+    tester,
+  ) async {
+    final repository =
+        await _openProfile(
+            tester,
+            selection: ProfileImageSelection(
+              fileName: 'unused',
+              bytes: Uint8List(0),
+            ),
+            phone: '+201234567890',
+          )
+          ..updateError = const ApiException(message: 'Could not save phone.');
+    await _edit(tester);
+    await tester.enterText(find.byKey(const Key('profile-phone-field')), '');
     await _save(tester);
     await tester.pump();
     expect(repository.profile.phone, '+201234567890');

@@ -36,16 +36,15 @@ class ApiProfileRepository implements ProfileRepository {
   Future<ManagerProfile> updateProfile({
     required String fullName,
     required String? phone,
-  }) =>
-      _profileRequest(
-        () => _dio.patch<Object?>(
-          ApiEndpoints.profile,
-          data: <String, Object?>{
-            'fullName': fullName.trim(),
-            'phone': phone?.trim(),
-          },
-        ),
-      );
+  }) => _profileRequest(
+    () => _dio.patch<Object?>(
+      ApiEndpoints.profile,
+      data: <String, Object?>{
+        'fullName': fullName.trim(),
+        'phone': phone?.trim(),
+      },
+    ),
+  );
 
   @override
   Future<ManagerProfile> uploadAvatar(ProfileImageSelection image) {

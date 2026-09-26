@@ -21,6 +21,7 @@ class _Auth implements AuthenticationService {
   int signInCalls = 0;
   int signOutCalls = 0;
   Object? signInError;
+  Completer<void>? signOutCompleter;
   final controller = StreamController<AuthenticationEvent>.broadcast();
 
   @override
@@ -49,6 +50,7 @@ class _Auth implements AuthenticationService {
   Future<void> signOut() async {
     signOutCalls++;
     session = null;
+    await signOutCompleter?.future;
   }
 }
 
@@ -207,6 +209,26 @@ void main() {
       await coordinator.signOut();
       expect(coordinator.state.status, SessionStatus.unauthenticated);
       expect(storage.value, isNull);
+    },
+  );
+
+  test(
+    'logout removes the authenticated identity before remote sign-out ends',
+    () async {
+      final auth = _Auth()
+        ..session = const AuthSession(accessToken: 'token')
+        ..signOutCompleter = Completer<void>();
+      final coordinator = await _coordinator(
+        auth,
+        _user([_membership('one', WorkspaceRole.manager)]),
+        MemoryActiveWorkspaceStorage(),
+      );
+
+      final signOut = coordinator.signOut();
+      expect(coordinator.state.status, SessionStatus.unauthenticated);
+      expect(coordinator.state.currentUser, isNull);
+      auth.signOutCompleter!.complete();
+      await signOut;
     },
   );
 
