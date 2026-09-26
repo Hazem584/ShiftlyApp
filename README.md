@@ -1,44 +1,77 @@
 # Shiftly
 
-Shiftly is a Flutter shift-management app for **Shift Lab**. Sprint 1 delivers the manager-facing mobile foundation with mock, session-only data.
+Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. The current sprint connects identity, profile bootstrap, workspace membership, and role-based routing while keeping feature screens on their existing mock repositories.
 
-## Sprint 1 features
+## Configuration
 
-- Material 3 app using `MaterialApp.router` and `go_router`
-- Five-tab manager shell: Dashboard, Employees, Attendance, Requests, and Profile
-- Repository-backed dashboard with loading, loaded, empty, and error states
-- Searchable employee directory and employee details
-- Validated add-employee flow with immediate in-session updates
-- Reference-based mobile design system with responsive dashboard, employee, and form layouts
-- Presentation-only Attendance & Leave workspace with metrics, recent records, segmented views, and a leave-request sheet
-- Feature-first architecture using repository interfaces and Cubits
-- Bundled Cairo variable font under the SIL Open Font License
-- Widget and unit coverage for startup, routing, dashboard states, search, form validation, adding employees, repositories, and Cubits
+The app requires three compile-time Dart defines:
 
-Attendance currently uses presentation-only mock content. Requests and Profile intentionally remain polished placeholders; backend-connected workflows are outside the current UI sprint.
+- `SUPABASE_URL`: the HTTPS URL of the Supabase project.
+- `SUPABASE_PUBLISHABLE_KEY`: the client-safe publishable/anon key. Never use a service-role key.
+- `SHIFTLY_API_BASE_URL`: the complete API prefix, ending exactly once in `/api/v1`.
 
-## Requirements
+Use placeholders locally:
 
-- Flutter 3.35 or newer
-- Dart 3.13 or newer
+```sh
+flutter run \
+  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY \
+  --dart-define=SHIFTLY_API_BASE_URL=https://shiftly-backend-gamma.vercel.app/api/v1
+```
 
-## Run locally
+Or copy `config/dev.example.json` to an ignored file such as `config/dev.json` and run:
+
+```sh
+flutter run --dart-define-from-file=config/dev.json
+```
+
+Production example:
+
+```sh
+flutter build apk --release \
+  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY \
+  --dart-define=SHIFTLY_API_BASE_URL=https://shiftly-backend-gamma.vercel.app/api/v1
+```
+
+Configuration is validated before the app starts. Supabase must use HTTPS. The API may use HTTP only for `localhost`, `127.0.0.1`, or the Android emulator host `10.0.2.2`; deployed endpoints must use HTTPS. Query strings, fragments, missing values, and duplicated API prefixes are rejected with a developer-facing configuration screen. Values and keys are never logged.
+
+## Authentication and sessions
+
+Supabase owns access-token and refresh-token persistence. Shiftly does not copy either token into app storage. Sign-in uses email/password through the Supabase SDK, then `GET /auth/me` validates the restored session and loads the backend profile and active memberships. A missing backend profile routes to profile setup, which sends only `fullName` and optional `phone` to `POST /auth/bootstrap` before reloading `/auth/me`.
+
+The Dio client reads the latest Supabase session for each protected request and sends its bearer token only to the configured Shiftly API host and `/api/v1` path. A `401` starts one shared Supabase refresh operation; concurrent failures await it, and each request is retried at most once with its original method, path, query, body, and cancellation token. Failed refresh clears the selected workspace, signs out locally, and returns to login. `403` and `404` are never treated as refresh failures.
+
+## Role and workspace routing
+
+The backend is the only authority for roles and membership status. The app ignores inactive and unknown memberships:
+
+- One active membership is selected automatically.
+- Multiple active memberships restore `activeWorkspaceId` only when it still appears in the fresh response; otherwise the workspace chooser is shown.
+- No active memberships show a retryable no-workspace state.
+- `MANAGER` routes to the existing manager shell; `EMPLOYEE` routes to the employee shell.
+
+Only `activeWorkspaceId` is stored in SharedPreferences. Roles and tokens are not stored there. Deep links remain behind session resolution, and logout clears protected navigation history through router redirects.
+
+## Errors and offline behavior
+
+Backend error envelopes, validation arrays, plain-text proxy failures, timeouts, cancellation, connection failures, and common HTTP statuses are converted to safe user messages. The backend `requestId` remains attached to the typed exception for support diagnostics. A backend outage with a locally restored Supabase session shows an offline/retry state; it never grants a manager or employee route from cached data.
+
+## Architecture
+
+The app retains its feature-first structure, repository injection, Cubits, GoRouter, theme, and custom toast. Shared integration code lives under `lib/core/config`, `error`, `network`, `session`, and `storage`. Authentication owns its service wrapper, API repository, models, screens, and focused widgets under `lib/features/auth`.
+
+## Verification
 
 ```sh
 flutter pub get
-flutter run
-```
-
-The app opens directly in the Manager experience. No backend, authentication, Firebase project, secrets, or environment configuration is required.
-
-## Verify
-
-```sh
-dart format --output=none --set-exit-if-changed lib test
+dart format .
 flutter analyze
 flutter test
 ```
 
-## Architecture
+Automated tests use fakes and an in-memory Dio adapter; they never call production Supabase or Vercel.
 
-Shared models and design primitives live under `lib/core`. Each feature owns its data contracts, mock implementations, state, screens, and reusable widgets. Repository interfaces keep widgets independent of the mock data source so a future API implementation can replace it without rebuilding the UI.
+## Still mocked
+
+Dashboard cards, employee management, shifts, attendance, leave requests, notifications, profile editing/avatar upload, and other feature data still use presentation mocks. The next sprint can replace those repositories with workspace-scoped NestJS implementations. No Flutter code reads Supabase application tables directly.

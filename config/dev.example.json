@@ -1,0 +1,5 @@
+{
+  "SUPABASE_URL": "https://YOUR_PROJECT.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "YOUR_PUBLISHABLE_KEY",
+  "SHIFTLY_API_BASE_URL": "https://shiftly-backend-gamma.vercel.app/api/v1"
+}

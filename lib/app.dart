@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/routing/app_router.dart';
+import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
@@ -27,6 +30,7 @@ class ShiftlyApp extends StatefulWidget {
     this.profileRepository,
     this.profileImagePicker,
     this.router,
+    this.sessionCoordinator,
   });
 
   final EmployeeRepository? employeeRepository;
@@ -35,6 +39,7 @@ class ShiftlyApp extends StatefulWidget {
   final ProfileRepository? profileRepository;
   final ProfileImagePicker? profileImagePicker;
   final GoRouter? router;
+  final SessionCoordinator? sessionCoordinator;
 
   @override
   State<ShiftlyApp> createState() => _ShiftlyAppState();
@@ -50,6 +55,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
   late final ProfileImagePicker _profileImagePicker;
   late final LeaveRequestsCubit _leaveRequestsCubit;
   late final ProfileCubit _profileCubit;
+  _SessionRouterRefresh? _sessionRefresh;
 
   @override
   void initState() {
@@ -58,7 +64,15 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     final dashboard =
         widget.dashboardRepository ??
         MockDashboardRepository(employeeRepository: _employees);
-    _router = widget.router ?? createAppRouter();
+    _sessionRefresh = widget.sessionCoordinator == null
+        ? null
+        : _SessionRouterRefresh(widget.sessionCoordinator!);
+    _router =
+        widget.router ??
+        createAppRouter(
+          sessionCoordinator: widget.sessionCoordinator,
+          refreshListenable: _sessionRefresh,
+        );
     _leaveRequests =
         widget.leaveRequestRepository ?? MockLeaveRequestRepository();
     _profile = widget.profileRepository ?? MockProfileRepository();
@@ -76,13 +90,15 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _employeesCubit.close();
     _leaveRequestsCubit.close();
     _profileCubit.close();
+    _sessionRefresh?.dispose();
+    widget.sessionCoordinator?.close();
     if (widget.router == null) _router.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MultiRepositoryProvider(
+    final app = MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: _employees),
         RepositoryProvider.value(value: _leaveRequests),
@@ -104,5 +120,26 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
         ),
       ),
     );
+    final coordinator = widget.sessionCoordinator;
+    return coordinator == null
+        ? app
+        : BlocProvider<SessionCoordinator>.value(
+            value: coordinator,
+            child: app,
+          );
+  }
+}
+
+class _SessionRouterRefresh extends ChangeNotifier {
+  _SessionRouterRefresh(SessionCoordinator coordinator) {
+    _subscription = coordinator.stream.listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<Object?> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
   }
 }

@@ -9,7 +9,9 @@ import 'package:shiftly/features/profile/presentation/widgets/profile_header.dar
 import 'package:shiftly/features/profile/presentation/widgets/profile_information_section.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({this.onLogout, super.key});
+
+  final Future<void> Function()? onLogout;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -64,6 +66,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ProfileHeader(profile: profile),
                       const SizedBox(height: AppSpacing.m),
                       ProfileInformationSection(profile: profile),
+                      if (widget.onLogout != null) ...[
+                        const SizedBox(height: AppSpacing.l),
+                        OutlinedButton.icon(
+                          key: const Key('manager-logout'),
+                          onPressed: widget.onLogout,
+                          icon: const Icon(Icons.logout_rounded),
+                          label: const Text('Sign out'),
+                        ),
+                      ],
                     ],
                   ),
         },
