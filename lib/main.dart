@@ -17,6 +17,8 @@ Future<void> main() async {
         employeeRepository: dependencies.employeeRepository,
         invitationRepository: dependencies.invitationRepository,
         workspaceRepository: dependencies.workspaceRepository,
+        shiftRepository: dependencies.shiftRepository,
+        attendanceRepository: dependencies.attendanceRepository,
       ),
     );
     unawaited(dependencies.sessionCoordinator.initialize());

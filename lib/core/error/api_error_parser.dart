@@ -87,6 +87,32 @@ abstract final class ApiErrorParser {
       'INVITATION_EMAIL_MISMATCH' =>
         'This invitation belongs to a different email address.',
       'INVITATION_EXPIRED' => 'This invitation has expired.',
+      'SHIFT_EMPLOYEE_INVALID' =>
+        'Choose an active employee from this workspace.',
+      'SHIFT_EMPLOYEE_NOT_ACTIVE' => 'The selected employee is not active.',
+      'SHIFT_OVERLAP' => 'This employee already has an overlapping shift.',
+      'SHIFT_INVALID_TIME_RANGE' =>
+        'Shift end must be after its start and the break must be shorter.',
+      'SHIFT_TOO_LONG' => 'A shift cannot be longer than 24 hours.',
+      'SHIFT_CANCELLED' => 'This shift has been cancelled.',
+      'SHIFT_ALREADY_COMPLETED' => 'This shift is already completed.',
+      'SHIFT_NOT_FOUND' => 'That shift could not be found.',
+      'CLOCK_IN_TOO_EARLY' => 'Clock-in is not available yet for this shift.',
+      'CLOCK_IN_TOO_LATE' => 'This shift has already ended.',
+      'ATTENDANCE_ALREADY_EXISTS' =>
+        'You have already clocked in for this shift.',
+      'ATTENDANCE_ALREADY_CLOCKED_OUT' =>
+        'You have already clocked out for this shift.',
+      'ATTENDANCE_REJECTED' => 'Rejected attendance cannot be clocked out.',
+      'ATTENDANCE_ALREADY_REVIEWED' =>
+        'This attendance request has already been reviewed.',
+      'ATTENDANCE_NOT_FOUND' => 'That attendance record could not be found.',
+      'REJECTION_REASON_REQUIRED' => 'Enter a reason for rejection.',
+      'REJECTION_REASON_NOT_ALLOWED' =>
+        'A rejection reason is only allowed when rejecting.',
+      'WORKSPACE_ACCESS_DENIED' =>
+        'Your workspace membership does not allow this action.',
+      'INVALID_DATE_RANGE' => 'The start date must not be after the end date.',
       _ => switch (status) {
         400 => 'Please check the information you entered.',
         401 => 'Your session has expired. Please sign in again.',

@@ -7,10 +7,16 @@ import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/routing/app_router.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
+import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
+import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/attendance/data/mock_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_cubit.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
@@ -23,6 +29,10 @@ import 'package:shiftly/features/profile/data/mock_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:shiftly/features/shifts/data/mock_shift_repository.dart';
+import 'package:shiftly/features/shifts/data/shift_repository.dart';
+import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit.dart';
+import 'package:shiftly/features/shifts/presentation/cubit/manager_shifts_cubit.dart';
 import 'package:shiftly/features/workspaces/data/mock_workspace_repository.dart';
 import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
@@ -39,6 +49,8 @@ class ShiftlyApp extends StatefulWidget {
     this.profileImagePicker,
     this.router,
     this.sessionCoordinator,
+    this.shiftRepository,
+    this.attendanceRepository,
   });
 
   final EmployeeRepository? employeeRepository;
@@ -50,6 +62,8 @@ class ShiftlyApp extends StatefulWidget {
   final ProfileImagePicker? profileImagePicker;
   final GoRouter? router;
   final SessionCoordinator? sessionCoordinator;
+  final ShiftRepository? shiftRepository;
+  final AttendanceRepository? attendanceRepository;
 
   @override
   State<ShiftlyApp> createState() => _ShiftlyAppState();
@@ -68,6 +82,12 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
   late final ProfileImagePicker _profileImagePicker;
   late final LeaveRequestsCubit _leaveRequestsCubit;
   late final ProfileCubit _profileCubit;
+  late final ShiftRepository _shifts;
+  late final AttendanceRepository _attendance;
+  late final ManagerShiftsCubit _managerShiftsCubit;
+  late final EmployeeShiftsCubit _employeeShiftsCubit;
+  late final ManagerAttendanceCubit _managerAttendanceCubit;
+  late final EmployeeAttendanceCubit _employeeAttendanceCubit;
   StreamSubscription<Object?>? _sessionSubscription;
   _SessionRouterRefresh? _sessionRefresh;
 
@@ -94,6 +114,9 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _profile = widget.profileRepository ?? MockProfileRepository();
     _profileImagePicker =
         widget.profileImagePicker ?? DeviceProfileImagePicker();
+    _shifts = widget.shiftRepository ?? const MockShiftRepository();
+    _attendance =
+        widget.attendanceRepository ?? const MockAttendanceRepository();
     _dashboardCubit = DashboardCubit(dashboard)..load();
     _employeesCubit = EmployeesCubit(_employees, invitations: _invitations);
     _workspacesCubit = WorkspacesCubit(
@@ -111,10 +134,26 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
       _profile,
       onProfileChanged: widget.sessionCoordinator?.synchronizeProfile,
     );
+    _managerShiftsCubit = ManagerShiftsCubit(_shifts);
+    _managerAttendanceCubit = ManagerAttendanceCubit(_attendance);
+    _employeeAttendanceCubit = EmployeeAttendanceCubit(_attendance);
+    _employeeShiftsCubit = EmployeeShiftsCubit(
+      _shifts,
+      _attendance,
+      onAttendanceChanged: () => _employeeAttendanceCubit.load(refresh: true),
+    );
     final coordinator = widget.sessionCoordinator;
     if (coordinator == null) {
       _profileCubit.load();
       _employeesCubit.load();
+      const previewScope = FeatureSessionScope(
+        userId: 'preview-user',
+        workspaceId: 'preview-workspace',
+        timezone: 'Etc/UTC',
+        role: WorkspaceRole.manager,
+      );
+      _managerShiftsCubit.bindSession(previewScope);
+      _managerAttendanceCubit.bindSession(previewScope);
     } else {
       _sessionSubscription = coordinator.stream.listen(_bindSession);
       _bindSession(coordinator.state);
@@ -128,6 +167,10 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _workspacesCubit.close();
     _leaveRequestsCubit.close();
     _profileCubit.close();
+    _managerShiftsCubit.close();
+    _employeeShiftsCubit.close();
+    _managerAttendanceCubit.close();
+    _employeeAttendanceCubit.close();
     _sessionSubscription?.cancel();
     _sessionRefresh?.dispose();
     widget.sessionCoordinator?.close();
@@ -145,6 +188,8 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
         RepositoryProvider.value(value: _leaveRequests),
         RepositoryProvider.value(value: _profile),
         RepositoryProvider.value(value: _profileImagePicker),
+        RepositoryProvider.value(value: _shifts),
+        RepositoryProvider.value(value: _attendance),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -153,6 +198,10 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
           BlocProvider.value(value: _workspacesCubit),
           BlocProvider.value(value: _leaveRequestsCubit),
           BlocProvider.value(value: _profileCubit),
+          BlocProvider.value(value: _managerShiftsCubit),
+          BlocProvider.value(value: _employeeShiftsCubit),
+          BlocProvider.value(value: _managerAttendanceCubit),
+          BlocProvider.value(value: _employeeAttendanceCubit),
         ],
         child: MaterialApp.router(
           title: AppStrings.appName,
@@ -175,7 +224,28 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _profileCubit.bindSession(_profileScope(state));
     _employeesCubit.bindSession(_employeeScope(state));
     _workspacesCubit.bindUser(state.currentUser?.id);
+    final featureScope = _featureScope(state);
+    _managerShiftsCubit.bindSession(featureScope);
+    _employeeShiftsCubit.bindSession(featureScope);
+    _managerAttendanceCubit.bindSession(featureScope);
+    _employeeAttendanceCubit.bindSession(featureScope);
   }
+}
+
+FeatureSessionScope? _featureScope(SessionState state) {
+  final user = state.currentUser;
+  final membership = state.activeMembership;
+  if (!state.isAuthenticated || user == null || membership == null) return null;
+  if (membership.status != MembershipStatus.active ||
+      membership.role == WorkspaceRole.unknown) {
+    return null;
+  }
+  return FeatureSessionScope(
+    userId: user.id,
+    workspaceId: membership.workspace.id,
+    timezone: membership.workspace.timezone,
+    role: membership.role,
+  );
 }
 
 ProfileSessionScope? _profileScope(SessionState state) {

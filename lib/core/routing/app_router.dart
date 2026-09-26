@@ -15,6 +15,7 @@ import 'package:shiftly/features/employees/presentation/screens/add_employee_scr
 import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employees_screen.dart';
 import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
+import 'package:shiftly/features/shifts/presentation/screens/manager_shifts_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
 
@@ -65,6 +66,20 @@ GoRouter createAppRouter({
             GoRoute(
               path: '/dashboard',
               builder: (_, _) => const DashboardScreen(),
+              routes: [
+                GoRoute(
+                  path: 'shifts',
+                  builder: (_, _) => ManagerShiftsScreen(
+                    timezone:
+                        sessionCoordinator
+                            ?.state
+                            .activeMembership
+                            ?.workspace
+                            .timezone ??
+                        'Etc/UTC',
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -94,6 +109,13 @@ GoRouter createAppRouter({
               path: '/attendance',
               builder: (_, state) => AttendanceScreen(
                 key: ValueKey(state.uri.queryParameters['tab']),
+                timezone:
+                    sessionCoordinator
+                        ?.state
+                        .activeMembership
+                        ?.workspace
+                        .timezone ??
+                    'Etc/UTC',
                 initialTab: state.uri.queryParameters['tab'] == 'leaveRequests'
                     ? 1
                     : 0,

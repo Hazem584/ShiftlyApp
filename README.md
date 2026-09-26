@@ -1,6 +1,6 @@
 # Shiftly
 
-Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authentication, profile editing, avatar management, workspace membership, and role-based routing use the production API while unrelated feature screens retain their mock repositories.
+Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authentication, profile editing, avatar management, workspace membership, role-based routing, shifts, clock actions, and attendance use the production API while unrelated feature screens retain their mock repositories.
 
 ## Configuration
 
@@ -90,7 +90,39 @@ Backend error envelopes, validation arrays, plain-text proxy failures, timeouts,
 
 ## Architecture
 
-The app retains its feature-first structure, repository injection, Cubits, GoRouter, theme, and custom toast. Shared integration code lives under `lib/core/config`, `error`, `network`, `session`, and `storage`. Authentication owns its service wrapper, API repository, models, screens, and focused widgets under `lib/features/auth`.
+The app retains its feature-first structure, repository injection, Cubits, GoRouter, theme, and custom toast. Shared integration code lives under `lib/core/config`, `error`, `network`, `session`, `storage`, and `utils`. Authentication owns its service wrapper, API repository, models, screens, and focused widgets under `lib/features/auth`.
+
+Production creates `ApiShiftRepository` and `ApiAttendanceRepository` with the existing authenticated Dio instance. Feature Cubits bind to the authenticated user, active workspace, active membership, and backend-confirmed role. A scope change clears data immediately and invalidates pending work. The mock shift and attendance repositories are limited to isolated tests and the no-session component preview entry point.
+
+Backend timestamps are parsed and stored as UTC. UI entry and display use the active workspace's IANA timezone through the maintained `timezone` package; device-local time is never treated as the workspace timezone or used as an official attendance timestamp.
+
+## Manual shifts and attendance regression
+
+Use two non-production accounts and an API client such as ApiDog against the same test environment. Do not change device time to bypass backend clock rules.
+
+1. Log in as a manager.
+2. Select a workspace.
+3. Confirm the target employee has an active membership.
+4. Create a shift for that employee and confirm the request uses the employee membership ID.
+5. Open the returned shift details.
+6. Log out, then log in as the employee.
+7. Select the invited workspace.
+8. Confirm the assigned shift appears under **My Shifts**.
+9. Open the shift details.
+10. Attempt an invalid early Clock-in and confirm only the safe backend error is shown.
+11. At an allowed time, Clock in and confirm the displayed timestamp is the server-confirmed value.
+12. Log in as the manager and open **Attendance**; confirm the pending attendance request appears.
+13. Open the attendance details.
+14. Approve it, or reject it with a valid rejection reason, and confirm the pending row disappears only after success.
+15. Log in as the employee and refresh **Attendance**; confirm the canonical review state appears.
+16. Clock out when the backend permits it.
+17. Confirm the employee history shows the server-confirmed Clock-in and Clock-out values.
+18. Confirm the manager sees the final attendance record.
+19. Switch workspaces and confirm the previous workspace's shifts and attendance disappear before the new load completes.
+20. Log out User A and log in as User B without restarting the app.
+21. Confirm no shifts or attendance from User A appear.
+
+ApiDog checks should use the same endpoint order where useful: create/list/detail shift, employee shift list/detail, rejected early Clock-in, successful Clock-in, pending attendance list/detail/review, employee attendance list, successful Clock-out, and final manager attendance list. Verify methods, IDs, UTC ISO-8601 bodies, pagination envelopes, canonical mutation responses, and `requestId` on deliberate failures.
 
 ## Verification
 
@@ -105,4 +137,4 @@ Automated tests use fakes and an in-memory Dio adapter; they never call producti
 
 ## Still mocked
 
-Dashboard cards, employee management, shifts, attendance, leave requests, notifications, and other non-profile feature data still use presentation mocks. Profile JSON and avatar mutations go only through NestJS; Flutter never writes directly to Supabase Storage or application tables. The mock profile repository remains available only for isolated tests and previews.
+Dashboard summary cards, leave requests, notifications, and other features outside this sprint still use presentation mocks. Shift management, employee shifts, Clock-in/out, manager attendance review, and employee attendance history use API repositories in production. Employee and workspace management remain API-backed from the prior integration sprint. Mock repositories remain available only for isolated tests and no-session previews.

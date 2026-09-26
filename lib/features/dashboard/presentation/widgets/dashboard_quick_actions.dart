@@ -30,8 +30,8 @@ class DashboardQuickActions extends StatelessWidget {
           Expanded(
             child: _QuickAction(
               icon: Icons.schedule_rounded,
-              label: 'Attendance',
-              onTap: () => context.go('/attendance'),
+              label: 'Shifts',
+              onTap: () => context.push(AppRoutes.managerShifts),
             ),
           ),
           const SizedBox(width: 10),

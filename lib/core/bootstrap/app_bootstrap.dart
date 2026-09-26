@@ -5,11 +5,15 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/data/authentication_api_repository.dart';
 import 'package:shiftly/features/auth/data/supabase_authentication_service.dart';
+import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
+import 'package:shiftly/features/attendance/data/attendance_repository.dart';
 import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/invitations/data/invitation_repository.dart';
 import 'package:shiftly/features/profile/data/api_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
+import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
+import 'package:shiftly/features/shifts/data/shift_repository.dart';
 import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -20,6 +24,8 @@ class AppDependencies {
     required this.employeeRepository,
     required this.invitationRepository,
     required this.workspaceRepository,
+    required this.shiftRepository,
+    required this.attendanceRepository,
   });
 
   final SessionCoordinator sessionCoordinator;
@@ -27,6 +33,8 @@ class AppDependencies {
   final EmployeeRepository employeeRepository;
   final InvitationRepository invitationRepository;
   final WorkspaceRepository workspaceRepository;
+  final ShiftRepository shiftRepository;
+  final AttendanceRepository attendanceRepository;
 }
 
 abstract final class AppBootstrap {
@@ -59,12 +67,16 @@ abstract final class AppBootstrap {
       currentUser: () => coordinator.state.currentUser,
     );
     final workforceRepository = ApiWorkforceRepository(apiClient.dio);
+    final shiftRepository = ApiShiftRepository(apiClient.dio);
+    final attendanceRepository = ApiAttendanceRepository(apiClient.dio);
     return AppDependencies(
       sessionCoordinator: coordinator,
       profileRepository: profileRepository,
       employeeRepository: workforceRepository,
       invitationRepository: workforceRepository,
       workspaceRepository: workforceRepository,
+      shiftRepository: shiftRepository,
+      attendanceRepository: attendanceRepository,
     );
   }
 }
