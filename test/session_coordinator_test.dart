@@ -47,6 +47,8 @@ class _Auth implements AuthenticationService {
     required String password,
   }) async => signInResult;
   @override
+  Future<void> resendSignUpVerification({required String email}) async {}
+  @override
   Future<void> signOut() async {
     signOutCalls++;
     session = null;

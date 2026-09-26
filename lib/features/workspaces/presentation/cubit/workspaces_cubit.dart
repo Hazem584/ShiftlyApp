@@ -150,7 +150,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     _acceptInFlight = true;
     emit(state.copyWith(accepting: true, clearFailure: true));
     try {
-      final workspace = await _invitations.acceptInvitation(inviteToken);
+      final workspace = await _invitations.acceptInvitation(inviteToken.trim());
       if (!_current(userId, generation)) return false;
       final operation = _MembershipOperation(userId);
       _membershipOperations.add(operation);

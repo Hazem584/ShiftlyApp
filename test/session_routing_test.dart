@@ -37,6 +37,8 @@ class _RoutingAuth implements AuthenticationService {
     required String email,
     required String password,
   }) async => AuthenticationResult(session: session);
+  @override
+  Future<void> resendSignUpVerification({required String email}) async {}
 }
 
 class _RoutingRepository implements AuthenticationRepository {

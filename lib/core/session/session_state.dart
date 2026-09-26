@@ -6,6 +6,7 @@ enum SessionStatus {
   initializing,
   unauthenticated,
   authenticating,
+  registering,
   emailVerificationRequired,
   profileSetupRequired,
   loadingCurrentUser,
@@ -23,6 +24,8 @@ class SessionState extends Equatable {
     this.currentUser,
     this.activeMembership,
     this.failure,
+    this.verificationEmail,
+    this.resendingVerification = false,
   });
 
   const SessionState.initializing() : this(status: SessionStatus.initializing);
@@ -31,11 +34,20 @@ class SessionState extends Equatable {
   final CurrentUser? currentUser;
   final WorkspaceMembership? activeMembership;
   final Failure? failure;
+  final String? verificationEmail;
+  final bool resendingVerification;
 
   bool get isAuthenticated =>
       status == SessionStatus.authenticatedManager ||
       status == SessionStatus.authenticatedEmployee;
 
   @override
-  List<Object?> get props => [status, currentUser, activeMembership, failure];
+  List<Object?> get props => [
+    status,
+    currentUser,
+    activeMembership,
+    failure,
+    verificationEmail,
+    resendingVerification,
+  ];
 }

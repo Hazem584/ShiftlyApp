@@ -7,23 +7,26 @@ import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _confirmPassword = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmation = true;
 
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _confirmPassword.dispose();
     super.dispose();
   }
 
@@ -35,10 +38,10 @@ class _LoginScreenState extends State<LoginScreen> {
         current.status == SessionStatus.failure && previous != current,
     listener: (context, state) => ToastService.error(
       context,
-      message: state.failure?.message ?? 'Unable to sign in.',
+      message: state.failure?.message ?? 'Unable to create your account.',
     ),
     builder: (context, state) {
-      final loading = state.status == SessionStatus.authenticating;
+      final loading = state.status == SessionStatus.registering;
       return Scaffold(
         body: SafeArea(
           child: GestureDetector(
@@ -56,29 +59,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Icon(Icons.schedule_rounded, size: 52),
                         const SizedBox(height: AppSpacing.m),
                         Text(
-                          'Welcome to Shiftly',
+                          'Create your Shiftly account',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 6),
                         const Text(
-                          'Sign in to continue to your workspace',
+                          'Use the exact email address your manager invited.',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: AppColors.textSecondary),
                         ),
-                        if (state.status == SessionStatus.unauthenticated &&
-                            state.failure != null) ...[
-                          const SizedBox(height: AppSpacing.m),
-                          Text(
-                            state.failure!.message,
-                            key: const Key('login-session-message'),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.error),
-                          ),
-                        ],
                         const SizedBox(height: AppSpacing.xl),
                         TextFormField(
-                          key: const Key('login-email'),
+                          key: const Key('register-email'),
                           controller: _email,
                           enabled: !loading,
                           keyboardType: TextInputType.emailAddress,
@@ -99,17 +92,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: AppSpacing.m),
                         TextFormField(
-                          key: const Key('login-password'),
+                          key: const Key('register-password'),
                           controller: _password,
                           enabled: !loading,
                           obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          autofillHints: const [AutofillHints.password],
-                          onFieldSubmitted: (_) => _submit(loading),
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
                             labelText: 'Password',
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
                             suffixIcon: IconButton(
+                              tooltip: _obscurePassword
+                                  ? 'Show password'
+                                  : 'Hide password',
                               onPressed: loading
                                   ? null
                                   : () => setState(
@@ -123,13 +118,52 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                          validator: (value) => value == null || value.isEmpty
-                              ? 'Password is required'
+                          validator: (value) {
+                            if ((value ?? '').trim().isEmpty) {
+                              return 'Password is required';
+                            }
+                            if (value!.length < 8) {
+                              return 'Use at least 8 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.m),
+                        TextFormField(
+                          key: const Key('register-confirm-password'),
+                          controller: _confirmPassword,
+                          enabled: !loading,
+                          obscureText: _obscureConfirmation,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.newPassword],
+                          onFieldSubmitted: (_) => _submit(loading),
+                          decoration: InputDecoration(
+                            labelText: 'Confirm password',
+                            prefixIcon: const Icon(Icons.lock_outline_rounded),
+                            suffixIcon: IconButton(
+                              tooltip: _obscureConfirmation
+                                  ? 'Show password confirmation'
+                                  : 'Hide password confirmation',
+                              onPressed: loading
+                                  ? null
+                                  : () => setState(
+                                      () => _obscureConfirmation =
+                                          !_obscureConfirmation,
+                                    ),
+                              icon: Icon(
+                                _obscureConfirmation
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                            ),
+                          ),
+                          validator: (value) => value != _password.text
+                              ? 'Passwords do not match'
                               : null,
                         ),
                         const SizedBox(height: AppSpacing.l),
                         FilledButton(
-                          key: const Key('login-submit'),
+                          key: const Key('register-submit'),
                           onPressed: loading ? null : () => _submit(false),
                           child: loading
                               ? const SizedBox.square(
@@ -139,17 +173,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Sign in'),
+                              : const Text('Create account'),
                         ),
                         const SizedBox(height: AppSpacing.s),
                         TextButton(
-                          key: const Key('login-create-account'),
+                          key: const Key('register-sign-in'),
                           onPressed: loading
                               ? null
-                              : () => context.go('/register'),
-                          child: const Text(
-                            'Don\u2019t have an account? Create account',
-                          ),
+                              : () => context.go('/login'),
+                          child: const Text('Already have an account? Sign in'),
                         ),
                       ],
                     ),
@@ -166,8 +198,8 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit(bool loading) {
     if (loading || !(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
-    context.read<SessionCoordinator>().signIn(
-      email: _email.text,
+    context.read<SessionCoordinator>().signUp(
+      email: _email.text.trim().toLowerCase(),
       password: _password.text,
     );
   }

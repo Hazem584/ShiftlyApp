@@ -36,6 +36,9 @@ class _ProfileAuth implements AuthenticationService {
     required String email,
     required String password,
   }) => throw UnimplementedError();
+  @override
+  Future<void> resendSignUpVerification({required String email}) =>
+      throw UnimplementedError();
 }
 
 class _ProfileRepository implements AuthenticationRepository {

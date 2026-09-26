@@ -13,6 +13,8 @@ abstract interface class AuthenticationService {
     required String password,
   });
 
+  Future<void> resendSignUpVerification({required String email});
+
   Future<AuthSession?> refreshSession();
 
   Future<void> signOut();

@@ -42,6 +42,8 @@ class _PendingAuth implements AuthenticationService {
     required String password,
   }) => completer.future;
   @override
+  Future<void> resendSignUpVerification({required String email}) async {}
+  @override
   Future<void> signOut() async {}
 }
 

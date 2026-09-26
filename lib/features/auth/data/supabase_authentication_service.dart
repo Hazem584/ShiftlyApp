@@ -71,6 +71,46 @@ class SupabaseAuthenticationService implements AuthenticationService {
       );
     } on AuthException catch (error) {
       throw AuthenticationException(_safeFailure(error));
+    } on TimeoutException {
+      throw const AuthenticationException(
+        Failure(
+          message: 'The request timed out. Please try again.',
+          kind: FailureKind.timeout,
+        ),
+      );
+    } catch (_) {
+      throw const AuthenticationException(
+        Failure(
+          message: 'Unable to create your account. Check your connection and try again.',
+          kind: FailureKind.network,
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<void> resendSignUpVerification({required String email}) async {
+    try {
+      await _auth.resend(
+        type: OtpType.signup,
+        email: email.trim().toLowerCase(),
+      );
+    } on AuthException catch (error) {
+      throw AuthenticationException(_safeFailure(error));
+    } on TimeoutException {
+      throw const AuthenticationException(
+        Failure(
+          message: 'The request timed out. Please try again.',
+          kind: FailureKind.timeout,
+        ),
+      );
+    } catch (_) {
+      throw const AuthenticationException(
+        Failure(
+          message: 'Unable to resend the email. Check your connection and try again.',
+          kind: FailureKind.network,
+        ),
+      );
     }
   }
 
@@ -114,6 +154,21 @@ class SupabaseAuthenticationService implements AuthenticationService {
     if (normalized.contains('rate') || normalized.contains('too many')) {
       return const Failure(
         message: 'Too many attempts. Please wait and try again.',
+      );
+    }
+    if (normalized.contains('already registered') ||
+        normalized.contains('already exists') ||
+        normalized.contains('user_already_exists')) {
+      return const Failure(
+        message: 'An account with this email already exists. Try signing in.',
+        kind: FailureKind.validation,
+      );
+    }
+    if (normalized.contains('weak') ||
+        normalized.contains('password') && normalized.contains('characters')) {
+      return const Failure(
+        message: 'Choose a stronger password with at least 8 characters.',
+        kind: FailureKind.validation,
       );
     }
     return const Failure(

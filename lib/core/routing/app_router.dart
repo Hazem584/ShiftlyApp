@@ -5,6 +5,8 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/login_screen.dart';
+import 'package:shiftly/features/auth/presentation/screens/register_screen.dart';
+import 'package:shiftly/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/profile_setup_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/session_status_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/workspace_selection_screen.dart';
@@ -33,9 +35,10 @@ GoRouter createAppRouter({
       builder: (_, _) => const SessionStatusScreen.loading(),
     ),
     GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+    GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
     GoRoute(
       path: '/verify-email',
-      builder: (_, _) => const SessionStatusScreen.emailVerification(),
+      builder: (_, _) => const EmailVerificationScreen(),
     ),
     GoRoute(
       path: '/profile-setup',
@@ -118,9 +121,10 @@ String? _redirect(SessionCoordinator coordinator, GoRouterState route) {
   return switch (status) {
     SessionStatus.initializing || SessionStatus.loadingCurrentUser =>
       location == '/session' ? null : '/session',
-    SessionStatus.unauthenticated ||
-    SessionStatus.sessionExpired => location == '/login' ? null : '/login',
+    SessionStatus.unauthenticated || SessionStatus.sessionExpired =>
+      location == '/login' || location == '/register' ? null : '/login',
     SessionStatus.authenticating => location == '/login' ? null : '/login',
+    SessionStatus.registering => location == '/register' ? null : '/register',
     SessionStatus.emailVerificationRequired =>
       location == '/verify-email' ? null : '/verify-email',
     SessionStatus.profileSetupRequired =>
@@ -130,7 +134,9 @@ String? _redirect(SessionCoordinator coordinator, GoRouterState route) {
     SessionStatus.offlineWithSession =>
       location == '/offline' ? null : '/offline',
     SessionStatus.failure =>
-      location == '/login' || location == '/session-error'
+      location == '/login' ||
+              location == '/register' ||
+              location == '/session-error'
           ? null
           : '/session-error',
     SessionStatus.authenticatedManager => _managerRedirect(location),
@@ -143,6 +149,7 @@ String? _managerRedirect(String location) {
   const public = {
     '/session',
     '/login',
+    '/register',
     '/verify-email',
     '/profile-setup',
     '/workspaces',

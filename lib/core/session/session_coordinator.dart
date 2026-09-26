@@ -64,6 +64,7 @@ class SessionCoordinator extends Cubit<SessionState> {
   bool _loggingOut = false;
   bool _resolving = false;
   var _resolutionGeneration = 0;
+  var _authenticationGeneration = 0;
 
   Future<void> initialize() async {
     emit(const SessionState.initializing());
@@ -76,12 +77,14 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> signIn({required String email, required String password}) async {
     if (state.status == SessionStatus.authenticating) return;
+    final generation = ++_authenticationGeneration;
     emit(const SessionState(status: SessionStatus.authenticating));
     try {
       final result = await _authentication.signIn(
         email: email.trim().toLowerCase(),
         password: password,
       );
+      if (!_authenticationIsCurrent(generation)) return;
       if (result.emailVerificationRequired) {
         emit(
           const SessionState(status: SessionStatus.emailVerificationRequired),
@@ -99,8 +102,10 @@ class SessionCoordinator extends Cubit<SessionState> {
       }
       await _resolveCurrentUser();
     } on AuthenticationException catch (error) {
+      if (!_authenticationIsCurrent(generation)) return;
       emit(SessionState(status: SessionStatus.failure, failure: error.failure));
     } catch (_) {
+      if (!_authenticationIsCurrent(generation)) return;
       emit(
         const SessionState(
           status: SessionStatus.failure,
@@ -113,10 +118,113 @@ class SessionCoordinator extends Cubit<SessionState> {
     }
   }
 
+  Future<void> signUp({required String email, required String password}) async {
+    if (state.status == SessionStatus.registering) return;
+    final normalizedEmail = email.trim().toLowerCase();
+    final generation = ++_authenticationGeneration;
+    emit(const SessionState(status: SessionStatus.registering));
+    try {
+      final result = await _authentication.signUp(
+        email: normalizedEmail,
+        password: password,
+      );
+      if (!_authenticationIsCurrent(generation)) return;
+      if (result.session != null) {
+        await _resolveCurrentUser();
+        return;
+      }
+      if (result.emailVerificationRequired) {
+        emit(
+          SessionState(
+            status: SessionStatus.emailVerificationRequired,
+            verificationEmail: normalizedEmail,
+          ),
+        );
+        return;
+      }
+      emit(
+        const SessionState(
+          status: SessionStatus.failure,
+          failure: Failure(
+            message:
+                'Account creation could not be completed. Please try again.',
+          ),
+        ),
+      );
+    } on AuthenticationException catch (error) {
+      if (!_authenticationIsCurrent(generation)) return;
+      emit(SessionState(status: SessionStatus.failure, failure: error.failure));
+    } catch (_) {
+      if (!_authenticationIsCurrent(generation)) return;
+      emit(
+        const SessionState(
+          status: SessionStatus.failure,
+          failure: Failure(
+            message: 'Unable to create your account. Check your connection and retry.',
+            kind: FailureKind.network,
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<bool> resendVerificationEmail() async {
+    final email = state.verificationEmail;
+    if (state.status != SessionStatus.emailVerificationRequired ||
+        state.resendingVerification ||
+        email == null) {
+      return false;
+    }
+    final generation = _authenticationGeneration;
+    emit(
+      SessionState(
+        status: SessionStatus.emailVerificationRequired,
+        verificationEmail: email,
+        resendingVerification: true,
+      ),
+    );
+    try {
+      await _authentication.resendSignUpVerification(email: email);
+      if (!_authenticationIsCurrent(generation)) return false;
+      emit(
+        SessionState(
+          status: SessionStatus.emailVerificationRequired,
+          verificationEmail: email,
+        ),
+      );
+      return true;
+    } on AuthenticationException catch (error) {
+      if (!_authenticationIsCurrent(generation)) return false;
+      emit(
+        SessionState(
+          status: SessionStatus.emailVerificationRequired,
+          verificationEmail: email,
+          failure: error.failure,
+        ),
+      );
+      return false;
+    } catch (_) {
+      if (!_authenticationIsCurrent(generation)) return false;
+      emit(
+        SessionState(
+          status: SessionStatus.emailVerificationRequired,
+          verificationEmail: email,
+          failure: const Failure(
+            message:
+                'Unable to resend the email. Check your connection and retry.',
+            kind: FailureKind.network,
+          ),
+        ),
+      );
+      return false;
+    }
+  }
+
   Future<void> bootstrapProfile({String? fullName, String? phone}) async {
     if (state.status == SessionStatus.loadingCurrentUser) return;
     final trimmedName = fullName?.trim();
     final trimmedPhone = phone?.trim();
+    final generation = _authenticationGeneration;
     emit(const SessionState(status: SessionStatus.loadingCurrentUser));
     try {
       await _repository.bootstrapProfile(
@@ -125,8 +233,13 @@ class SessionCoordinator extends Cubit<SessionState> {
             ? null
             : trimmedPhone,
       );
+      if (!_authenticationIsCurrent(generation) ||
+          _authentication.currentSession == null) {
+        return;
+      }
       await _resolveCurrentUser();
     } on ApiException catch (error) {
+      if (!_authenticationIsCurrent(generation)) return;
       emit(
         SessionState(status: SessionStatus.failure, failure: error.toFailure()),
       );
@@ -201,6 +314,7 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> signOut() async {
     _loggingOut = true;
+    _authenticationGeneration += 1;
     _resolutionGeneration += 1;
     emit(const SessionState(status: SessionStatus.unauthenticated));
     try {
@@ -341,7 +455,15 @@ class SessionCoordinator extends Cubit<SessionState> {
   }
 
   void _onAuthEvent(AuthenticationEvent event) {
+    if (event.type == AuthenticationEventType.signedIn &&
+        state.status == SessionStatus.emailVerificationRequired &&
+        _authentication.currentSession != null) {
+      _authenticationGeneration += 1;
+      unawaited(_resolveCurrentUser());
+      return;
+    }
     if (event.type != AuthenticationEventType.signedOut || _loggingOut) return;
+    _authenticationGeneration += 1;
     _resolutionGeneration += 1;
     unawaited(_workspaceStorage.clear());
     emit(const SessionState(status: SessionStatus.sessionExpired));
@@ -362,6 +484,9 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   bool _resolutionIsCurrent(int generation) =>
       !isClosed && _resolutionGeneration == generation;
+
+  bool _authenticationIsCurrent(int generation) =>
+      !isClosed && _authenticationGeneration == generation;
 
   @override
   Future<void> close() async {
