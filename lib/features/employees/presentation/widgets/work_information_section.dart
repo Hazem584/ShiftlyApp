@@ -148,7 +148,8 @@ class WorkInformationSection extends StatelessWidget {
 
   String _statusLabel(EmploymentStatus value) => switch (value) {
     EmploymentStatus.active => 'Active',
+    EmploymentStatus.suspended => 'Suspended',
     EmploymentStatus.onLeave => 'On leave',
-    EmploymentStatus.inactive => 'Inactive',
+    EmploymentStatus.unknown => 'Unknown',
   };
 }

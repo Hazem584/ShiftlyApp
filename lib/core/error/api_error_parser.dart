@@ -73,6 +73,16 @@ abstract final class ApiErrorParser {
       'PROFILE_NOT_INITIALIZED' => 'Complete your profile to continue.',
       'INVALID_CREDENTIALS' => 'The email or password is incorrect.',
       'RATE_LIMIT_EXCEEDED' => 'Too many requests. Please wait and try again.',
+      'EMPLOYEE_NOT_FOUND' => 'That employee could not be found.',
+      'EMPTY_UPDATE' => 'Choose a change before saving.',
+      'MEMBER_ALREADY_EXISTS' => 'This person is already a workspace member.',
+      'INVITATION_ALREADY_PENDING' =>
+        'A pending invitation already exists for this email.',
+      'INVALID_INVITATION' => 'This invitation is not valid.',
+      'INVITATION_ALREADY_USED' => 'This invitation has already been used.',
+      'INVITATION_EMAIL_MISMATCH' =>
+        'This invitation belongs to a different email address.',
+      'INVITATION_EXPIRED' => 'This invitation has expired.',
       _ => switch (status) {
         400 => 'Please check the information you entered.',
         401 => 'Your session has expired. Please sign in again.',

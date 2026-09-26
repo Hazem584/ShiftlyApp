@@ -108,7 +108,7 @@ class MockEmployeeRepository implements EmployeeRepository {
       _employees.where(
         (employee) =>
             normalized.isEmpty ||
-            employee.fullName.toLowerCase().contains(normalized),
+            employee.displayName.toLowerCase().contains(normalized),
       ),
     );
   }
@@ -128,5 +128,79 @@ class MockEmployeeRepository implements EmployeeRepository {
     if (delay > Duration.zero) await Future<void>.delayed(delay);
     if (shouldFail) throw Exception('Unable to add employee');
     _employees.add(employee);
+  }
+
+  @override
+  Future<EmployeePage> listEmployees({
+    required String workspaceId,
+    String search = '',
+    EmployeeStatusFilter? status,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final matches = (await getEmployees(query: search))
+        .where(
+          (employee) => switch (status) {
+            EmployeeStatusFilter.active =>
+              employee.employmentStatus == EmploymentStatus.active,
+            EmployeeStatusFilter.suspended =>
+              employee.employmentStatus == EmploymentStatus.suspended,
+            null => true,
+          },
+        )
+        .toList(growable: false);
+    final start = (page - 1) * limit;
+    final data = start >= matches.length
+        ? const <Employee>[]
+        : matches.sublist(start, (start + limit).clamp(0, matches.length));
+    return EmployeePage(
+      data: data,
+      page: page,
+      limit: limit,
+      total: matches.length,
+      totalPages: (matches.length / limit).ceil(),
+    );
+  }
+
+  @override
+  Future<Employee> getWorkspaceEmployee({
+    required String workspaceId,
+    required String membershipId,
+  }) async {
+    final employee = await getEmployee(membershipId);
+    if (employee == null) throw Exception('Unable to load employee');
+    return employee;
+  }
+
+  @override
+  Future<Employee> setEmployeeStatus({
+    required String workspaceId,
+    required String membershipId,
+    required EmployeeStatusFilter status,
+  }) async {
+    final index = _employees.indexWhere((item) => item.id == membershipId);
+    if (index < 0) throw Exception('Unable to load employee');
+    final current = _employees[index];
+    final updated = Employee(
+      id: current.id,
+      profileId: current.profileId,
+      fullName: current.fullName,
+      phone: current.phone,
+      email: current.email,
+      jobTitle: current.jobTitle,
+      location: current.location,
+      shift: current.shift,
+      startDate: current.startDate,
+      employmentStatus: status == EmployeeStatusFilter.active
+          ? EmploymentStatus.active
+          : EmploymentStatus.suspended,
+      attendanceStatus: current.attendanceStatus,
+      avatarUrl: current.avatarUrl,
+      role: current.role,
+      createdAt: current.createdAt,
+      updatedAt: current.updatedAt,
+    );
+    _employees[index] = updated;
+    return updated;
   }
 }

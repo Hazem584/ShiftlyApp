@@ -9,10 +9,16 @@ class EmployeeList extends StatelessWidget {
   const EmployeeList({
     required this.employees,
     required this.onRefresh,
+    this.hasMore = false,
+    this.loadingMore = false,
+    this.onLoadMore,
     super.key,
   });
   final List<Employee> employees;
   final RefreshCallback onRefresh;
+  final bool hasMore;
+  final bool loadingMore;
+  final VoidCallback? onLoadMore;
 
   @override
   Widget build(BuildContext context) => RefreshIndicator(
@@ -21,9 +27,26 @@ class EmployeeList extends StatelessWidget {
     child: ListView.separated(
       key: const Key('employee-list'),
       padding: const EdgeInsets.fromLTRB(18, 2, 18, 30),
-      itemCount: employees.length,
+      itemCount: employees.length + ((hasMore || loadingMore) ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (_, index) => _EmployeeCard(employee: employees[index]),
+      itemBuilder: (_, index) {
+        if (index < employees.length) {
+          return _EmployeeCard(employee: employees[index]);
+        }
+        return Center(
+          child: loadingMore
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: CircularProgressIndicator(),
+                )
+              : TextButton.icon(
+                  key: const Key('load-more-employees'),
+                  onPressed: onLoadMore,
+                  icon: const Icon(Icons.expand_more_rounded),
+                  label: const Text('Load more'),
+                ),
+        );
+      },
     ),
   );
 }
@@ -53,13 +76,13 @@ class _EmployeeCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                employee.fullName,
+                employee.displayName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               Text(
-                employee.jobTitle,
+                employee.displayJobTitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -78,7 +101,7 @@ class _EmployeeCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      employee.shift.name,
+                      employee.displayEmail,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -96,7 +119,7 @@ class _EmployeeCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            EmployeeStatusBadge(status: employee.attendanceStatus),
+            EmployeeStatusBadge(status: employee.employmentStatus),
             const SizedBox(height: 10),
             const Icon(
               Icons.arrow_forward_ios_rounded,

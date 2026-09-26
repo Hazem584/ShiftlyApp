@@ -64,7 +64,7 @@ class MockDashboardRepository implements DashboardRepository {
         return AttendanceRecord(
           id: 'record-${index + 1}',
           employeeId: employee.id,
-          employeeName: employee.fullName,
+          employeeName: employee.displayName,
           occurredAt: DateTime(
             now.year,
             now.month,

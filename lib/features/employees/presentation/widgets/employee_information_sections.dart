@@ -16,12 +16,12 @@ class EmployeeContactSection extends StatelessWidget {
       _Detail(
         icon: Icons.email_outlined,
         title: 'Email',
-        value: employee.email,
+        value: employee.displayEmail,
       ),
       _Detail(
         icon: Icons.phone_outlined,
         title: 'Phone',
-        value: employee.phone,
+        value: employee.displayPhone,
       ),
     ],
   );
@@ -42,28 +42,25 @@ class EmployeeWorkSection extends StatelessWidget {
         value: _employmentLabel(employee.employmentStatus),
       ),
       _Detail(
-        icon: Icons.location_on_outlined,
-        title: 'Workplace',
-        value: employee.location.name,
-      ),
-      _Detail(
-        icon: Icons.schedule_outlined,
-        title: 'Assigned shift',
-        value: '${employee.shift.name}\n${employee.shift.timeRange}',
+        icon: Icons.badge_outlined,
+        title: 'Job title',
+        value: employee.displayJobTitle,
       ),
       _Detail(
         icon: Icons.calendar_today_outlined,
-        title: 'Start date',
-        value:
-            '${employee.startDate.day}/${employee.startDate.month}/${employee.startDate.year}',
+        title: 'Joined',
+        value: employee.startDate == null
+            ? 'Not provided'
+            : '${employee.startDate!.day}/${employee.startDate!.month}/${employee.startDate!.year}',
       ),
     ],
   );
 
   String _employmentLabel(EmploymentStatus status) => switch (status) {
     EmploymentStatus.active => 'Active',
+    EmploymentStatus.suspended => 'Suspended',
     EmploymentStatus.onLeave => 'On leave',
-    EmploymentStatus.inactive => 'Inactive',
+    EmploymentStatus.unknown => 'Unknown',
   };
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/models/employee.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 
@@ -72,7 +73,7 @@ void main() {
     );
     expect(find.text('Work details'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Start date'),
+      find.text('Joined'),
       250,
       scrollable: find
           .descendant(
@@ -81,7 +82,42 @@ void main() {
           )
           .first,
     );
-    expect(find.text('Start date'), findsOneWidget);
+    expect(find.text('Joined'), findsOneWidget);
+  });
+
+  testWidgets('employee deactivation is confirmed and can be reversed', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _appWith(MockEmployeeRepository(delay: Duration.zero)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Employees').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mariam Hassan'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('deactivate-employee')),
+      250,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('employee-details-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+
+    await tester.tap(find.byKey(const Key('deactivate-employee')));
+    await tester.pumpAndSettle();
+    expect(find.text('Deactivate employee?'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('confirm-deactivate-employee')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('reactivate-employee')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('reactivate-employee')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('deactivate-employee')), findsOneWidget);
+    ToastService.dismissAll();
   });
 
   testWidgets('long employee content does not overflow a 360px viewport', (
@@ -130,7 +166,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Add').last);
       await tester.pumpAndSettle();
-      expect(find.text('Add New Employee'), findsOneWidget);
+      expect(find.text('Invite Employee'), findsWidgets);
       expect(tester.takeException(), isNull, reason: 'Top failed at $size');
       await tester.drag(
         find.byKey(const Key('add-employee-form')),

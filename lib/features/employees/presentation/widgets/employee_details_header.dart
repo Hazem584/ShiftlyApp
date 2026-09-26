@@ -47,7 +47,7 @@ class EmployeeDetailsHeader extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Text(
-                  employee.fullName,
+                  employee.displayName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -55,11 +55,11 @@ class EmployeeDetailsHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                employee.jobTitle,
+                employee.displayJobTitle,
                 style: const TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 10),
-              EmployeeStatusBadge(status: employee.attendanceStatus),
+              EmployeeStatusBadge(status: employee.employmentStatus),
             ],
           ),
         ),

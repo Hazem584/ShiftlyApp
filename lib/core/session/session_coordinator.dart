@@ -118,6 +118,14 @@ class SessionCoordinator extends Cubit<SessionState> {
     await _resolveCurrentUser();
   }
 
+  Future<void> refreshMemberships({String? preferredWorkspaceId}) async {
+    if (_authentication.currentSession == null) {
+      emit(const SessionState(status: SessionStatus.unauthenticated));
+      return;
+    }
+    await _resolveCurrentUser(preferredWorkspaceId: preferredWorkspaceId);
+  }
+
   Future<void> selectWorkspace(String workspaceId) async {
     final user = state.currentUser;
     if (user == null) return;
@@ -162,7 +170,7 @@ class SessionCoordinator extends Cubit<SessionState> {
     }
   }
 
-  Future<void> _resolveCurrentUser() async {
+  Future<void> _resolveCurrentUser({String? preferredWorkspaceId}) async {
     if (_resolving) return;
     _resolving = true;
     emit(const SessionState(status: SessionStatus.loadingCurrentUser));
@@ -175,7 +183,7 @@ class SessionCoordinator extends Cubit<SessionState> {
                 item.role != WorkspaceRole.unknown,
           )
           .toList(growable: false);
-      final savedId = await _workspaceStorage.read();
+      final savedId = preferredWorkspaceId ?? await _workspaceStorage.read();
       if (memberships.isEmpty) {
         await _workspaceStorage.clear();
         emit(

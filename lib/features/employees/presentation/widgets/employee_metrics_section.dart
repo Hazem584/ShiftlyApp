@@ -4,8 +4,13 @@ import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
 class EmployeeMetricsSection extends StatelessWidget {
-  const EmployeeMetricsSection({required this.employees, super.key});
+  const EmployeeMetricsSection({
+    required this.employees,
+    this.total,
+    super.key,
+  });
   final List<Employee> employees;
+  final int? total;
 
   @override
   Widget build(BuildContext context) {
@@ -14,9 +19,9 @@ class EmployeeMetricsSection extends StatelessWidget {
           (employee) => employee.employmentStatus == EmploymentStatus.active,
         )
         .length;
-    final onLeave = employees
+    final suspended = employees
         .where(
-          (employee) => employee.employmentStatus == EmploymentStatus.onLeave,
+          (employee) => employee.employmentStatus == EmploymentStatus.suspended,
         )
         .length;
     return SizedBox(
@@ -27,7 +32,7 @@ class EmployeeMetricsSection extends StatelessWidget {
         children: [
           _Metric(
             label: 'Total Employees',
-            value: employees.length,
+            value: total ?? employees.length,
             icon: Icons.groups_outlined,
             color: AppColors.ink,
           ),
@@ -40,8 +45,8 @@ class EmployeeMetricsSection extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           _Metric(
-            label: 'On Leave',
-            value: onLeave,
+            label: 'Loaded suspended',
+            value: suspended,
             icon: Icons.person_off_outlined,
             color: AppColors.warning,
           ),

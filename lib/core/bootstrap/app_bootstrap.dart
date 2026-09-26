@@ -5,18 +5,28 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/data/authentication_api_repository.dart';
 import 'package:shiftly/features/auth/data/supabase_authentication_service.dart';
+import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
+import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/invitations/data/invitation_repository.dart';
 import 'package:shiftly/features/profile/data/api_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
+import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppDependencies {
   const AppDependencies({
     required this.sessionCoordinator,
     required this.profileRepository,
+    required this.employeeRepository,
+    required this.invitationRepository,
+    required this.workspaceRepository,
   });
 
   final SessionCoordinator sessionCoordinator;
   final ProfileRepository profileRepository;
+  final EmployeeRepository employeeRepository;
+  final InvitationRepository invitationRepository;
+  final WorkspaceRepository workspaceRepository;
 }
 
 abstract final class AppBootstrap {
@@ -48,9 +58,13 @@ abstract final class AppBootstrap {
       () => coordinator.state.activeMembership,
       currentUser: () => coordinator.state.currentUser,
     );
+    final workforceRepository = ApiWorkforceRepository(apiClient.dio);
     return AppDependencies(
       sessionCoordinator: coordinator,
       profileRepository: profileRepository,
+      employeeRepository: workforceRepository,
+      invitationRepository: workforceRepository,
+      workspaceRepository: workforceRepository,
     );
   }
 }

@@ -40,7 +40,9 @@ class EmployeeFormActions extends StatelessWidget {
                     ),
                   )
                 : const Icon(Icons.person_add_alt_1_rounded, size: 19),
-            label: Text(submitting ? 'Adding employee…' : 'Add Employee'),
+            label: Text(
+              submitting ? 'Creating invitation…' : 'Invite Employee',
+            ),
           ),
         ),
       ],

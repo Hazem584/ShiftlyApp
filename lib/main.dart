@@ -14,6 +14,9 @@ Future<void> main() async {
       ShiftlyApp(
         sessionCoordinator: dependencies.sessionCoordinator,
         profileRepository: dependencies.profileRepository,
+        employeeRepository: dependencies.employeeRepository,
+        invitationRepository: dependencies.invitationRepository,
+        workspaceRepository: dependencies.workspaceRepository,
       ),
     );
     unawaited(dependencies.sessionCoordinator.initialize());

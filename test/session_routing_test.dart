@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/app.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
+import 'package:shiftly/features/invitations/data/invitation_repository.dart';
+import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
 
 class _RoutingAuth implements AuthenticationService {
   _RoutingAuth() : session = const AuthSession(accessToken: 'token');
@@ -79,6 +82,35 @@ Future<_RoutingAuth> _pumpRole(WidgetTester tester, WorkspaceRole role) async {
   return auth;
 }
 
+Future<(_RoutingAuth, _AcceptingInvitations)> _pumpNoWorkspace(
+  WidgetTester tester,
+) async {
+  final auth = _RoutingAuth();
+  final invitations = _AcceptingInvitations();
+  final coordinator = SessionCoordinator(
+    auth,
+    _RoutingRepository(
+      CurrentUser(
+        id: 'profile',
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026),
+        memberships: const [],
+      ),
+    ),
+    MemoryActiveWorkspaceStorage(),
+  );
+  await coordinator.initialize();
+  await tester.pumpWidget(
+    ShiftlyApp(
+      sessionCoordinator: coordinator,
+      invitationRepository: invitations,
+    ),
+  );
+  await tester.pumpAndSettle();
+  addTearDown(auth.events.close);
+  return (auth, invitations);
+}
+
 void main() {
   testWidgets('backend manager role opens the manager shell', (tester) async {
     await _pumpRole(tester, WorkspaceRole.manager);
@@ -115,4 +147,56 @@ void main() {
     expect(find.text('Welcome to Shiftly'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
   });
+
+  testWidgets(
+    'no-workspace onboarding offers creation and invitation acceptance',
+    (tester) async {
+      final (_, invitations) = await _pumpNoWorkspace(tester);
+      expect(find.byKey(const Key('no-workspace-onboarding')), findsOneWidget);
+      expect(find.byKey(const Key('create-workspace')), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('invitation-token-field')),
+        ' one-time-token ',
+      );
+      await tester.tap(find.byKey(const Key('accept-invitation')));
+      await tester.pumpAndSettle();
+
+      expect(invitations.acceptedToken, 'one-time-token');
+      ToastService.dismissAll();
+    },
+  );
+}
+
+class _AcceptingInvitations implements InvitationRepository {
+  String? acceptedToken;
+
+  @override
+  Future<WorkspaceRecord> acceptInvitation(String inviteToken) async {
+    acceptedToken = inviteToken;
+    return const WorkspaceRecord(
+      id: 'accepted-workspace',
+      name: 'Accepted workspace',
+      code: 'ACCEPTED',
+      timezone: 'Africa/Cairo',
+      role: WorkspaceAccessRole.employee,
+      status: WorkspaceAccessStatus.active,
+    );
+  }
+
+  @override
+  Future<WorkspaceInvitation> createInvitation({
+    required String workspaceId,
+    required String email,
+    String? jobTitle,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<List<WorkspaceInvitation>> listMyInvitations() async => const [];
+
+  @override
+  Future<List<WorkspaceInvitation>> listWorkspaceInvitations({
+    required String workspaceId,
+    InvitationStatus? status,
+  }) => throw UnimplementedError();
 }

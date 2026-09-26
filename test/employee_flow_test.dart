@@ -39,7 +39,7 @@ void main() {
     await _openEmployees(tester);
     await tester.tap(find.text('Add').last);
     await tester.pumpAndSettle();
-    expect(find.text('Add New Employee'), findsOneWidget);
+    expect(find.text('Invite Employee'), findsWidgets);
     await tester.enterText(find.byKey(const Key('email-field')), 'invalid');
     await tester.pump();
     expect(find.text('Enter a valid email address'), findsOneWidget);
@@ -51,7 +51,7 @@ void main() {
     expect(button.onPressed, isNull);
   });
 
-  testWidgets('valid add employee submission updates the session list', (
+  testWidgets('valid invitation stays separate from active employees', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -63,15 +63,7 @@ void main() {
     await _openEmployees(tester);
     await tester.tap(find.text('Add').last);
     await tester.pumpAndSettle();
-    expect(find.text('Add New Employee'), findsOneWidget);
-    await tester.enterText(
-      find.byKey(const Key('full-name-field')),
-      'Salma Nabil',
-    );
-    await tester.enterText(
-      find.byKey(const Key('phone-field')),
-      '+20 100 555 1212',
-    );
+    expect(find.text('Invite Employee'), findsWidgets);
     await tester.enterText(
       find.byKey(const Key('email-field')),
       'salma@shiftlab.com',
@@ -94,20 +86,14 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -750));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('submit-employee')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byKey(const Key('invitation-token')), findsOneWidget);
+    await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
-    expect(find.text('Employee added successfully'), findsOneWidget);
-    await tester.enterText(
-      find.byKey(const Key('employee-search')),
-      'Salma Nabil',
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('employee-list')),
-        matching: find.text('Salma Nabil'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Invitation created successfully'), findsOneWidget);
+    expect(find.byKey(const Key('pending-invitations')), findsOneWidget);
+    expect(find.text('Salma Nabil'), findsNothing);
     ToastService.dismissAll();
   });
 }

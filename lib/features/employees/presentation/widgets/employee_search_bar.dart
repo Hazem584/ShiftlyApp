@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/features/employees/data/employee_repository.dart';
 
 class EmployeeSearchBar extends StatelessWidget {
-  const EmployeeSearchBar({required this.onChanged, super.key});
+  const EmployeeSearchBar({
+    required this.onChanged,
+    this.status,
+    this.onStatusChanged,
+    super.key,
+  });
   final ValueChanged<String> onChanged;
+  final EmployeeStatusFilter? status;
+  final ValueChanged<EmployeeStatusFilter?>? onStatusChanged;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -25,16 +32,26 @@ class EmployeeSearchBar extends StatelessWidget {
         const SizedBox(width: 10),
         SizedBox.square(
           dimension: 52,
-          child: OutlinedButton(
-            onPressed: () => ToastService.info(
-              context,
-              message: 'More filters are coming soon',
+          child: PopupMenuButton<EmployeeStatusFilter?>(
+            key: const Key('employee-status-filter'),
+            onSelected: onStatusChanged,
+            tooltip: 'Filter employees',
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: null, child: Text('All statuses')),
+              PopupMenuItem(
+                value: EmployeeStatusFilter.active,
+                child: Text('Active'),
+              ),
+              PopupMenuItem(
+                value: EmployeeStatusFilter.suspended,
+                child: Text('Suspended'),
+              ),
+            ],
+            child: Icon(
+              Icons.tune_rounded,
+              size: 20,
+              color: status == null ? null : AppColors.orange,
             ),
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              backgroundColor: AppColors.surface,
-            ),
-            child: const Icon(Icons.tune_rounded, size: 20),
           ),
         ),
       ],

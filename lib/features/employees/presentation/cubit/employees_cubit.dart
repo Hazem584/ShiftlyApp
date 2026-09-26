@@ -1,7 +1,29 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/models/employee.dart';
+import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/invitations/data/invitation_repository.dart';
+
+final class EmployeeSessionScope extends Equatable {
+  const EmployeeSessionScope({
+    required this.userId,
+    required this.workspaceId,
+    required this.role,
+  });
+  final String userId;
+  final String workspaceId;
+  final WorkspaceRole role;
+  bool get canManage => role == WorkspaceRole.manager;
+  @override
+  List<Object?> get props => [userId, workspaceId, role];
+}
+
+enum EmployeeOperationResult { success, failure, busy, stale }
 
 sealed class EmployeesState extends Equatable {
   const EmployeesState();
@@ -14,11 +36,82 @@ final class EmployeesLoading extends EmployeesState {
 }
 
 final class EmployeesLoaded extends EmployeesState {
-  const EmployeesLoaded({required this.employees, required this.query});
+  const EmployeesLoaded({
+    required this.employees,
+    required this.query,
+    this.status,
+    this.page = 1,
+    this.total = 0,
+    this.totalPages = 0,
+    this.loadingMore = false,
+    this.refreshing = false,
+    this.mutatingMembershipId,
+    this.pendingInvitations = const [],
+    this.inviting = false,
+    this.failure,
+  });
   final List<Employee> employees;
   final String query;
+  final EmployeeStatusFilter? status;
+  final int page;
+  final int total;
+  final int totalPages;
+  final bool loadingMore;
+  final bool refreshing;
+  final String? mutatingMembershipId;
+  final List<WorkspaceInvitation> pendingInvitations;
+  final bool inviting;
+  final Failure? failure;
+  bool get hasMore => page < totalPages;
+
+  EmployeesLoaded copyWith({
+    List<Employee>? employees,
+    String? query,
+    EmployeeStatusFilter? status,
+    bool clearStatus = false,
+    int? page,
+    int? total,
+    int? totalPages,
+    bool? loadingMore,
+    bool? refreshing,
+    String? mutatingMembershipId,
+    bool clearMutatingMembership = false,
+    List<WorkspaceInvitation>? pendingInvitations,
+    bool? inviting,
+    Failure? failure,
+    bool clearFailure = false,
+  }) => EmployeesLoaded(
+    employees: employees ?? this.employees,
+    query: query ?? this.query,
+    status: clearStatus ? null : status ?? this.status,
+    page: page ?? this.page,
+    total: total ?? this.total,
+    totalPages: totalPages ?? this.totalPages,
+    loadingMore: loadingMore ?? this.loadingMore,
+    refreshing: refreshing ?? this.refreshing,
+    mutatingMembershipId: clearMutatingMembership
+        ? null
+        : mutatingMembershipId ?? this.mutatingMembershipId,
+    pendingInvitations: pendingInvitations ?? this.pendingInvitations,
+    inviting: inviting ?? this.inviting,
+    failure: clearFailure ? null : failure ?? this.failure,
+  );
+
   @override
-  List<Object?> get props => [employees, query];
+  List<Object?> get props => [
+    employees,
+    query,
+    status,
+    page,
+    total,
+    totalPages,
+    loadingMore,
+    refreshing,
+    mutatingMembershipId,
+    pendingInvitations,
+    inviting,
+    failure,
+  ];
 }
 
 final class EmployeesError extends EmployeesState {
@@ -29,21 +122,211 @@ final class EmployeesError extends EmployeesState {
 }
 
 class EmployeesCubit extends Cubit<EmployeesState> {
-  EmployeesCubit(this._repository) : super(const EmployeesLoading());
-  final EmployeeRepository _repository;
-  int _requestId = 0;
+  EmployeesCubit(this._repository, {this.invitations})
+    : super(const EmployeesLoading());
 
-  Future<void> load({String query = ''}) async {
+  final EmployeeRepository _repository;
+  final InvitationRepository? invitations;
+  EmployeeSessionScope? _scope;
+  var _generation = 0;
+  var _requestId = 0;
+  var _sessionBound = false;
+
+  void bindSession(EmployeeSessionScope? scope) {
+    _sessionBound = true;
+    if (_scope == scope) return;
+    _scope = scope;
+    _generation += 1;
+    _requestId += 1;
+    emit(const EmployeesLoading());
+    if (scope?.canManage == true) unawaited(load());
+  }
+
+  Future<void> load({
+    String query = '',
+    EmployeeStatusFilter? status,
+    bool refresh = false,
+  }) async {
+    final scope = _scope;
+    if (_sessionBound && (scope == null || !scope.canManage)) return;
+    final generation = _generation;
     final requestId = ++_requestId;
+    final current = state;
+    if (refresh && current is EmployeesLoaded) {
+      emit(current.copyWith(refreshing: true, clearFailure: true));
+    } else {
+      emit(const EmployeesLoading());
+    }
     try {
-      final employees = await _repository.getEmployees(query: query);
-      if (requestId == _requestId) {
-        emit(EmployeesLoaded(employees: employees, query: query));
+      final page = await _repository.listEmployees(
+        workspaceId: scope?.workspaceId ?? 'preview',
+        search: query,
+        status: status,
+      );
+      final pending = await _loadPending(scope?.workspaceId ?? 'preview');
+      if (!_isCurrent(scope, generation, requestId)) return;
+      emit(
+        EmployeesLoaded(
+          employees: page.data,
+          query: query,
+          status: status,
+          page: page.page,
+          total: page.total,
+          totalPages: page.totalPages,
+          pendingInvitations: pending,
+        ),
+      );
+    } catch (error) {
+      if (!_isCurrent(scope, generation, requestId)) return;
+      final failure = _failure(error, 'Unable to load employees.');
+      if (refresh && current is EmployeesLoaded) {
+        emit(current.copyWith(refreshing: false, failure: failure));
+      } else {
+        emit(EmployeesError(failure.message));
       }
-    } catch (_) {
-      if (requestId == _requestId) {
-        emit(const EmployeesError('Unable to load employees.'));
+    }
+  }
+
+  Future<void> loadMore() async {
+    final current = state;
+    final scope = _scope;
+    if (current is! EmployeesLoaded ||
+        current.loadingMore ||
+        !current.hasMore ||
+        (_sessionBound && scope == null)) {
+      return;
+    }
+    final generation = _generation;
+    final requestId = ++_requestId;
+    emit(current.copyWith(loadingMore: true, clearFailure: true));
+    try {
+      final page = await _repository.listEmployees(
+        workspaceId: scope?.workspaceId ?? 'preview',
+        search: current.query,
+        status: current.status,
+        page: current.page + 1,
+      );
+      if (!_isCurrent(scope, generation, requestId)) return;
+      final ids = current.employees.map((item) => item.id).toSet();
+      emit(
+        current.copyWith(
+          employees: [
+            ...current.employees,
+            ...page.data.where((item) => ids.add(item.id)),
+          ],
+          page: page.page,
+          total: page.total,
+          totalPages: page.totalPages,
+          loadingMore: false,
+        ),
+      );
+    } catch (error) {
+      if (!_isCurrent(scope, generation, requestId)) return;
+      emit(
+        current.copyWith(
+          loadingMore: false,
+          failure: _failure(error, 'Could not load more employees.'),
+        ),
+      );
+    }
+  }
+
+  Future<WorkspaceInvitation?> invite({
+    required String email,
+    String? jobTitle,
+  }) async {
+    final current = state;
+    final scope = _scope;
+    final invitationRepository = invitations;
+    if (current is! EmployeesLoaded ||
+        current.inviting ||
+        invitationRepository == null ||
+        (_sessionBound && scope == null)) {
+      return null;
+    }
+    final generation = _generation;
+    emit(current.copyWith(inviting: true, clearFailure: true));
+    try {
+      final invitation = await invitationRepository.createInvitation(
+        workspaceId: scope?.workspaceId ?? 'preview',
+        email: email,
+        jobTitle: jobTitle,
+      );
+      if (!_isScopeCurrent(scope, generation)) return null;
+      final pending = await _loadPending(scope?.workspaceId ?? 'preview');
+      if (!_isScopeCurrent(scope, generation)) return null;
+      emit(current.copyWith(inviting: false, pendingInvitations: pending));
+      return invitation;
+    } catch (error) {
+      if (!_isScopeCurrent(scope, generation)) return null;
+      emit(
+        current.copyWith(
+          inviting: false,
+          failure: _failure(error, 'Could not create invitation.'),
+        ),
+      );
+      rethrow;
+    }
+  }
+
+  Future<EmployeeOperationResult> setStatus(
+    String membershipId,
+    EmployeeStatusFilter status,
+  ) async {
+    final current = state;
+    final scope = _scope;
+    if (current is! EmployeesLoaded || (_sessionBound && scope == null)) {
+      return EmployeeOperationResult.failure;
+    }
+    if (current.mutatingMembershipId != null) {
+      return EmployeeOperationResult.busy;
+    }
+    final generation = _generation;
+    emit(current.copyWith(mutatingMembershipId: membershipId));
+    try {
+      final employee = await _repository.setEmployeeStatus(
+        workspaceId: scope?.workspaceId ?? 'preview',
+        membershipId: membershipId,
+        status: status,
+      );
+      if (!_isScopeCurrent(scope, generation)) {
+        return EmployeeOperationResult.stale;
       }
+      final wasListed = current.employees.any((item) => item.id == employee.id);
+      final matchesFilter = switch (current.status) {
+        EmployeeStatusFilter.active =>
+          employee.employmentStatus == EmploymentStatus.active,
+        EmployeeStatusFilter.suspended =>
+          employee.employmentStatus == EmploymentStatus.suspended,
+        null => true,
+      };
+      emit(
+        current.copyWith(
+          employees: matchesFilter
+              ? current.employees
+                    .map((item) => item.id == employee.id ? employee : item)
+                    .toList(growable: false)
+              : current.employees
+                    .where((item) => item.id != employee.id)
+                    .toList(growable: false),
+          total: wasListed && !matchesFilter && current.total > 0
+              ? current.total - 1
+              : current.total,
+          clearMutatingMembership: true,
+        ),
+      );
+      return EmployeeOperationResult.success;
+    } catch (error) {
+      if (!_isScopeCurrent(scope, generation)) {
+        return EmployeeOperationResult.stale;
+      }
+      emit(
+        current.copyWith(
+          clearMutatingMembership: true,
+          failure: _failure(error, 'Could not update employee status.'),
+        ),
+      );
+      return EmployeeOperationResult.failure;
     }
   }
 
@@ -51,4 +334,26 @@ class EmployeesCubit extends Cubit<EmployeesState> {
     await _repository.addEmployee(employee);
     await load();
   }
+
+  Future<List<WorkspaceInvitation>> _loadPending(String workspaceId) async {
+    final invitationRepository = invitations;
+    if (invitationRepository == null) return const [];
+    final values = await invitationRepository.listWorkspaceInvitations(
+      workspaceId: workspaceId,
+      status: InvitationStatus.pending,
+    );
+    return values
+        .where((item) => item.status == InvitationStatus.pending)
+        .toList(growable: false);
+  }
+
+  Failure _failure(Object error, String fallback) =>
+      error is ApiException ? error.toFailure() : Failure(message: fallback);
+  bool _isCurrent(EmployeeSessionScope? scope, int generation, int requestId) =>
+      !isClosed &&
+      _scope == scope &&
+      _generation == generation &&
+      _requestId == requestId;
+  bool _isScopeCurrent(EmployeeSessionScope? scope, int generation) =>
+      !isClosed && _scope == scope && _generation == generation;
 }

@@ -17,15 +17,22 @@ import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.da
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
+import 'package:shiftly/features/invitations/data/invitation_repository.dart';
+import 'package:shiftly/features/invitations/data/mock_invitation_repository.dart';
 import 'package:shiftly/features/profile/data/mock_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:shiftly/features/workspaces/data/mock_workspace_repository.dart';
+import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
+import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
 
 class ShiftlyApp extends StatefulWidget {
   const ShiftlyApp({
     super.key,
     this.employeeRepository,
+    this.invitationRepository,
+    this.workspaceRepository,
     this.dashboardRepository,
     this.leaveRequestRepository,
     this.profileRepository,
@@ -35,6 +42,8 @@ class ShiftlyApp extends StatefulWidget {
   });
 
   final EmployeeRepository? employeeRepository;
+  final InvitationRepository? invitationRepository;
+  final WorkspaceRepository? workspaceRepository;
   final DashboardRepository? dashboardRepository;
   final LeaveRequestRepository? leaveRequestRepository;
   final ProfileRepository? profileRepository;
@@ -48,24 +57,29 @@ class ShiftlyApp extends StatefulWidget {
 
 class _ShiftlyAppState extends State<ShiftlyApp> {
   late final EmployeeRepository _employees;
+  late final InvitationRepository _invitations;
+  late final WorkspaceRepository _workspaces;
   late final GoRouter _router;
   late final DashboardCubit _dashboardCubit;
   late final EmployeesCubit _employeesCubit;
+  late final WorkspacesCubit _workspacesCubit;
   late final LeaveRequestRepository _leaveRequests;
   late final ProfileRepository _profile;
   late final ProfileImagePicker _profileImagePicker;
   late final LeaveRequestsCubit _leaveRequestsCubit;
   late final ProfileCubit _profileCubit;
-  StreamSubscription<Object?>? _profileSessionSubscription;
+  StreamSubscription<Object?>? _sessionSubscription;
   _SessionRouterRefresh? _sessionRefresh;
 
   @override
   void initState() {
     super.initState();
     _employees = widget.employeeRepository ?? MockEmployeeRepository();
+    _invitations = widget.invitationRepository ?? MockInvitationRepository();
+    _workspaces = widget.workspaceRepository ?? MockWorkspaceRepository();
     final dashboard =
         widget.dashboardRepository ??
-        MockDashboardRepository(employeeRepository: _employees);
+        MockDashboardRepository(employeeRepository: MockEmployeeRepository());
     _sessionRefresh = widget.sessionCoordinator == null
         ? null
         : _SessionRouterRefresh(widget.sessionCoordinator!);
@@ -81,7 +95,13 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _profileImagePicker =
         widget.profileImagePicker ?? DeviceProfileImagePicker();
     _dashboardCubit = DashboardCubit(dashboard)..load();
-    _employeesCubit = EmployeesCubit(_employees)..load();
+    _employeesCubit = EmployeesCubit(_employees, invitations: _invitations);
+    _workspacesCubit = WorkspacesCubit(
+      _workspaces,
+      _invitations,
+      onMembershipChanged: (workspaceId) async => widget.sessionCoordinator
+          ?.refreshMemberships(preferredWorkspaceId: workspaceId),
+    );
     _leaveRequestsCubit = LeaveRequestsCubit(_leaveRequests)..load();
     _profileCubit = ProfileCubit(
       _profile,
@@ -90,11 +110,10 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     final coordinator = widget.sessionCoordinator;
     if (coordinator == null) {
       _profileCubit.load();
+      _employeesCubit.load();
     } else {
-      _profileSessionSubscription = coordinator.stream.listen(
-        (state) => _profileCubit.bindSession(_profileScope(state)),
-      );
-      _profileCubit.bindSession(_profileScope(coordinator.state));
+      _sessionSubscription = coordinator.stream.listen(_bindSession);
+      _bindSession(coordinator.state);
     }
   }
 
@@ -102,9 +121,10 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
   void dispose() {
     _dashboardCubit.close();
     _employeesCubit.close();
+    _workspacesCubit.close();
     _leaveRequestsCubit.close();
     _profileCubit.close();
-    _profileSessionSubscription?.cancel();
+    _sessionSubscription?.cancel();
     _sessionRefresh?.dispose();
     widget.sessionCoordinator?.close();
     if (widget.router == null) _router.dispose();
@@ -116,6 +136,8 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     final app = MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: _employees),
+        RepositoryProvider.value(value: _invitations),
+        RepositoryProvider.value(value: _workspaces),
         RepositoryProvider.value(value: _leaveRequests),
         RepositoryProvider.value(value: _profile),
         RepositoryProvider.value(value: _profileImagePicker),
@@ -124,6 +146,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
         providers: [
           BlocProvider.value(value: _dashboardCubit),
           BlocProvider.value(value: _employeesCubit),
+          BlocProvider.value(value: _workspacesCubit),
           BlocProvider.value(value: _leaveRequestsCubit),
           BlocProvider.value(value: _profileCubit),
         ],
@@ -143,6 +166,12 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
             child: app,
           );
   }
+
+  void _bindSession(SessionState state) {
+    _profileCubit.bindSession(_profileScope(state));
+    _employeesCubit.bindSession(_employeeScope(state));
+    _workspacesCubit.bindUser(state.currentUser?.id);
+  }
 }
 
 ProfileSessionScope? _profileScope(SessionState state) {
@@ -152,6 +181,17 @@ ProfileSessionScope? _profileScope(SessionState state) {
   return ProfileSessionScope(
     userId: user.id,
     workspaceId: membership.workspace.id,
+  );
+}
+
+EmployeeSessionScope? _employeeScope(SessionState state) {
+  final user = state.currentUser;
+  final membership = state.activeMembership;
+  if (!state.isAuthenticated || user == null || membership == null) return null;
+  return EmployeeSessionScope(
+    userId: user.id,
+    workspaceId: membership.workspace.id,
+    role: membership.role,
   );
 }
 

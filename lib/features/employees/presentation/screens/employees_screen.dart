@@ -9,6 +9,7 @@ import 'package:shiftly/features/employees/presentation/widgets/employee_list.da
 import 'package:shiftly/features/employees/presentation/widgets/employee_metrics_section.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_search_bar.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employees_loading.dart';
+import 'package:shiftly/features/invitations/data/invitation_repository.dart';
 
 class EmployeesScreen extends StatelessWidget {
   const EmployeesScreen({super.key});
@@ -16,7 +17,7 @@ class EmployeesScreen extends StatelessWidget {
   Future<void> _openAddEmployee(BuildContext context) async {
     final added = await context.push<bool>('/employees/add');
     if (added == true && context.mounted) {
-      ToastService.success(context, message: 'Employee added successfully');
+      ToastService.success(context, message: 'Invitation created successfully');
     }
   }
 
@@ -42,11 +43,18 @@ class EmployeesScreen extends StatelessWidget {
                 ),
               ),
             ),
-            if (state case EmployeesLoaded(:final employees))
-              EmployeeMetricsSection(employees: employees),
+            if (state case EmployeesLoaded(:final employees, :final total))
+              EmployeeMetricsSection(employees: employees, total: total),
             EmployeeSearchBar(
-              onChanged: (query) =>
-                  context.read<EmployeesCubit>().load(query: query),
+              status: state is EmployeesLoaded ? state.status : null,
+              onChanged: (query) => context.read<EmployeesCubit>().load(
+                query: query,
+                status: state is EmployeesLoaded ? state.status : null,
+              ),
+              onStatusChanged: (status) => context.read<EmployeesCubit>().load(
+                query: state is EmployeesLoaded ? state.query : '',
+                status: status,
+              ),
             ),
             Expanded(child: _stateBody(context, state)),
           ],
@@ -63,26 +71,71 @@ class EmployeesScreen extends StatelessWidget {
           title: 'Could not load employees',
           message: message,
           action: FilledButton(
-            onPressed: context.read<EmployeesCubit>().load,
+            onPressed: () => context.read<EmployeesCubit>().load(),
             child: const Text('Retry'),
           ),
         ),
-        EmployeesLoaded(:final employees, :final query) =>
-          employees.isEmpty
-              ? EmptyState(
-                  icon: query.isEmpty
-                      ? Icons.group_add_outlined
-                      : Icons.person_search_outlined,
-                  title: query.isEmpty
-                      ? 'No employees yet'
-                      : 'No matching employees',
-                  message: query.isEmpty
-                      ? 'Add your first team member to get started.'
-                      : 'Try another name or clear your search.',
-                )
-              : EmployeeList(
-                  employees: employees,
-                  onRefresh: context.read<EmployeesCubit>().load,
-                ),
+        EmployeesLoaded() => _loadedBody(context, state),
       };
+
+  Widget _loadedBody(BuildContext context, EmployeesLoaded state) => Column(
+    children: [
+      if (state.pendingInvitations.isNotEmpty)
+        _PendingInvitations(invitations: state.pendingInvitations),
+      if (state.failure != null)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Text(
+            state.failure!.message,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      Expanded(
+        child: state.employees.isEmpty
+            ? EmptyState(
+                icon: state.query.isEmpty
+                    ? Icons.group_add_outlined
+                    : Icons.person_search_outlined,
+                title: state.query.isEmpty
+                    ? 'No employees yet'
+                    : 'No matching employees',
+                message: state.query.isEmpty
+                    ? 'Invite your first team member to get started.'
+                    : 'Try another name or clear your search.',
+              )
+            : EmployeeList(
+                employees: state.employees,
+                hasMore: state.hasMore,
+                loadingMore: state.loadingMore,
+                onLoadMore: context.read<EmployeesCubit>().loadMore,
+                onRefresh: () => context.read<EmployeesCubit>().load(
+                  query: state.query,
+                  status: state.status,
+                  refresh: true,
+                ),
+              ),
+      ),
+    ],
+  );
+}
+
+class _PendingInvitations extends StatelessWidget {
+  const _PendingInvitations({required this.invitations});
+  final List<WorkspaceInvitation> invitations;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const Key('pending-invitations'),
+    width: double.infinity,
+    margin: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      '${invitations.length} pending invitation${invitations.length == 1 ? '' : 's'}',
+      style: const TextStyle(fontWeight: FontWeight.w600),
+    ),
+  );
 }

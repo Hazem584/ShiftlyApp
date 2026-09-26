@@ -34,7 +34,7 @@ class EmployeeFormHeader extends StatelessWidget {
               ),
               SizedBox(height: 2),
               Text(
-                'Add their contact details and work assignment.',
+                'Send a secure workspace invitation by email.',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               ),
             ],

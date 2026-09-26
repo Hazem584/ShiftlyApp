@@ -1,51 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shiftly/core/models/employee.dart';
-import 'package:shiftly/core/models/shift.dart';
-import 'package:shiftly/core/models/work_location.dart';
+import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
-import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_form_actions.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_form_header.dart';
-import 'package:shiftly/features/employees/presentation/widgets/personal_information_section.dart';
-import 'package:shiftly/features/employees/presentation/widgets/work_information_section.dart';
 
 class AddEmployeeScreen extends StatefulWidget {
   const AddEmployeeScreen({super.key});
-
   @override
   State<AddEmployeeScreen> createState() => _AddEmployeeScreenState();
 }
 
 class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _phone = TextEditingController();
   final _email = TextEditingController();
   final _jobTitle = TextEditingController();
-  late WorkLocation _location;
-  late Shift _shift;
-  DateTime _startDate = DateTime.now();
-  EmploymentStatus _status = EmploymentStatus.active;
-  bool _valid = false;
-  bool _submitting = false;
-
-  EmployeeRepository get _repository => context.read<EmployeeRepository>();
-
-  @override
-  void initState() {
-    super.initState();
-    _location = _repository.availableLocations.first;
-    _shift = _repository.availableShifts.first;
-  }
+  var _valid = false;
+  var _submitting = false;
 
   @override
   void dispose() {
-    _name.dispose();
-    _phone.dispose();
     _email.dispose();
     _jobTitle.dispose();
     super.dispose();
@@ -56,47 +34,69 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
     if (valid != _valid) setState(() => _valid = valid);
   }
 
-  Future<void> _pickDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _startDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (date != null) setState(() => _startDate = date);
-  }
-
   Future<void> _submit() async {
     if (_submitting || !(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _submitting = true);
-    final employee = Employee(
-      id: 'emp-${DateTime.now().microsecondsSinceEpoch}',
-      fullName: _name.text.trim(),
-      phone: _phone.text.trim(),
-      email: _email.text.trim(),
-      jobTitle: _jobTitle.text.trim(),
-      location: _location,
-      shift: _shift,
-      startDate: _startDate,
-      employmentStatus: _status,
-    );
     try {
-      await context.read<EmployeesCubit>().add(employee);
+      final invitation = await context.read<EmployeesCubit>().invite(
+        email: _email.text.trim().toLowerCase(),
+        jobTitle: _jobTitle.text.trim().isEmpty ? null : _jobTitle.text.trim(),
+      );
+      if (!mounted || invitation == null) return;
+      final token = invitation.inviteToken;
+      if (token != null) await _showToken(token);
       if (mounted) context.pop(true);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ToastService.error(context, message: error.toFailure().message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _submitting = false);
-      ToastService.error(
-        context,
-        message: 'Could not add employee. Please try again.',
-      );
+      ToastService.error(context, message: 'Could not create invitation.');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
+
+  Future<void> _showToken(String token) => showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Invitation created'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Share this one-time token only with the intended employee.',
+          ),
+          const SizedBox(height: 12),
+          SelectableText(token, key: const Key('invitation-token')),
+        ],
+      ),
+      actions: [
+        TextButton.icon(
+          key: const Key('copy-invitation-token'),
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: token));
+            if (dialogContext.mounted) {
+              ToastService.success(dialogContext, message: 'Token copied');
+            }
+          },
+          icon: const Icon(Icons.copy_rounded),
+          label: const Text('Copy'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('Done'),
+        ),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Add New Employee'),
+      title: const Text('Invite Employee'),
       bottom: const PreferredSize(
         preferredSize: Size.fromHeight(1),
         child: Divider(height: 1, color: AppColors.borderColor),
@@ -110,28 +110,35 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           key: const Key('add-employee-form'),
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
           children: [
             const EmployeeFormHeader(),
-            PersonalInformationSection(
-              nameController: _name,
-              phoneController: _phone,
-              emailController: _email,
-            ),
-            WorkInformationSection(
-              jobTitleController: _jobTitle,
-              locations: _repository.availableLocations,
-              shifts: _repository.availableShifts,
-              selectedLocation: _location,
-              selectedShift: _shift,
-              startDate: _startDate,
-              status: _status,
+            const SizedBox(height: 18),
+            TextFormField(
+              key: const Key('email-field'),
+              controller: _email,
               enabled: !_submitting,
-              onLocationChanged: (value) => setState(() => _location = value),
-              onShiftChanged: (value) => setState(() => _shift = value),
-              onPickDate: _pickDate,
-              onStatusChanged: (value) => setState(() => _status = value),
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Employee email',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+              validator: (value) =>
+                  RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                      .hasMatch(value?.trim() ?? '')
+                  ? null
+                  : 'Enter a valid email address',
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              key: const Key('job-title-field'),
+              controller: _jobTitle,
+              enabled: !_submitting,
+              maxLength: 120,
+              decoration: const InputDecoration(
+                labelText: 'Job title (optional)',
+                prefixIcon: Icon(Icons.badge_outlined),
+              ),
             ),
             EmployeeFormActions(
               submitting: _submitting,
