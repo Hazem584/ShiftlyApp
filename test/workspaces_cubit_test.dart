@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/core/session/session_coordinator.dart';
+import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/invitations/data/invitation_repository.dart';
 import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
@@ -20,6 +23,16 @@ const _invitation = WorkspaceInvitation(
   status: InvitationStatus.pending,
 );
 
+MembershipRefreshResult _authorized(
+  String workspaceId, {
+  String userId = 'user-1',
+  WorkspaceRole role = WorkspaceRole.manager,
+}) => MembershipRefreshResult.authorized(
+  userId: userId,
+  workspaceId: workspaceId,
+  role: role,
+);
+
 void main() {
   test('binding a user loads workspaces and personal invitations', () async {
     final workspaces = _FakeWorkspaceRepository();
@@ -27,7 +40,8 @@ void main() {
     final cubit = WorkspacesCubit(
       workspaces,
       invitations,
-      onMembershipChanged: (_) async {},
+      onMembershipChanged: (_, _) async =>
+          const MembershipRefreshResult.failed(),
     );
 
     cubit.bindUser('user-1');
@@ -40,21 +54,149 @@ void main() {
   });
 
   test(
-    'create and accept refresh membership with the returned workspace',
+    'create succeeds across temporary unbind and same-user rebind',
     () async {
-      final changed = <String>[];
-      final cubit = WorkspacesCubit(
+      late WorkspacesCubit cubit;
+      cubit = WorkspacesCubit(
         _FakeWorkspaceRepository(),
         _FakeInvitationRepository(),
-        onMembershipChanged: (workspaceId) async => changed.add(workspaceId),
+        onMembershipChanged: (workspaceId, expectedUserId) async {
+          cubit.bindUser(null);
+          cubit.bindUser(expectedUserId);
+          return _authorized(workspaceId, userId: expectedUserId);
+        },
       )..bindUser('user-1');
       await _settle();
 
       expect(await cubit.create(name: 'Shiftly Cairo'), isTrue);
       expect(cubit.state.creating, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'accept succeeds across temporary unbind and same-user rebind',
+    () async {
+      late WorkspacesCubit cubit;
+      cubit = WorkspacesCubit(
+        _FakeWorkspaceRepository(),
+        _FakeInvitationRepository(),
+        onMembershipChanged: (workspaceId, expectedUserId) async {
+          cubit.bindUser(null);
+          cubit.bindUser(expectedUserId);
+          return _authorized(
+            workspaceId,
+            userId: expectedUserId,
+            role: WorkspaceRole.employee,
+          );
+        },
+      )..bindUser('user-1');
+      await _settle();
+
       expect(await cubit.accept('one-time-token'), isTrue);
       expect(cubit.state.accepting, isFalse);
-      expect(changed, ['workspace-1', 'workspace-2']);
+      await cubit.close();
+    },
+  );
+
+  test('logout during membership refresh cannot report success', () async {
+    late WorkspacesCubit cubit;
+    cubit = WorkspacesCubit(
+      _FakeWorkspaceRepository(),
+      _FakeInvitationRepository(),
+      onMembershipChanged: (workspaceId, expectedUserId) async {
+        cubit.bindUser(null);
+        return const MembershipRefreshResult.failed();
+      },
+    )..bindUser('user-1');
+    await _settle();
+
+    expect(await cubit.create(name: 'Shiftly Cairo'), isFalse);
+    expect(cubit.state.creating, isFalse);
+    await cubit.close();
+  });
+
+  test(
+    'switching users during membership refresh cannot report success',
+    () async {
+      late WorkspacesCubit cubit;
+      cubit = WorkspacesCubit(
+        _FakeWorkspaceRepository(),
+        _FakeInvitationRepository(),
+        onMembershipChanged: (workspaceId, expectedUserId) async {
+          cubit.bindUser(null);
+          cubit.bindUser('user-2');
+          return _authorized(workspaceId, userId: expectedUserId);
+        },
+      )..bindUser('user-1');
+      await _settle();
+
+      expect(await cubit.accept('one-time-token'), isFalse);
+      expect(cubit.state.accepting, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test('membership refresh failure is returned as a real failure', () async {
+    final cubit = WorkspacesCubit(
+      _FakeWorkspaceRepository(),
+      _FakeInvitationRepository(),
+      onMembershipChanged: (_, _) async =>
+          const MembershipRefreshResult.failed(),
+    )..bindUser('user-1');
+    await _settle();
+
+    expect(await cubit.create(name: 'Shiftly Cairo'), isFalse);
+    expect(await cubit.accept('one-time-token'), isFalse);
+    await cubit.close();
+  });
+
+  test('backend create and acceptance failures remain failures', () async {
+    final cubit = WorkspacesCubit(
+      _FakeWorkspaceRepository(createError: const ApiException(message: 'x')),
+      _FakeInvitationRepository(acceptError: const ApiException(message: 'x')),
+      onMembershipChanged: (workspaceId, userId) async =>
+          _authorized(workspaceId, userId: userId),
+    )..bindUser('user-1');
+    await _settle();
+
+    expect(await cubit.create(name: 'Shiftly Cairo'), isFalse);
+    expect(await cubit.accept('one-time-token'), isFalse);
+    await cubit.close();
+  });
+
+  test(
+    'duplicate create and accept submissions make one request each',
+    () async {
+      final createRefresh = Completer<MembershipRefreshResult>();
+      final acceptRefresh = Completer<MembershipRefreshResult>();
+      final workspaces = _FakeWorkspaceRepository();
+      final invitations = _FakeInvitationRepository();
+      final cubit = WorkspacesCubit(
+        workspaces,
+        invitations,
+        onMembershipChanged: (workspaceId, userId) =>
+            workspaceId == 'workspace-1'
+            ? createRefresh.future
+            : acceptRefresh.future,
+      )..bindUser('user-1');
+      await _settle();
+
+      final create = cubit.create(name: 'Shiftly Cairo');
+      await _settle();
+      expect(await cubit.create(name: 'Duplicate'), isFalse);
+      expect(workspaces.createCalls, 1);
+      createRefresh.complete(_authorized('workspace-1'));
+      expect(await create, isTrue);
+
+      final accept = cubit.accept('one-time-token');
+      await _settle();
+      expect(await cubit.accept('duplicate-token'), isFalse);
+      expect(invitations.acceptCalls, 1);
+      acceptRefresh.complete(
+        _authorized('workspace-2', role: WorkspaceRole.employee),
+      );
+      expect(await accept, isTrue);
       await cubit.close();
     },
   );
@@ -64,7 +206,8 @@ void main() {
     final cubit = WorkspacesCubit(
       _FakeWorkspaceRepository(pendingList: pending.future),
       _FakeInvitationRepository(),
-      onMembershipChanged: (_) async {},
+      onMembershipChanged: (_, _) async =>
+          const MembershipRefreshResult.failed(),
     )..bindUser('user-1');
     await Future<void>.delayed(Duration.zero);
 
@@ -84,15 +227,21 @@ Future<void> _settle() async {
 }
 
 class _FakeWorkspaceRepository implements WorkspaceRepository {
-  _FakeWorkspaceRepository({this.pendingList});
+  _FakeWorkspaceRepository({this.pendingList, this.createError});
 
   final Future<List<WorkspaceRecord>>? pendingList;
+  final Object? createError;
+  int createCalls = 0;
 
   @override
   Future<WorkspaceRecord> createWorkspace({
     required String name,
     String? timezone,
-  }) async => _workspace;
+  }) async {
+    createCalls += 1;
+    if (createError case final Object error) throw error;
+    return _workspace;
+  }
 
   @override
   Future<WorkspaceRecord> getWorkspace(String workspaceId) async => _workspace;
@@ -103,16 +252,24 @@ class _FakeWorkspaceRepository implements WorkspaceRepository {
 }
 
 class _FakeInvitationRepository implements InvitationRepository {
+  _FakeInvitationRepository({this.acceptError});
+
+  final Object? acceptError;
+  int acceptCalls = 0;
+
   @override
-  Future<WorkspaceRecord> acceptInvitation(String inviteToken) async =>
-      const WorkspaceRecord(
-        id: 'workspace-2',
-        name: 'Accepted workspace',
-        code: 'ACCEPTED',
-        timezone: 'Africa/Cairo',
-        role: WorkspaceAccessRole.employee,
-        status: WorkspaceAccessStatus.active,
-      );
+  Future<WorkspaceRecord> acceptInvitation(String inviteToken) async {
+    acceptCalls += 1;
+    if (acceptError case final Object error) throw error;
+    return const WorkspaceRecord(
+      id: 'workspace-2',
+      name: 'Accepted workspace',
+      code: 'ACCEPTED',
+      timezone: 'Africa/Cairo',
+      role: WorkspaceAccessRole.employee,
+      status: WorkspaceAccessStatus.active,
+    );
+  }
 
   @override
   Future<WorkspaceInvitation> createInvitation({

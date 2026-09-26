@@ -99,8 +99,12 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _workspacesCubit = WorkspacesCubit(
       _workspaces,
       _invitations,
-      onMembershipChanged: (workspaceId) async => widget.sessionCoordinator
-          ?.refreshMemberships(preferredWorkspaceId: workspaceId),
+      onMembershipChanged: (workspaceId, expectedUserId) async =>
+          await widget.sessionCoordinator?.refreshMemberships(
+            preferredWorkspaceId: workspaceId,
+            expectedUserId: expectedUserId,
+          ) ??
+          const MembershipRefreshResult.failed(),
     );
     _leaveRequestsCubit = LeaveRequestsCubit(_leaveRequests)..load();
     _profileCubit = ProfileCubit(

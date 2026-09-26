@@ -12,6 +12,28 @@ import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 
+class MembershipRefreshResult {
+  const MembershipRefreshResult._({this.userId, this.workspaceId, this.role});
+
+  const MembershipRefreshResult.failed() : this._();
+
+  const MembershipRefreshResult.authorized({
+    required String userId,
+    required String workspaceId,
+    required WorkspaceRole role,
+  }) : this._(userId: userId, workspaceId: workspaceId, role: role);
+
+  final String? userId;
+  final String? workspaceId;
+  final WorkspaceRole? role;
+
+  bool authorizes({required String userId, required String workspaceId}) =>
+      this.userId == userId &&
+      this.workspaceId == workspaceId &&
+      role != null &&
+      role != WorkspaceRole.unknown;
+}
+
 class SessionCoordinator extends Cubit<SessionState> {
   SessionCoordinator(
     this._authentication,
@@ -41,6 +63,7 @@ class SessionCoordinator extends Cubit<SessionState> {
   late final StreamSubscription<AuthenticationEvent> _authSubscription;
   bool _loggingOut = false;
   bool _resolving = false;
+  var _resolutionGeneration = 0;
 
   Future<void> initialize() async {
     emit(const SessionState.initializing());
@@ -118,12 +141,29 @@ class SessionCoordinator extends Cubit<SessionState> {
     await _resolveCurrentUser();
   }
 
-  Future<void> refreshMemberships({String? preferredWorkspaceId}) async {
+  Future<MembershipRefreshResult> refreshMemberships({
+    required String preferredWorkspaceId,
+    required String expectedUserId,
+  }) async {
     if (_authentication.currentSession == null) {
       emit(const SessionState(status: SessionStatus.unauthenticated));
-      return;
+      return const MembershipRefreshResult.failed();
     }
     await _resolveCurrentUser(preferredWorkspaceId: preferredWorkspaceId);
+    final user = state.currentUser;
+    final membership = state.activeMembership;
+    if (!state.isAuthenticated ||
+        user?.id != expectedUserId ||
+        membership?.workspace.id != preferredWorkspaceId ||
+        membership?.status != MembershipStatus.active ||
+        membership?.role == WorkspaceRole.unknown) {
+      return const MembershipRefreshResult.failed();
+    }
+    return MembershipRefreshResult.authorized(
+      userId: user!.id,
+      workspaceId: membership!.workspace.id,
+      role: membership.role,
+    );
   }
 
   Future<void> selectWorkspace(String workspaceId) async {
@@ -161,6 +201,7 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> signOut() async {
     _loggingOut = true;
+    _resolutionGeneration += 1;
     emit(const SessionState(status: SessionStatus.unauthenticated));
     try {
       await _authentication.signOut();
@@ -173,9 +214,11 @@ class SessionCoordinator extends Cubit<SessionState> {
   Future<void> _resolveCurrentUser({String? preferredWorkspaceId}) async {
     if (_resolving) return;
     _resolving = true;
+    final generation = ++_resolutionGeneration;
     emit(const SessionState(status: SessionStatus.loadingCurrentUser));
     try {
       final user = await _repository.loadCurrentUser();
+      if (!_resolutionIsCurrent(generation)) return;
       final memberships = user.memberships
           .where(
             (item) =>
@@ -184,8 +227,10 @@ class SessionCoordinator extends Cubit<SessionState> {
           )
           .toList(growable: false);
       final savedId = preferredWorkspaceId ?? await _workspaceStorage.read();
+      if (!_resolutionIsCurrent(generation)) return;
       if (memberships.isEmpty) {
         await _workspaceStorage.clear();
+        if (!_resolutionIsCurrent(generation)) return;
         emit(
           SessionState(
             status: SessionStatus.workspaceSelectionRequired,
@@ -193,15 +238,24 @@ class SessionCoordinator extends Cubit<SessionState> {
           ),
         );
       } else if (memberships.length == 1) {
-        await _activate(user, memberships.single);
+        await _activate(
+          user,
+          memberships.single,
+          resolutionGeneration: generation,
+        );
       } else {
         final restored = memberships.where(
           (item) => item.workspace.id == savedId,
         );
         if (restored.length == 1) {
-          await _activate(user, restored.single);
+          await _activate(
+            user,
+            restored.single,
+            resolutionGeneration: generation,
+          );
         } else {
           if (savedId != null) await _workspaceStorage.clear();
+          if (!_resolutionIsCurrent(generation)) return;
           emit(
             SessionState(
               status: SessionStatus.workspaceSelectionRequired,
@@ -211,6 +265,7 @@ class SessionCoordinator extends Cubit<SessionState> {
         }
       }
     } on ApiException catch (error) {
+      if (!_resolutionIsCurrent(generation)) return;
       if (error.code == 'PROFILE_NOT_INITIALIZED') {
         emit(const SessionState(status: SessionStatus.profileSetupRequired));
       } else if (error.kind == FailureKind.network ||
@@ -248,6 +303,7 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> _clearExpiredAuthentication() async {
     _loggingOut = true;
+    _resolutionGeneration += 1;
     try {
       if (_authentication.currentSession != null) {
         await _authentication.signOut();
@@ -260,9 +316,19 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> _activate(
     CurrentUser user,
-    WorkspaceMembership membership,
-  ) async {
+    WorkspaceMembership membership, {
+    int? resolutionGeneration,
+  }) async {
+    if (resolutionGeneration != null &&
+        !_resolutionIsCurrent(resolutionGeneration)) {
+      return;
+    }
     await _workspaceStorage.write(membership.workspace.id);
+    if (resolutionGeneration != null &&
+        !_resolutionIsCurrent(resolutionGeneration)) {
+      await _workspaceStorage.clear();
+      return;
+    }
     emit(
       SessionState(
         status: membership.role == WorkspaceRole.manager
@@ -276,6 +342,7 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   void _onAuthEvent(AuthenticationEvent event) {
     if (event.type != AuthenticationEventType.signedOut || _loggingOut) return;
+    _resolutionGeneration += 1;
     unawaited(_workspaceStorage.clear());
     emit(const SessionState(status: SessionStatus.sessionExpired));
     scheduleMicrotask(() {
@@ -292,6 +359,9 @@ class SessionCoordinator extends Cubit<SessionState> {
       }
     });
   }
+
+  bool _resolutionIsCurrent(int generation) =>
+      !isClosed && _resolutionGeneration == generation;
 
   @override
   Future<void> close() async {

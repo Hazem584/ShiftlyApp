@@ -65,6 +65,9 @@ class _Repository implements AuthenticationRepository {
   Future<CurrentUser> loadCurrentUser() async {
     loads++;
     if (result is Exception) throw result as Exception;
+    if (result is Future<CurrentUser>) {
+      return await (result as Future<CurrentUser>);
+    }
     return result as CurrentUser;
   }
 }
@@ -371,5 +374,109 @@ void main() {
     expect(coordinator.state.currentUser?.email, 'Not provided');
     expect(coordinator.state.currentUser?.phone, isNull);
     expect(coordinator.state.activeMembership, same(membership));
+  });
+
+  test(
+    'membership refresh authorizes only the refreshed backend role',
+    () async {
+      final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+      final repository = _Repository(_user([]));
+      final storage = MemoryActiveWorkspaceStorage();
+      final coordinator = SessionCoordinator(auth, repository, storage);
+      addTearDown(coordinator.close);
+      addTearDown(auth.controller.close);
+      await coordinator.initialize();
+      repository.result = _user([_membership('new', WorkspaceRole.employee)]);
+
+      final result = await coordinator.refreshMemberships(
+        preferredWorkspaceId: 'new',
+        expectedUserId: 'profile',
+      );
+
+      expect(result.authorizes(userId: 'profile', workspaceId: 'new'), isTrue);
+      expect(result.role, WorkspaceRole.employee);
+      expect(coordinator.state.status, SessionStatus.authenticatedEmployee);
+      expect(coordinator.state.activeMembership?.workspace.id, 'new');
+      expect(storage.value, 'new');
+    },
+  );
+
+  test('membership refresh rejects a workspace absent from auth me', () async {
+    final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+    final repository = _Repository(_user([]));
+    final coordinator = SessionCoordinator(
+      auth,
+      repository,
+      MemoryActiveWorkspaceStorage(),
+    );
+    addTearDown(coordinator.close);
+    addTearDown(auth.controller.close);
+    await coordinator.initialize();
+
+    final result = await coordinator.refreshMemberships(
+      preferredWorkspaceId: 'unconfirmed',
+      expectedUserId: 'profile',
+    );
+
+    expect(
+      result.authorizes(userId: 'profile', workspaceId: 'unconfirmed'),
+      isFalse,
+    );
+    expect(coordinator.state.activeMembership, isNull);
+  });
+
+  test('logout invalidates an in-flight membership refresh', () async {
+    final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+    final repository = _Repository(
+      _user([_membership('old', WorkspaceRole.manager)]),
+    );
+    final storage = MemoryActiveWorkspaceStorage();
+    final coordinator = SessionCoordinator(auth, repository, storage);
+    addTearDown(coordinator.close);
+    addTearDown(auth.controller.close);
+    await coordinator.initialize();
+    final pending = Completer<CurrentUser>();
+    repository.result = pending.future;
+
+    final refresh = coordinator.refreshMemberships(
+      preferredWorkspaceId: 'new',
+      expectedUserId: 'profile',
+    );
+    await Future<void>.delayed(Duration.zero);
+    await coordinator.signOut();
+    pending.complete(_user([_membership('new', WorkspaceRole.employee)]));
+    final result = await refresh;
+
+    expect(result.authorizes(userId: 'profile', workspaceId: 'new'), isFalse);
+    expect(coordinator.state.status, SessionStatus.unauthenticated);
+    expect(coordinator.state.activeMembership, isNull);
+    expect(storage.value, isNull);
+  });
+
+  test('membership refresh API failure cannot report authorization', () async {
+    final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+    final repository = _Repository(
+      _user([_membership('old', WorkspaceRole.manager)]),
+    );
+    final coordinator = SessionCoordinator(
+      auth,
+      repository,
+      MemoryActiveWorkspaceStorage(),
+    );
+    addTearDown(coordinator.close);
+    addTearDown(auth.controller.close);
+    await coordinator.initialize();
+    repository.result = const ApiException(
+      message: 'offline',
+      kind: FailureKind.network,
+    );
+
+    final result = await coordinator.refreshMemberships(
+      preferredWorkspaceId: 'new',
+      expectedUserId: 'profile',
+    );
+
+    expect(result.authorizes(userId: 'profile', workspaceId: 'new'), isFalse);
+    expect(coordinator.state.status, SessionStatus.offlineWithSession);
   });
 }
