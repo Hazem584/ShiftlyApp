@@ -90,9 +90,17 @@ class SessionCoordinator extends Cubit<SessionState> {
   }
 
   Future<void> bootstrapProfile({String? fullName, String? phone}) async {
+    if (state.status == SessionStatus.loadingCurrentUser) return;
+    final trimmedName = fullName?.trim();
+    final trimmedPhone = phone?.trim();
     emit(const SessionState(status: SessionStatus.loadingCurrentUser));
     try {
-      await _repository.bootstrapProfile(fullName: fullName, phone: phone);
+      await _repository.bootstrapProfile(
+        fullName: trimmedName,
+        phone: trimmedPhone == null || trimmedPhone.isEmpty
+            ? null
+            : trimmedPhone,
+      );
       await _resolveCurrentUser();
     } on ApiException catch (error) {
       emit(
@@ -182,6 +190,7 @@ class SessionCoordinator extends Cubit<SessionState> {
           ),
         );
       } else if (error.statusCode == 401) {
+        await _clearExpiredAuthentication();
         emit(const SessionState(status: SessionStatus.sessionExpired));
         emit(
           const SessionState(
@@ -202,6 +211,18 @@ class SessionCoordinator extends Cubit<SessionState> {
       }
     } finally {
       _resolving = false;
+    }
+  }
+
+  Future<void> _clearExpiredAuthentication() async {
+    _loggingOut = true;
+    try {
+      if (_authentication.currentSession != null) {
+        await _authentication.signOut();
+      }
+      await _workspaceStorage.clear();
+    } finally {
+      _loggingOut = false;
     }
   }
 

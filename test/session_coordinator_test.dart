@@ -280,4 +280,26 @@ void main() {
     expect(coordinator.state.status, SessionStatus.failure);
     expect(coordinator.state.failure?.message, isNot(contains('private')));
   });
+
+  test(
+    'final backend 401 clears Supabase session and stale workspace',
+    () async {
+      final auth = _Auth()..session = const AuthSession(accessToken: 'stale');
+      final storage = MemoryActiveWorkspaceStorage()..value = 'stale-workspace';
+      final coordinator = await _coordinator(
+        auth,
+        const ApiException(
+          statusCode: 401,
+          code: 'SESSION_EXPIRED',
+          message: 'expired',
+          kind: FailureKind.authentication,
+        ),
+        storage,
+      );
+      expect(auth.currentSession, isNull);
+      expect(auth.signOutCalls, 1);
+      expect(storage.value, isNull);
+      expect(coordinator.state.status, SessionStatus.unauthenticated);
+    },
+  );
 }

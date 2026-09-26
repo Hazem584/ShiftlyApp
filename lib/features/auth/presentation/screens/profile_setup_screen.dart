@@ -102,8 +102,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     context
                                         .read<SessionCoordinator>()
                                         .bootstrapProfile(
-                                          fullName: _name.text,
-                                          phone: _phone.text,
+                                          fullName: _name.text.trim(),
+                                          phone: _phone.text.trim().isEmpty
+                                              ? null
+                                              : _phone.text.trim(),
                                         );
                                   },
                             child: loading
