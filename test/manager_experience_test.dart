@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/app.dart';
@@ -12,7 +10,7 @@ import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 
 class _CancelledImagePicker implements ProfileImagePicker {
   @override
-  Future<Uint8List?> pickImage() async => null;
+  Future<ProfileImageSelection?> pickImage() async => null;
 }
 
 ShiftlyApp _testApp() {
@@ -135,13 +133,13 @@ void main() {
     await tester.tap(find.byKey(const Key('change-photo')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('profile-initials')), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('profile-email-field')), 'bad');
+    await tester.enterText(find.byKey(const Key('profile-name-field')), '');
     tester.testTextInput.hide();
     await tester.ensureVisible(find.byKey(const Key('save-profile')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('save-profile')));
     await tester.pump();
-    expect(find.text('Enter a valid email address'), findsOneWidget);
+    expect(find.text('Enter your full name'), findsOneWidget);
     await tester.ensureVisible(find.byKey(const Key('cancel-profile-edit')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('cancel-profile-edit')));

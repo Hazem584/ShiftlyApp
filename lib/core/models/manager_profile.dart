@@ -9,6 +9,10 @@ class ManagerProfile extends Equatable {
     required this.email,
     required this.phone,
     required this.workplace,
+    this.id = '',
+    this.avatarUrl,
+    this.createdAt,
+    this.updatedAt,
     this.photoBytes,
   });
 
@@ -17,15 +21,20 @@ class ManagerProfile extends Equatable {
   final String email;
   final String phone;
   final String workplace;
+  final String id;
+  final String? avatarUrl;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final Uint8List? photoBytes;
 
   String get initials {
     final parts = fullName.trim().split(RegExp(r'\s+'));
-    return parts
+    final value = parts
         .where((part) => part.isNotEmpty)
         .take(2)
         .map((part) => part[0].toUpperCase())
         .join();
+    return value.isEmpty ? 'S' : value;
   }
 
   ManagerProfile copyWith({
@@ -34,6 +43,11 @@ class ManagerProfile extends Equatable {
     String? email,
     String? phone,
     String? workplace,
+    String? id,
+    String? avatarUrl,
+    bool clearAvatarUrl = false,
+    DateTime? createdAt,
+    DateTime? updatedAt,
     Uint8List? photoBytes,
   }) => ManagerProfile(
     fullName: fullName ?? this.fullName,
@@ -41,6 +55,10 @@ class ManagerProfile extends Equatable {
     email: email ?? this.email,
     phone: phone ?? this.phone,
     workplace: workplace ?? this.workplace,
+    id: id ?? this.id,
+    avatarUrl: clearAvatarUrl ? null : avatarUrl ?? this.avatarUrl,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
     photoBytes: photoBytes ?? this.photoBytes,
   );
 
@@ -51,6 +69,10 @@ class ManagerProfile extends Equatable {
     email,
     phone,
     workplace,
+    id,
+    avatarUrl,
+    createdAt,
+    updatedAt,
     photoBytes,
   ];
 }

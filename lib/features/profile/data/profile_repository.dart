@@ -1,6 +1,9 @@
 import 'package:shiftly/core/models/manager_profile.dart';
+import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 
 abstract interface class ProfileRepository {
   Future<ManagerProfile> getProfile();
-  Future<ManagerProfile> updateProfile(ManagerProfile profile);
+  Future<ManagerProfile> updateProfile({String? fullName, String? phone});
+  Future<ManagerProfile> uploadAvatar(ProfileImageSelection image);
+  Future<ManagerProfile> deleteAvatar();
 }

@@ -1,6 +1,6 @@
 # Shiftly
 
-Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. The current sprint connects identity, profile bootstrap, workspace membership, and role-based routing while keeping feature screens on their existing mock repositories.
+Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authentication, profile editing, avatar management, workspace membership, and role-based routing use the production API while unrelated feature screens retain their mock repositories.
 
 ## Configuration
 
@@ -74,4 +74,4 @@ Automated tests use fakes and an in-memory Dio adapter; they never call producti
 
 ## Still mocked
 
-Dashboard cards, employee management, shifts, attendance, leave requests, notifications, profile editing/avatar upload, and other feature data still use presentation mocks. The next sprint can replace those repositories with workspace-scoped NestJS implementations. No Flutter code reads Supabase application tables directly.
+Dashboard cards, employee management, shifts, attendance, leave requests, notifications, and other non-profile feature data still use presentation mocks. Profile JSON and avatar mutations go only through NestJS; Flutter never writes directly to Supabase Storage or application tables. The mock profile repository remains available only for isolated tests and previews.

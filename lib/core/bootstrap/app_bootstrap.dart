@@ -5,12 +5,18 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/data/authentication_api_repository.dart';
 import 'package:shiftly/features/auth/data/supabase_authentication_service.dart';
+import 'package:shiftly/features/profile/data/api_profile_repository.dart';
+import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppDependencies {
-  const AppDependencies({required this.sessionCoordinator});
+  const AppDependencies({
+    required this.sessionCoordinator,
+    required this.profileRepository,
+  });
 
   final SessionCoordinator sessionCoordinator;
+  final ProfileRepository profileRepository;
 }
 
 abstract final class AppBootstrap {
@@ -37,6 +43,14 @@ abstract final class AppBootstrap {
       AuthenticationApiRepository(apiClient.dio),
       workspaceStorage,
     );
-    return AppDependencies(sessionCoordinator: coordinator);
+    final profileRepository = ApiProfileRepository(
+      apiClient.dio,
+      () => coordinator.state.activeMembership,
+      currentUser: () => coordinator.state.currentUser,
+    );
+    return AppDependencies(
+      sessionCoordinator: coordinator,
+      profileRepository: profileRepository,
+    );
   }
 }

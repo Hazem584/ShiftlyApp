@@ -117,6 +117,24 @@ class CurrentUser {
           .toList(growable: false),
     );
   }
+
+  CurrentUser copyWithProfile({
+    String? email,
+    String? fullName,
+    String? phone,
+    String? avatarUrl,
+    bool clearAvatarUrl = false,
+    DateTime? updatedAt,
+  }) => CurrentUser(
+    id: id,
+    email: email ?? this.email,
+    fullName: fullName ?? this.fullName,
+    phone: phone ?? this.phone,
+    avatarUrl: clearAvatarUrl ? null : avatarUrl ?? this.avatarUrl,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    memberships: memberships,
+  );
 }
 
 String _requiredString(Map<String, Object?> json, String key) {

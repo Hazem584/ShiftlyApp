@@ -35,12 +35,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: const Text('Retry'),
             ),
           ),
-          ProfileLoaded(:final profile, :final saving) =>
+          ProfileLoaded(:final profile, :final action) =>
             _editing
                 ? ProfileEditForm(
                     key: const Key('profile-editor'),
                     profile: profile,
-                    saving: saving,
+                    action: action,
                     onCancel: () => setState(() => _editing = false),
                     onSaved: () => setState(() => _editing = false),
                   )

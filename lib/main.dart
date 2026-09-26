@@ -10,7 +10,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     final dependencies = await AppBootstrap.initialize();
-    runApp(ShiftlyApp(sessionCoordinator: dependencies.sessionCoordinator));
+    runApp(
+      ShiftlyApp(
+        sessionCoordinator: dependencies.sessionCoordinator,
+        profileRepository: dependencies.profileRepository,
+      ),
+    );
     unawaited(dependencies.sessionCoordinator.initialize());
   } on AppConfigException catch (error) {
     runApp(ConfigurationErrorApp(message: error.message));

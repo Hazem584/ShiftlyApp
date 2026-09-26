@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
+import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
@@ -302,4 +303,34 @@ void main() {
       expect(coordinator.state.status, SessionStatus.unauthenticated);
     },
   );
+
+  test('profile synchronization preserves active workspace and role', () async {
+    final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+    final coordinator = await _coordinator(
+      auth,
+      _user([_membership('one', WorkspaceRole.manager)]),
+      MemoryActiveWorkspaceStorage(),
+    );
+    final membership = coordinator.state.activeMembership;
+    coordinator.synchronizeProfile(
+      ManagerProfile(
+        id: 'profile',
+        fullName: 'Updated Name',
+        role: 'Manager',
+        email: 'updated@example.com',
+        phone: '+20123',
+        workplace: 'Workspace one',
+        avatarUrl: 'https://cdn.example/avatar.png',
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026, 2),
+      ),
+    );
+    expect(coordinator.state.status, SessionStatus.authenticatedManager);
+    expect(coordinator.state.activeMembership, same(membership));
+    expect(coordinator.state.currentUser?.fullName, 'Updated Name');
+    expect(
+      coordinator.state.currentUser?.avatarUrl,
+      'https://cdn.example/avatar.png',
+    );
+  });
 }

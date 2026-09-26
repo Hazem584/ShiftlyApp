@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
+import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/data/models/current_user.dart';
@@ -128,6 +129,27 @@ class SessionCoordinator extends Cubit<SessionState> {
     );
     if (active.length != 1) return;
     await _activate(user, active.single);
+  }
+
+  void synchronizeProfile(ManagerProfile profile) {
+    final user = state.currentUser;
+    if (user == null || profile.id != user.id) return;
+    final updated = user.copyWithProfile(
+      email: profile.email == 'Not provided' ? null : profile.email,
+      fullName: profile.fullName == 'Shiftly user' ? null : profile.fullName,
+      phone: profile.phone == 'Not provided' ? null : profile.phone,
+      avatarUrl: profile.avatarUrl,
+      clearAvatarUrl: profile.avatarUrl == null,
+      updatedAt: profile.updatedAt,
+    );
+    emit(
+      SessionState(
+        status: state.status,
+        currentUser: updated,
+        activeMembership: state.activeMembership,
+        failure: state.failure,
+      ),
+    );
   }
 
   Future<void> signOut() async {

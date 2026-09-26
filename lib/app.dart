@@ -55,6 +55,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
   late final ProfileImagePicker _profileImagePicker;
   late final LeaveRequestsCubit _leaveRequestsCubit;
   late final ProfileCubit _profileCubit;
+  StreamSubscription<Object?>? _profileSessionSubscription;
   _SessionRouterRefresh? _sessionRefresh;
 
   @override
@@ -81,7 +82,21 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _dashboardCubit = DashboardCubit(dashboard)..load();
     _employeesCubit = EmployeesCubit(_employees)..load();
     _leaveRequestsCubit = LeaveRequestsCubit(_leaveRequests)..load();
-    _profileCubit = ProfileCubit(_profile)..load();
+    _profileCubit = ProfileCubit(
+      _profile,
+      onProfileChanged: widget.sessionCoordinator?.synchronizeProfile,
+    );
+    final coordinator = widget.sessionCoordinator;
+    if (coordinator == null) {
+      _profileCubit.load();
+    } else {
+      _profileSessionSubscription = coordinator.stream.listen((state) {
+        if (state.isAuthenticated && _profileCubit.state is ProfileLoading) {
+          _profileCubit.load();
+        }
+      });
+      if (coordinator.state.isAuthenticated) _profileCubit.load();
+    }
   }
 
   @override
@@ -90,6 +105,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _employeesCubit.close();
     _leaveRequestsCubit.close();
     _profileCubit.close();
+    _profileSessionSubscription?.cancel();
     _sessionRefresh?.dispose();
     widget.sessionCoordinator?.close();
     if (widget.router == null) _router.dispose();
