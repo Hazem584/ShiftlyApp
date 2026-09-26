@@ -43,14 +43,14 @@ class ProfileModel {
   ManagerProfile toPresentation(WorkspaceMembership? membership) =>
       ManagerProfile(
         id: id,
-        fullName: fullName ?? 'Shiftly user',
+        fullName: fullName,
         role: switch (membership?.role) {
           WorkspaceRole.manager => membership?.jobTitle ?? 'Manager',
           WorkspaceRole.employee => membership?.jobTitle ?? 'Employee',
           _ => 'Team member',
         },
-        email: email ?? 'Not provided',
-        phone: phone ?? 'Not provided',
+        email: email,
+        phone: phone,
         workplace: membership?.workspace.name ?? 'No active workspace',
         avatarUrl: avatarUrl,
         createdAt: createdAt,

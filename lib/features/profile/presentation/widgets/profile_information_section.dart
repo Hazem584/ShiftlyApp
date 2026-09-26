@@ -25,13 +25,13 @@ class ProfileInformationSection extends StatelessWidget {
             _InfoRow(
               icon: Icons.email_outlined,
               label: 'Email address',
-              value: profile.email,
+              value: profile.displayEmail,
             ),
             const Divider(height: 1, indent: 58),
             _InfoRow(
               icon: Icons.phone_outlined,
               label: 'Phone number',
-              value: profile.phone,
+              value: profile.displayPhone,
             ),
             const Divider(height: 1, indent: 58),
             _InfoRow(

@@ -85,11 +85,29 @@ void main() {
     final profile = await client.repository.getProfile();
     expect(client.adapter.requests.single.method, 'GET');
     expect(client.adapter.requests.single.uri.path, '/api/v1/auth/me');
-    expect(profile.fullName, 'Shiftly user');
-    expect(profile.email, 'Not provided');
-    expect(profile.phone, 'Not provided');
+    expect(profile.fullName, isNull);
+    expect(profile.email, isNull);
+    expect(profile.phone, isNull);
+    expect(profile.displayName, 'Shiftly user');
+    expect(profile.displayEmail, 'Not provided');
+    expect(profile.displayPhone, 'Not provided');
     expect(profile.avatarUrl, isNull);
     expect(profile.createdAt?.isUtc, isTrue);
+  });
+
+  test('update sends JSON null when phone is cleared', () async {
+    final client = _repository((_) => _json(_profile()));
+
+    final profile = await client.repository.updateProfile(
+      fullName: '  Hazem  ',
+      phone: null,
+    );
+
+    expect(client.adapter.requests.single.data, {
+      'fullName': 'Hazem',
+      'phone': null,
+    });
+    expect(profile.phone, isNull);
   });
 
   test('update trims and sends only fullName and phone', () async {
@@ -156,7 +174,7 @@ void main() {
   test('malformed success becomes a safe typed failure', () async {
     final client = _repository((_) => _json({'id': 'missing-fields'}));
     await expectLater(
-      client.repository.updateProfile(fullName: 'Hazem'),
+      client.repository.updateProfile(fullName: 'Hazem', phone: null),
       throwsA(
         isA<ApiException>().having(
           (error) => error.message,
@@ -178,7 +196,7 @@ void main() {
       }, status: 429),
     );
     await expectLater(
-      client.repository.updateProfile(fullName: 'Hazem'),
+      client.repository.updateProfile(fullName: 'Hazem', phone: null),
       throwsA(
         isA<ApiException>()
             .having((error) => error.code, 'code', 'RATE_LIMIT_EXCEEDED')

@@ -135,11 +135,10 @@ class SessionCoordinator extends Cubit<SessionState> {
     final user = state.currentUser;
     if (user == null || profile.id != user.id) return;
     final updated = user.copyWithProfile(
-      email: profile.email == 'Not provided' ? null : profile.email,
-      fullName: profile.fullName == 'Shiftly user' ? null : profile.fullName,
-      phone: profile.phone == 'Not provided' ? null : profile.phone,
+      email: profile.email,
+      fullName: profile.fullName,
+      phone: profile.phone,
       avatarUrl: profile.avatarUrl,
-      clearAvatarUrl: profile.avatarUrl == null,
       updatedAt: profile.updatedAt,
     );
     emit(
@@ -154,10 +153,13 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> signOut() async {
     _loggingOut = true;
-    await _authentication.signOut();
-    await _workspaceStorage.clear();
-    _loggingOut = false;
     emit(const SessionState(status: SessionStatus.unauthenticated));
+    try {
+      await _authentication.signOut();
+      await _workspaceStorage.clear();
+    } finally {
+      _loggingOut = false;
+    }
   }
 
   Future<void> _resolveCurrentUser() async {

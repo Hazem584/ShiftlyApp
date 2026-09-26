@@ -21,11 +21,15 @@ class MockProfileRepository implements ProfileRepository {
 
   @override
   Future<ManagerProfile> updateProfile({
-    String? fullName,
-    String? phone,
+    required String fullName,
+    required String? phone,
   }) async {
     if (delay > Duration.zero) await Future<void>.delayed(delay);
-    _profile = _profile.copyWith(fullName: fullName, phone: phone);
+    _profile = _profile.copyWith(
+      fullName: fullName,
+      phone: phone,
+      clearPhone: phone == null,
+    );
     return _profile;
   }
 

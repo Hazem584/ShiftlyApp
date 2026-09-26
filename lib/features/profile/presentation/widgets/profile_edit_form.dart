@@ -39,12 +39,10 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController(text: widget.profile.fullName);
+    _name = TextEditingController(text: widget.profile.fullName ?? '');
     _role = TextEditingController(text: widget.profile.role);
-    _email = TextEditingController(text: widget.profile.email);
-    _phone = TextEditingController(
-      text: widget.profile.phone == 'Not provided' ? '' : widget.profile.phone,
-    );
+    _email = TextEditingController(text: widget.profile.email ?? '');
+    _phone = TextEditingController(text: widget.profile.phone ?? '');
   }
 
   @override
@@ -87,7 +85,9 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
         );
       case ProfileOperationResult.failure:
         ToastService.error(context, message: _failureMessage());
-      case ProfileOperationResult.cancelled || ProfileOperationResult.busy:
+      case ProfileOperationResult.cancelled ||
+          ProfileOperationResult.busy ||
+          ProfileOperationResult.stale:
         break;
     }
   }

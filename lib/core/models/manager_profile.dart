@@ -16,10 +16,10 @@ class ManagerProfile extends Equatable {
     this.photoBytes,
   });
 
-  final String fullName;
+  final String? fullName;
   final String role;
-  final String email;
-  final String phone;
+  final String? email;
+  final String? phone;
   final String workplace;
   final String id;
   final String? avatarUrl;
@@ -27,8 +27,12 @@ class ManagerProfile extends Equatable {
   final DateTime? updatedAt;
   final Uint8List? photoBytes;
 
+  String get displayName => fullName ?? 'Shiftly user';
+  String get displayEmail => email ?? 'Not provided';
+  String get displayPhone => phone ?? 'Not provided';
+
   String get initials {
-    final parts = fullName.trim().split(RegExp(r'\s+'));
+    final parts = displayName.trim().split(RegExp(r'\s+'));
     final value = parts
         .where((part) => part.isNotEmpty)
         .take(2)
@@ -42,6 +46,7 @@ class ManagerProfile extends Equatable {
     String? role,
     String? email,
     String? phone,
+    bool clearPhone = false,
     String? workplace,
     String? id,
     String? avatarUrl,
@@ -53,7 +58,7 @@ class ManagerProfile extends Equatable {
     fullName: fullName ?? this.fullName,
     role: role ?? this.role,
     email: email ?? this.email,
-    phone: phone ?? this.phone,
+    phone: clearPhone ? null : phone ?? this.phone,
     workplace: workplace ?? this.workplace,
     id: id ?? this.id,
     avatarUrl: clearAvatarUrl ? null : avatarUrl ?? this.avatarUrl,

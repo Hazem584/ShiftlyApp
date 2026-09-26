@@ -16,7 +16,7 @@ class ProfileHeader extends StatelessWidget {
         ProfileAvatar(profile: profile, radius: 48),
         const SizedBox(height: 13),
         Text(
-          profile.fullName,
+          profile.displayName,
           key: const Key('profile-name'),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineSmall,

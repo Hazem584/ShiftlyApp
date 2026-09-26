@@ -33,14 +33,16 @@ class ApiProfileRepository implements ProfileRepository {
   }
 
   @override
-  Future<ManagerProfile> updateProfile({String? fullName, String? phone}) =>
+  Future<ManagerProfile> updateProfile({
+    required String fullName,
+    required String? phone,
+  }) =>
       _profileRequest(
         () => _dio.patch<Object?>(
           ApiEndpoints.profile,
-          data: <String, String>{
-            if (fullName?.trim().isNotEmpty == true)
-              'fullName': fullName!.trim(),
-            if (phone?.trim().isNotEmpty == true) 'phone': phone!.trim(),
+          data: <String, Object?>{
+            'fullName': fullName.trim(),
+            'phone': phone?.trim(),
           },
         ),
       );

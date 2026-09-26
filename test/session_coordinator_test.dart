@@ -332,5 +332,22 @@ void main() {
       coordinator.state.currentUser?.avatarUrl,
       'https://cdn.example/avatar.png',
     );
+
+    coordinator.synchronizeProfile(
+      ManagerProfile(
+        id: 'profile',
+        fullName: 'Shiftly user',
+        role: 'Manager',
+        email: 'Not provided',
+        phone: null,
+        workplace: 'Workspace one',
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026, 3),
+      ),
+    );
+    expect(coordinator.state.currentUser?.fullName, 'Shiftly user');
+    expect(coordinator.state.currentUser?.email, 'Not provided');
+    expect(coordinator.state.currentUser?.phone, isNull);
+    expect(coordinator.state.activeMembership, same(membership));
   });
 }

@@ -10,12 +10,15 @@ import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 
-ManagerProfile _profile({String? avatarUrl}) => ManagerProfile(
+ManagerProfile _profile({
+  String? avatarUrl,
+  String? phone,
+}) => ManagerProfile(
   id: 'profile-id',
   fullName: 'Backend User',
   role: 'Operations Manager',
   email: 'backend@example.com',
-  phone: 'Not provided',
+  phone: phone,
   workplace: 'Cairo Operations',
   avatarUrl: avatarUrl,
   createdAt: DateTime.utc(2026),
@@ -35,15 +38,23 @@ class _Repository implements ProfileRepository {
   ManagerProfile profile;
   int uploadCalls = 0;
   Object? uploadError;
+  Object? updateError;
+  String? lastPhone;
 
   @override
   Future<ManagerProfile> getProfile() async => profile;
   @override
   Future<ManagerProfile> updateProfile({
-    String? fullName,
-    String? phone,
+    required String fullName,
+    required String? phone,
   }) async {
-    profile = profile.copyWith(fullName: fullName, phone: phone);
+    lastPhone = phone;
+    if (updateError case final Object error) throw error;
+    profile = profile.copyWith(
+      fullName: fullName,
+      phone: phone,
+      clearPhone: phone == null,
+    );
     return profile;
   }
 
@@ -66,8 +77,9 @@ Future<_Repository> _openProfile(
   WidgetTester tester, {
   required ProfileImageSelection selection,
   String? avatarUrl,
+  String? phone,
 }) async {
-  final repository = _Repository(_profile(avatarUrl: avatarUrl));
+  final repository = _Repository(_profile(avatarUrl: avatarUrl, phone: phone));
   await tester.pumpWidget(
     ShiftlyApp(
       profileRepository: repository,
@@ -83,6 +95,13 @@ Future<_Repository> _openProfile(
 Future<void> _edit(WidgetTester tester) async {
   await tester.tap(find.byKey(const Key('edit-profile')));
   await tester.pumpAndSettle();
+}
+
+Future<void> _save(WidgetTester tester) async {
+  final button = find.byKey(const Key('save-profile'));
+  await tester.ensureVisible(button);
+  await tester.pumpAndSettle();
+  await tester.tap(button);
 }
 
 void main() {
@@ -112,6 +131,50 @@ void main() {
     await tester.pump();
     expect(find.text('Avatar must not exceed 2 MiB.'), findsOneWidget);
     expect(repository.uploadCalls, 0);
+    await tester.pump(const Duration(seconds: 4));
+  });
+
+  testWidgets('clearing phone sends null and shows the fallback', (tester) async {
+    final repository = await _openProfile(
+      tester,
+      selection: ProfileImageSelection(fileName: 'unused', bytes: Uint8List(0)),
+      phone: '+201234567890',
+    );
+    await _edit(tester);
+    await tester.enterText(
+      find.byKey(const Key('profile-phone-field')),
+      '',
+    );
+    await _save(tester);
+    await tester.pumpAndSettle();
+
+    expect(repository.lastPhone, isNull);
+    expect(repository.profile.phone, isNull);
+    expect(find.text('Not provided'), findsOneWidget);
+  });
+
+  testWidgets('failed phone clearing retains the previous profile value', (
+    tester,
+  ) async {
+    final repository = await _openProfile(
+      tester,
+      selection: ProfileImageSelection(fileName: 'unused', bytes: Uint8List(0)),
+      phone: '+201234567890',
+    )..updateError = const ApiException(message: 'Could not save phone.');
+    await _edit(tester);
+    await tester.enterText(
+      find.byKey(const Key('profile-phone-field')),
+      '',
+    );
+    await _save(tester);
+    await tester.pump();
+    expect(repository.profile.phone, '+201234567890');
+
+    final cancel = find.byKey(const Key('cancel-profile-edit'));
+    await tester.ensureVisible(cancel);
+    await tester.tap(cancel);
+    await tester.pumpAndSettle();
+    expect(find.text('+201234567890'), findsOneWidget);
     await tester.pump(const Duration(seconds: 4));
   });
 

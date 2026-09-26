@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/routing/app_router.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
+import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
@@ -90,12 +91,10 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     if (coordinator == null) {
       _profileCubit.load();
     } else {
-      _profileSessionSubscription = coordinator.stream.listen((state) {
-        if (state.isAuthenticated && _profileCubit.state is ProfileLoading) {
-          _profileCubit.load();
-        }
-      });
-      if (coordinator.state.isAuthenticated) _profileCubit.load();
+      _profileSessionSubscription = coordinator.stream.listen(
+        (state) => _profileCubit.bindSession(_profileScope(state)),
+      );
+      _profileCubit.bindSession(_profileScope(coordinator.state));
     }
   }
 
@@ -144,6 +143,16 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
             child: app,
           );
   }
+}
+
+ProfileSessionScope? _profileScope(SessionState state) {
+  final user = state.currentUser;
+  final membership = state.activeMembership;
+  if (!state.isAuthenticated || user == null || membership == null) return null;
+  return ProfileSessionScope(
+    userId: user.id,
+    workspaceId: membership.workspace.id,
+  );
 }
 
 class _SessionRouterRefresh extends ChangeNotifier {
