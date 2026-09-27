@@ -201,10 +201,15 @@ void main() {
     );
     final repository = ApiShiftRepository(client.dio);
     final page = await repository.listMyShifts(
+      'workspace-id',
       const ShiftQuery(employeeMembershipId: 'must-not-be-sent'),
     );
     await repository.getMyShift('shift-id');
     expect(client.adapter.requests.first.uri.path, '/api/v1/shifts/me');
+    expect(
+      client.adapter.requests.first.queryParameters['workspaceId'],
+      'workspace-id',
+    );
     expect(
       client.adapter.requests.first.queryParameters,
       isNot(contains('employeeMembershipId')),
@@ -254,6 +259,7 @@ void main() {
         rejectionReason: ' Missing checkout ',
       );
       await repository.listMyAttendance(
+        'workspace-id',
         const AttendanceQuery(
           employeeMembershipId: 'must-not-be-sent',
           shiftStatus: ShiftStatus.completed,
@@ -299,6 +305,10 @@ void main() {
       expect(
         client.adapter.requests.last.queryParameters,
         isNot(anyOf(contains('employeeMembershipId'), contains('shiftStatus'))),
+      );
+      expect(
+        client.adapter.requests.last.queryParameters['workspaceId'],
+        'workspace-id',
       );
     },
   );

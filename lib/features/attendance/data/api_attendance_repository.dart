@@ -69,17 +69,19 @@ class ApiAttendanceRepository implements AttendanceRepository {
   );
 
   @override
-  Future<AttendancePage> listMyAttendance(AttendanceQuery query) =>
-      _request(() async {
-        final response = await _dio.get<Object?>(
-          '/attendance/me',
-          queryParameters: query.toQuery(
-            includeEmployee: false,
-            includeShiftStatus: false,
-          ),
-        );
-        return _page(response.data);
-      });
+  Future<AttendancePage> listMyAttendance(
+    String workspaceId,
+    AttendanceQuery query,
+  ) => _request(() async {
+    final response = await _dio.get<Object?>(
+      '/attendance/me',
+      queryParameters: {
+        ...query.toQuery(includeEmployee: false, includeShiftStatus: false),
+        'workspaceId': workspaceId,
+      },
+    );
+    return _page(response.data);
+  });
 
   Future<AttendanceRecordApi> _object(
     Future<Response<Object?>> Function() operation,

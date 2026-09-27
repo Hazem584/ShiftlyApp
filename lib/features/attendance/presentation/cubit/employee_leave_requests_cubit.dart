@@ -6,11 +6,10 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 
-enum LeaveMutationResult { success, failure, busy, stale }
-
-class LeaveRequestsState extends Equatable {
-  const LeaveRequestsState({
+class EmployeeLeaveRequestsState extends Equatable {
+  const EmployeeLeaveRequestsState({
     this.initialLoading = true,
     this.requests = const [],
     this.query = const LeaveRequestQuery(),
@@ -18,7 +17,8 @@ class LeaveRequestsState extends Equatable {
     this.totalPages = 0,
     this.refreshing = false,
     this.loadingMore = false,
-    this.reviewingIds = const {},
+    this.creating = false,
+    this.cancellingIds = const {},
     this.selected,
     this.detailLoading = false,
     this.failure,
@@ -31,17 +31,15 @@ class LeaveRequestsState extends Equatable {
   final int totalPages;
   final bool refreshing;
   final bool loadingMore;
-  final Set<String> reviewingIds;
+  final bool creating;
+  final Set<String> cancellingIds;
   final LeaveRequestRecord? selected;
   final bool detailLoading;
   final Failure? failure;
 
   bool get hasMore => page < totalPages;
-  int get pendingCount => requests
-      .where((request) => request.status == LeaveRequestStatus.pending)
-      .length;
 
-  LeaveRequestsState copyWith({
+  EmployeeLeaveRequestsState copyWith({
     bool? initialLoading,
     List<LeaveRequestRecord>? requests,
     LeaveRequestQuery? query,
@@ -49,13 +47,14 @@ class LeaveRequestsState extends Equatable {
     int? totalPages,
     bool? refreshing,
     bool? loadingMore,
-    Set<String>? reviewingIds,
+    bool? creating,
+    Set<String>? cancellingIds,
     LeaveRequestRecord? selected,
     bool clearSelected = false,
     bool? detailLoading,
     Failure? failure,
     bool clearFailure = false,
-  }) => LeaveRequestsState(
+  }) => EmployeeLeaveRequestsState(
     initialLoading: initialLoading ?? this.initialLoading,
     requests: requests ?? this.requests,
     query: query ?? this.query,
@@ -63,7 +62,8 @@ class LeaveRequestsState extends Equatable {
     totalPages: totalPages ?? this.totalPages,
     refreshing: refreshing ?? this.refreshing,
     loadingMore: loadingMore ?? this.loadingMore,
-    reviewingIds: reviewingIds ?? this.reviewingIds,
+    creating: creating ?? this.creating,
+    cancellingIds: cancellingIds ?? this.cancellingIds,
     selected: clearSelected ? null : selected ?? this.selected,
     detailLoading: detailLoading ?? this.detailLoading,
     failure: clearFailure ? null : failure ?? this.failure,
@@ -78,27 +78,29 @@ class LeaveRequestsState extends Equatable {
     totalPages,
     refreshing,
     loadingMore,
-    reviewingIds,
+    creating,
+    cancellingIds,
     selected,
     detailLoading,
     failure,
   ];
 }
 
-class LeaveRequestsCubit extends Cubit<LeaveRequestsState> {
-  LeaveRequestsCubit(this._repository) : super(const LeaveRequestsState());
+class EmployeeLeaveRequestsCubit extends Cubit<EmployeeLeaveRequestsState> {
+  EmployeeLeaveRequestsCubit(this._repository)
+    : super(const EmployeeLeaveRequestsState());
   final LeaveRequestRepository _repository;
   FeatureSessionScope? _scope;
   var _generation = 0;
   var _requestId = 0;
 
   void bindSession(FeatureSessionScope? scope) {
-    final authorized = scope?.isManager == true ? scope : null;
+    final authorized = scope?.isEmployee == true ? scope : null;
     if (_scope == authorized) return;
     _scope = authorized;
     _generation += 1;
     _requestId += 1;
-    emit(const LeaveRequestsState());
+    emit(const EmployeeLeaveRequestsState());
     if (authorized != null) unawaited(load());
   }
 
@@ -112,19 +114,23 @@ class LeaveRequestsCubit extends Cubit<LeaveRequestsState> {
     emit(
       refresh && previous.requests.isNotEmpty
           ? previous.copyWith(refreshing: true, clearFailure: true)
-          : LeaveRequestsState(query: requested),
+          : EmployeeLeaveRequestsState(query: requested),
     );
     try {
-      final page = await _repository.listWorkspace(
+      final page = await _repository.listMine(
         scope.workspaceId,
         requested.copyWith(page: 1),
       );
       if (!_current(scope, generation, requestId)) return;
-      if (page.data.any((item) => item.workspaceId != scope.workspaceId)) {
-        throw const FormatException('Cross-workspace leave response');
+      if (page.data.any(
+        (item) =>
+            item.workspaceId != scope.workspaceId ||
+            item.employeeMembershipId != scope.membershipId,
+      )) {
+        throw const FormatException('Invalid employee leave response');
       }
       emit(
-        LeaveRequestsState(
+        EmployeeLeaveRequestsState(
           initialLoading: false,
           requests: page.data,
           query: requested.copyWith(page: 1),
@@ -134,11 +140,11 @@ class LeaveRequestsCubit extends Cubit<LeaveRequestsState> {
       );
     } catch (error) {
       if (!_current(scope, generation, requestId)) return;
-      final failure = _failure(error, 'Unable to load leave requests.');
+      final failure = _failure(error, 'Unable to load your leave requests.');
       emit(
         refresh && previous.requests.isNotEmpty
             ? previous.copyWith(refreshing: false, failure: failure)
-            : LeaveRequestsState(
+            : EmployeeLeaveRequestsState(
                 initialLoading: false,
                 query: requested,
                 failure: failure,
@@ -155,13 +161,17 @@ class LeaveRequestsCubit extends Cubit<LeaveRequestsState> {
     final requestId = ++_requestId;
     emit(previous.copyWith(loadingMore: true, clearFailure: true));
     try {
-      final page = await _repository.listWorkspace(
+      final page = await _repository.listMine(
         scope.workspaceId,
         previous.query.copyWith(page: previous.page + 1),
       );
       if (!_current(scope, generation, requestId)) return;
-      if (page.data.any((item) => item.workspaceId != scope.workspaceId)) {
-        throw const FormatException('Cross-workspace leave response');
+      if (page.data.any(
+        (item) =>
+            item.workspaceId != scope.workspaceId ||
+            item.employeeMembershipId != scope.membershipId,
+      )) {
+        throw const FormatException('Invalid employee leave response');
       }
       final ids = previous.requests.map((item) => item.id).toSet();
       emit(
@@ -186,18 +196,107 @@ class LeaveRequestsCubit extends Cubit<LeaveRequestsState> {
     }
   }
 
+  Future<LeaveMutationResult> create(CreateLeaveRequestInput input) async {
+    final scope = _scope;
+    if (scope == null) return LeaveMutationResult.failure;
+    if (state.creating) return LeaveMutationResult.busy;
+    final validation = validate(input);
+    if (validation != null) {
+      emit(state.copyWith(failure: validation));
+      return LeaveMutationResult.failure;
+    }
+    final generation = _generation;
+    emit(state.copyWith(creating: true, clearFailure: true));
+    try {
+      final record = await _repository.create(scope.workspaceId, input);
+      if (!_scopeCurrent(scope, generation)) return LeaveMutationResult.stale;
+      if (record.workspaceId != scope.workspaceId ||
+          record.employeeMembershipId != scope.membershipId ||
+          record.status != LeaveRequestStatus.pending) {
+        emit(
+          state.copyWith(
+            creating: false,
+            failure: const Failure(
+              message: 'The server returned an invalid leave request.',
+              kind: FailureKind.server,
+            ),
+          ),
+        );
+        return LeaveMutationResult.failure;
+      }
+      emit(
+        state.copyWith(
+          requests: [
+            record,
+            ...state.requests.where((item) => item.id != record.id),
+          ],
+          creating: false,
+        ),
+      );
+      return LeaveMutationResult.success;
+    } catch (error) {
+      if (!_scopeCurrent(scope, generation)) return LeaveMutationResult.stale;
+      emit(
+        state.copyWith(
+          creating: false,
+          failure: _failure(error, 'Unable to create the leave request.'),
+        ),
+      );
+      return LeaveMutationResult.failure;
+    }
+  }
+
+  Future<LeaveMutationResult> cancel(String requestId) async {
+    final scope = _scope;
+    if (scope == null) return LeaveMutationResult.failure;
+    if (state.cancellingIds.contains(requestId)) {
+      return LeaveMutationResult.busy;
+    }
+    final generation = _generation;
+    emit(
+      state.copyWith(
+        cancellingIds: {...state.cancellingIds, requestId},
+        clearFailure: true,
+      ),
+    );
+    try {
+      final record = await _repository.cancelMine(requestId);
+      if (!_scopeCurrent(scope, generation)) return LeaveMutationResult.stale;
+      if (record.id != requestId ||
+          record.workspaceId != scope.workspaceId ||
+          record.employeeMembershipId != scope.membershipId ||
+          record.status != LeaveRequestStatus.cancelled) {
+        _finishCancel(
+          requestId,
+          failure: const Failure(
+            message: 'The server returned an invalid cancellation response.',
+            kind: FailureKind.server,
+          ),
+        );
+        return LeaveMutationResult.failure;
+      }
+      _finishCancel(requestId, record: record);
+      return LeaveMutationResult.success;
+    } catch (error) {
+      if (!_scopeCurrent(scope, generation)) return LeaveMutationResult.stale;
+      _finishCancel(
+        requestId,
+        failure: _failure(error, 'Unable to cancel the leave request.'),
+      );
+      return LeaveMutationResult.failure;
+    }
+  }
+
   Future<LeaveRequestRecord?> loadDetails(String requestId) async {
     final scope = _scope;
     if (scope == null || state.detailLoading) return null;
     final generation = _generation;
     emit(state.copyWith(detailLoading: true, clearFailure: true));
     try {
-      final record = await _repository.getWorkspace(
-        scope.workspaceId,
-        requestId,
-      );
+      final record = await _repository.getMine(requestId);
       if (!_scopeCurrent(scope, generation) ||
-          record.workspaceId != scope.workspaceId) {
+          record.workspaceId != scope.workspaceId ||
+          record.employeeMembershipId != scope.membershipId) {
         if (_scopeCurrent(scope, generation)) {
           emit(state.copyWith(detailLoading: false));
         }
@@ -217,89 +316,50 @@ class LeaveRequestsCubit extends Cubit<LeaveRequestsState> {
     }
   }
 
-  Future<LeaveMutationResult> review(
-    String requestId,
-    LeaveReviewDecision decision, {
-    String? rejectionReason,
-  }) async {
-    final scope = _scope;
-    if (scope == null) return LeaveMutationResult.failure;
-    if (state.reviewingIds.contains(requestId)) return LeaveMutationResult.busy;
-    final reason = rejectionReason?.trim();
-    if (decision == LeaveReviewDecision.rejected &&
-        (reason == null || reason.isEmpty)) {
-      emit(
-        state.copyWith(
-          failure: const Failure(
-            message: 'A rejection reason is required.',
-            kind: FailureKind.validation,
-          ),
-        ),
+  static Failure? validate(CreateLeaveRequestInput input) {
+    if (input.type == LeaveRequestType.unknown) {
+      return const Failure(
+        message: 'Select a valid leave type.',
+        kind: FailureKind.validation,
       );
-      return LeaveMutationResult.failure;
     }
-    if ((reason?.length ?? 0) > 1000) {
-      emit(
-        state.copyWith(
-          failure: const Failure(
-            message: 'Rejection reason is too long.',
-            kind: FailureKind.validation,
-          ),
-        ),
+    if (!input.endsAt.isAfter(input.startsAt)) {
+      return const Failure(
+        message: 'Leave end must be after its start.',
+        kind: FailureKind.validation,
       );
-      return LeaveMutationResult.failure;
     }
-    final generation = _generation;
-    emit(
-      state.copyWith(
-        reviewingIds: {...state.reviewingIds, requestId},
-        clearFailure: true,
-      ),
-    );
-    try {
-      final record = await _repository.review(
-        scope.workspaceId,
-        requestId,
-        decision,
-        rejectionReason: reason,
+    if (!input.startsAt.isAfter(DateTime.now().toUtc())) {
+      return const Failure(
+        message: 'Leave must start in the future.',
+        kind: FailureKind.validation,
       );
-      if (!_scopeCurrent(scope, generation)) return LeaveMutationResult.stale;
-      final expected = decision == LeaveReviewDecision.approved
-          ? LeaveRequestStatus.approved
-          : LeaveRequestStatus.rejected;
-      if (record.workspaceId != scope.workspaceId ||
-          record.id != requestId ||
-          record.status != expected) {
-        _finishReview(
-          requestId,
-          failure: const Failure(
-            message: 'The server returned an invalid leave review response.',
-            kind: FailureKind.server,
-          ),
-        );
-        return LeaveMutationResult.failure;
-      }
-      _finishReview(requestId, record: record);
-      return LeaveMutationResult.success;
-    } catch (error) {
-      if (!_scopeCurrent(scope, generation)) return LeaveMutationResult.stale;
-      _finishReview(
-        requestId,
-        failure: _failure(error, 'Unable to review the leave request.'),
-      );
-      return LeaveMutationResult.failure;
     }
+    if (input.endsAt.difference(input.startsAt) > const Duration(days: 365)) {
+      return const Failure(
+        message: 'Leave cannot be longer than 365 days.',
+        kind: FailureKind.validation,
+      );
+    }
+    final reason = input.reason.trim();
+    if (reason.isEmpty || reason.length > 1000) {
+      return const Failure(
+        message: 'Enter a reason of up to 1000 characters.',
+        kind: FailureKind.validation,
+      );
+    }
+    return null;
   }
 
-  void _finishReview(
+  void _finishCancel(
     String requestId, {
     LeaveRequestRecord? record,
     Failure? failure,
   }) {
-    final reviewing = {...state.reviewingIds}..remove(requestId);
+    final cancelling = {...state.cancellingIds}..remove(requestId);
     emit(
       state.copyWith(
-        reviewingIds: reviewing,
+        cancellingIds: cancelling,
         requests: record == null
             ? state.requests
             : state.requests

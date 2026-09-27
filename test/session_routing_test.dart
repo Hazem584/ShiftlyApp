@@ -57,6 +57,7 @@ CurrentUser _routingUser(WorkspaceRole role) => CurrentUser(
   updatedAt: DateTime.utc(2026),
   memberships: [
     WorkspaceMembership(
+      id: 'membership',
       role: role,
       status: MembershipStatus.active,
       workspace: const Workspace(

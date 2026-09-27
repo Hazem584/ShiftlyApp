@@ -87,6 +87,7 @@ WorkspaceMembership _membership(
   WorkspaceRole role, {
   MembershipStatus status = MembershipStatus.active,
 }) => WorkspaceMembership(
+  id: 'membership-$id',
   role: role,
   status: status,
   workspace: Workspace(

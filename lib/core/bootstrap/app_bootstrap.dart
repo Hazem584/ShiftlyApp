@@ -7,6 +7,8 @@ import 'package:shiftly/features/auth/data/authentication_api_repository.dart';
 import 'package:shiftly/features/auth/data/supabase_authentication_service.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
+import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/invitations/data/invitation_repository.dart';
@@ -26,6 +28,7 @@ class AppDependencies {
     required this.workspaceRepository,
     required this.shiftRepository,
     required this.attendanceRepository,
+    required this.leaveRequestRepository,
   });
 
   final SessionCoordinator sessionCoordinator;
@@ -35,6 +38,7 @@ class AppDependencies {
   final WorkspaceRepository workspaceRepository;
   final ShiftRepository shiftRepository;
   final AttendanceRepository attendanceRepository;
+  final LeaveRequestRepository leaveRequestRepository;
 }
 
 abstract final class AppBootstrap {
@@ -69,6 +73,7 @@ abstract final class AppBootstrap {
     final workforceRepository = ApiWorkforceRepository(apiClient.dio);
     final shiftRepository = ApiShiftRepository(apiClient.dio);
     final attendanceRepository = ApiAttendanceRepository(apiClient.dio);
+    final leaveRequestRepository = ApiLeaveRequestRepository(apiClient.dio);
     return AppDependencies(
       sessionCoordinator: coordinator,
       profileRepository: profileRepository,
@@ -77,6 +82,7 @@ abstract final class AppBootstrap {
       workspaceRepository: workforceRepository,
       shiftRepository: shiftRepository,
       attendanceRepository: attendanceRepository,
+      leaveRequestRepository: leaveRequestRepository,
     );
   }
 }

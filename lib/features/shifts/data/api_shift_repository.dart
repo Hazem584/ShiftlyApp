@@ -53,13 +53,17 @@ class ApiShiftRepository implements ShiftRepository {
       );
 
   @override
-  Future<ShiftPage> listMyShifts(ShiftQuery query) => _request(() async {
-    final response = await _dio.get<Object?>(
-      '/shifts/me',
-      queryParameters: query.toQuery(includeEmployee: false),
-    );
-    return _page(response.data);
-  });
+  Future<ShiftPage> listMyShifts(String workspaceId, ShiftQuery query) =>
+      _request(() async {
+        final response = await _dio.get<Object?>(
+          '/shifts/me',
+          queryParameters: {
+            ...query.toQuery(includeEmployee: false),
+            'workspaceId': workspaceId,
+          },
+        );
+        return _page(response.data);
+      });
 
   @override
   Future<ShiftRecord> getMyShift(String shiftId) =>

@@ -47,6 +47,7 @@ class Workspace {
 
 class WorkspaceMembership {
   const WorkspaceMembership({
+    required this.id,
     required this.role,
     required this.status,
     required this.workspace,
@@ -54,6 +55,7 @@ class WorkspaceMembership {
     this.joinedAt,
   });
 
+  final String id;
   final WorkspaceRole role;
   final MembershipStatus status;
   final String? jobTitle;
@@ -64,6 +66,7 @@ class WorkspaceMembership {
     final workspace = json['workspace'];
     if (workspace is! Map) throw const FormatException('Invalid workspace');
     return WorkspaceMembership(
+      id: _requiredString(json, 'id'),
       role: WorkspaceRole.parse(json['role']),
       status: MembershipStatus.parse(json['status']),
       jobTitle: _optionalString(json['jobTitle']),

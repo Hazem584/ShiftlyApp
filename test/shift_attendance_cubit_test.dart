@@ -13,12 +13,14 @@ import 'package:shiftly/features/shifts/presentation/cubit/manager_shifts_cubit.
 const _managerScope = FeatureSessionScope(
   userId: 'manager-user',
   workspaceId: 'workspace-id',
+  membershipId: 'manager-membership-id',
   timezone: 'Africa/Cairo',
   role: WorkspaceRole.manager,
 );
 const _employeeScope = FeatureSessionScope(
   userId: 'employee-user',
   workspaceId: 'workspace-id',
+  membershipId: 'employee-membership-id',
   timezone: 'Africa/Cairo',
   role: WorkspaceRole.employee,
 );
@@ -86,7 +88,7 @@ class _ShiftFake implements ShiftRepository {
       listCompleter?.future ??
       Future.value(ShiftPage(data: [record], pagination: _pagination()));
   @override
-  Future<ShiftPage> listMyShifts(ShiftQuery query) async =>
+  Future<ShiftPage> listMyShifts(String workspaceId, ShiftQuery query) async =>
       ShiftPage(data: [record], pagination: _pagination());
   @override
   Future<ShiftRecord> getWorkspaceShift(
@@ -131,8 +133,10 @@ class _AttendanceFake implements AttendanceRepository {
     int limit = 20,
   }) async => AttendancePage(data: [_attendance()], pagination: _pagination());
   @override
-  Future<AttendancePage> listMyAttendance(AttendanceQuery query) async =>
-      AttendancePage(data: [_attendance()], pagination: _pagination());
+  Future<AttendancePage> listMyAttendance(
+    String workspaceId,
+    AttendanceQuery query,
+  ) async => AttendancePage(data: [_attendance()], pagination: _pagination());
   @override
   Future<AttendanceRecordApi> getWorkspaceAttendance(
     String workspaceId,

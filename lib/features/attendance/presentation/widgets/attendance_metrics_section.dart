@@ -13,7 +13,7 @@ class AttendanceMetricsSection extends StatelessWidget {
     children: [
       BlocBuilder<LeaveRequestsCubit, LeaveRequestsState>(
         builder: (context, state) {
-          final pending = state is LeaveRequestsLoaded ? state.pendingCount : 0;
+          final pending = state.pendingCount;
           return SurfaceCard(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(

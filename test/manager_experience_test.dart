@@ -110,6 +110,10 @@ void main() {
     await tester.tap(find.byKey(const Key('reject-leave-2')));
     await tester.pumpAndSettle();
     expect(find.text('Reject request?'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('rejection-reason')),
+      'Coverage is not available.',
+    );
     await tester.tap(find.byKey(const Key('confirm-reject')));
     await tester.pumpAndSettle();
     expect(find.text('Request rejected'), findsOneWidget);

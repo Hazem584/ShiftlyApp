@@ -27,7 +27,8 @@ class MockShiftRepository implements ShiftRepository {
   Future<ShiftRecord> getWorkspaceShift(String workspaceId, String shiftId) =>
       throw UnsupportedError('No preview shift');
   @override
-  Future<ShiftPage> listMyShifts(ShiftQuery query) async => _empty(query);
+  Future<ShiftPage> listMyShifts(String workspaceId, ShiftQuery query) async =>
+      _empty(query);
   @override
   Future<ShiftPage> listWorkspaceShifts(
     String workspaceId,

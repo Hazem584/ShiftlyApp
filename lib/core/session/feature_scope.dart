@@ -5,12 +5,14 @@ class FeatureSessionScope extends Equatable {
   const FeatureSessionScope({
     required this.userId,
     required this.workspaceId,
+    required this.membershipId,
     required this.timezone,
     required this.role,
   });
 
   final String userId;
   final String workspaceId;
+  final String membershipId;
   final String timezone;
   final WorkspaceRole role;
 
@@ -18,5 +20,11 @@ class FeatureSessionScope extends Equatable {
   bool get isEmployee => role == WorkspaceRole.employee;
 
   @override
-  List<Object?> get props => [userId, workspaceId, timezone, role];
+  List<Object?> get props => [
+    userId,
+    workspaceId,
+    membershipId,
+    timezone,
+    role,
+  ];
 }

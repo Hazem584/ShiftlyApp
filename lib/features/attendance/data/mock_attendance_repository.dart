@@ -32,8 +32,10 @@ class MockAttendanceRepository implements AttendanceRepository {
     int limit = 20,
   }) async => _empty(page, limit);
   @override
-  Future<AttendancePage> listMyAttendance(AttendanceQuery query) async =>
-      _empty(query.page, query.limit);
+  Future<AttendancePage> listMyAttendance(
+    String workspaceId,
+    AttendanceQuery query,
+  ) async => _empty(query.page, query.limit);
   @override
   Future<AttendancePage> listWorkspaceAttendance(
     String workspaceId,

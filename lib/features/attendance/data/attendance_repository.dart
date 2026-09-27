@@ -213,5 +213,8 @@ abstract interface class AttendanceRepository {
     AttendanceReviewDecision decision, {
     String? rejectionReason,
   });
-  Future<AttendancePage> listMyAttendance(AttendanceQuery query);
+  Future<AttendancePage> listMyAttendance(
+    String workspaceId,
+    AttendanceQuery query,
+  );
 }

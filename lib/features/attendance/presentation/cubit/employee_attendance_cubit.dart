@@ -97,6 +97,7 @@ class EmployeeAttendanceCubit extends Cubit<EmployeeAttendanceState> {
     );
     try {
       final page = await _repository.listMyAttendance(
+        scope.workspaceId,
         requested.copyWith(page: 1),
       );
       if (!_current(scope, generation, requestId)) return;
@@ -137,6 +138,7 @@ class EmployeeAttendanceCubit extends Cubit<EmployeeAttendanceState> {
     emit(previous.copyWith(loadingMore: true, clearFailure: true));
     try {
       final page = await _repository.listMyAttendance(
+        scope.workspaceId,
         previous.query.copyWith(page: previous.page + 1),
       );
       if (!_current(scope, generation, requestId)) return;

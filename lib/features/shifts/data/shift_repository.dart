@@ -346,6 +346,6 @@ abstract interface class ShiftRepository {
     UpdateShiftInput input,
   );
   Future<ShiftRecord> cancelShift(String workspaceId, String shiftId);
-  Future<ShiftPage> listMyShifts(ShiftQuery query);
+  Future<ShiftPage> listMyShifts(String workspaceId, ShiftQuery query);
   Future<ShiftRecord> getMyShift(String shiftId);
 }

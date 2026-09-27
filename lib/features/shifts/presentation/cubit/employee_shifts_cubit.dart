@@ -125,7 +125,10 @@ class EmployeeShiftsCubit extends Cubit<EmployeeShiftsState> {
           : EmployeeShiftsState(query: requested),
     );
     try {
-      final page = await _shifts.listMyShifts(requested.copyWith(page: 1));
+      final page = await _shifts.listMyShifts(
+        scope.workspaceId,
+        requested.copyWith(page: 1),
+      );
       if (!_current(scope, generation, requestId)) return;
       final records = page.data
           .where((item) => item.workspaceId == scope.workspaceId)
@@ -165,6 +168,7 @@ class EmployeeShiftsCubit extends Cubit<EmployeeShiftsState> {
     emit(previous.copyWith(loadingMore: true, clearFailure: true));
     try {
       final page = await _shifts.listMyShifts(
+        scope.workspaceId,
         previous.query.copyWith(page: previous.page + 1),
       );
       if (!_current(scope, generation, requestId)) return;

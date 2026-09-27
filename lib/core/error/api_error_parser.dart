@@ -107,6 +107,21 @@ abstract final class ApiErrorParser {
       'ATTENDANCE_ALREADY_REVIEWED' =>
         'This attendance request has already been reviewed.',
       'ATTENDANCE_NOT_FOUND' => 'That attendance record could not be found.',
+      'LEAVE_EMPLOYEE_NOT_ACTIVE' =>
+        'Only active employees can manage leave requests.',
+      'LEAVE_REQUEST_INVALID_TIME_RANGE' =>
+        'Leave end must be after its start.',
+      'LEAVE_REQUEST_TOO_LONG' =>
+        'A leave request cannot be longer than 365 days.',
+      'LEAVE_REQUEST_OVERLAP' =>
+        'This leave overlaps another pending or approved request.',
+      'LEAVE_REQUEST_NOT_FOUND' => 'That leave request could not be found.',
+      'LEAVE_REQUEST_ALREADY_REVIEWED' =>
+        'This leave request has already been reviewed.',
+      'LEAVE_REQUEST_ALREADY_CANCELLED' =>
+        'This leave request has already been cancelled.',
+      'LEAVE_REQUEST_NOT_PENDING' =>
+        'Only pending leave requests can be changed.',
       'REJECTION_REASON_REQUIRED' => 'Enter a reason for rejection.',
       'REJECTION_REASON_NOT_ALLOWED' =>
         'A rejection reason is only allowed when rejecting.',

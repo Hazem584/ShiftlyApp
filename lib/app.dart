@@ -15,6 +15,7 @@ import 'package:shiftly/features/attendance/data/attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_cubit.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
@@ -81,6 +82,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
   late final ProfileRepository _profile;
   late final ProfileImagePicker _profileImagePicker;
   late final LeaveRequestsCubit _leaveRequestsCubit;
+  late final EmployeeLeaveRequestsCubit _employeeLeaveRequestsCubit;
   late final ProfileCubit _profileCubit;
   late final ShiftRepository _shifts;
   late final AttendanceRepository _attendance;
@@ -129,7 +131,8 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
           ) ??
           const MembershipRefreshResult.failed(),
     );
-    _leaveRequestsCubit = LeaveRequestsCubit(_leaveRequests)..load();
+    _leaveRequestsCubit = LeaveRequestsCubit(_leaveRequests);
+    _employeeLeaveRequestsCubit = EmployeeLeaveRequestsCubit(_leaveRequests);
     _profileCubit = ProfileCubit(
       _profile,
       onProfileChanged: widget.sessionCoordinator?.synchronizeProfile,
@@ -149,11 +152,13 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
       const previewScope = FeatureSessionScope(
         userId: 'preview-user',
         workspaceId: 'preview-workspace',
+        membershipId: 'preview-membership',
         timezone: 'Etc/UTC',
         role: WorkspaceRole.manager,
       );
       _managerShiftsCubit.bindSession(previewScope);
       _managerAttendanceCubit.bindSession(previewScope);
+      _leaveRequestsCubit.bindSession(previewScope);
     } else {
       _sessionSubscription = coordinator.stream.listen(_bindSession);
       _bindSession(coordinator.state);
@@ -166,6 +171,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _employeesCubit.close();
     _workspacesCubit.close();
     _leaveRequestsCubit.close();
+    _employeeLeaveRequestsCubit.close();
     _profileCubit.close();
     _managerShiftsCubit.close();
     _employeeShiftsCubit.close();
@@ -197,6 +203,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
           BlocProvider.value(value: _employeesCubit),
           BlocProvider.value(value: _workspacesCubit),
           BlocProvider.value(value: _leaveRequestsCubit),
+          BlocProvider.value(value: _employeeLeaveRequestsCubit),
           BlocProvider.value(value: _profileCubit),
           BlocProvider.value(value: _managerShiftsCubit),
           BlocProvider.value(value: _employeeShiftsCubit),
@@ -229,6 +236,8 @@ class _ShiftlyAppState extends State<ShiftlyApp> {
     _employeeShiftsCubit.bindSession(featureScope);
     _managerAttendanceCubit.bindSession(featureScope);
     _employeeAttendanceCubit.bindSession(featureScope);
+    _leaveRequestsCubit.bindSession(featureScope);
+    _employeeLeaveRequestsCubit.bindSession(featureScope);
   }
 }
 
@@ -243,6 +252,7 @@ FeatureSessionScope? _featureScope(SessionState state) {
   return FeatureSessionScope(
     userId: user.id,
     workspaceId: membership.workspace.id,
+    membershipId: membership.id,
     timezone: membership.workspace.timezone,
     role: membership.role,
   );

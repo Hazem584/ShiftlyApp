@@ -92,7 +92,7 @@ Backend error envelopes, validation arrays, plain-text proxy failures, timeouts,
 
 The app retains its feature-first structure, repository injection, Cubits, GoRouter, theme, and custom toast. Shared integration code lives under `lib/core/config`, `error`, `network`, `session`, `storage`, and `utils`. Authentication owns its service wrapper, API repository, models, screens, and focused widgets under `lib/features/auth`.
 
-Production creates `ApiShiftRepository` and `ApiAttendanceRepository` with the existing authenticated Dio instance. Feature Cubits bind to the authenticated user, active workspace, active membership, and backend-confirmed role. A scope change clears data immediately and invalidates pending work. The mock shift and attendance repositories are limited to isolated tests and the no-session component preview entry point.
+Production creates `ApiShiftRepository`, `ApiAttendanceRepository`, and `ApiLeaveRequestRepository` with the existing authenticated Dio instance. Feature Cubits bind to the authenticated user, active workspace, active membership, and backend-confirmed role. A scope change clears data immediately and invalidates pending work. The mock repositories are limited to isolated tests and the no-session component preview entry point.
 
 Backend timestamps are parsed and stored as UTC. UI entry and display use the active workspace's IANA timezone through the maintained `timezone` package; device-local time is never treated as the workspace timezone or used as an official attendance timestamp.
 
@@ -124,6 +124,31 @@ Use two non-production accounts and an API client such as ApiDog against the sam
 
 ApiDog checks should use the same endpoint order where useful: create/list/detail shift, employee shift list/detail, rejected early Clock-in, successful Clock-in, pending attendance list/detail/review, employee attendance list, successful Clock-out, and final manager attendance list. Verify methods, IDs, UTC ISO-8601 bodies, pagination envelopes, canonical mutation responses, and `requestId` on deliberate failures.
 
+## Manual leave and multi-workspace regression
+
+Use two non-production accounts and ApiDog against the same test environment.
+
+1. Log in as a manager and select a workspace.
+2. Confirm the employee has an active membership in that workspace.
+3. Log in as the employee and select the same workspace.
+4. Open **Attendance & Leave**, choose **Leave**, and create a valid request.
+5. Confirm the canonical response appears as **Pending**.
+6. Log in as the manager and open **Attendance → Leave Requests**.
+7. Confirm the request appears only in the selected workspace.
+8. Approve the request and confirm the row changes only after the API succeeds.
+9. Refresh as the employee and confirm **Approved** appears.
+10. Create another employee request.
+11. Reject it as the manager with a non-empty reason.
+12. Refresh as the employee and confirm **Rejected** and the canonical reason appear.
+13. Create a pending request and cancel it as the employee.
+14. Attempt the cancellation again in ApiDog; confirm the backend safely rejects it as already cancelled/not pending according to its contract.
+15. Switch workspaces and confirm old leave, shift, and attendance data clears immediately.
+16. Log out User A and log in as User B without restarting; confirm no User A data appears.
+17. Create enough records for multiple pages and verify load-more results contain only the selected workspace.
+18. Exercise offline, timeout, validation, unauthorized, and already-reviewed responses; confirm retained lists and safe messages.
+19. In ApiDog, verify create/list/detail/cancel employee leave routes and list/detail/review manager routes, including pagination, UTC values, error codes, and `requestId`.
+20. With one employee active in two workspaces, call `/shifts/me`, `/attendance/me`, and `/leave-requests/me` using each `workspaceId`; verify page totals and every returned row belong only to that workspace.
+
 ## Verification
 
 ```sh
@@ -137,4 +162,4 @@ Automated tests use fakes and an in-memory Dio adapter; they never call producti
 
 ## Still mocked
 
-Dashboard summary cards, leave requests, notifications, and other features outside this sprint still use presentation mocks. Shift management, employee shifts, Clock-in/out, manager attendance review, and employee attendance history use API repositories in production. Employee and workspace management remain API-backed from the prior integration sprint. Mock repositories remain available only for isolated tests and no-session previews.
+Dashboard summary cards, notifications, and other features outside this sprint still use presentation mocks. Shift management, employee shifts, Clock-in/out, manager attendance review, employee attendance history, and employee/manager leave requests use API repositories in production. Employee and workspace management remain API-backed from the prior integration sprint. Mock repositories remain available only for isolated tests and no-session previews.

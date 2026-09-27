@@ -50,6 +50,7 @@ Map<String, Object?> _currentUser() => {
   ..._profile(),
   'memberships': [
     {
+      'id': 'manager-membership-id',
       'role': 'MANAGER',
       'status': 'ACTIVE',
       'jobTitle': 'Operations Manager',

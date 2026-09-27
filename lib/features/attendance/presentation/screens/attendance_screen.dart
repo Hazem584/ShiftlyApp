@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_state.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_metrics_section.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_tab_selector.dart';
@@ -47,7 +48,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         child: RefreshIndicator(
           onRefresh: _selectedTab == 0
               ? () => context.read<ManagerAttendanceCubit>().load(refresh: true)
-              : () async {},
+              : () => context.read<LeaveRequestsCubit>().load(refresh: true),
           child: ListView(
             key: const Key('attendance-content'),
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
@@ -66,7 +67,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               const SizedBox(height: AppSpacing.l),
               switch (_selectedTab) {
                 0 => ManagerAttendancePanel(timezone: widget.timezone),
-                1 => const LeaveRequestsPanel(),
+                1 => LeaveRequestsPanel(timezone: widget.timezone),
                 _ => const AttendanceCalendarState(),
               },
             ],

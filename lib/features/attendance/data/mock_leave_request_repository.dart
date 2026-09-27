@@ -1,65 +1,203 @@
-import 'package:shiftly/core/models/attendance_request.dart';
-import 'package:shiftly/core/models/leave_request.dart';
+import 'package:shiftly/core/network/api_model_parser.dart';
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
+import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/shifts/data/shift_repository.dart';
 
 class MockLeaveRequestRepository implements LeaveRequestRepository {
   MockLeaveRequestRepository({this.delay = Duration.zero})
     : _requests = [
-        LeaveRequest(
+        _request(
           id: 'leave-1',
           employeeId: 'emp-1',
-          employeeName: 'Mariam Hassan',
-          type: LeaveRequestType.leave,
-          startDate: DateTime(2026, 9, 24),
-          endDate: DateTime(2026, 9, 26),
+          name: 'Mariam Hassan',
+          type: LeaveRequestType.annualLeave,
           reason: 'Family event outside the city.',
-          status: RequestStatus.pending,
-          submittedAt: DateTime(2026, 9, 20, 9, 45),
         ),
-        LeaveRequest(
+        _request(
           id: 'leave-2',
           employeeId: 'emp-2',
-          employeeName: 'Omar Khaled',
-          type: LeaveRequestType.earlyDeparture,
-          startDate: DateTime(2026, 9, 22),
-          endDate: DateTime(2026, 9, 22),
+          name: 'Omar Khaled',
+          type: LeaveRequestType.earlyLeave,
           reason: 'Medical appointment at 3:30 PM.',
-          status: RequestStatus.pending,
-          submittedAt: DateTime(2026, 9, 19, 14, 10),
         ),
-        LeaveRequest(
+        _request(
           id: 'leave-3',
           employeeId: 'emp-3',
-          employeeName: 'Nour Adel',
-          type: LeaveRequestType.leave,
-          startDate: DateTime(2026, 9, 15),
-          endDate: DateTime(2026, 9, 15),
+          name: 'Nour Adel',
+          status: LeaveRequestStatus.approved,
           reason: 'Personal day.',
-          status: RequestStatus.approved,
-          submittedAt: DateTime(2026, 9, 12, 11, 30),
-          reviewedAt: DateTime(2026, 9, 12, 12, 5),
         ),
       ];
 
   final Duration delay;
-  final List<LeaveRequest> _requests;
+  final List<LeaveRequestRecord> _requests;
 
-  @override
-  Future<List<LeaveRequest>> getRequests() async {
+  Future<void> _wait() async {
     if (delay > Duration.zero) await Future<void>.delayed(delay);
-    return List.unmodifiable(_requests);
+  }
+
+  LeaveRequestPage _page(LeaveRequestQuery query) {
+    final filtered = _requests
+        .where((item) => query.status == null || item.status == query.status)
+        .toList(growable: false);
+    return LeaveRequestPage(
+      data: filtered,
+      pagination: _pagination(query, filtered.length),
+    );
   }
 
   @override
-  Future<LeaveRequest> updateStatus(String id, RequestStatus status) async {
-    if (delay > Duration.zero) await Future<void>.delayed(delay);
+  Future<LeaveRequestRecord> create(
+    String workspaceId,
+    CreateLeaveRequestInput input,
+  ) async {
+    await _wait();
+    final created = _request(
+      id: 'leave-created-${_requests.length}',
+      employeeId: 'preview-employee',
+      name: 'Preview Employee',
+      type: input.type,
+      reason: input.reason,
+      startsAt: input.startsAt,
+      endsAt: input.endsAt,
+      workspaceId: workspaceId,
+    );
+    _requests.insert(0, created);
+    return created;
+  }
+
+  @override
+  Future<LeaveRequestPage> listMine(
+    String workspaceId,
+    LeaveRequestQuery query,
+  ) async {
+    await _wait();
+    return _page(query);
+  }
+
+  @override
+  Future<LeaveRequestPage> listWorkspace(
+    String workspaceId,
+    LeaveRequestQuery query,
+  ) async {
+    await _wait();
+    return _page(query);
+  }
+
+  @override
+  Future<LeaveRequestRecord> getMine(String requestId) async {
+    await _wait();
+    return _find(requestId);
+  }
+
+  @override
+  Future<LeaveRequestRecord> getWorkspace(
+    String workspaceId,
+    String requestId,
+  ) async {
+    await _wait();
+    return _find(requestId);
+  }
+
+  @override
+  Future<LeaveRequestRecord> cancelMine(String requestId) async {
+    await _wait();
+    return _replace(
+      requestId,
+      status: LeaveRequestStatus.cancelled,
+      cancelledAt: DateTime.utc(2030, 1, 2),
+    );
+  }
+
+  @override
+  Future<LeaveRequestRecord> review(
+    String workspaceId,
+    String requestId,
+    LeaveReviewDecision decision, {
+    String? rejectionReason,
+  }) async {
+    await _wait();
+    return _replace(
+      requestId,
+      status: decision == LeaveReviewDecision.approved
+          ? LeaveRequestStatus.approved
+          : LeaveRequestStatus.rejected,
+      reviewedAt: DateTime.utc(2030, 1, 2),
+      rejectionReason: rejectionReason,
+    );
+  }
+
+  LeaveRequestRecord _find(String id) =>
+      _requests.firstWhere((request) => request.id == id);
+
+  LeaveRequestRecord _replace(
+    String id, {
+    required LeaveRequestStatus status,
+    DateTime? reviewedAt,
+    DateTime? cancelledAt,
+    String? rejectionReason,
+  }) {
     final index = _requests.indexWhere((request) => request.id == id);
     if (index < 0) throw StateError('Request not found');
-    final updated = _requests[index].copyWith(
+    final current = _requests[index];
+    final updated = LeaveRequestRecord(
+      id: current.id,
+      workspaceId: current.workspaceId,
+      employeeMembershipId: current.employeeMembershipId,
+      type: current.type,
       status: status,
-      reviewedAt: DateTime.now(),
+      startsAt: current.startsAt,
+      endsAt: current.endsAt,
+      reason: current.reason,
+      reviewedByMembershipId: reviewedAt == null ? null : 'manager-id',
+      reviewedAt: reviewedAt,
+      rejectionReason: rejectionReason,
+      cancelledAt: cancelledAt,
+      createdAt: current.createdAt,
+      updatedAt: reviewedAt ?? cancelledAt ?? current.updatedAt,
+      employee: current.employee,
     );
     _requests[index] = updated;
     return updated;
   }
 }
+
+LeaveRequestRecord _request({
+  required String id,
+  required String employeeId,
+  required String name,
+  required String reason,
+  LeaveRequestType type = LeaveRequestType.other,
+  LeaveRequestStatus status = LeaveRequestStatus.pending,
+  DateTime? startsAt,
+  DateTime? endsAt,
+  String workspaceId = 'preview-workspace',
+}) => LeaveRequestRecord(
+  id: id,
+  workspaceId: workspaceId,
+  employeeMembershipId: employeeId,
+  type: type,
+  status: status,
+  startsAt: startsAt ?? DateTime.utc(2030, 1, 10),
+  endsAt: endsAt ?? DateTime.utc(2030, 1, 11),
+  reason: reason,
+  reviewedAt: status == LeaveRequestStatus.pending
+      ? null
+      : DateTime.utc(2030, 1, 2),
+  createdAt: DateTime.utc(2030, 1, 1),
+  updatedAt: DateTime.utc(2030, 1, 1),
+  employee: ShiftEmployeeSummary(
+    membershipId: employeeId,
+    profileId: 'profile-$employeeId',
+    role: WorkspaceRole.employee,
+    membershipStatus: MembershipStatus.active,
+    fullName: name,
+  ),
+);
+
+ApiPagination _pagination(LeaveRequestQuery query, int total) => ApiPagination(
+  page: query.page,
+  limit: query.limit,
+  total: total,
+  totalPages: total == 0 ? 0 : (total / query.limit).ceil(),
+);
