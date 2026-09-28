@@ -13,6 +13,7 @@ import 'package:shiftly/features/auth/data/supabase_authentication_service.dart'
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
+import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
 
 class _RegistrationAuth implements AuthenticationService {
   final events = StreamController<AuthenticationEvent>.broadcast();
@@ -251,7 +252,10 @@ void main() {
       final setup = _coordinator(auth);
       await setup.coordinator.initialize();
       await tester.pumpWidget(
-        ShiftlyApp(sessionCoordinator: setup.coordinator),
+        ShiftlyApp(
+          sessionCoordinator: setup.coordinator,
+          notificationRepository: MockNotificationRepository(),
+        ),
       );
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
@@ -329,7 +333,12 @@ void main() {
       email: 'Invited@Example.Test',
       password: 'not-recorded',
     );
-    await tester.pumpWidget(ShiftlyApp(sessionCoordinator: setup.coordinator));
+    await tester.pumpWidget(
+      ShiftlyApp(
+        sessionCoordinator: setup.coordinator,
+        notificationRepository: MockNotificationRepository(),
+      ),
+    );
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     addTearDown(auth.events.close);
@@ -388,7 +397,12 @@ void main() {
       );
     final setup = _coordinator(auth);
     await setup.coordinator.initialize();
-    await tester.pumpWidget(ShiftlyApp(sessionCoordinator: setup.coordinator));
+    await tester.pumpWidget(
+      ShiftlyApp(
+        sessionCoordinator: setup.coordinator,
+        notificationRepository: MockNotificationRepository(),
+      ),
+    );
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     addTearDown(auth.events.close);

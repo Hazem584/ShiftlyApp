@@ -122,6 +122,7 @@ abstract final class ApiErrorParser {
         'This leave request has already been cancelled.',
       'LEAVE_REQUEST_NOT_PENDING' =>
         'Only pending leave requests can be changed.',
+      'NOTIFICATION_NOT_FOUND' => 'That notification is no longer available.',
       'REJECTION_REASON_REQUIRED' => 'Enter a reason for rejection.',
       'REJECTION_REASON_NOT_ALLOWED' =>
         'A rejection reason is only allowed when rejecting.',

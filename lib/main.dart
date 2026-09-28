@@ -20,6 +20,7 @@ Future<void> main() async {
         shiftRepository: dependencies.shiftRepository,
         attendanceRepository: dependencies.attendanceRepository,
         leaveRequestRepository: dependencies.leaveRequestRepository,
+        notificationRepository: dependencies.notificationRepository,
       ),
     );
     unawaited(dependencies.sessionCoordinator.initialize());

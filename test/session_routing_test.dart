@@ -11,6 +11,7 @@ import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:shiftly/features/invitations/data/invitation_repository.dart';
+import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
 import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
 
 class _RoutingAuth implements AuthenticationService {
@@ -78,7 +79,12 @@ Future<_RoutingAuth> _pumpRole(WidgetTester tester, WorkspaceRole role) async {
     MemoryActiveWorkspaceStorage(),
   );
   await coordinator.initialize();
-  await tester.pumpWidget(ShiftlyApp(sessionCoordinator: coordinator));
+  await tester.pumpWidget(
+    ShiftlyApp(
+      sessionCoordinator: coordinator,
+      notificationRepository: MockNotificationRepository(),
+    ),
+  );
   await tester.pump(const Duration(seconds: 1));
   await tester.pumpAndSettle();
   addTearDown(auth.events.close);
@@ -107,6 +113,7 @@ Future<(_RoutingAuth, _AcceptingInvitations)> _pumpNoWorkspace(
     ShiftlyApp(
       sessionCoordinator: coordinator,
       invitationRepository: invitations,
+      notificationRepository: MockNotificationRepository(),
     ),
   );
   await tester.pumpAndSettle();
@@ -119,6 +126,14 @@ void main() {
     await _pumpRole(tester, WorkspaceRole.manager);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsOneWidget);
     expect(find.textContaining('Good morning'), findsOneWidget);
+    expect(find.byKey(const Key('notification-bell')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('notification-badge')),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('backend employee role opens only the employee shell', (
@@ -127,6 +142,14 @@ void main() {
     await _pumpRole(tester, WorkspaceRole.employee);
     expect(find.text('Employee workspace'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
+    expect(find.byKey(const Key('notification-bell')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('notification-badge')),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('logout replaces protected manager navigation with login', (

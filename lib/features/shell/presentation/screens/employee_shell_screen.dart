@@ -3,16 +3,33 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/attendance/presentation/screens/employee_attendance_screen.dart';
 import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
+import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 
 class EmployeeShellScreen extends StatefulWidget {
-  const EmployeeShellScreen({super.key});
+  const EmployeeShellScreen({this.initialTab = 0, super.key});
+
+  final int initialTab;
 
   @override
   State<EmployeeShellScreen> createState() => _EmployeeShellScreenState();
 }
 
 class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
-  var _selectedIndex = 0;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialTab;
+  }
+
+  @override
+  void didUpdateWidget(covariant EmployeeShellScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTab != widget.initialTab) {
+      _selectedIndex = widget.initialTab;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +37,7 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
       appBar: AppBar(
         title: const Text('Employee workspace'),
         actions: [
+          const NotificationBell(),
           IconButton(
             key: const Key('employee-logout'),
             onPressed: context.read<SessionCoordinator>().signOut,

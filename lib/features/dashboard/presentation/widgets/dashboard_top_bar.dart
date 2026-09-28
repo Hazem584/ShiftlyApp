@@ -4,6 +4,7 @@ import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_avatar.dart';
+import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 
 class DashboardTopBar extends StatelessWidget {
   const DashboardTopBar({super.key});
@@ -38,14 +39,7 @@ class DashboardTopBar extends StatelessWidget {
           ],
         ),
       ),
-      IconButton(
-        onPressed: () {},
-        tooltip: 'Notifications',
-        icon: const Badge(
-          smallSize: 7,
-          child: Icon(Icons.notifications_none_rounded),
-        ),
-      ),
+      const NotificationBell(),
       BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) => state is ProfileLoaded
             ? ProfileAvatar(profile: state.profile, radius: 19)

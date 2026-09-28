@@ -92,7 +92,7 @@ Backend error envelopes, validation arrays, plain-text proxy failures, timeouts,
 
 The app retains its feature-first structure, repository injection, Cubits, GoRouter, theme, and custom toast. Shared integration code lives under `lib/core/config`, `error`, `network`, `session`, `storage`, and `utils`. Authentication owns its service wrapper, API repository, models, screens, and focused widgets under `lib/features/auth`.
 
-Production creates `ApiShiftRepository`, `ApiAttendanceRepository`, and `ApiLeaveRequestRepository` with the existing authenticated Dio instance. Feature Cubits bind to the authenticated user, active workspace, active membership, and backend-confirmed role. A scope change clears data immediately and invalidates pending work. The mock repositories are limited to isolated tests and the no-session component preview entry point.
+Production creates `ApiShiftRepository`, `ApiAttendanceRepository`, `ApiLeaveRequestRepository`, and `ApiNotificationRepository` with the existing authenticated Dio instance. Feature Cubits bind to the authenticated user, active workspace, active membership, and backend-confirmed role. A scope change clears data immediately and invalidates pending work. The mock repositories are limited to isolated tests and the no-session component preview entry point.
 
 Backend timestamps are parsed and stored as UTC. UI entry and display use the active workspace's IANA timezone through the maintained `timezone` package; device-local time is never treated as the workspace timezone or used as an official attendance timestamp.
 
@@ -149,6 +149,33 @@ Use two non-production accounts and ApiDog against the same test environment.
 19. In ApiDog, verify create/list/detail/cancel employee leave routes and list/detail/review manager routes, including pagination, UTC values, error codes, and `requestId`.
 20. With one employee active in two workspaces, call `/shifts/me`, `/attendance/me`, and `/leave-requests/me` using each `workspaceId`; verify page totals and every returned row belong only to that workspace.
 
+## Manual notifications regression
+
+Use two non-production accounts in the same workspace. Existing backend shift, attendance, and leave mutations create notifications automatically; there is no public create-notification endpoint. ApiDog should call the business endpoint that produces each event, then inspect the recipient's notification endpoints with that recipient's temporary token.
+
+1. Log in as the manager, select the test workspace, and note the notification badge.
+2. Log in as the employee in a separate test session and note the employee badge.
+3. In ApiDog, call `GET /api/v1/notifications/unread-count` as each account and compare the global count with its Flutter badge.
+4. Create a shift as the manager; confirm the employee receives `SHIFT_ASSIGNED` with `shiftId` and `employeeMembershipId`.
+5. Update that shift; confirm the employee receives `SHIFT_UPDATED` with the same payload keys.
+6. Cancel a scheduled test shift; confirm the employee receives `SHIFT_CANCELLED`.
+7. Clock in as the employee; confirm active managers receive `ATTENDANCE_CLOCKED_IN` with `attendanceId` and `employeeMembershipId`.
+8. Clock out as the employee; confirm active managers receive `ATTENDANCE_CLOCKED_OUT` with the same payload keys.
+9. Create leave as the employee; confirm active managers receive `LEAVE_REQUEST_CREATED` with `leaveRequestId` and `employeeMembershipId`.
+10. Approve a leave request; confirm the employee receives `LEAVE_REQUEST_APPROVED` with `leaveRequestId` and `reviewedByMembershipId`.
+11. Reject another request; confirm `LEAVE_REQUEST_REJECTED` also carries the canonical `rejectionReason`.
+12. Open an unread Flutter notification; confirm `PATCH /api/v1/notifications/{notificationId}/read` succeeds, the row changes style, and the badge refreshes.
+13. Use **Mark all read**; confirm `PATCH /api/v1/notifications/read-all` sends the active `workspaceId`, reloads canonical rows, and refreshes the global badge.
+14. Delete a test notification after confirmation; verify `DELETE /api/v1/notifications/{notificationId}` returns `{ "deleted": true }` before the row disappears.
+15. Generate more than 20 records and verify `GET /api/v1/notifications?page=2&limit=20&workspaceId=...` and Flutter **Load more** deduplicate rows.
+16. Pull to refresh and confirm existing rows remain visible if the refresh is deliberately failed.
+17. Open a known notification and confirm it verifies the canonical destination, then routes to Shifts, Attendance, or Leave for the current role.
+18. Seed an unknown notification type only in an isolated non-production fixture; confirm neutral presentation, read/delete support, and no navigation.
+19. Test a malformed payload ID and a deleted target; confirm Flutter stays on Notifications and shows a safe unavailable message.
+20. Switch workspaces; confirm the old list clears immediately and only the selected workspace's rows load. The unread-count endpoint is global by backend contract, so the badge may include other workspaces.
+21. Log out User A and log in as User B without restarting; confirm no User A rows appear.
+22. Exercise offline, timeout, final `401`, `403`, `404`, `429`, and `502` responses; verify safe messages, retained rows where applicable, and sign-out only after the existing refresh pipeline confirms session expiry.
+
 ## Verification
 
 ```sh
@@ -162,4 +189,4 @@ Automated tests use fakes and an in-memory Dio adapter; they never call producti
 
 ## Still mocked
 
-Dashboard summary cards, notifications, and other features outside this sprint still use presentation mocks. Shift management, employee shifts, Clock-in/out, manager attendance review, employee attendance history, and employee/manager leave requests use API repositories in production. Employee and workspace management remain API-backed from the prior integration sprint. Mock repositories remain available only for isolated tests and no-session previews.
+Dashboard summary cards and other features outside these integration sprints still use presentation mocks. Shift management, employee shifts, Clock-in/out, manager attendance review, employee attendance history, employee/manager leave requests, and notifications use API repositories in production. Employee and workspace management remain API-backed from the prior integration sprint. Mock repositories remain available only for isolated tests and no-session previews.

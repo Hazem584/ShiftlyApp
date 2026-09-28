@@ -57,7 +57,13 @@ GoRouter createAppRouter({
       path: '/session-error',
       builder: (_, _) => const SessionStatusScreen.failure(),
     ),
-    GoRoute(path: '/employee', builder: (_, _) => const EmployeeShellScreen()),
+    GoRoute(
+      path: '/employee',
+      builder: (_, state) => EmployeeShellScreen(
+        key: ValueKey(state.uri.queryParameters['tab']),
+        initialTab: state.uri.queryParameters['tab'] == 'leave' ? 1 : 0,
+      ),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, shell) => ShellScreen(navigationShell: shell),
       branches: [
