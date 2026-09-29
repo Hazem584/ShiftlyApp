@@ -6,7 +6,7 @@ import 'package:shiftly/features/dashboard/presentation/widgets/summary_card.dar
 
 class DashboardMetricsGrid extends StatelessWidget {
   const DashboardMetricsGrid({required this.data, super.key});
-  final DashboardData data;
+  final ManagerDashboardData data;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -20,40 +20,40 @@ class DashboardMetricsGrid extends StatelessWidget {
             width: width,
             child: SummaryCard(
               label: 'Total employees',
-              value: data.totalEmployees,
+              value: data.summary.totalEmployees,
               icon: Icons.groups_outlined,
               color: AppColors.ink,
-              caption: 'Shift Lab team',
+              caption: 'Active employees',
             ),
           ),
           SizedBox(
             width: width,
             child: SummaryCard(
-              label: 'Present today',
-              value: data.presentEmployees,
+              label: 'Scheduled today',
+              value: data.summary.scheduledToday,
               icon: Icons.person_rounded,
               color: AppColors.success,
-              caption: 'Checked in',
+              caption: 'Non-cancelled shifts',
             ),
           ),
           SizedBox(
             width: width,
             child: SummaryCard(
-              label: 'Absent',
-              value: data.absentEmployees,
-              icon: Icons.person_off_outlined,
-              color: AppColors.error,
-              caption: 'Today',
+              label: 'Clocked in now',
+              value: data.summary.clockedInNow,
+              icon: Icons.login_rounded,
+              color: AppColors.success,
+              caption: 'Open attendance',
             ),
           ),
           SizedBox(
             width: width,
             child: SummaryCard(
-              label: 'Late',
-              value: data.lateEmployees,
-              icon: Icons.schedule_rounded,
-              color: AppColors.warning,
-              caption: 'Needs review',
+              label: 'Completed today',
+              value: data.summary.completedToday,
+              icon: Icons.task_alt_rounded,
+              color: AppColors.teal,
+              caption: 'Clocked out',
             ),
           ),
         ],

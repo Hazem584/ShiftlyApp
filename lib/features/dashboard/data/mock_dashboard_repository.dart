@@ -1,5 +1,3 @@
-import 'package:shiftly/core/models/attendance_record.dart';
-import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 
@@ -8,74 +6,69 @@ class MockDashboardRepository implements DashboardRepository {
     required this.employeeRepository,
     this.delay = const Duration(milliseconds: 550),
     this.shouldFail = false,
+    this.timezone = 'Etc/UTC',
+    this.employeeMembershipId = '040e52de-05b9-46b8-80ca-e7df3ef7444b',
   });
 
   final EmployeeRepository employeeRepository;
   final Duration delay;
   final bool shouldFail;
+  final String timezone;
+  final String employeeMembershipId;
 
-  @override
-  Future<DashboardData> getDashboard() async {
+  Future<void> _prepare() async {
     if (delay > Duration.zero) await Future<void>.delayed(delay);
     if (shouldFail) throw Exception('Unable to load dashboard');
+  }
+
+  @override
+  Future<ManagerDashboardData> getManagerDashboard(String workspaceId) async {
+    await _prepare();
     final employees = await employeeRepository.getEmployees();
-    final now = DateTime.now();
-    final currentShift = employeeRepository.availableShifts.first;
-    if (employees.isEmpty) {
-      return DashboardData(
-        totalEmployees: 0,
-        presentEmployees: 0,
-        absentEmployees: 0,
-        lateEmployees: 0,
-        pendingRequests: 0,
-        recentActivity: const [],
-        currentShift: currentShift,
-        currentShiftEmployees: 0,
-      );
-    }
-    final attended = employees
-        .where(
-          (employee) => employee.attendanceStatus != AttendanceStatus.absent,
-        )
-        .take(3)
-        .toList();
-    return DashboardData(
-      totalEmployees: employees.length,
-      presentEmployees: employees
-          .where(
-            (employee) => employee.attendanceStatus == AttendanceStatus.present,
-          )
-          .length,
-      absentEmployees: employees
-          .where(
-            (employee) => employee.attendanceStatus == AttendanceStatus.absent,
-          )
-          .length,
-      lateEmployees: employees
-          .where(
-            (employee) => employee.attendanceStatus == AttendanceStatus.late,
-          )
-          .length,
-      pendingRequests: 3,
-      currentShift: currentShift,
-      currentShiftEmployees: 3,
-      recentActivity: List.generate(attended.length, (index) {
-        final employee = attended[index];
-        return AttendanceRecord(
-          id: 'record-${index + 1}',
-          employeeId: employee.id,
-          employeeName: employee.displayName,
-          occurredAt: DateTime(
-            now.year,
-            now.month,
-            now.day,
-            7,
-            56 + (index * 9),
-          ),
-          isCheckIn: true,
-          isLate: employee.attendanceStatus == AttendanceStatus.late,
-        );
-      }),
+    final now = DateTime.now().toUtc();
+    return ManagerDashboardData(
+      date: _date(now),
+      timezone: timezone,
+      generatedAt: now,
+      summary: ManagerDashboardSummary(
+        totalEmployees: employees.length,
+        scheduledToday: 0,
+        clockedInNow: 0,
+        completedToday: 0,
+        lateToday: 0,
+        missedToday: 0,
+        onApprovedLeave: 0,
+        pendingLeaveRequests: 0,
+        unreadNotifications: 0,
+      ),
+      todayShifts: const [],
+      pendingLeaveRequests: const [],
+    );
+  }
+
+  @override
+  Future<EmployeeDashboardData> getEmployeeDashboard(String workspaceId) async {
+    await _prepare();
+    final now = DateTime.now().toUtc();
+    return EmployeeDashboardData(
+      date: _date(now),
+      timezone: timezone,
+      generatedAt: now,
+      employee: EmployeeDashboardIdentity(
+        membershipId: employeeMembershipId,
+        fullName: 'Preview employee',
+      ),
+      summary: const EmployeeDashboardSummary(
+        pendingLeaveRequests: 0,
+        approvedLeaveRequests: 0,
+        unreadNotifications: 0,
+      ),
+      recentLeaveRequests: const [],
     );
   }
 }
+
+String _date(DateTime value) =>
+    '${value.year.toString().padLeft(4, '0')}-'
+    '${value.month.toString().padLeft(2, '0')}-'
+    '${value.day.toString().padLeft(2, '0')}';

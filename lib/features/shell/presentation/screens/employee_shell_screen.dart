@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/attendance/presentation/screens/employee_attendance_screen.dart';
+import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
 import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 
@@ -49,7 +50,11 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
-          children: const [EmployeeShiftsScreen(), EmployeeAttendanceScreen()],
+          children: const [
+            EmployeeDashboardScreen(),
+            EmployeeShiftsScreen(),
+            EmployeeAttendanceScreen(),
+          ],
         ),
       ),
       bottomNavigationBar: NavigationBar(
@@ -58,6 +63,11 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
         onDestinationSelected: (index) =>
             setState(() => _selectedIndex = index),
         destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Overview',
+          ),
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
             selectedIcon: Icon(Icons.calendar_month_rounded),

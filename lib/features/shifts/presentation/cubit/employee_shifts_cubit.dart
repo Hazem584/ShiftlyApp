@@ -93,11 +93,13 @@ class EmployeeShiftsCubit extends Cubit<EmployeeShiftsState> {
     this._shifts,
     this._attendance, {
     this.onAttendanceChanged,
+    this.onDashboardChanged,
   }) : super(const EmployeeShiftsState());
 
   final ShiftRepository _shifts;
   final AttendanceRepository _attendance;
   final Future<void> Function()? onAttendanceChanged;
+  final void Function()? onDashboardChanged;
   FeatureSessionScope? _scope;
   var _generation = 0;
   var _requestId = 0;
@@ -292,6 +294,7 @@ class EmployeeShiftsCubit extends Cubit<EmployeeShiftsState> {
         selected: selected,
       );
       await onAttendanceChanged?.call();
+      onDashboardChanged?.call();
       return ClockMutationResult.success;
     } catch (error) {
       if (!_scopeCurrent(scope, generation)) return ClockMutationResult.stale;

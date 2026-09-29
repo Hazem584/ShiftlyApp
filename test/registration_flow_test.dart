@@ -14,6 +14,8 @@ import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
+import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
+import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 
 class _RegistrationAuth implements AuthenticationService {
   final events = StreamController<AuthenticationEvent>.broadcast();
@@ -255,6 +257,10 @@ void main() {
         ShiftlyApp(
           sessionCoordinator: setup.coordinator,
           notificationRepository: MockNotificationRepository(),
+          dashboardRepository: MockDashboardRepository(
+            employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+            delay: Duration.zero,
+          ),
         ),
       );
       await tester.pump(const Duration(seconds: 1));
@@ -337,6 +343,10 @@ void main() {
       ShiftlyApp(
         sessionCoordinator: setup.coordinator,
         notificationRepository: MockNotificationRepository(),
+        dashboardRepository: MockDashboardRepository(
+          employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+          delay: Duration.zero,
+        ),
       ),
     );
     await tester.pump(const Duration(seconds: 1));
@@ -401,6 +411,10 @@ void main() {
       ShiftlyApp(
         sessionCoordinator: setup.coordinator,
         notificationRepository: MockNotificationRepository(),
+        dashboardRepository: MockDashboardRepository(
+          employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+          delay: Duration.zero,
+        ),
       ),
     );
     await tester.pump(const Duration(seconds: 1));

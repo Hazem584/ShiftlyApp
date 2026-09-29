@@ -61,7 +61,11 @@ GoRouter createAppRouter({
       path: '/employee',
       builder: (_, state) => EmployeeShellScreen(
         key: ValueKey(state.uri.queryParameters['tab']),
-        initialTab: state.uri.queryParameters['tab'] == 'leave' ? 1 : 0,
+        initialTab: switch (state.uri.queryParameters['tab']) {
+          'shifts' => 1,
+          'attendance' || 'leave' => 2,
+          _ => 0,
+        },
       ),
     ),
     StatefulShellRoute.indexedStack(

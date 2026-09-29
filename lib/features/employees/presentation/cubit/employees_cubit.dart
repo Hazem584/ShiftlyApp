@@ -122,11 +122,12 @@ final class EmployeesError extends EmployeesState {
 }
 
 class EmployeesCubit extends Cubit<EmployeesState> {
-  EmployeesCubit(this._repository, {this.invitations})
+  EmployeesCubit(this._repository, {this.invitations, this.onDashboardChanged})
     : super(const EmployeesLoading());
 
   final EmployeeRepository _repository;
   final InvitationRepository? invitations;
+  final void Function()? onDashboardChanged;
   EmployeeSessionScope? _scope;
   var _generation = 0;
   var _requestId = 0;
@@ -315,6 +316,7 @@ class EmployeesCubit extends Cubit<EmployeesState> {
           clearMutatingMembership: true,
         ),
       );
+      onDashboardChanged?.call();
       return EmployeeOperationResult.success;
     } catch (error) {
       if (!_isScopeCurrent(scope, generation)) {
@@ -333,6 +335,7 @@ class EmployeesCubit extends Cubit<EmployeesState> {
   Future<void> add(Employee employee) async {
     await _repository.addEmployee(employee);
     await load();
+    onDashboardChanged?.call();
   }
 
   Future<List<WorkspaceInvitation>> _loadPending(String workspaceId) async {

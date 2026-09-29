@@ -11,6 +11,8 @@ import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:shiftly/features/invitations/data/invitation_repository.dart';
+import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
+import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
 import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
 
@@ -53,16 +55,16 @@ class _RoutingRepository implements AuthenticationRepository {
 }
 
 CurrentUser _routingUser(WorkspaceRole role) => CurrentUser(
-  id: 'profile',
+  id: '4f6c53d3-8518-44d8-813e-b915cc93d203',
   createdAt: DateTime.utc(2026),
   updatedAt: DateTime.utc(2026),
   memberships: [
     WorkspaceMembership(
-      id: 'membership',
+      id: '040e52de-05b9-46b8-80ca-e7df3ef7444b',
       role: role,
       status: MembershipStatus.active,
       workspace: const Workspace(
-        id: 'workspace',
+        id: 'c551356a-e456-4a3e-a49a-9dd0caa7e790',
         name: 'Cairo Operations',
         code: 'CAIRO',
         timezone: 'Africa/Cairo',
@@ -83,6 +85,11 @@ Future<_RoutingAuth> _pumpRole(WidgetTester tester, WorkspaceRole role) async {
     ShiftlyApp(
       sessionCoordinator: coordinator,
       notificationRepository: MockNotificationRepository(),
+      dashboardRepository: MockDashboardRepository(
+        employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+        delay: Duration.zero,
+        timezone: 'Africa/Cairo',
+      ),
     ),
   );
   await tester.pump(const Duration(seconds: 1));
@@ -114,6 +121,10 @@ Future<(_RoutingAuth, _AcceptingInvitations)> _pumpNoWorkspace(
       sessionCoordinator: coordinator,
       invitationRepository: invitations,
       notificationRepository: MockNotificationRepository(),
+      dashboardRepository: MockDashboardRepository(
+        employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+        delay: Duration.zero,
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -141,6 +152,8 @@ void main() {
   ) async {
     await _pumpRole(tester, WorkspaceRole.employee);
     expect(find.text('Employee workspace'), findsOneWidget);
+    expect(find.text('Hello, Preview employee'), findsOneWidget);
+    expect(find.text('Overview'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
     expect(find.byKey(const Key('notification-bell')), findsOneWidget);
     expect(

@@ -11,6 +11,8 @@ import 'package:shiftly/features/attendance/data/api_leave_request_repository.da
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/dashboard/data/api_dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/invitations/data/invitation_repository.dart';
 import 'package:shiftly/features/notifications/data/api_notification_repository.dart';
 import 'package:shiftly/features/notifications/data/notification_repository.dart';
@@ -32,6 +34,7 @@ class AppDependencies {
     required this.attendanceRepository,
     required this.leaveRequestRepository,
     required this.notificationRepository,
+    required this.dashboardRepository,
   });
 
   final SessionCoordinator sessionCoordinator;
@@ -43,6 +46,7 @@ class AppDependencies {
   final AttendanceRepository attendanceRepository;
   final LeaveRequestRepository leaveRequestRepository;
   final NotificationRepository notificationRepository;
+  final DashboardRepository dashboardRepository;
 }
 
 abstract final class AppBootstrap {
@@ -79,6 +83,7 @@ abstract final class AppBootstrap {
     final attendanceRepository = ApiAttendanceRepository(apiClient.dio);
     final leaveRequestRepository = ApiLeaveRequestRepository(apiClient.dio);
     final notificationRepository = ApiNotificationRepository(apiClient.dio);
+    final dashboardRepository = ApiDashboardRepository(apiClient.dio);
     return AppDependencies(
       sessionCoordinator: coordinator,
       profileRepository: profileRepository,
@@ -89,6 +94,7 @@ abstract final class AppBootstrap {
       attendanceRepository: attendanceRepository,
       leaveRequestRepository: leaveRequestRepository,
       notificationRepository: notificationRepository,
+      dashboardRepository: dashboardRepository,
     );
   }
 }

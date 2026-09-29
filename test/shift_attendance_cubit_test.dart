@@ -159,6 +159,27 @@ class _AttendanceFake implements AttendanceRepository {
 }
 
 void main() {
+  test('confirmed shift creation invalidates the dashboard once', () async {
+    var dashboardRefreshes = 0;
+    final cubit = ManagerShiftsCubit(
+      _ShiftFake(),
+      onDashboardChanged: () => dashboardRefreshes += 1,
+    )..bindSession(_managerScope);
+    addTearDown(cubit.close);
+    await cubit.stream.firstWhere((state) => !state.initialLoading);
+    final result = await cubit.create(
+      CreateShiftInput(
+        employeeMembershipId: 'membership-id',
+        startsAt: DateTime.utc(2030, 1, 1, 6),
+        endsAt: DateTime.utc(2030, 1, 1, 14),
+        breakMinutes: 30,
+        graceMinutes: 10,
+      ),
+    );
+    expect(result, ShiftMutationResult.success);
+    expect(dashboardRefreshes, 1);
+  });
+
   test('logout invalidates an in-flight manager shift response', () async {
     final completer = Completer<ShiftPage>();
     final cubit = ManagerShiftsCubit(_ShiftFake(listCompleter: completer));
@@ -196,7 +217,12 @@ void main() {
   test('clock-in prevents duplicates and applies canonical response', () async {
     final shifts = _ShiftFake();
     final attendance = _AttendanceFake();
-    final cubit = EmployeeShiftsCubit(shifts, attendance);
+    var dashboardRefreshes = 0;
+    final cubit = EmployeeShiftsCubit(
+      shifts,
+      attendance,
+      onDashboardChanged: () => dashboardRefreshes += 1,
+    );
     addTearDown(cubit.close);
     cubit.bindSession(_employeeScope);
     await cubit.stream.firstWhere((state) => !state.initialLoading);
@@ -208,13 +234,18 @@ void main() {
     expect(await first, ClockMutationResult.success);
     expect(cubit.state.records.single.attendance?.id, 'attendance-id');
     expect(cubit.state.clockingInIds, isEmpty);
+    expect(dashboardRefreshes, 1);
   });
 
   test(
     'attendance review requires a reason and removes approved request',
     () async {
       final repository = _AttendanceFake();
-      final cubit = ManagerAttendanceCubit(repository);
+      var dashboardRefreshes = 0;
+      final cubit = ManagerAttendanceCubit(
+        repository,
+        onDashboardChanged: () => dashboardRefreshes += 1,
+      );
       addTearDown(cubit.close);
       cubit.bindSession(_managerScope);
       await cubit.stream.firstWhere((state) => !state.initialLoading);
@@ -226,6 +257,7 @@ void main() {
       );
       expect(invalid, AttendanceMutationResult.failure);
       expect(repository.reviewCalls, 0);
+      expect(dashboardRefreshes, 0);
 
       final approved = await cubit.review(
         'attendance-id',
@@ -237,6 +269,7 @@ void main() {
         cubit.state.records.single.reviewStatus,
         AttendanceReviewStatus.approved,
       );
+      expect(dashboardRefreshes, 1);
     },
   );
 }

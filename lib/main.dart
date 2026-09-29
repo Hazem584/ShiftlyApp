@@ -21,6 +21,7 @@ Future<void> main() async {
         attendanceRepository: dependencies.attendanceRepository,
         leaveRequestRepository: dependencies.leaveRequestRepository,
         notificationRepository: dependencies.notificationRepository,
+        dashboardRepository: dependencies.dashboardRepository,
       ),
     );
     unawaited(dependencies.sessionCoordinator.initialize());

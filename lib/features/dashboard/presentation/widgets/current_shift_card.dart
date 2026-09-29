@@ -4,75 +4,71 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 
-class CurrentShiftCard extends StatelessWidget {
-  const CurrentShiftCard({required this.data, super.key});
-  final DashboardData data;
+class DashboardDayStatusCard extends StatelessWidget {
+  const DashboardDayStatusCard({required this.data, super.key});
+  final ManagerDashboardData data;
 
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text('Current shift', style: Theme.of(context).textTheme.titleLarge),
+      Text('Today at a glance', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: AppSpacing.s),
       SurfaceCard(
-        child: Row(
+        child: Wrap(
+          spacing: 20,
+          runSpacing: 14,
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: .1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.wb_sunny_outlined,
-                color: AppColors.orange,
-                size: 22,
-              ),
+            _Value(
+              label: 'Late',
+              value: data.summary.lateToday,
+              color: AppColors.warning,
             ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    data.currentShift.name,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    data.currentShift.timeRange,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+            _Value(
+              label: 'Missed',
+              value: data.summary.missedToday,
+              color: AppColors.error,
             ),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.successSoft,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                child: Text(
-                  '${data.currentShiftEmployees} on shift',
-                  style: const TextStyle(
-                    color: AppColors.success,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+            _Value(
+              label: 'On approved leave',
+              value: data.summary.onApprovedLeave,
+              color: AppColors.teal,
             ),
           ],
         ),
       ),
     ],
+  );
+}
+
+class _Value extends StatelessWidget {
+  const _Value({required this.label, required this.value, required this.color});
+
+  final String label;
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 90,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            '$value',
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(color: color),
+          ),
+        ),
+        Text(
+          label,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+        ),
+      ],
+    ),
   );
 }

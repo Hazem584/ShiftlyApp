@@ -44,7 +44,14 @@ class SummaryCard extends StatelessWidget {
               ],
             ),
             const Spacer(),
-            Text('$value', style: Theme.of(context).textTheme.headlineSmall),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '$value',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+            ),
             if (caption != null)
               Text(
                 caption!,

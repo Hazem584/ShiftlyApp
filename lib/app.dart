@@ -108,7 +108,13 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
     _workspaces = widget.workspaceRepository ?? MockWorkspaceRepository();
     final dashboard =
         widget.dashboardRepository ??
-        MockDashboardRepository(employeeRepository: MockEmployeeRepository());
+        (widget.sessionCoordinator == null
+            ? MockDashboardRepository(
+                employeeRepository: MockEmployeeRepository(),
+              )
+            : throw StateError(
+                'Authenticated apps must inject DashboardRepository.',
+              ));
     _sessionRefresh = widget.sessionCoordinator == null
         ? null
         : _SessionRouterRefresh(widget.sessionCoordinator!);
@@ -133,8 +139,12 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
             : throw StateError(
                 'Authenticated apps must inject NotificationRepository.',
               ));
-    _dashboardCubit = DashboardCubit(dashboard)..load();
-    _employeesCubit = EmployeesCubit(_employees, invitations: _invitations);
+    _dashboardCubit = DashboardCubit(dashboard);
+    _employeesCubit = EmployeesCubit(
+      _employees,
+      invitations: _invitations,
+      onDashboardChanged: _dashboardCubit.invalidate,
+    );
     _workspacesCubit = WorkspacesCubit(
       _workspaces,
       _invitations,
@@ -145,19 +155,32 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
           ) ??
           const MembershipRefreshResult.failed(),
     );
-    _leaveRequestsCubit = LeaveRequestsCubit(_leaveRequests);
-    _employeeLeaveRequestsCubit = EmployeeLeaveRequestsCubit(_leaveRequests);
+    _leaveRequestsCubit = LeaveRequestsCubit(
+      _leaveRequests,
+      onDashboardChanged: _dashboardCubit.invalidate,
+    );
+    _employeeLeaveRequestsCubit = EmployeeLeaveRequestsCubit(
+      _leaveRequests,
+      onDashboardChanged: _dashboardCubit.invalidate,
+    );
     _profileCubit = ProfileCubit(
       _profile,
       onProfileChanged: widget.sessionCoordinator?.synchronizeProfile,
     );
-    _managerShiftsCubit = ManagerShiftsCubit(_shifts);
-    _managerAttendanceCubit = ManagerAttendanceCubit(_attendance);
+    _managerShiftsCubit = ManagerShiftsCubit(
+      _shifts,
+      onDashboardChanged: _dashboardCubit.invalidate,
+    );
+    _managerAttendanceCubit = ManagerAttendanceCubit(
+      _attendance,
+      onDashboardChanged: _dashboardCubit.invalidate,
+    );
     _employeeAttendanceCubit = EmployeeAttendanceCubit(_attendance);
     _employeeShiftsCubit = EmployeeShiftsCubit(
       _shifts,
       _attendance,
       onAttendanceChanged: () => _employeeAttendanceCubit.load(refresh: true),
+      onDashboardChanged: _dashboardCubit.invalidate,
     );
     _notificationsCubit = NotificationsCubit(_notifications);
     WidgetsBinding.instance.addObserver(this);
@@ -171,11 +194,13 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
         membershipId: 'preview-membership',
         timezone: 'Etc/UTC',
         role: WorkspaceRole.manager,
+        workspaceName: 'Shift Lab Preview Workspace',
       );
       _managerShiftsCubit.bindSession(previewScope);
       _managerAttendanceCubit.bindSession(previewScope);
       _leaveRequestsCubit.bindSession(previewScope);
       _notificationsCubit.bindSession(previewScope);
+      _dashboardCubit.bindSession(previewScope);
     } else {
       _sessionSubscription = coordinator.stream.listen(_bindSession);
       _bindSession(coordinator.state);
@@ -207,6 +232,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_notificationsCubit.refreshUnreadCount());
+      _dashboardCubit.invalidate();
     }
   }
 
@@ -267,6 +293,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
     _leaveRequestsCubit.bindSession(featureScope);
     _employeeLeaveRequestsCubit.bindSession(featureScope);
     _notificationsCubit.bindSession(featureScope);
+    _dashboardCubit.bindSession(featureScope);
   }
 }
 
@@ -284,6 +311,7 @@ FeatureSessionScope? _featureScope(SessionState state) {
     membershipId: membership.id,
     timezone: membership.workspace.timezone,
     role: membership.role,
+    workspaceName: membership.workspace.name,
   );
 }
 

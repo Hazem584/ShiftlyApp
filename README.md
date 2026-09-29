@@ -176,6 +176,52 @@ Use two non-production accounts in the same workspace. Existing backend shift, a
 21. Log out User A and log in as User B without restarting; confirm no User A rows appear.
 22. Exercise offline, timeout, final `401`, `403`, `404`, `429`, and `502` responses; verify safe messages, retained rows where applicable, and sign-out only after the existing refresh pipeline confirms session expiry.
 
+## Dashboard real-data integration
+
+Production injects `ApiDashboardRepository` with the shared authenticated Dio client. `DashboardCubit` binds to the authenticated user, active workspace, membership, role, and session generation. Manager data comes from `GET /api/v1/workspaces/{workspaceId}/dashboard`; employee data comes from `GET /api/v1/dashboard/me?workspaceId=...`. The app deliberately omits `date`, allowing the backend to define today from the workspace IANA timezone.
+
+Manager UI mapping is exact: Total employees → `summary.totalEmployees`; Scheduled today → `summary.scheduledToday`; Clocked in now → `summary.clockedInNow`; Completed today → `summary.completedToday`; Late → `summary.lateToday`; Missed → `summary.missedToday`; On approved leave → `summary.onApprovedLeave`; pending badges/cards → `summary.pendingLeaveRequests`; Today's shifts → `todayShifts`. `summary.unreadNotifications` remains parsed but the header badge continues to use the canonical notifications endpoint. The API has no recent-activity feed, active/suspended split, percentages, comparisons, or trends, so the old mock activity and invented indicators are not shown.
+
+Employee Overview maps `employee`, `todayShift`, `attendance`, `nextShift`, `summary.pendingLeaveRequests`, `summary.approvedLeaveRequests`, and `recentLeaveRequests`. Manager totals are never rendered in the employee shell.
+
+Confirmed employee-status, shift, Clock-in/out, attendance-review, and leave mutations invoke a typed dashboard invalidation callback only after their canonical success response. Workspace/session changes reload through scope binding, and app resume triggers a background refresh. Equivalent in-flight triggers are coalesced into at most one follow-up request. Background failures retain the last dashboard and do not change the successful feature mutation.
+
+## Manual dashboard regression
+
+Use non-production manager and employee accounts in the same test workspace. In ApiDog, authenticate as the role named in each row. A “background” refresh is automatic; “manual” means pull-to-refresh is the expected fallback.
+
+| # | Action | Expected API request and response | Expected Flutter dashboard change | Manual refresh |
+|---|---|---|---|---|
+| 1 | Log in as manager | `GET /api/v1/auth/me`, then manager dashboard `200` | Manager dashboard opens with no previous-user data | No |
+| 2 | Select a workspace | `GET /api/v1/workspaces/{id}/dashboard` | Old cards clear; selected name/timezone and new snapshot appear | No |
+| 3 | Inspect initial dashboard | Manager dashboard `200` with `date`, `timezone`, `generatedAt`, `summary`, `todayShifts`, `pendingLeaveRequests` | Loading becomes canonical cards/previews | No |
+| 4 | Compare every visible value | Repeat manager GET in ApiDog | Every card equals its documented response field; no trends | No |
+| 5 | Pull to refresh | One manager dashboard GET | Cards update; failed refresh retains prior cards | Yes, this is the action |
+| 6 | Add/activate employee | `POST /api/v1/invitations/accept` or `PATCH /api/v1/workspaces/{id}/employees/{membershipId}` returns canonical active membership, then dashboard GET | `totalEmployees` changes only when membership becomes active | No after in-app activation; otherwise manual |
+| 7 | Suspend employee | `PATCH /api/v1/workspaces/{id}/employees/{membershipId}` returns suspended membership, then dashboard GET | Active `totalEmployees` decreases | No |
+| 8 | Create today-overlapping shift | `POST /api/v1/workspaces/{id}/shifts` returns canonical shift, then dashboard GET | `scheduledToday` and `todayShifts` update | No |
+| 9 | Update shift | `PATCH /api/v1/workspaces/{id}/shifts/{shiftId}` returns canonical shift, then dashboard GET | Affected day/time preview updates | No |
+| 10 | Cancel shift | `PATCH /api/v1/workspaces/{id}/shifts/{shiftId}/cancel` returns cancelled shift, then dashboard GET | Cancelled shift is excluded from today totals/preview | No |
+| 11 | Employee Clock-in | `POST /api/v1/shifts/{shiftId}/clock-in` returns attendance, then employee dashboard GET | Employee attendance appears; manager sees new value after its next refresh | No for employee; manager session manual |
+| 12 | Employee Clock-out | `POST /api/v1/shifts/{shiftId}/clock-out` returns completed attendance, then employee dashboard GET | Attendance becomes completed with canonical minutes | No for employee; manager session manual |
+| 13 | Approve/reject attendance | `PATCH /api/v1/workspaces/{id}/attendance/{attendanceId}/review` returns reviewed attendance, then manager dashboard GET | Approved metrics remain canonical; rejected attendance is excluded | No |
+| 14 | Employee creates leave | `POST /api/v1/leave-requests` returns canonical pending leave, then employee dashboard GET | Pending count/recent leave update | No |
+| 15 | Manager approves/rejects leave | `PATCH /api/v1/workspaces/{id}/leave-requests/{requestId}/review` returns reviewed leave, then manager dashboard GET | Pending leave count/preview update | No |
+| 16 | Employee cancels leave | `PATCH /api/v1/leave-requests/me/{requestId}/cancel` returns cancelled leave, then employee dashboard GET | Pending count and recent status update | No |
+| 17 | Open notifications | Notification unread/list GETs | Bell remains functional; dashboard layout is unchanged | No |
+| 18 | Use each Quick Action | No dashboard request until a successful mutation | Employees, Shifts, and Requests destinations still open | No |
+| 19 | Open profile/avatar | Existing profile/avatar GET | Header avatar remains canonical | No |
+| 20 | Switch workspace | Manager path or employee query uses only new workspace UUID | Old data clears immediately; new timezone/data load | No |
+| 21 | Logout A, login B without restart | Auth/me plus B dashboard GET | No A workspace, name, counts, shifts, or leave records appear | No |
+| 22 | Disable network and refresh | Dashboard GET fails with network error | First load shows retry; refresh retains prior cards | Yes to retry |
+| 23 | Simulate timeout | Dashboard GET times out | Safe timeout message; prior dashboard retained | Yes to retry |
+| 24 | Exercise `401`, `403`, `404`, `429`, `502` | Dashboard GET returns each envelope with `requestId` | Safe message; sign-out only after final auth refresh failure | Yes after recoverable errors |
+| 25 | Background and resume app | One coalesced dashboard GET on resume | Snapshot refreshes without disruptive toast | No |
+| 26 | Test 320px-wide device and long workspace name | Normal dashboard `200` | No overflow; large counts scale down | No |
+| 27 | Cross-check manager vs employee | Manager endpoint rejects employee `403`; employee endpoint rejects manager/inactive membership `403` | Employee sees Overview only; manager totals remain inaccessible | No |
+
+Dashboard creation is not a mutation. All test data changes use the existing employee, shift, attendance, and leave business endpoints; no SQL or direct production data setup is required.
+
 ## Verification
 
 ```sh

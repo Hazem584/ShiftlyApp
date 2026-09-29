@@ -105,10 +105,11 @@ class ManagerAttendanceState extends Equatable {
 }
 
 class ManagerAttendanceCubit extends Cubit<ManagerAttendanceState> {
-  ManagerAttendanceCubit(this._repository)
+  ManagerAttendanceCubit(this._repository, {this.onDashboardChanged})
     : super(const ManagerAttendanceState());
 
   final AttendanceRepository _repository;
+  final void Function()? onDashboardChanged;
   FeatureSessionScope? _scope;
   var _generation = 0;
   var _requestId = 0;
@@ -356,6 +357,7 @@ class ManagerAttendanceCubit extends Cubit<ManagerAttendanceState> {
         return AttendanceMutationResult.failure;
       }
       _finishReview(attendanceId, record: record);
+      onDashboardChanged?.call();
       return AttendanceMutationResult.success;
     } catch (error) {
       if (!_scopeCurrent(scope, generation)) {

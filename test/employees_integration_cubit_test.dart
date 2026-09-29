@@ -256,7 +256,12 @@ void main() {
         total: 1,
         totalPages: 1,
       );
-    final cubit = EmployeesCubit(repository, invitations: repository);
+    var dashboardRefreshes = 0;
+    final cubit = EmployeesCubit(
+      repository,
+      invitations: repository,
+      onDashboardChanged: () => dashboardRefreshes += 1,
+    );
     addTearDown(cubit.close);
     cubit.bindSession(_scopeA);
     await Future<void>.delayed(Duration.zero);
@@ -265,6 +270,7 @@ void main() {
     final invitation = await cubit.invite(email: 'employee@example.test');
     expect(invitation?.inviteToken, 'one-time-token');
     expect((cubit.state as EmployeesLoaded).pendingInvitations, hasLength(1));
+    expect(dashboardRefreshes, 0);
     expect(
       await cubit.setStatus('one', EmployeeStatusFilter.suspended),
       EmployeeOperationResult.success,
@@ -273,5 +279,6 @@ void main() {
       (cubit.state as EmployeesLoaded).employees.single.employmentStatus,
       EmploymentStatus.suspended,
     );
+    expect(dashboardRefreshes, 1);
   });
 }

@@ -100,9 +100,11 @@ class ManagerShiftsState extends Equatable {
 }
 
 class ManagerShiftsCubit extends Cubit<ManagerShiftsState> {
-  ManagerShiftsCubit(this._repository) : super(const ManagerShiftsState());
+  ManagerShiftsCubit(this._repository, {this.onDashboardChanged})
+    : super(const ManagerShiftsState());
 
   final ShiftRepository _repository;
+  final void Function()? onDashboardChanged;
   FeatureSessionScope? _scope;
   var _generation = 0;
   var _requestId = 0;
@@ -265,6 +267,7 @@ class ManagerShiftsCubit extends Cubit<ManagerShiftsState> {
           creating: false,
         ),
       );
+      onDashboardChanged?.call();
       return ShiftMutationResult.success;
     } catch (error) {
       if (!_scopeCurrent(scope, generation)) return ShiftMutationResult.stale;
@@ -328,6 +331,7 @@ class ManagerShiftsCubit extends Cubit<ManagerShiftsState> {
           clearUpdating: true,
         ),
       );
+      onDashboardChanged?.call();
       return ShiftMutationResult.success;
     } catch (error) {
       if (!_scopeCurrent(scope, generation)) return ShiftMutationResult.stale;
@@ -364,6 +368,7 @@ class ManagerShiftsCubit extends Cubit<ManagerShiftsState> {
           clearCancelling: true,
         ),
       );
+      onDashboardChanged?.call();
       return ShiftMutationResult.success;
     } catch (error) {
       if (!_scopeCurrent(scope, generation)) return ShiftMutationResult.stale;

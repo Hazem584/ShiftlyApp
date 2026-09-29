@@ -87,9 +87,10 @@ class EmployeeLeaveRequestsState extends Equatable {
 }
 
 class EmployeeLeaveRequestsCubit extends Cubit<EmployeeLeaveRequestsState> {
-  EmployeeLeaveRequestsCubit(this._repository)
+  EmployeeLeaveRequestsCubit(this._repository, {this.onDashboardChanged})
     : super(const EmployeeLeaveRequestsState());
   final LeaveRequestRepository _repository;
+  final void Function()? onDashboardChanged;
   FeatureSessionScope? _scope;
   var _generation = 0;
   var _requestId = 0;
@@ -233,6 +234,7 @@ class EmployeeLeaveRequestsCubit extends Cubit<EmployeeLeaveRequestsState> {
           creating: false,
         ),
       );
+      onDashboardChanged?.call();
       return LeaveMutationResult.success;
     } catch (error) {
       if (!_scopeCurrent(scope, generation)) return LeaveMutationResult.stale;
@@ -276,6 +278,7 @@ class EmployeeLeaveRequestsCubit extends Cubit<EmployeeLeaveRequestsState> {
         return LeaveMutationResult.failure;
       }
       _finishCancel(requestId, record: record);
+      onDashboardChanged?.call();
       return LeaveMutationResult.success;
     } catch (error) {
       if (!_scopeCurrent(scope, generation)) return LeaveMutationResult.stale;

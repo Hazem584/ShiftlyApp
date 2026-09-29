@@ -5,7 +5,7 @@ import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 
 class DashboardHeroSection extends StatelessWidget {
   const DashboardHeroSection({required this.data, super.key});
-  final DashboardData data;
+  final ManagerDashboardData data;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -54,15 +54,15 @@ class DashboardHeroSection extends StatelessWidget {
               children: [
                 _HeroChip(
                   icon: Icons.groups_outlined,
-                  label: '${data.totalEmployees} employees',
+                  label: '${data.summary.totalEmployees} employees',
                 ),
                 _HeroChip(
                   icon: Icons.check_circle_outline,
-                  label: '${data.presentEmployees} active today',
+                  label: '${data.summary.clockedInNow} clocked in',
                 ),
                 _HeroChip(
                   icon: Icons.calendar_today_outlined,
-                  label: _date(DateTime.now()),
+                  label: data.date,
                 ),
               ],
             ),
@@ -102,22 +102,4 @@ class _HeroChip extends StatelessWidget {
       ),
     ),
   );
-}
-
-String _date(DateTime date) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return '${months[date.month - 1]} ${date.day}';
 }

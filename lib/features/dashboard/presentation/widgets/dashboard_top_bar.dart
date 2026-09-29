@@ -7,7 +7,14 @@ import 'package:shiftly/features/profile/presentation/widgets/profile_avatar.dar
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 
 class DashboardTopBar extends StatelessWidget {
-  const DashboardTopBar({super.key});
+  const DashboardTopBar({
+    required this.workspaceName,
+    required this.timezone,
+    super.key,
+  });
+
+  final String workspaceName;
+  final String timezone;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -24,16 +31,20 @@ class DashboardTopBar extends StatelessWidget {
         child: const Icon(Icons.bolt_rounded, color: Colors.white),
       ),
       const SizedBox(width: 11),
-      const Expanded(
+      Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppStrings.workplace,
+              workspaceName.isEmpty ? AppStrings.workplace : workspaceName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
             Text(
-              'Manager workspace',
+              timezone,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
             ),
           ],

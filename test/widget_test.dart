@@ -20,7 +20,7 @@ void main() {
     await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
     expect(find.textContaining('Good morning'), findsOneWidget);
-    expect(find.text('Shift Lab'), findsOneWidget);
+    expect(find.text('Shift Lab Preview Workspace'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsOneWidget);
     expect(find.byKey(const Key('nav-0')), findsOneWidget);
     expect(find.byKey(const Key('nav-1')), findsOneWidget);

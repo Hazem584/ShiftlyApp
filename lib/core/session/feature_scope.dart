@@ -8,6 +8,7 @@ class FeatureSessionScope extends Equatable {
     required this.membershipId,
     required this.timezone,
     required this.role,
+    this.workspaceName = '',
   });
 
   final String userId;
@@ -15,6 +16,7 @@ class FeatureSessionScope extends Equatable {
   final String membershipId;
   final String timezone;
   final WorkspaceRole role;
+  final String workspaceName;
 
   bool get isManager => role == WorkspaceRole.manager;
   bool get isEmployee => role == WorkspaceRole.employee;
@@ -26,5 +28,6 @@ class FeatureSessionScope extends Equatable {
     membershipId,
     timezone,
     role,
+    workspaceName,
   ];
 }

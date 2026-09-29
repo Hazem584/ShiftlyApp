@@ -134,7 +134,11 @@ void main() {
     () async {
       final repository = _Fake()
         ..createRequest = Completer<LeaveRequestRecord>();
-      final cubit = EmployeeLeaveRequestsCubit(repository);
+      var dashboardRefreshes = 0;
+      final cubit = EmployeeLeaveRequestsCubit(
+        repository,
+        onDashboardChanged: () => dashboardRefreshes += 1,
+      );
       cubit.bindSession(_employeeA);
       await Future<void>.delayed(Duration.zero);
       final future = cubit.create(
@@ -149,13 +153,18 @@ void main() {
       repository.createRequest!.complete(_record());
       expect(await future, LeaveMutationResult.stale);
       expect(cubit.state.requests, isEmpty);
+      expect(dashboardRefreshes, 0);
       await cubit.close();
     },
   );
 
   test('manager duplicate review is suppressed and canonical response replaces item', () async {
     final repository = _Fake();
-    final cubit = LeaveRequestsCubit(repository)..bindSession(_managerA);
+    var dashboardRefreshes = 0;
+    final cubit = LeaveRequestsCubit(
+      repository,
+      onDashboardChanged: () => dashboardRefreshes += 1,
+    )..bindSession(_managerA);
     await Future<void>.delayed(Duration.zero);
     final first = cubit.review('leave-id', LeaveReviewDecision.approved);
     final second = await cubit.review('leave-id', LeaveReviewDecision.approved);
@@ -163,17 +172,22 @@ void main() {
     expect(await first, LeaveMutationResult.success);
     expect(repository.reviewCalls, 1);
     expect(cubit.state.requests.single.status, LeaveRequestStatus.approved);
+    expect(dashboardRefreshes, 1);
     await cubit.close();
   });
 
   test('employee cancellation uses canonical cancelled response', () async {
     final repository = _Fake();
-    final cubit = EmployeeLeaveRequestsCubit(repository)
-      ..bindSession(_employeeA);
+    var dashboardRefreshes = 0;
+    final cubit = EmployeeLeaveRequestsCubit(
+      repository,
+      onDashboardChanged: () => dashboardRefreshes += 1,
+    )..bindSession(_employeeA);
     await Future<void>.delayed(Duration.zero);
     expect(await cubit.cancel('leave-id'), LeaveMutationResult.success);
     expect(repository.cancelCalls, 1);
     expect(cubit.state.requests.single.status, LeaveRequestStatus.cancelled);
+    expect(dashboardRefreshes, 1);
     await cubit.close();
   });
 }
