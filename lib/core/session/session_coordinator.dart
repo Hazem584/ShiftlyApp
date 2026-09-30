@@ -34,6 +34,8 @@ class MembershipRefreshResult {
       role != WorkspaceRole.unknown;
 }
 
+enum WorkspaceSwitchResult { success, noAlternative, invalid, busy, failure }
+
 class SessionCoordinator extends Cubit<SessionState> {
   SessionCoordinator(
     this._authentication,
@@ -63,6 +65,7 @@ class SessionCoordinator extends Cubit<SessionState> {
   late final StreamSubscription<AuthenticationEvent> _authSubscription;
   bool _loggingOut = false;
   bool _resolving = false;
+  bool _switchingWorkspace = false;
   var _resolutionGeneration = 0;
   var _authenticationGeneration = 0;
 
@@ -279,17 +282,62 @@ class SessionCoordinator extends Cubit<SessionState> {
     );
   }
 
-  Future<void> selectWorkspace(String workspaceId) async {
+  List<WorkspaceMembership> get selectableMemberships =>
+      state.currentUser?.memberships
+          .where(
+            (item) =>
+                item.status == MembershipStatus.active &&
+                item.role != WorkspaceRole.unknown,
+          )
+          .toList(growable: false) ??
+      const [];
+
+  Future<WorkspaceSwitchResult> selectWorkspace(String workspaceId) =>
+      _switchWorkspace(workspaceId, requireAlternative: false);
+
+  Future<WorkspaceSwitchResult> switchWorkspace(String workspaceId) =>
+      _switchWorkspace(workspaceId, requireAlternative: true);
+
+  Future<WorkspaceSwitchResult> _switchWorkspace(
+    String workspaceId, {
+    required bool requireAlternative,
+  }) async {
+    if (_switchingWorkspace) return WorkspaceSwitchResult.busy;
     final user = state.currentUser;
-    if (user == null) return;
-    final active = user.memberships.where(
-      (item) =>
-          item.status == MembershipStatus.active &&
-          item.role != WorkspaceRole.unknown &&
-          item.workspace.id == workspaceId,
+    if (user == null || _authentication.currentSession == null) {
+      return WorkspaceSwitchResult.invalid;
+    }
+    final memberships = selectableMemberships;
+    final currentId = state.activeMembership?.workspace.id;
+    final alternatives = memberships.where(
+      (item) => item.workspace.id != currentId,
     );
-    if (active.length != 1) return;
-    await _activate(user, active.single);
+    if (requireAlternative && alternatives.isEmpty) {
+      return WorkspaceSwitchResult.noAlternative;
+    }
+    final matches = memberships.where(
+      (item) =>
+          item.workspace.id == workspaceId && item.workspace.id != currentId,
+    );
+    if (matches.length != 1) return WorkspaceSwitchResult.invalid;
+    final previous = state;
+    final generation = ++_resolutionGeneration;
+    _switchingWorkspace = true;
+    emit(
+      SessionState(status: SessionStatus.loadingCurrentUser, currentUser: user),
+    );
+    try {
+      await _activate(user, matches.single, resolutionGeneration: generation);
+      return _resolutionIsCurrent(generation) &&
+              state.activeMembership?.workspace.id == workspaceId
+          ? WorkspaceSwitchResult.success
+          : WorkspaceSwitchResult.invalid;
+    } catch (_) {
+      if (_resolutionIsCurrent(generation)) emit(previous);
+      return WorkspaceSwitchResult.failure;
+    } finally {
+      _switchingWorkspace = false;
+    }
   }
 
   void synchronizeProfile(ManagerProfile profile) {

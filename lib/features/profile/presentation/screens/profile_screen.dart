@@ -7,6 +7,7 @@ import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_edit_form.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_header.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_information_section.dart';
+import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({this.onLogout, super.key});
@@ -19,6 +20,17 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _editing = false;
+  bool _switchingWorkspace = false;
+
+  Future<void> _showWorkspaceChooser() async {
+    if (_switchingWorkspace) return;
+    await showWorkspaceSwitcher(
+      context,
+      onSwitchingChanged: (switching) {
+        if (mounted) setState(() => _switchingWorkspace = switching);
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -69,10 +81,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       if (widget.onLogout != null) ...[
                         const SizedBox(height: AppSpacing.l),
                         OutlinedButton.icon(
+                          key: const Key('switch-workspace'),
+                          onPressed: _switchingWorkspace
+                              ? null
+                              : _showWorkspaceChooser,
+                          icon: const Icon(Icons.business_outlined),
+                          label: const Text('Switch workspace'),
+                        ),
+                        const SizedBox(height: AppSpacing.s),
+                        OutlinedButton.icon(
                           key: const Key('manager-logout'),
                           onPressed: widget.onLogout,
                           icon: const Icon(Icons.logout_rounded),
                           label: const Text('Sign out'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context)
+                                .colorScheme
+                                .error,
+                            side: BorderSide(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
                         ),
                       ],
                     ],

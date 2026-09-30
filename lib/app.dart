@@ -12,12 +12,14 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/attendance/data/attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
@@ -94,6 +96,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
   late final ManagerShiftsCubit _managerShiftsCubit;
   late final EmployeeShiftsCubit _employeeShiftsCubit;
   late final ManagerAttendanceCubit _managerAttendanceCubit;
+  late final AttendanceCalendarCubit _attendanceCalendarCubit;
   late final EmployeeAttendanceCubit _employeeAttendanceCubit;
   late final NotificationRepository _notifications;
   late final NotificationsCubit _notificationsCubit;
@@ -140,10 +143,13 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
                 'Authenticated apps must inject NotificationRepository.',
               ));
     _dashboardCubit = DashboardCubit(dashboard);
+    _attendanceCalendarCubit = AttendanceCalendarCubit(
+      ApiAttendanceCalendarRepository(_shifts, _attendance, _leaveRequests),
+    );
     _employeesCubit = EmployeesCubit(
       _employees,
       invitations: _invitations,
-      onDashboardChanged: _dashboardCubit.invalidate,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
     );
     _workspacesCubit = WorkspacesCubit(
       _workspaces,
@@ -157,11 +163,11 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
     );
     _leaveRequestsCubit = LeaveRequestsCubit(
       _leaveRequests,
-      onDashboardChanged: _dashboardCubit.invalidate,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
     );
     _employeeLeaveRequestsCubit = EmployeeLeaveRequestsCubit(
       _leaveRequests,
-      onDashboardChanged: _dashboardCubit.invalidate,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
     );
     _profileCubit = ProfileCubit(
       _profile,
@@ -169,18 +175,18 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
     );
     _managerShiftsCubit = ManagerShiftsCubit(
       _shifts,
-      onDashboardChanged: _dashboardCubit.invalidate,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
     );
     _managerAttendanceCubit = ManagerAttendanceCubit(
       _attendance,
-      onDashboardChanged: _dashboardCubit.invalidate,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
     );
     _employeeAttendanceCubit = EmployeeAttendanceCubit(_attendance);
     _employeeShiftsCubit = EmployeeShiftsCubit(
       _shifts,
       _attendance,
       onAttendanceChanged: () => _employeeAttendanceCubit.load(refresh: true),
-      onDashboardChanged: _dashboardCubit.invalidate,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
     );
     _notificationsCubit = NotificationsCubit(_notifications);
     WidgetsBinding.instance.addObserver(this);
@@ -219,6 +225,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
     _managerShiftsCubit.close();
     _employeeShiftsCubit.close();
     _managerAttendanceCubit.close();
+    _attendanceCalendarCubit.close();
     _employeeAttendanceCubit.close();
     _notificationsCubit.close();
     _sessionSubscription?.cancel();
@@ -261,6 +268,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _managerShiftsCubit),
           BlocProvider.value(value: _employeeShiftsCubit),
           BlocProvider.value(value: _managerAttendanceCubit),
+          BlocProvider.value(value: _attendanceCalendarCubit),
           BlocProvider.value(value: _employeeAttendanceCubit),
           BlocProvider.value(value: _notificationsCubit),
         ],
@@ -289,11 +297,17 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
     _managerShiftsCubit.bindSession(featureScope);
     _employeeShiftsCubit.bindSession(featureScope);
     _managerAttendanceCubit.bindSession(featureScope);
+    _attendanceCalendarCubit.bindSession(featureScope);
     _employeeAttendanceCubit.bindSession(featureScope);
     _leaveRequestsCubit.bindSession(featureScope);
     _employeeLeaveRequestsCubit.bindSession(featureScope);
     _notificationsCubit.bindSession(featureScope);
     _dashboardCubit.bindSession(featureScope);
+  }
+
+  void _invalidateDashboardAndCalendar() {
+    _dashboardCubit.invalidate();
+    _attendanceCalendarCubit.invalidate();
   }
 }
 

@@ -14,27 +14,35 @@ class DashboardDayStatusCard extends StatelessWidget {
     children: [
       Text('Today at a glance', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: AppSpacing.s),
-      SurfaceCard(
-        child: Wrap(
-          spacing: 20,
-          runSpacing: 14,
-          children: [
-            _Value(
-              label: 'Late',
-              value: data.summary.lateToday,
-              color: AppColors.warning,
-            ),
-            _Value(
-              label: 'Missed',
-              value: data.summary.missedToday,
-              color: AppColors.error,
-            ),
-            _Value(
-              label: 'On approved leave',
-              value: data.summary.onApprovedLeave,
-              color: AppColors.teal,
-            ),
-          ],
+      SizedBox(
+        key: const Key('today-at-a-glance-card'),
+        width: double.infinity,
+        child: SurfaceCard(
+          child: Row(
+            children: [
+              Expanded(
+                child: _Value(
+                  label: 'Late',
+                  value: data.summary.lateToday,
+                  color: AppColors.warning,
+                ),
+              ),
+              Expanded(
+                child: _Value(
+                  label: 'Missed',
+                  value: data.summary.missedToday,
+                  color: AppColors.error,
+                ),
+              ),
+              Expanded(
+                child: _Value(
+                  label: 'On approved leave',
+                  value: data.summary.onApprovedLeave,
+                  color: AppColors.teal,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     ],
@@ -49,8 +57,8 @@ class _Value extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 90,
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 4),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

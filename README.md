@@ -191,7 +191,7 @@ Confirmed employee-status, shift, Clock-in/out, attendance-review, and leave mut
 Use non-production manager and employee accounts in the same test workspace. In ApiDog, authenticate as the role named in each row. A “background” refresh is automatic; “manual” means pull-to-refresh is the expected fallback.
 
 | # | Action | Expected API request and response | Expected Flutter dashboard change | Manual refresh |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 1 | Log in as manager | `GET /api/v1/auth/me`, then manager dashboard `200` | Manager dashboard opens with no previous-user data | No |
 | 2 | Select a workspace | `GET /api/v1/workspaces/{id}/dashboard` | Old cards clear; selected name/timezone and new snapshot appear | No |
 | 3 | Inspect initial dashboard | Manager dashboard `200` with `date`, `timezone`, `generatedAt`, `summary`, `todayShifts`, `pendingLeaveRequests` | Loading becomes canonical cards/previews | No |
@@ -221,6 +221,38 @@ Use non-production manager and employee accounts in the same test workspace. In 
 | 27 | Cross-check manager vs employee | Manager endpoint rejects employee `403`; employee endpoint rejects manager/inactive membership `403` | Employee sees Overview only; manager totals remain inaccessible | No |
 
 Dashboard creation is not a mutation. All test data changes use the existing employee, shift, attendance, and leave business endpoints; no SQL or direct production data setup is required.
+
+## Attendance calendar and workspace switching
+
+The manager Calendar tab lazily loads the visible workspace-local month through the existing authenticated repositories. It exhausts all pages with the API maximum `limit=100` from:
+
+- `GET /api/v1/workspaces/{workspaceId}/shifts`
+- `GET /api/v1/workspaces/{workspaceId}/attendance`
+- `GET /api/v1/workspaces/{workspaceId}/leave-requests?status=APPROVED`
+
+Local month start and exclusive next-month start are constructed in the active workspace IANA timezone and converted to UTC for `from` and `to`. Client derivation then excludes boundary-only records and deduplicates canonical IDs. A valid non-rejected attendance is Present, or Late when `minutesLate > 0`; an ended non-cancelled shift without valid attendance is Absent unless approved leave overlaps that local day; approved overlapping leave is Leave. Future shifts are not absent, cancelled shifts are ignored, and rejected or unknown attendance cannot produce a known attendance state. A day can show several status dots because its selected-day list retains one derived outcome per employee.
+
+Profile reuses the same active-membership chooser as initial workspace selection. Only active Manager and Employee memberships are selectable, the current workspace is identified, switching persists the workspace ID without signing out, and the session status routes to the correct role shell. Emitting the intermediate session-loading state clears all workspace feature scopes before activation, while each Cubit's generation guard rejects old responses.
+
+Calendar refresh is routed by the selected Attendance tab and is triggered after successful shift, attendance-review, clock, and leave mutations. First-load failures support retry; background failures retain the last valid month. Holiday data is deliberately absent: the backend has no confirmed holiday model or endpoint, and weekends are not treated as holidays. Holiday support remains a future backend capability.
+
+### Manual attendance-calendar regression
+
+1. Sign in as a Manager with two active workspaces and open Profile.
+2. Confirm Switch workspace is full width, immediately above the distinct Sign out action.
+3. Open the chooser and confirm the active workspace is marked Current.
+4. Confirm suspended, inactive, and unknown-role memberships are absent.
+5. Switch Manager-to-Manager and verify the workspace ID persists after an app restart.
+6. Switch Manager-to-Employee and back Employee-to-Manager; verify the correct shell and no prior-workspace data.
+7. With one eligible workspace, tap Switch workspace and verify the safe informational toast without logout.
+8. Open Attendance > Calendar and compare all three paginated API queries in ApiDog for the visible UTC range.
+9. Navigate across a DST-changing month and verify its UTC offsets while local dates remain correct.
+10. Verify Present, Late, Absent, and Leave dots against canonical records; confirm no Holiday legend.
+11. Select mixed-status days and verify employee identity, shift times, clocks, lateness, and leave type.
+12. Confirm future shifts are not absent and cancelled/rejected/unknown records do not grant misleading states.
+13. Pull to refresh each Attendance tab and verify only its corresponding Cubit/API reloads.
+14. Mutate shifts, attendance review, clocks, and leave; verify refresh occurs only after success and failed refresh retains the month.
+15. Verify 320px, 360px, 390px, larger phones, large text, long names, large dashboard counts, and the full-width Today at a glance card without overflow.
 
 ## Verification
 

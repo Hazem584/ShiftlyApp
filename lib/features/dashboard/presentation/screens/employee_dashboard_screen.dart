@@ -169,12 +169,11 @@ class _ShiftCard extends StatelessWidget {
                     ),
                   ),
                   if (attendance != null)
-                    Text(
-                      attendance!.status == DashboardAttendanceStatus.completed
-                          ? 'Completed'
-                          : 'Clocked in',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
+                    Text(switch (attendance!.status) {
+                      DashboardAttendanceStatus.clockedIn => 'Clocked in',
+                      DashboardAttendanceStatus.completed => 'Completed',
+                      DashboardAttendanceStatus.unknown => 'Recorded',
+                    }, style: const TextStyle(fontWeight: FontWeight.w700)),
                 ],
               ),
       ),

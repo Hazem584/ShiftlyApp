@@ -6,6 +6,7 @@ import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
+import 'package:shiftly/features/auth/presentation/widgets/workspace_membership_chooser.dart';
 
 class WorkspaceSelectionScreen extends StatefulWidget {
   const WorkspaceSelectionScreen({super.key});
@@ -118,7 +119,12 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
           ],
         ),
         body: memberships.isNotEmpty
-            ? _MembershipList(memberships: memberships)
+            ? WorkspaceMembershipChooser(
+                memberships: memberships,
+                onSelected: (membership) => context
+                    .read<SessionCoordinator>()
+                    .selectWorkspace(membership.workspace.id),
+              )
             : BlocBuilder<WorkspacesCubit, WorkspacesState>(
                 builder: (context, state) => ListView(
                   key: const Key('no-workspace-onboarding'),
@@ -208,33 +214,6 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
                   ],
                 ),
               ),
-      );
-    },
-  );
-}
-
-class _MembershipList extends StatelessWidget {
-  const _MembershipList({required this.memberships});
-  final List<WorkspaceMembership> memberships;
-  @override
-  Widget build(BuildContext context) => ListView.separated(
-    padding: const EdgeInsets.all(AppSpacing.m),
-    itemCount: memberships.length,
-    separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s),
-    itemBuilder: (context, index) {
-      final membership = memberships[index];
-      return Card(
-        child: ListTile(
-          key: Key('workspace-${membership.workspace.id}'),
-          title: Text(membership.workspace.name),
-          subtitle: Text(
-            membership.role == WorkspaceRole.manager ? 'Manager' : 'Employee',
-          ),
-          trailing: const Icon(Icons.chevron_right_rounded),
-          onTap: () => context.read<SessionCoordinator>().selectWorkspace(
-            membership.workspace.id,
-          ),
-        ),
       );
     },
   );

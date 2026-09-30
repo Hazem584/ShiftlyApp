@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
@@ -9,6 +11,13 @@ import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
+import 'package:shiftly/core/session/session_coordinator.dart';
+import 'package:shiftly/core/storage/active_workspace_storage.dart';
+import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
+import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
+import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 
 ManagerProfile _profile({String? avatarUrl, String? phone}) => ManagerProfile(
   id: 'profile-id',
@@ -70,6 +79,77 @@ class _Repository implements ProfileRepository {
   }
 }
 
+class _ProfileAuth implements AuthenticationService {
+  final controller = StreamController<AuthenticationEvent>.broadcast();
+  AuthSession? session = const AuthSession(accessToken: 'token');
+  @override
+  Stream<AuthenticationEvent> get authStateChanges => controller.stream;
+  @override
+  AuthSession? get currentSession => session;
+  @override
+  Future<AuthSession?> refreshSession() async => session;
+  @override
+  Future<AuthenticationResult> signIn({
+    required String email,
+    required String password,
+  }) async => AuthenticationResult(session: session);
+  @override
+  Future<AuthenticationResult> signUp({
+    required String email,
+    required String password,
+  }) async => AuthenticationResult(session: session);
+  @override
+  Future<void> resendSignUpVerification({required String email}) async {}
+  @override
+  Future<void> signOut() async => session = null;
+}
+
+class _ProfileAuthRepository implements AuthenticationRepository {
+  _ProfileAuthRepository(this.user);
+  final CurrentUser user;
+  @override
+  Future<void> bootstrapProfile({String? fullName, String? phone}) async {}
+  @override
+  Future<CurrentUser> loadCurrentUser() async => user;
+}
+
+WorkspaceMembership _profileMembership(String id, WorkspaceRole role) =>
+    WorkspaceMembership(
+      id: 'membership-$id',
+      role: role,
+      status: MembershipStatus.active,
+      workspace: Workspace(
+        id: id,
+        name: 'Workspace $id',
+        code: id,
+        timezone: 'Africa/Cairo',
+      ),
+    );
+
+Future<SessionCoordinator> _profileCoordinator(
+  List<WorkspaceMembership> memberships,
+) async {
+  final auth = _ProfileAuth();
+  final storage = MemoryActiveWorkspaceStorage()
+    ..value = memberships.first.workspace.id;
+  final coordinator = SessionCoordinator(
+    auth,
+    _ProfileAuthRepository(
+      CurrentUser(
+        id: 'profile-id',
+        createdAt: DateTime.utc(2026),
+        updatedAt: DateTime.utc(2026),
+        memberships: memberships,
+      ),
+    ),
+    storage,
+  );
+  await coordinator.initialize();
+  addTearDown(coordinator.close);
+  addTearDown(auth.controller.close);
+  return coordinator;
+}
+
 Future<_Repository> _openProfile(
   WidgetTester tester, {
   required ProfileImageSelection selection,
@@ -102,6 +182,81 @@ Future<void> _save(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('switch workspace is above sign out and one workspace is safe', (
+    tester,
+  ) async {
+    final coordinator = await _profileCoordinator([
+      _profileMembership('one', WorkspaceRole.manager),
+    ]);
+    final profileCubit = ProfileCubit(_Repository(_profile()))..load();
+    addTearDown(profileCubit.close);
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: coordinator),
+          BlocProvider.value(value: profileCubit),
+        ],
+        child: MaterialApp(home: ProfileScreen(onLogout: coordinator.signOut)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const Key('profile-content')),
+      const Offset(0, -500),
+    );
+    await tester.pumpAndSettle();
+    final switchButton = find.byKey(const Key('switch-workspace'));
+    final signOut = find.byKey(const Key('manager-logout'));
+    expect(switchButton, findsOneWidget);
+    expect(signOut, findsOneWidget);
+    expect(
+      tester.getTopLeft(switchButton).dy,
+      lessThan(tester.getTopLeft(signOut).dy),
+    );
+    await tester.tap(switchButton);
+    await tester.pump();
+    expect(
+      find.text('No other active workspace is available.'),
+      findsOneWidget,
+    );
+    expect(coordinator.state.isAuthenticated, isTrue);
+    await tester.pump(const Duration(seconds: 4));
+  });
+
+  testWidgets('workspace chooser identifies the current active workspace', (
+    tester,
+  ) async {
+    final coordinator = await _profileCoordinator([
+      _profileMembership('one', WorkspaceRole.manager),
+      _profileMembership('two', WorkspaceRole.employee),
+    ]);
+    final profileCubit = ProfileCubit(_Repository(_profile()))..load();
+    addTearDown(profileCubit.close);
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: coordinator),
+          BlocProvider.value(value: profileCubit),
+        ],
+        child: MaterialApp(home: ProfileScreen(onLogout: coordinator.signOut)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const Key('profile-content')),
+      const Offset(0, -500),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('switch-workspace')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('workspace-membership-chooser')),
+      findsOneWidget,
+    );
+    expect(find.text('Current'), findsOneWidget);
+    expect(find.text('Workspace two'), findsOneWidget);
+  });
+
   testWidgets('backend profile and nullable fallback are displayed', (
     tester,
   ) async {

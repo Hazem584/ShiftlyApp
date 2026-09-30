@@ -42,11 +42,17 @@ class _DashboardFake implements DashboardRepository {
 ManagerDashboardData dashboardManagerForPreview({
   int totalEmployees = 12,
   int scheduledToday = 4,
+  int lateToday = 1,
+  int missedToday = 0,
+  int onApprovedLeave = 1,
 }) => ManagerDashboardData.fromJson(
   managerDashboardJson(
     timezone: 'Etc/UTC',
     totalEmployees: totalEmployees,
     scheduledToday: scheduledToday,
+    lateToday: lateToday,
+    missedToday: missedToday,
+    onApprovedLeave: onApprovedLeave,
   ),
 );
 
@@ -106,6 +112,9 @@ void main() {
         manager: dashboardManagerForPreview(
           totalEmployees: 0,
           scheduledToday: 999999999,
+          lateToday: 999999999,
+          missedToday: 888888888,
+          onApprovedLeave: 777777777,
         ),
       );
       await tester.pumpWidget(_app(repository));
@@ -115,6 +124,21 @@ void main() {
       expect(find.text('999999999'), findsOneWidget);
       expect(find.textContaining('Preview Workspace'), findsOneWidget);
       expect(find.text('Etc/UTC'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('today-at-a-glance-card')),
+        250,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const Key('dashboard-content')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(
+        tester.getSize(find.byKey(const Key('today-at-a-glance-card'))).width,
+        284,
+      );
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -178,6 +202,37 @@ void main() {
     expect(find.text("Today's shift"), findsOneWidget);
     expect(find.text('Pending leave'), findsOneWidget);
     expect(find.text('Total employees'), findsNothing);
+  });
+
+  testWidgets('unknown employee attendance uses a neutral label', (
+    tester,
+  ) async {
+    final json = employeeDashboardJson(timezone: 'Etc/UTC');
+    final attendance = Map<String, Object?>.from(json['attendance']! as Map)
+      ..['status'] = 'A_FUTURE_BACKEND_STATUS';
+    json['attendance'] = attendance;
+    final repository = _DashboardFake()
+      ..employee = EmployeeDashboardData.fromJson(json);
+    final cubit = DashboardCubit(repository)
+      ..bindSession(
+        const FeatureSessionScope(
+          userId: 'employee-user',
+          workspaceId: dashboardWorkspaceId,
+          membershipId: dashboardMembershipId,
+          timezone: 'Etc/UTC',
+          role: WorkspaceRole.employee,
+        ),
+      );
+    addTearDown(cubit.close);
+    await tester.pumpWidget(
+      BlocProvider.value(
+        value: cubit,
+        child: const MaterialApp(home: EmployeeDashboardScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Recorded'), findsOneWidget);
+    expect(find.text('Clocked in'), findsNothing);
   });
 }
 

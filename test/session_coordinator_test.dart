@@ -74,6 +74,23 @@ class _Repository implements AuthenticationRepository {
   }
 }
 
+class _BlockingWorkspaceStorage implements ActiveWorkspaceStorage {
+  String? value;
+  Completer<void>? blocker;
+  Completer<void>? writeStarted;
+
+  @override
+  Future<void> clear() async => value = null;
+  @override
+  Future<String?> read() async => value;
+  @override
+  Future<void> write(String workspaceId) async {
+    writeStarted?.complete();
+    await blocker?.future;
+    value = workspaceId;
+  }
+}
+
 CurrentUser _user(List<WorkspaceMembership> memberships) => CurrentUser(
   id: 'profile',
   email: 'person@example.com',
@@ -140,6 +157,117 @@ void main() {
     );
     expect(coordinator.state.status, SessionStatus.authenticatedEmployee);
   });
+
+  test(
+    'switches manager workspaces and persists the active workspace',
+    () async {
+      final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+      final storage = MemoryActiveWorkspaceStorage()..value = 'one';
+      final coordinator = await _coordinator(
+        auth,
+        _user([
+          _membership('one', WorkspaceRole.manager),
+          _membership('two', WorkspaceRole.manager),
+        ]),
+        storage,
+      );
+
+      final result = await coordinator.switchWorkspace('two');
+
+      expect(result, WorkspaceSwitchResult.success);
+      expect(coordinator.state.status, SessionStatus.authenticatedManager);
+      expect(coordinator.state.activeMembership?.workspace.id, 'two');
+      expect(storage.value, 'two');
+      expect(auth.signOutCalls, 0);
+      expect(auth.currentSession, isNotNull);
+    },
+  );
+
+  test('switches manager to employee and employee to manager roles', () async {
+    final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+    final storage = MemoryActiveWorkspaceStorage()..value = 'manager';
+    final coordinator = await _coordinator(
+      auth,
+      _user([
+        _membership('manager', WorkspaceRole.manager),
+        _membership('employee', WorkspaceRole.employee),
+      ]),
+      storage,
+    );
+
+    expect(
+      await coordinator.switchWorkspace('employee'),
+      WorkspaceSwitchResult.success,
+    );
+    expect(coordinator.state.status, SessionStatus.authenticatedEmployee);
+    expect(
+      await coordinator.switchWorkspace('manager'),
+      WorkspaceSwitchResult.success,
+    );
+    expect(coordinator.state.status, SessionStatus.authenticatedManager);
+    expect(auth.signOutCalls, 0);
+  });
+
+  test('workspace switch excludes suspended and unknown memberships', () async {
+    final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+    final storage = MemoryActiveWorkspaceStorage()..value = 'one';
+    final coordinator = await _coordinator(
+      auth,
+      _user([
+        _membership('one', WorkspaceRole.manager),
+        _membership(
+          'suspended',
+          WorkspaceRole.employee,
+          status: MembershipStatus.suspended,
+        ),
+        _membership('unknown', WorkspaceRole.unknown),
+      ]),
+      storage,
+    );
+
+    expect(coordinator.selectableMemberships, hasLength(1));
+    expect(
+      await coordinator.switchWorkspace('suspended'),
+      WorkspaceSwitchResult.noAlternative,
+    );
+    expect(
+      await coordinator.switchWorkspace('unknown'),
+      WorkspaceSwitchResult.noAlternative,
+    );
+    expect(coordinator.state.activeMembership?.workspace.id, 'one');
+  });
+
+  test(
+    'workspace switching rejects duplicate taps while persistence runs',
+    () async {
+      final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+      final storage = _BlockingWorkspaceStorage()..value = 'one';
+      final coordinator = SessionCoordinator(
+        auth,
+        _Repository(
+          _user([
+            _membership('one', WorkspaceRole.manager),
+            _membership('two', WorkspaceRole.employee),
+          ]),
+        ),
+        storage,
+      );
+      addTearDown(coordinator.close);
+      addTearDown(auth.controller.close);
+      await coordinator.initialize();
+      storage.blocker = Completer<void>();
+      storage.writeStarted = Completer<void>();
+
+      final first = coordinator.switchWorkspace('two');
+      await storage.writeStarted!.future;
+      final duplicate = await coordinator.switchWorkspace('two');
+
+      expect(duplicate, WorkspaceSwitchResult.busy);
+      storage.blocker!.complete();
+      expect(await first, WorkspaceSwitchResult.success);
+      expect(storage.value, 'two');
+    },
+  );
 
   test('missing profile routes to profile setup', () async {
     final auth = _Auth()..session = const AuthSession(accessToken: 'token');

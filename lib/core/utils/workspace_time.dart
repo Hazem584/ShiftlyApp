@@ -36,6 +36,28 @@ abstract final class WorkspaceTime {
     minute,
   ).toUtc();
 
+  static ({DateTime start, DateTime end}) monthUtcRange({
+    required int year,
+    required int month,
+    required String timezoneName,
+  }) {
+    final zone = location(timezoneName);
+    final start = timezone.TZDateTime(zone, year, month);
+    final end = timezone.TZDateTime(zone, year, month + 1);
+    return (start: start.toUtc(), end: end.toUtc());
+  }
+
+  static String dateKey(DateTime utc, String timezoneName) {
+    final value = inWorkspace(utc, timezoneName);
+    return '${value.year}-${_two(value.month)}-${_two(value.day)}';
+  }
+
+  static String localDateKey({
+    required int year,
+    required int month,
+    required int day,
+  }) => '$year-${_two(month)}-${_two(day)}';
+
   static String dateTime(DateTime utc, String ianaName) {
     final value = inWorkspace(utc, ianaName);
     final month = _two(value.month);

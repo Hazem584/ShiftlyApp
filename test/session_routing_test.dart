@@ -156,6 +156,7 @@ void main() {
     expect(find.text('Overview'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
     expect(find.byKey(const Key('notification-bell')), findsOneWidget);
+    expect(find.byKey(const Key('employee-switch-workspace')), findsOneWidget);
     expect(
       find.descendant(
         of: find.byKey(const Key('notification-badge')),

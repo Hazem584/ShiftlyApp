@@ -5,6 +5,7 @@ import 'package:shiftly/features/attendance/presentation/screens/employee_attend
 import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
 import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
+import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
 
 class EmployeeShellScreen extends StatefulWidget {
   const EmployeeShellScreen({this.initialTab = 0, super.key});
@@ -17,6 +18,7 @@ class EmployeeShellScreen extends StatefulWidget {
 
 class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
   late int _selectedIndex;
+  bool _switchingWorkspace = false;
 
   @override
   void initState() {
@@ -39,6 +41,21 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
         title: const Text('Employee workspace'),
         actions: [
           const NotificationBell(),
+          IconButton(
+            key: const Key('employee-switch-workspace'),
+            onPressed: _switchingWorkspace
+                ? null
+                : () => showWorkspaceSwitcher(
+                    context,
+                    onSwitchingChanged: (switching) {
+                      if (mounted) {
+                        setState(() => _switchingWorkspace = switching);
+                      }
+                    },
+                  ),
+            tooltip: 'Switch workspace',
+            icon: const Icon(Icons.business_outlined),
+          ),
           IconButton(
             key: const Key('employee-logout'),
             onPressed: context.read<SessionCoordinator>().signOut,

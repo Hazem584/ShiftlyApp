@@ -126,7 +126,16 @@ class _AttendanceMetric extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(value, style: Theme.of(context).textTheme.headlineSmall),
+                Flexible(
+                  child: FittedBox(
+                    alignment: Alignment.centerLeft,
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      value,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

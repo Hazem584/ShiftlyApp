@@ -128,6 +128,8 @@ GoRouter createAppRouter({
                     'Etc/UTC',
                 initialTab: state.uri.queryParameters['tab'] == 'leaveRequests'
                     ? 1
+                    : state.uri.queryParameters['tab'] == 'calendar'
+                    ? 2
                     : 0,
               ),
             ),
