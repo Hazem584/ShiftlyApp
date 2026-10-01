@@ -26,7 +26,8 @@ void main() {
     expect(find.byKey(const Key('nav-1')), findsOneWidget);
     expect(find.byKey(const Key('nav-2')), findsOneWidget);
     expect(find.byKey(const Key('nav-3')), findsOneWidget);
-    expect(find.byKey(const Key('nav-4')), findsNothing);
+    expect(find.byKey(const Key('nav-4')), findsOneWidget);
+    expect(find.text('Chat'), findsOneWidget);
   });
 
   testWidgets('bottom navigation changes and preserves the selected tab', (
@@ -48,6 +49,9 @@ void main() {
     await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
     expect(find.text('Manager Profile'), findsOneWidget);
+    await tester.tap(find.text('Chat').last);
+    await tester.pumpAndSettle();
+    expect(find.text('No chat groups yet.'), findsOneWidget);
   });
 
   testWidgets('manager shell fits a compact mobile viewport', (tester) async {

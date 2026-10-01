@@ -268,3 +268,10 @@ Automated tests use fakes and an in-memory Dio adapter; they never call producti
 ## Still mocked
 
 Dashboard summary cards and other features outside these integration sprints still use presentation mocks. Shift management, employee shifts, Clock-in/out, manager attendance review, employee attendance history, employee/manager leave requests, and notifications use API repositories in production. Employee and workspace management remain API-backed from the prior integration sprint. Mock repositories remain available only for isolated tests and no-session previews.
+## Chat Sprint 1 manual regression
+
+1. Sign in as a manager, switch workspaces, and confirm the Chat tab and its unread badge reset to the selected workspace.
+2. Create a group using active employee memberships; edit it, add/remove a member (including the confirmation), and verify the employee only sees groups they belong to.
+3. Send text from two sessions, verify Realtime refreshes canonical sender details, unread badges update, older messages load without a scroll jump, and retrying a failed send creates only one message.
+4. Archive the group and confirm its history remains readable while sending, editing, archiving, and membership controls are disabled.
+5. Sign out while a chat is open and confirm chat data clears and no later Realtime/API response appears in the next session.

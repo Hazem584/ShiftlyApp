@@ -9,6 +9,9 @@ import 'package:shiftly/features/attendance/data/api_attendance_repository.dart'
 import 'package:shiftly/features/attendance/data/attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
+import 'package:shiftly/features/chat/data/api_chat_repository.dart';
+import 'package:shiftly/features/chat/data/chat_realtime.dart';
+import 'package:shiftly/features/chat/data/chat_repository.dart';
 import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/dashboard/data/api_dashboard_repository.dart';
@@ -35,6 +38,8 @@ class AppDependencies {
     required this.leaveRequestRepository,
     required this.notificationRepository,
     required this.dashboardRepository,
+    required this.chatRepository,
+    required this.chatRealtime,
   });
 
   final SessionCoordinator sessionCoordinator;
@@ -47,6 +52,8 @@ class AppDependencies {
   final LeaveRequestRepository leaveRequestRepository;
   final NotificationRepository notificationRepository;
   final DashboardRepository dashboardRepository;
+  final ChatRepository chatRepository;
+  final ChatRealtime chatRealtime;
 }
 
 abstract final class AppBootstrap {
@@ -84,6 +91,7 @@ abstract final class AppBootstrap {
     final leaveRequestRepository = ApiLeaveRequestRepository(apiClient.dio);
     final notificationRepository = ApiNotificationRepository(apiClient.dio);
     final dashboardRepository = ApiDashboardRepository(apiClient.dio);
+    final chatRepository = ApiChatRepository(apiClient.dio);
     return AppDependencies(
       sessionCoordinator: coordinator,
       profileRepository: profileRepository,
@@ -95,6 +103,8 @@ abstract final class AppBootstrap {
       leaveRequestRepository: leaveRequestRepository,
       notificationRepository: notificationRepository,
       dashboardRepository: dashboardRepository,
+      chatRepository: chatRepository,
+      chatRealtime: SupabaseChatRealtime(Supabase.instance.client),
     );
   }
 }

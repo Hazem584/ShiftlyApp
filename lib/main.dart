@@ -22,6 +22,8 @@ Future<void> main() async {
         leaveRequestRepository: dependencies.leaveRequestRepository,
         notificationRepository: dependencies.notificationRepository,
         dashboardRepository: dependencies.dashboardRepository,
+        chatRepository: dependencies.chatRepository,
+        chatRealtime: dependencies.chatRealtime,
       ),
     );
     unawaited(dependencies.sessionCoordinator.initialize());

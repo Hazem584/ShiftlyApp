@@ -129,6 +129,15 @@ abstract final class ApiErrorParser {
       'WORKSPACE_ACCESS_DENIED' =>
         'Your workspace membership does not allow this action.',
       'INVALID_DATE_RANGE' => 'The start date must not be after the end date.',
+      'CHAT_GROUP_ARCHIVED' => 'This chat group is archived and read only.',
+      'CHAT_GROUP_NOT_FOUND' => 'That chat group could not be found.',
+      'CHAT_CURSOR_INVALID' => 'Messages changed. Refresh the conversation.',
+      'CHAT_CLIENT_MESSAGE_ID_CONFLICT' =>
+        'This message conflicts with an earlier send attempt.',
+      'CHAT_READ_POSITION_BACKWARDS' =>
+        'Your read position is already ahead of that message.',
+      'CHAT_READ_POSITION_CONFLICT' =>
+        'The read position changed. Refreshing will synchronize it.',
       _ => switch (status) {
         400 => 'Please check the information you entered.',
         401 => 'Your session has expired. Please sign in again.',

@@ -23,6 +23,10 @@ import 'package:shiftly/features/attendance/presentation/cubit/attendance_calend
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:shiftly/features/chat/data/chat_realtime.dart';
+import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
+import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
@@ -58,6 +62,8 @@ class ShiftlyApp extends StatefulWidget {
     this.shiftRepository,
     this.attendanceRepository,
     this.notificationRepository,
+    this.chatRepository,
+    this.chatRealtime,
   });
 
   final EmployeeRepository? employeeRepository;
@@ -72,6 +78,8 @@ class ShiftlyApp extends StatefulWidget {
   final ShiftRepository? shiftRepository;
   final AttendanceRepository? attendanceRepository;
   final NotificationRepository? notificationRepository;
+  final ChatRepository? chatRepository;
+  final ChatRealtime? chatRealtime;
 
   @override
   State<ShiftlyApp> createState() => _ShiftlyAppState();
@@ -100,6 +108,9 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
   late final EmployeeAttendanceCubit _employeeAttendanceCubit;
   late final NotificationRepository _notifications;
   late final NotificationsCubit _notificationsCubit;
+  late final ChatRepository _chat;
+  late final ChatRealtime _chatRealtime;
+  late final ChatGroupsCubit _chatGroupsCubit;
   StreamSubscription<Object?>? _sessionSubscription;
   _SessionRouterRefresh? _sessionRefresh;
 
@@ -189,6 +200,9 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
       onDashboardChanged: _invalidateDashboardAndCalendar,
     );
     _notificationsCubit = NotificationsCubit(_notifications);
+    _chat = widget.chatRepository ?? const MockChatRepository();
+    _chatRealtime = widget.chatRealtime ?? const NoopChatRealtime();
+    _chatGroupsCubit = ChatGroupsCubit(_chat);
     WidgetsBinding.instance.addObserver(this);
     final coordinator = widget.sessionCoordinator;
     if (coordinator == null) {
@@ -207,6 +221,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
       _leaveRequestsCubit.bindSession(previewScope);
       _notificationsCubit.bindSession(previewScope);
       _dashboardCubit.bindSession(previewScope);
+      _chatGroupsCubit.bindSession(previewScope);
     } else {
       _sessionSubscription = coordinator.stream.listen(_bindSession);
       _bindSession(coordinator.state);
@@ -228,6 +243,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
     _attendanceCalendarCubit.close();
     _employeeAttendanceCubit.close();
     _notificationsCubit.close();
+    _chatGroupsCubit.close();
     _sessionSubscription?.cancel();
     _sessionRefresh?.dispose();
     widget.sessionCoordinator?.close();
@@ -239,6 +255,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_notificationsCubit.refreshUnreadCount());
+      unawaited(_chatGroupsCubit.refreshUnread());
       _dashboardCubit.invalidate();
     }
   }
@@ -256,6 +273,8 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
         RepositoryProvider.value(value: _shifts),
         RepositoryProvider.value(value: _attendance),
         RepositoryProvider.value(value: _notifications),
+        RepositoryProvider<ChatRepository>.value(value: _chat),
+        RepositoryProvider<ChatRealtime>.value(value: _chatRealtime),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -271,6 +290,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _attendanceCalendarCubit),
           BlocProvider.value(value: _employeeAttendanceCubit),
           BlocProvider.value(value: _notificationsCubit),
+          BlocProvider.value(value: _chatGroupsCubit),
         ],
         child: MaterialApp.router(
           title: AppStrings.appName,
@@ -303,6 +323,7 @@ class _ShiftlyAppState extends State<ShiftlyApp> with WidgetsBindingObserver {
     _employeeLeaveRequestsCubit.bindSession(featureScope);
     _notificationsCubit.bindSession(featureScope);
     _dashboardCubit.bindSession(featureScope);
+    _chatGroupsCubit.bindSession(featureScope);
   }
 
   void _invalidateDashboardAndCalendar() {

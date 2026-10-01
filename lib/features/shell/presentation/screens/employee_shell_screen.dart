@@ -6,6 +6,8 @@ import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboa
 import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
+import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 
 class EmployeeShellScreen extends StatefulWidget {
   const EmployeeShellScreen({this.initialTab = 0, super.key});
@@ -71,31 +73,52 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
             EmployeeDashboardScreen(),
             EmployeeShiftsScreen(),
             EmployeeAttendanceScreen(),
+            ChatGroupsScreen(embedded: true),
           ],
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        key: const Key('employee-bottom-navigation'),
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _selectedIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Overview',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month_rounded),
-            label: 'My Shifts',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.fact_check_outlined),
-            selectedIcon: Icon(Icons.fact_check_rounded),
-            label: 'Attendance',
-          ),
-        ],
+      bottomNavigationBar: BlocBuilder<ChatGroupsCubit, ChatGroupsState>(
+        buildWhen: (before, after) => before.unreadCount != after.unreadCount,
+        builder: (context, chat) => NavigationBar(
+          key: const Key('employee-bottom-navigation'),
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (index) =>
+              setState(() => _selectedIndex = index),
+          destinations: [
+            const NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
+              label: 'Overview',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.calendar_month_outlined),
+              selectedIcon: Icon(Icons.calendar_month_rounded),
+              label: 'My Shifts',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.fact_check_outlined),
+              selectedIcon: Icon(Icons.fact_check_rounded),
+              label: 'Attendance',
+            ),
+            NavigationDestination(
+              icon: Badge(
+                isLabelVisible: chat.unreadCount > 0,
+                label: Text(
+                  chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                ),
+                child: const Icon(Icons.chat_bubble_outline_rounded),
+              ),
+              selectedIcon: Badge(
+                isLabelVisible: chat.unreadCount > 0,
+                label: Text(
+                  chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                ),
+                child: const Icon(Icons.chat_bubble_rounded),
+              ),
+              label: 'Chat',
+            ),
+          ],
+        ),
       ),
     );
   }

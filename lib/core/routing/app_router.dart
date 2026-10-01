@@ -11,6 +11,8 @@ import 'package:shiftly/features/auth/presentation/screens/profile_setup_screen.
 import 'package:shiftly/features/auth/presentation/screens/session_status_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/workspace_selection_screen.dart';
 import 'package:shiftly/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employees_screen.dart';
@@ -64,6 +66,7 @@ GoRouter createAppRouter({
         initialTab: switch (state.uri.queryParameters['tab']) {
           'shifts' => 1,
           'attendance' || 'leave' => 2,
+          'chat' => 3,
           _ => 0,
         },
       ),
@@ -132,6 +135,21 @@ GoRouter createAppRouter({
                     ? 2
                     : 0,
               ),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/chat',
+              builder: (_, _) => const ChatGroupsScreen(),
+              routes: [
+                GoRoute(
+                  path: ':groupId',
+                  builder: (_, state) =>
+                      ChatScreen(groupId: state.pathParameters['groupId']!),
+                ),
+              ],
             ),
           ],
         ),

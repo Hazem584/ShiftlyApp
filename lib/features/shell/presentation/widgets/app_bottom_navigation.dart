@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 
 class AppBottomNavigation extends StatelessWidget {
   const AppBottomNavigation({
@@ -16,35 +18,41 @@ class AppBottomNavigation extends StatelessWidget {
     (Icons.home_rounded, AppStrings.dashboard),
     (Icons.groups_rounded, AppStrings.employees),
     (Icons.schedule_rounded, AppStrings.attendance),
+    (Icons.chat_bubble_rounded, 'Chat'),
     (Icons.person_rounded, AppStrings.profile),
   ];
 
   @override
-  Widget build(BuildContext context) => DecoratedBox(
-    key: const Key('manager-bottom-navigation'),
-    decoration: const BoxDecoration(
-      color: AppColors.surface,
-      border: Border(top: BorderSide(color: AppColors.borderColor)),
-    ),
-    child: SafeArea(
-      top: false,
-      child: SizedBox(
-        height: 68,
-        child: Row(
-          children: [
-            for (var index = 0; index < _destinations.length; index++)
-              NavigationDestinationItem(
-                icon: _destinations[index].$1,
-                label: _destinations[index].$2,
-                index: index,
-                selected: selectedIndex == index,
-                onTap: () => onDestinationSelected(index),
+  Widget build(BuildContext context) =>
+      BlocBuilder<ChatGroupsCubit, ChatGroupsState>(
+        buildWhen: (before, after) => before.unreadCount != after.unreadCount,
+        builder: (context, chat) => DecoratedBox(
+          key: const Key('manager-bottom-navigation'),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            border: Border(top: BorderSide(color: AppColors.borderColor)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(
+              height: 68,
+              child: Row(
+                children: [
+                  for (var index = 0; index < _destinations.length; index++)
+                    NavigationDestinationItem(
+                      icon: _destinations[index].$1,
+                      label: _destinations[index].$2,
+                      index: index,
+                      selected: selectedIndex == index,
+                      onTap: () => onDestinationSelected(index),
+                      badgeCount: index == 3 ? chat.unreadCount : 0,
+                    ),
+                ],
               ),
-          ],
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }
 
 class NavigationDestinationItem extends StatelessWidget {
@@ -54,6 +62,7 @@ class NavigationDestinationItem extends StatelessWidget {
     required this.index,
     required this.selected,
     required this.onTap,
+    this.badgeCount = 0,
     super.key,
   });
 
@@ -62,6 +71,7 @@ class NavigationDestinationItem extends StatelessWidget {
   final int index;
   final bool selected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) => Expanded(
@@ -87,10 +97,14 @@ class NavigationDestinationItem extends StatelessWidget {
               AnimatedScale(
                 scale: selected ? 1 : .92,
                 duration: const Duration(milliseconds: 220),
-                child: Icon(
-                  icon,
-                  size: 21,
-                  color: selected ? AppColors.ink : AppColors.lighterGray,
+                child: Badge(
+                  isLabelVisible: badgeCount > 0,
+                  label: Text(badgeCount > 99 ? '99+' : '$badgeCount'),
+                  child: Icon(
+                    icon,
+                    size: 21,
+                    color: selected ? AppColors.ink : AppColors.lighterGray,
+                  ),
                 ),
               ),
               const SizedBox(height: 2),
