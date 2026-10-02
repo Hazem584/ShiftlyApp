@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,6 +21,8 @@ class ChatConversationState extends Equatable {
     this.sending = false,
     this.failedText,
     this.failure,
+    this.pending = const [],
+    this.accessLost = false,
   });
   final bool loading;
   final List<ChatMessage> messages;
@@ -29,6 +32,8 @@ class ChatConversationState extends Equatable {
   final bool sending;
   final String? failedText;
   final Failure? failure;
+  final List<PendingChatMessage> pending;
+  final bool accessLost;
   bool get hasMore => nextCursor != null;
 
   ChatConversationState copyWith({
@@ -43,6 +48,8 @@ class ChatConversationState extends Equatable {
     bool clearFailedText = false,
     Failure? failure,
     bool clearFailure = false,
+    List<PendingChatMessage>? pending,
+    bool? accessLost,
   }) => ChatConversationState(
     loading: loading ?? this.loading,
     messages: messages ?? this.messages,
@@ -52,6 +59,8 @@ class ChatConversationState extends Equatable {
     sending: sending ?? this.sending,
     failedText: clearFailedText ? null : failedText ?? this.failedText,
     failure: clearFailure ? null : failure ?? this.failure,
+    pending: pending ?? this.pending,
+    accessLost: accessLost ?? this.accessLost,
   );
 
   @override
@@ -64,7 +73,80 @@ class ChatConversationState extends Equatable {
     sending,
     failedText,
     failure,
+    pending,
+    accessLost,
   ];
+}
+
+enum ChatUploadState {
+  preparing,
+  uploading,
+  finalizing,
+  sent,
+  failed,
+  cancelled,
+}
+
+class PendingChatMessage extends Equatable {
+  const PendingChatMessage({
+    required this.clientMessageId,
+    required this.type,
+    required this.status,
+    this.progress = 0,
+    this.previewBytes,
+    this.durationMs,
+    this.failure,
+  });
+
+  final String clientMessageId;
+  final String type;
+  final ChatUploadState status;
+  final double progress;
+  final Uint8List? previewBytes;
+  final int? durationMs;
+  final Failure? failure;
+
+  PendingChatMessage copyWith({
+    ChatUploadState? status,
+    double? progress,
+    bool clearPreview = false,
+    Failure? failure,
+    bool clearFailure = false,
+  }) => PendingChatMessage(
+    clientMessageId: clientMessageId,
+    type: type,
+    status: status ?? this.status,
+    progress: progress ?? this.progress,
+    previewBytes: clearPreview ? null : previewBytes,
+    durationMs: durationMs,
+    failure: clearFailure ? null : failure ?? this.failure,
+  );
+
+  @override
+  List<Object?> get props => [
+    clientMessageId,
+    type,
+    status,
+    progress,
+    previewBytes,
+    durationMs,
+    failure,
+  ];
+}
+
+class _MediaJob {
+  _MediaJob({
+    required this.type,
+    required this.mimeType,
+    required this.bytes,
+    this.durationMs,
+  });
+  final String type;
+  final String mimeType;
+  Uint8List? bytes;
+  final int? durationMs;
+  String? uploadId;
+  bool running = false;
 }
 
 class ChatConversationCubit extends Cubit<ChatConversationState> {
@@ -87,6 +169,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
   bool _synchronizingReadConflict = false;
   bool _loadingPage = false;
   bool _refreshQueued = false;
+  final Map<String, _MediaJob> _mediaJobs = {};
 
   void bind(FeatureSessionScope? scope, String groupId) {
     FeatureSessionScope? valid;
@@ -96,6 +179,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
       valid = null;
     }
     if (_scope == valid && _groupId == groupId) return;
+    _cancelPendingForOldScope();
     _cancelRealtime();
     _scope = valid;
     _groupId = valid == null ? null : groupId;
@@ -108,7 +192,11 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     _refreshQueued = false;
     emit(const ChatConversationState());
     if (valid != null) {
-      _subscription = _realtime.subscribeToGroup(groupId, _onRealtimeInsert);
+      final subscriptionGeneration = _generation;
+      _subscription = _realtime.subscribeToGroup(
+        groupId,
+        () => _onRealtimeInsert(subscriptionGeneration),
+      );
       unawaited(load());
     }
   }
@@ -140,16 +228,37 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           loading: false,
           messages: merged,
           nextCursor: page.nextCursor,
+          pending: state.pending,
         ),
       );
       _markNewestRead(merged);
     } catch (error) {
       if (!_current(scope, groupId, generation, request)) return;
       final failure = _failure(error, 'Unable to load messages.');
+      if (_isAccessLost(error)) {
+        _cancelRealtime();
+        _cancelPendingForOldScope();
+        emit(
+          ChatConversationState(
+            loading: false,
+            failure: failure,
+            accessLost: true,
+          ),
+        );
+        return;
+      }
       emit(
         previous.messages.isEmpty
-            ? ChatConversationState(loading: false, failure: failure)
-            : previous.copyWith(refreshing: false, failure: failure),
+            ? ChatConversationState(
+                loading: false,
+                failure: failure,
+                pending: state.pending,
+              )
+            : previous.copyWith(
+                refreshing: false,
+                failure: failure,
+                pending: state.pending,
+              ),
       );
     } finally {
       if (_scopeCurrent(scope, groupId, generation)) {
@@ -191,6 +300,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           nextCursor: page.nextCursor,
           clearCursor: page.nextCursor == null,
           loadingOlder: false,
+          pending: state.pending,
         ),
       );
     } catch (error) {
@@ -273,10 +383,275 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     }
   }
 
-  void _onRealtimeInsert() {
+  Future<String?> sendMedia({
+    required String type,
+    required String mimeType,
+    required Uint8List bytes,
+    int? durationMs,
+  }) async {
+    if (_scope == null ||
+        _groupId == null ||
+        !const ['IMAGE', 'VOICE'].contains(type) ||
+        bytes.isEmpty) {
+      return null;
+    }
+    final clientId = _uuidV4();
+    _mediaJobs[clientId] = _MediaJob(
+      type: type,
+      mimeType: mimeType,
+      bytes: bytes,
+      durationMs: durationMs,
+    );
+    _replacePending(
+      PendingChatMessage(
+        clientMessageId: clientId,
+        type: type,
+        status: ChatUploadState.preparing,
+        previewBytes: type == 'IMAGE' ? bytes : null,
+        durationMs: durationMs,
+      ),
+    );
+    unawaited(_runMedia(clientId));
+    return clientId;
+  }
+
+  Future<void> retryMedia(String clientId) => _runMedia(clientId);
+
+  Future<void> _runMedia(String clientId) async {
+    final job = _mediaJobs[clientId];
+    final scope = _scope;
+    final groupId = _groupId;
+    if (job == null || job.running || scope == null || groupId == null) return;
+    job.running = true;
+    final generation = _generation;
+    try {
+      if (job.uploadId == null) {
+        final bytes = job.bytes;
+        if (bytes == null) throw const FormatException('Media is unavailable');
+        _updatePending(
+          clientId,
+          status: ChatUploadState.preparing,
+          clearFailure: true,
+        );
+        final authorization = await _repository.initiateUpload(
+          scope.workspaceId,
+          groupId,
+          type: job.type,
+          mimeType: job.mimeType,
+          sizeBytes: bytes.length,
+          durationMs: job.durationMs,
+        );
+        if (!_scopeCurrent(scope, groupId, generation)) {
+          unawaited(
+            _repository.cancelUpload(
+              scope.workspaceId,
+              groupId,
+              authorization.uploadId,
+            ),
+          );
+          return;
+        }
+        job.uploadId = authorization.uploadId;
+        _updatePending(
+          clientId,
+          status: ChatUploadState.uploading,
+          progress: 0,
+        );
+        try {
+          await _repository.uploadSigned(
+            authorization,
+            bytes,
+            job.mimeType,
+            onProgress: (sent, total) {
+              if (_scopeCurrent(scope, groupId, generation) && total > 0) {
+                _updatePending(clientId, progress: sent / total);
+              }
+            },
+          );
+        } catch (_) {
+          await _cancelTracked(scope, groupId, job);
+          rethrow;
+        }
+      }
+      if (!_scopeCurrent(scope, groupId, generation)) return;
+      _updatePending(
+        clientId,
+        status: ChatUploadState.finalizing,
+        progress: 1,
+        clearPreview: true,
+      );
+      final canonical = await _repository.finalizeUpload(
+        scope.workspaceId,
+        groupId,
+        type: job.type,
+        uploadId: job.uploadId!,
+        clientMessageId: clientId,
+      );
+      if (!_scopeCurrent(scope, groupId, generation)) return;
+      _validate([canonical], scope, groupId);
+      _mediaJobs.remove(clientId);
+      job.bytes = null;
+      final pending = state.pending
+          .where((p) => p.clientMessageId != clientId)
+          .toList();
+      final messages = _merge([canonical], state.messages);
+      emit(
+        state.copyWith(
+          messages: messages,
+          pending: pending,
+          clearFailure: true,
+        ),
+      );
+      _markNewestRead(messages);
+      onChanged?.call();
+    } catch (error) {
+      if (_scopeCurrent(scope, groupId, generation)) {
+        if (error is ApiException &&
+            const [
+              'CHAT_UPLOAD_EXPIRED',
+              'CHAT_UPLOAD_NOT_PENDING',
+            ].contains(error.code)) {
+          await _cancelTracked(scope, groupId, job);
+        }
+        _updatePending(
+          clientId,
+          status: ChatUploadState.failed,
+          failure: _failure(error, 'Unable to send media.'),
+        );
+      }
+    } finally {
+      job.running = false;
+    }
+  }
+
+  Future<void> cancelPending(String clientId) async {
+    final job = _mediaJobs.remove(clientId);
+    final scope = _scope;
+    final groupId = _groupId;
+    if (job != null && scope != null && groupId != null) {
+      await _cancelTracked(scope, groupId, job);
+      job.bytes = null;
+    }
+    if (!isClosed) {
+      emit(
+        state.copyWith(
+          pending: state.pending
+              .where((p) => p.clientMessageId != clientId)
+              .toList(),
+        ),
+      );
+    }
+  }
+
+  Future<bool> sendLocation(ChatLocation location) async {
+    final scope = _scope;
+    final groupId = _groupId;
+    if (scope == null ||
+        groupId == null ||
+        !location.isValid ||
+        state.sending) {
+      return false;
+    }
+    final generation = _generation;
+    emit(state.copyWith(sending: true, clearFailure: true));
+    try {
+      final canonical = await _repository.sendLocation(
+        scope.workspaceId,
+        groupId,
+        location: location,
+        clientMessageId: _uuidV4(),
+      );
+      if (!_scopeCurrent(scope, groupId, generation)) return false;
+      _validate([canonical], scope, groupId);
+      final messages = _merge([canonical], state.messages);
+      emit(state.copyWith(sending: false, messages: messages));
+      _markNewestRead(messages);
+      onChanged?.call();
+      return true;
+    } catch (error) {
+      if (_scopeCurrent(scope, groupId, generation)) {
+        emit(
+          state.copyWith(
+            sending: false,
+            failure: _failure(error, 'Unable to share location.'),
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
+  void _replacePending(PendingChatMessage value) {
+    final pending = [...state.pending];
+    final index = pending.indexWhere(
+      (p) => p.clientMessageId == value.clientMessageId,
+    );
+    if (index < 0) {
+      pending.add(value);
+    } else {
+      pending[index] = value;
+    }
+    emit(state.copyWith(pending: pending));
+  }
+
+  void _updatePending(
+    String clientId, {
+    ChatUploadState? status,
+    double? progress,
+    bool clearPreview = false,
+    Failure? failure,
+    bool clearFailure = false,
+  }) {
+    final current = state.pending
+        .where((p) => p.clientMessageId == clientId)
+        .firstOrNull;
+    if (current == null) return;
+    _replacePending(
+      current.copyWith(
+        status: status,
+        progress: progress,
+        clearPreview: clearPreview,
+        failure: failure,
+        clearFailure: clearFailure,
+      ),
+    );
+  }
+
+  Future<void> _cancelTracked(
+    FeatureSessionScope scope,
+    String groupId,
+    _MediaJob job,
+  ) async {
+    final uploadId = job.uploadId;
+    job.uploadId = null;
+    if (uploadId == null) return;
+    try {
+      await _repository.cancelUpload(scope.workspaceId, groupId, uploadId);
+    } catch (_) {
+      // Cancellation is best-effort; backend expiry cleanup remains authoritative.
+    }
+  }
+
+  void _cancelPendingForOldScope() {
+    final scope = _scope;
+    final groupId = _groupId;
+    final jobs = _mediaJobs.values.toList();
+    _mediaJobs.clear();
+    for (final job in jobs) {
+      job.bytes = null;
+      if (scope != null && groupId != null) {
+        unawaited(_cancelTracked(scope, groupId, job));
+      }
+    }
+  }
+
+  void _onRealtimeInsert(int generation) {
+    if (generation != _generation) return;
     _refreshDebounce?.cancel();
     _refreshDebounce = Timer(const Duration(milliseconds: 300), () {
-      if (!isClosed) unawaited(load(refresh: true));
+      if (!isClosed && generation == _generation) {
+        unawaited(load(refresh: true));
+      }
     });
   }
 
@@ -441,6 +816,10 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
   Failure _failure(Object error, String fallback) => error is ApiException
       ? error.toFailure()
       : Failure(message: fallback, kind: FailureKind.server);
+  bool _isAccessLost(Object error) =>
+      error is ApiException &&
+      (error.statusCode == 403 ||
+          (error.statusCode == 404 && error.code == 'CHAT_GROUP_NOT_FOUND'));
   bool _current(
     FeatureSessionScope scope,
     String groupId,
@@ -467,6 +846,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
 
   @override
   Future<void> close() async {
+    _cancelPendingForOldScope();
     _generation++;
     _request++;
     _scope = null;

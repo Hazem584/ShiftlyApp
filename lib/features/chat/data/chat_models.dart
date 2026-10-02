@@ -98,9 +98,11 @@ class ChatMessage extends Equatable {
     required this.id,
     required this.groupId,
     required this.type,
-    required this.text,
+    this.text,
     required this.sender,
     required this.createdAt,
+    this.attachment,
+    this.location,
     this.clientMessageId,
     this.replyToMessageId,
   });
@@ -108,24 +110,42 @@ class ChatMessage extends Equatable {
   final String id;
   final String groupId;
   final String type;
-  final String text;
+  final String? text;
   final ChatSender sender;
+  final ChatAttachment? attachment;
+  final ChatLocation? location;
   final String? clientMessageId;
   final String? replyToMessageId;
   final DateTime createdAt;
 
   factory ChatMessage.fromJson(Map<String, Object?> json) {
     final type = _text(json, 'type');
-    if (type != 'TEXT') throw const FormatException('Unsupported message type');
-    final body = _text(json, 'text');
-    if (body.length > 4000) throw const FormatException('Invalid message text');
+    final rawText = json['text'];
+    if (rawText != null && rawText is! String) {
+      throw const FormatException('Invalid message text');
+    }
+    final body = rawText as String?;
+    if (type == 'TEXT' && (body == null || body.trim().isEmpty)) {
+      throw const FormatException('Invalid message text');
+    }
+    if (body != null && body.length > 4000) {
+      throw const FormatException('Invalid message text');
+    }
     final senderValue = json['sender'] ?? json['senderMembership'];
+    final rawAttachment = json['attachment'];
+    final rawLocation = json['location'];
     return ChatMessage(
       id: chatUuid(json, 'id'),
       groupId: chatUuid(json, 'groupId'),
       type: type,
       text: body,
       sender: ChatSender.fromJson(chatMap(senderValue, 'sender')),
+      attachment: rawAttachment == null
+          ? null
+          : ChatAttachment.fromJson(chatMap(rawAttachment, 'attachment')),
+      location: rawLocation == null
+          ? null
+          : ChatLocation.fromJson(chatMap(rawLocation, 'location')),
       clientMessageId: chatOptionalUuid(json['clientMessageId']),
       replyToMessageId: chatOptionalUuid(json['replyToMessageId']),
       createdAt: _date(json, 'createdAt'),
@@ -139,10 +159,146 @@ class ChatMessage extends Equatable {
     type,
     text,
     sender,
+    attachment,
+    location,
     clientMessageId,
     replyToMessageId,
     createdAt,
   ];
+}
+
+class ChatAttachment extends Equatable {
+  const ChatAttachment({
+    required this.id,
+    required this.category,
+    required this.mimeType,
+    required this.sizeBytes,
+    this.durationMs,
+  });
+
+  final String id;
+  final String category;
+  final String mimeType;
+  final int sizeBytes;
+  final int? durationMs;
+
+  factory ChatAttachment.fromJson(Map<String, Object?> json) {
+    final size = json['sizeBytes'];
+    final duration = json['durationMs'];
+    if (size is! int || size < 1 || (duration != null && duration is! int)) {
+      throw const FormatException('Invalid attachment metadata');
+    }
+    return ChatAttachment(
+      id: chatUuid(json, 'id'),
+      category: _text(json, 'category'),
+      mimeType: _text(json, 'mimeType'),
+      sizeBytes: size,
+      durationMs: duration as int?,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, category, mimeType, sizeBytes, durationMs];
+}
+
+class ChatLocation extends Equatable {
+  const ChatLocation({
+    required this.latitude,
+    required this.longitude,
+    this.label,
+    this.address,
+  });
+
+  final double latitude;
+  final double longitude;
+  final String? label;
+  final String? address;
+
+  bool get isValid =>
+      latitude.isFinite &&
+      longitude.isFinite &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180;
+
+  factory ChatLocation.fromJson(Map<String, Object?> json) {
+    final latitude = json['latitude'];
+    final longitude = json['longitude'];
+    final value = ChatLocation(
+      latitude: latitude is num ? latitude.toDouble() : double.nan,
+      longitude: longitude is num ? longitude.toDouble() : double.nan,
+      label: _optionalText(json['label']),
+      address: _optionalText(json['address']),
+    );
+    if (!value.isValid) throw const FormatException('Invalid location');
+    return value;
+  }
+
+  Map<String, Object?> toJson() => {
+    'latitude': latitude,
+    'longitude': longitude,
+    if (label != null) 'label': label,
+    if (address != null) 'address': address,
+  };
+
+  @override
+  List<Object?> get props => [latitude, longitude, label, address];
+}
+
+class ChatUploadAuthorization extends Equatable {
+  const ChatUploadAuthorization({
+    required this.uploadId,
+    required this.signedUploadUrl,
+    required this.uploadToken,
+    required this.expiresAt,
+  });
+
+  final String uploadId;
+  final Uri signedUploadUrl;
+  final String uploadToken;
+  final DateTime expiresAt;
+
+  factory ChatUploadAuthorization.fromJson(Map<String, Object?> json) {
+    final url = json['signedUploadUrl'];
+    final token = json['uploadToken'];
+    final expires = json['expiresAt'];
+    final uri = url is String ? Uri.tryParse(url) : null;
+    final date = expires is String ? DateTime.tryParse(expires) : null;
+    if (uri == null ||
+        !uri.isAbsolute ||
+        uri.scheme != 'https' ||
+        token is! String ||
+        token.isEmpty ||
+        date == null) {
+      throw const FormatException('Invalid upload authorization');
+    }
+    return ChatUploadAuthorization(
+      uploadId: chatUuid(json, 'uploadId'),
+      signedUploadUrl: uri,
+      uploadToken: token,
+      expiresAt: date.toUtc(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [uploadId, signedUploadUrl, expiresAt];
+
+  @override
+  String toString() =>
+      'ChatUploadAuthorization($uploadId, expiresAt: $expiresAt)';
+}
+
+class ChatMediaUrl extends Equatable {
+  const ChatMediaUrl({required this.url, required this.expiresAt});
+  final Uri url;
+  final DateTime expiresAt;
+
+  @override
+  List<Object?> get props => [url, expiresAt];
+
+  @override
+  String toString() => 'ChatMediaUrl(expiresAt: $expiresAt)';
 }
 
 class ChatMember extends Equatable {

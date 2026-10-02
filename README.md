@@ -297,3 +297,123 @@ Use authorized non-production manager and employee accounts. Do not use producti
 23. Switch workspace and verify old groups, messages, and unread state clear immediately.
 24. Log out User A and log in as User B without restarting; verify no User A chat state returns.
 25. Exercise offline, timeout, `401`, `403`, `404`, `409`, `429`, `500`, and `502` responses and verify safe errors, retry behavior, request IDs in diagnostics, and retained canonical data where applicable.
+# Chat media integration
+
+Shiftly chat supports canonical `TEXT`, `IMAGE`, `VOICE`, and `LOCATION`
+messages. Unknown future message types are retained and rendered as an inert
+fallback. The feature extends the existing authenticated Dio repository,
+session-scoped Cubits, GoRouter routes, Supabase session, Realtime subscription,
+toast/error pipeline, and shared chat screen; there is no second authentication,
+routing, state-management, or backend mutation path.
+
+## Media architecture and packages
+
+- `image_picker` (existing) selects images. Bytes are bounded and checked for
+  JPEG, PNG, or WebP magic bytes rather than trusting the extension.
+- `record` records AAC-LC in an M4A container and requests microphone access only
+  when recording starts. `path_provider` provides the temporary recording folder.
+- `just_audio` provides play/pause/resume/replay. A single player belongs to the
+  active conversation, so starting another item replaces the previous source and
+  leaving the screen disposes playback.
+- `geolocator` performs one bounded, foreground location request after the user
+  selects Share location. No continuous tracking or location history is used.
+- `url_launcher` opens a generated HTTPS Google Maps query in an external app.
+  Backend text is never interpreted as a URL.
+
+For IMAGE and VOICE, the client validates locally, calls
+`POST /workspaces/{workspaceId}/chat/groups/{groupId}/uploads`, uploads bytes with
+`PUT` to the exact returned HTTPS `signedUploadUrl` using the validated content
+type and `x-upsert: false`, and finalizes through
+`POST /workspaces/{workspaceId}/chat/groups/{groupId}/messages`. Finalization
+uses the original upload ID and a stable UUID-v4 `clientMessageId`; only the
+canonical returned message enters history. A pre-finalization failure or user
+cancellation attempts `DELETE .../uploads/{uploadId}`. A finalization failure
+retains the same upload/client IDs for a safe retry. Storage success alone is
+never shown as a sent message, and the client never constructs a bucket path or
+public URL.
+
+Pending media explicitly progresses through preparing, uploading, finalizing,
+sent, failed, or cancelled. Progress is surfaced where Dio reports it. Duplicate
+execution of the same pending job is suppressed. Image preview bytes exist only
+for the pending UI and are dropped before finalization. Voice files are created
+only in the OS temporary directory and deleted after reading, cancellation, or
+failure; in-memory retry data is cleared after upload/cancel/session change.
+
+Backend limits mirrored for early feedback are: JPEG/PNG/WebP images up to 5 MiB;
+MP4/AAC/MPEG/Ogg/WebM voice up to 10 MiB and 600,000 ms. The backend remains
+authoritative and verifies stored MIME, size, and signature. Location coordinates
+must be finite with latitude in `[-90, 90]`, longitude in `[-180, 180]`, and at
+most six decimal places server-side. Users always confirm a retrieved location
+before it is sent.
+
+## Permissions
+
+Android declares only `RECORD_AUDIO`, `ACCESS_FINE_LOCATION`, and the existing
+`INTERNET` permission. iOS declares `NSMicrophoneUsageDescription`,
+`NSLocationWhenInUseUsageDescription`, and the existing photo-library reason.
+Microphone and location runtime prompts occur only after the corresponding chat
+action. Denied, permanently denied, disabled-service, timeout, cancellation, and
+unavailable-device cases produce safe user messages.
+
+## Realtime, session isolation, and errors
+
+Realtime subscribes only to inserts for the active `group_id` through the current
+authenticated Supabase session. Events and connection failures are bounded,
+debounced invalidation signals; presentation data is refetched from NestJS.
+Subscription callbacks, HTTP responses, uploads, read positions, and refreshes
+are guarded by user, workspace, membership, role, group, and local session
+generation. Scope changes immediately clear messages, pending bytes, playback,
+and the old subscription. Cursor pages are deduplicated by canonical message ID
+and sorted by `(createdAt, id)`. Loading older pages preserves scroll position;
+new messages only auto-scroll when the reader is already near the bottom.
+
+Archived groups remain readable and disable every composer action. API failures
+preserve canonical history and flow through the typed safe-message mapping for
+400, 401, 403, 404, 409, 413, 415, 429, 500, 502, network, timeout, and
+cancellation cases. `requestId` remains available internally. Signed URLs,
+upload tokens, file paths, media bytes, coordinates, provider bodies, and access
+tokens are never logged or placed in exception `toString()` output.
+
+## Manual chat-media regression plan
+
+1. Use separate manager and employee sessions in the same group; verify both
+   render all four message types and only authorized groups are visible.
+2. Send JPEG, PNG, and WebP images; verify preview/progress becomes exactly one
+   canonical bubble. Retry a network failure, reject spoofed/GIF and >5 MiB
+   files, and confirm removing a failed item cancels it.
+3. Test microphone grant, denial, permanent denial, interruption, cancel, a
+   zero-length recording, automatic 10-minute limit, upload, play/pause/resume,
+   replay, switching between voice items, background/resume, and screen exit.
+4. Test location service disabled, grant/deny/permanent deny, timeout, cancel the
+   confirmation, confirm sending, rendering, and opening the external maps app.
+5. Keep two simultaneous sessions open; send each type in both directions and
+   verify one debounced canonical refresh without duplicates or forced scrolling.
+6. Verify unread totals and read positions synchronize after foreground refresh
+   and Realtime delivery.
+7. Load several older cursor pages and verify ordering, deduplication, and stable
+   scroll position.
+8. Archive a group and verify history remains readable while text and all attach
+   actions are disabled for manager and employee.
+9. Remove the employee while chat is open and verify the next canonical 403/404
+   removes access and no old event changes the screen.
+10. Switch workspaces during refresh, upload, recording, playback, and location;
+    verify old data and operations cannot enter the new scope.
+11. Log out User A and sign in User B without restarting; verify no messages,
+    media, pending bytes, player state, URLs, or subscriptions survive.
+12. Exercise offline, timeout, 401, 403, 404, each upload 409 state, 413, 415,
+    429, 500, and 502; verify safe text, preserved canonical history, stable-ID
+    retry, and no fake canonical message.
+13. Background/resume while recording, uploading, playing, and awaiting location;
+    verify resources settle safely and no duplicate finalization occurs.
+14. Repeat composer, long-name/text, image, voice, location, loading, empty,
+    error, and offline states on a narrow Android device.
+15. Inspect debug/release logs for credentials, bearer tokens, signed URLs,
+    upload tokens, provider responses, local paths, coordinates, and personal
+    data; none should appear.
+
+Remaining device-level risk is codec/provider behavior across OEM Android and iOS
+versions, which must be covered by the manual matrix above. Signed media URLs are
+short-lived (10 minutes), so an already-rendered image or active player may need a
+fresh user action after expiry. Upload authorizations expire after two hours; the
+UI retries expired pre-finalization work with a new authorization while preserving
+the logical client message ID.

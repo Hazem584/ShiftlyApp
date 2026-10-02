@@ -142,6 +142,21 @@ abstract final class ApiErrorParser {
         'The read position changed. Refreshing will synchronize it.',
       'CHAT_REPLY_INVALID' =>
         'The message being replied to is no longer available.',
+      'CHAT_MEDIA_TYPE_UNSUPPORTED' => 'This media format is not supported.',
+      'CHAT_MEDIA_TOO_LARGE' => 'The selected media is too large.',
+      'CHAT_MEDIA_METADATA_INVALID' => 'The media details are invalid.',
+      'CHAT_MEDIA_AUTHORIZATION_REQUIRED' =>
+        'Media authorization is no longer available.',
+      'CHAT_MEDIA_UPLOAD_AUTHORIZATION_FAILED' =>
+        'The upload service is temporarily unavailable.',
+      'CHAT_MEDIA_VERIFICATION_FAILED' =>
+        'The uploaded media could not be verified.',
+      'CHAT_UPLOAD_NOT_FOUND' => 'That upload is no longer available.',
+      'CHAT_UPLOAD_TYPE_MISMATCH' => 'The upload does not match this message.',
+      'CHAT_UPLOAD_EXPIRED' => 'The upload expired. Please try again.',
+      'CHAT_UPLOAD_CONSUMED' => 'This upload has already been sent.',
+      'CHAT_UPLOAD_NOT_PENDING' => 'This upload is no longer pending.',
+      'CHAT_MESSAGE_HAS_NO_MEDIA' => 'This message has no available media.',
       'CHAT_READ_MESSAGE_INVALID' =>
         'The selected message cannot be used as a read position.',
       _ => switch (status) {

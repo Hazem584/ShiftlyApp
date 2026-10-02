@@ -37,15 +37,14 @@ const _scope = FeatureSessionScope(
 
 void main() {
   group('defensive models and repository contract', () {
-    test('rejects malformed UUIDs and unknown message types', () {
+    test('rejects malformed UUIDs and retains unknown message types', () {
       expect(
         () => ChatMessage.fromJson(_messageJson(id: 'bad-id')),
         throwsFormatException,
       );
-      expect(
-        () => ChatMessage.fromJson(_messageJson(type: 'IMAGE')),
-        throwsFormatException,
-      );
+      final unknown = ChatMessage.fromJson(_messageJson(type: 'FUTURE_TYPE'));
+      expect(unknown.type, 'FUTURE_TYPE');
+      expect(unknown.text, 'hello');
     });
 
     test('maps cursor pagination and the deployed endpoint', () async {
@@ -1579,7 +1578,7 @@ class _FakeSubscription implements ChatRealtimeSubscription {
   Future<void> cancel() async => onCancel();
 }
 
-class _FakeChatRepository implements ChatRepository {
+class _FakeChatRepository extends ChatRepository {
   final groupLoads = <Future<List<ChatGroup>>>[];
   final messageLoads = <Object>[];
   final unreadLoads = <Future<int>>[];

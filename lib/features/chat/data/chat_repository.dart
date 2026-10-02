@@ -1,6 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:shiftly/features/chat/data/chat_models.dart';
 
-abstract interface class ChatRepository {
+abstract class ChatRepository {
+  const ChatRepository();
+
   Future<List<ChatGroup>> listGroups(String workspaceId);
   Future<ChatGroup> getGroup(String workspaceId, String groupId);
   Future<ChatGroup> createGroup(
@@ -39,6 +43,43 @@ abstract interface class ChatRepository {
     required String clientMessageId,
     String? replyToMessageId,
   });
+  Future<ChatUploadAuthorization> initiateUpload(
+    String workspaceId,
+    String groupId, {
+    required String type,
+    required String mimeType,
+    required int sizeBytes,
+    int? durationMs,
+  }) => throw UnsupportedError('Chat media is unavailable');
+  Future<void> uploadSigned(
+    ChatUploadAuthorization authorization,
+    Uint8List bytes,
+    String mimeType, {
+    void Function(int sent, int total)? onProgress,
+  }) => throw UnsupportedError('Chat media is unavailable');
+  Future<ChatMessage> finalizeUpload(
+    String workspaceId,
+    String groupId, {
+    required String type,
+    required String uploadId,
+    required String clientMessageId,
+  }) => throw UnsupportedError('Chat media is unavailable');
+  Future<void> cancelUpload(
+    String workspaceId,
+    String groupId,
+    String uploadId,
+  ) => throw UnsupportedError('Chat media is unavailable');
+  Future<ChatMessage> sendLocation(
+    String workspaceId,
+    String groupId, {
+    required ChatLocation location,
+    required String clientMessageId,
+  }) => throw UnsupportedError('Location messages are unavailable');
+  Future<ChatMediaUrl> mediaUrl(
+    String workspaceId,
+    String groupId,
+    String messageId,
+  ) => throw UnsupportedError('Chat media is unavailable');
   Future<void> markRead(String workspaceId, String groupId, String messageId);
   Future<int> unreadCount(String workspaceId);
 }

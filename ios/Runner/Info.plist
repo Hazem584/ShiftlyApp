@@ -27,7 +27,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Shiftly uses your photo library when you choose a manager profile photo.</string>
+	<string>Shiftly uses your photo library when you choose a profile photo or chat image.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Shiftly uses your microphone only when you record a voice message.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Shiftly uses your location only when you choose to share it in chat.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

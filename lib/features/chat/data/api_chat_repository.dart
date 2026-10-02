@@ -1,12 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
 
-class ApiChatRepository implements ChatRepository {
-  ApiChatRepository(this._dio);
+class ApiChatRepository extends ChatRepository {
+  ApiChatRepository(this._dio, {Dio? signedUploadClient})
+    : _signedUploadClient = signedUploadClient ?? Dio();
   final Dio _dio;
+  final Dio _signedUploadClient;
 
   String _groups(String workspaceId) => '/workspaces/$workspaceId/chat/groups';
   String _group(String workspaceId, String groupId) =>
@@ -176,6 +180,144 @@ class ApiChatRepository implements ChatRepository {
       ),
     ),
   );
+
+  @override
+  Future<ChatUploadAuthorization> initiateUpload(
+    String workspaceId,
+    String groupId, {
+    required String type,
+    required String mimeType,
+    required int sizeBytes,
+    int? durationMs,
+  }) => _request(() async {
+    if (!const ['IMAGE', 'VOICE'].contains(type) || sizeBytes < 1) {
+      throw const FormatException('Invalid upload metadata');
+    }
+    final response = await _dio.post<Object?>(
+      '${_group(workspaceId, groupId)}/uploads',
+      data: {
+        'type': type,
+        'mimeType': mimeType,
+        'sizeBytes': sizeBytes,
+        'durationMs': ?durationMs,
+      },
+    );
+    return ChatUploadAuthorization.fromJson(
+      chatMap(response.data, 'upload authorization'),
+    );
+  });
+
+  @override
+  Future<void> uploadSigned(
+    ChatUploadAuthorization authorization,
+    Uint8List bytes,
+    String mimeType, {
+    void Function(int sent, int total)? onProgress,
+  }) => _request(() async {
+    if (DateTime.now().toUtc().isAfter(authorization.expiresAt)) {
+      throw const FormatException('Upload authorization expired');
+    }
+    await _signedUploadClient.putUri<void>(
+      authorization.signedUploadUrl,
+      data: Stream<List<int>>.value(bytes),
+      options: Options(
+        headers: {
+          Headers.contentTypeHeader: mimeType,
+          Headers.contentLengthHeader: bytes.length,
+          'x-upsert': 'false',
+        },
+      ),
+      onSendProgress: onProgress,
+    );
+  });
+
+  @override
+  Future<ChatMessage> finalizeUpload(
+    String workspaceId,
+    String groupId, {
+    required String type,
+    required String uploadId,
+    required String clientMessageId,
+  }) => _request(
+    () async => ChatMessage.fromJson(
+      chatMap(
+        (await _dio.post<Object?>(
+          '${_group(workspaceId, groupId)}/messages',
+          data: {
+            'type': type,
+            'uploadId': uploadId,
+            'clientMessageId': clientMessageId,
+          },
+        )).data,
+        'message',
+      ),
+    ),
+  );
+
+  @override
+  Future<void> cancelUpload(
+    String workspaceId,
+    String groupId,
+    String uploadId,
+  ) => _request(() async {
+    final body = chatMap(
+      (await _dio.delete<Object?>(
+        '${_group(workspaceId, groupId)}/uploads/$uploadId',
+      )).data,
+      'upload cancellation',
+    );
+    if (body['cancelled'] != true) {
+      throw const FormatException('Invalid upload cancellation');
+    }
+  });
+
+  @override
+  Future<ChatMessage> sendLocation(
+    String workspaceId,
+    String groupId, {
+    required ChatLocation location,
+    required String clientMessageId,
+  }) => _request(() async {
+    if (!location.isValid) throw const FormatException('Invalid location');
+    return ChatMessage.fromJson(
+      chatMap(
+        (await _dio.post<Object?>(
+          '${_group(workspaceId, groupId)}/messages',
+          data: {
+            'type': 'LOCATION',
+            'clientMessageId': clientMessageId,
+            'location': location.toJson(),
+          },
+        )).data,
+        'message',
+      ),
+    );
+  });
+
+  @override
+  Future<ChatMediaUrl> mediaUrl(
+    String workspaceId,
+    String groupId,
+    String messageId,
+  ) => _request(() async {
+    final body = chatMap(
+      (await _dio.get<Object?>(
+        '${_group(workspaceId, groupId)}/messages/$messageId/media-url',
+      )).data,
+      'media URL',
+    );
+    final rawUrl = body['url'];
+    final rawExpires = body['expiresAt'];
+    final url = rawUrl is String ? Uri.tryParse(rawUrl) : null;
+    final expires = rawExpires is String ? DateTime.tryParse(rawExpires) : null;
+    if (url == null ||
+        !url.isAbsolute ||
+        url.scheme != 'https' ||
+        expires == null) {
+      throw const FormatException('Invalid media URL');
+    }
+    return ChatMediaUrl(url: url, expiresAt: expires.toUtc());
+  });
 
   @override
   Future<void> markRead(String workspaceId, String groupId, String messageId) =>

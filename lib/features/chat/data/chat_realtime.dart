@@ -36,7 +36,12 @@ class SupabaseChatRealtime implements ChatRealtime {
           ),
           callback: (_) => onInsert(),
         )
-        .subscribe();
+        .subscribe((status, _) {
+          if (status == RealtimeSubscribeStatus.channelError ||
+              status == RealtimeSubscribeStatus.timedOut) {
+            onInsert();
+          }
+        });
     return _SupabaseChatSubscription(_client, channel);
   }
 }

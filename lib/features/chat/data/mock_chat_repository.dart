@@ -2,7 +2,7 @@ import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
 
-class MockChatRepository implements ChatRepository {
+class MockChatRepository extends ChatRepository {
   const MockChatRepository();
   @override
   Future<List<ChatGroup>> listGroups(String workspaceId) async => const [];
