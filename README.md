@@ -270,8 +270,30 @@ Automated tests use fakes and an in-memory Dio adapter; they never call producti
 Dashboard summary cards and other features outside these integration sprints still use presentation mocks. Shift management, employee shifts, Clock-in/out, manager attendance review, employee attendance history, employee/manager leave requests, and notifications use API repositories in production. Employee and workspace management remain API-backed from the prior integration sprint. Mock repositories remain available only for isolated tests and no-session previews.
 ## Chat Sprint 1 manual regression
 
-1. Sign in as a manager, switch workspaces, and confirm the Chat tab and its unread badge reset to the selected workspace.
-2. Create a group using active employee memberships; edit it, add/remove a member (including the confirmation), and verify the employee only sees groups they belong to.
-3. Send text from two sessions, verify Realtime refreshes canonical sender details, unread badges update, older messages load without a scroll jump, and retrying a failed send creates only one message.
-4. Archive the group and confirm its history remains readable while sending, editing, archiving, and membership controls are disabled.
-5. Sign out while a chat is open and confirm chat data clears and no later Realtime/API response appears in the next session.
+Use authorized non-production manager and employee accounts. Do not use production data.
+
+1. Log in as a manager.
+2. Select the intended workspace.
+3. Create a manager-only group and confirm an empty employee selection is accepted.
+4. Create a group with one or more active employees.
+5. Verify the manager appears exactly once.
+6. Verify the canonical member count in the group list and details.
+7. Log in as an included employee in another session.
+8. Confirm the included employee sees the group.
+9. Confirm an excluded employee cannot see the group.
+10. Send a text message from the manager.
+11. Verify the employee receives the canonical REST-backed message after the Realtime event.
+12. Send a text message from the employee.
+13. Verify the manager unread badge updates.
+14. Open the conversation and verify the unread count clears.
+15. Simulate a failed send, retry it, and confirm only one message exists for the reused client message ID.
+16. Load older messages and confirm chronology, deduplication, and scroll position remain stable.
+17. Edit the group and verify list metadata is retained after canonical refresh.
+18. Add an employee and verify canonical details and member count.
+19. Remove an employee after confirmation and verify immediate access denial and removal from canonical details.
+20. Archive the group after confirmation.
+21. Confirm its history remains readable.
+22. Confirm sending, editing, archiving, and member operations are disabled.
+23. Switch workspace and verify old groups, messages, and unread state clear immediately.
+24. Log out User A and log in as User B without restarting; verify no User A chat state returns.
+25. Exercise offline, timeout, `401`, `403`, `404`, `409`, `429`, `500`, and `502` responses and verify safe errors, retry behavior, request IDs in diagnostics, and retained canonical data where applicable.

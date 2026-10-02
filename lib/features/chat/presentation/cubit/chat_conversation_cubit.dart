@@ -82,6 +82,8 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
   String? _pendingClientId;
   String? _pendingText;
   DateTime? _readAt;
+  bool _loadingPage = false;
+  bool _refreshQueued = false;
 
   void bind(FeatureSessionScope? scope, String groupId) {
     FeatureSessionScope? valid;
@@ -99,6 +101,8 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     _pendingClientId = null;
     _pendingText = null;
     _readAt = null;
+    _loadingPage = false;
+    _refreshQueued = false;
     emit(const ChatConversationState());
     if (valid != null) {
       _subscription = _realtime.subscribeToGroup(groupId, _onRealtimeInsert);
@@ -110,6 +114,11 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     final scope = _scope;
     final groupId = _groupId;
     if (scope == null || groupId == null) return;
+    if (_loadingPage) {
+      if (refresh) _refreshQueued = true;
+      return;
+    }
+    _loadingPage = true;
     final generation = _generation;
     final request = ++_request;
     final previous = state;
@@ -140,6 +149,14 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
             ? ChatConversationState(loading: false, failure: failure)
             : previous.copyWith(refreshing: false, failure: failure),
       );
+    } finally {
+      if (_scopeCurrent(scope, groupId, generation)) {
+        _loadingPage = false;
+        if (_refreshQueued) {
+          _refreshQueued = false;
+          unawaited(load(refresh: true));
+        }
+      }
     }
   }
 
@@ -150,10 +167,12 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     if (scope == null ||
         groupId == null ||
         previous.loadingOlder ||
+        _loadingPage ||
         !previous.hasMore) {
       return;
     }
     final generation = _generation;
+    _loadingPage = true;
     final request = ++_request;
     emit(previous.copyWith(loadingOlder: true, clearFailure: true));
     try {
@@ -180,6 +199,14 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           failure: _failure(error, 'Unable to load older messages.'),
         ),
       );
+    } finally {
+      if (_scopeCurrent(scope, groupId, generation)) {
+        _loadingPage = false;
+        if (_refreshQueued) {
+          _refreshQueued = false;
+          unawaited(load(refresh: true));
+        }
+      }
     }
   }
 
@@ -267,7 +294,13 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           .then((_) {
             if (_scopeCurrent(scope, groupId, generation)) onChanged?.call();
           })
-          .catchError((_) {}),
+          .catchError((Object error) {
+            if (error is ApiException &&
+                error.code == 'CHAT_READ_POSITION_CONFLICT' &&
+                _scopeCurrent(scope, groupId, generation)) {
+              _onRealtimeInsert();
+            }
+          }),
     );
   }
 

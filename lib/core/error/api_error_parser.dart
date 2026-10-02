@@ -131,6 +131,8 @@ abstract final class ApiErrorParser {
       'INVALID_DATE_RANGE' => 'The start date must not be after the end date.',
       'CHAT_GROUP_ARCHIVED' => 'This chat group is archived and read only.',
       'CHAT_GROUP_NOT_FOUND' => 'That chat group could not be found.',
+      'CHAT_MEMBER_INVALID' =>
+        'Choose active members from the current workspace.',
       'CHAT_CURSOR_INVALID' => 'Messages changed. Refresh the conversation.',
       'CHAT_CLIENT_MESSAGE_ID_CONFLICT' =>
         'This message conflicts with an earlier send attempt.',
@@ -138,6 +140,10 @@ abstract final class ApiErrorParser {
         'Your read position is already ahead of that message.',
       'CHAT_READ_POSITION_CONFLICT' =>
         'The read position changed. Refreshing will synchronize it.',
+      'CHAT_REPLY_INVALID' =>
+        'The message being replied to is no longer available.',
+      'CHAT_READ_MESSAGE_INVALID' =>
+        'The selected message cannot be used as a read position.',
       _ => switch (status) {
         400 => 'Please check the information you entered.',
         401 => 'Your session has expired. Please sign in again.',

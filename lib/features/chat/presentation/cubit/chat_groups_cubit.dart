@@ -61,6 +61,8 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
   FeatureSessionScope? _scope;
   var _generation = 0;
   var _request = 0;
+  bool _loading = false;
+  bool _refreshQueued = false;
 
   FeatureSessionScope? get scope => _scope;
 
@@ -72,6 +74,8 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _scope = authorized;
     _generation++;
     _request++;
+    _loading = false;
+    _refreshQueued = false;
     emit(const ChatGroupsState());
     if (authorized != null) unawaited(load());
   }
@@ -79,6 +83,11 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
   Future<void> load({bool refresh = false}) async {
     final scope = _scope;
     if (scope == null) return;
+    if (_loading) {
+      if (refresh) _refreshQueued = true;
+      return;
+    }
+    _loading = true;
     final generation = _generation;
     final request = ++_request;
     final previous = state;
@@ -116,6 +125,14 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
                 failure: failure,
               ),
       );
+    } finally {
+      if (_scopeCurrent(scope, generation)) {
+        _loading = false;
+        if (_refreshQueued) {
+          _refreshQueued = false;
+          unawaited(load(refresh: true));
+        }
+      }
     }
   }
 
@@ -161,7 +178,7 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
       _mutate((scope) => _repository.archiveGroup(scope.workspaceId, groupId));
 
   Future<ChatMutationResult> _mutate(
-    Future<ChatGroup> Function(FeatureSessionScope scope) operation,
+    Future<Object?> Function(FeatureSessionScope scope) operation,
   ) async {
     final scope = _scope;
     if (scope == null || !scope.isManager) return ChatMutationResult.failure;
@@ -169,23 +186,13 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     final generation = _generation;
     emit(state.copyWith(mutating: true, clearFailure: true));
     try {
-      final group = await operation(scope);
+      await operation(scope);
       if (!_scopeCurrent(scope, generation)) return ChatMutationResult.stale;
-      if (group.workspaceId != scope.workspaceId) {
-        throw const FormatException('Cross-workspace chat response');
-      }
-      final existing = state.groups.any((item) => item.id == group.id);
-      emit(
-        state.copyWith(
-          mutating: false,
-          groups: existing
-              ? state.groups
-                    .map((item) => item.id == group.id ? group : item)
-                    .toList()
-              : [group, ...state.groups],
-        ),
-      );
-      return ChatMutationResult.success;
+      emit(state.copyWith(mutating: false));
+      await _refreshAfterMutation(scope, generation);
+      return _scopeCurrent(scope, generation)
+          ? ChatMutationResult.success
+          : ChatMutationResult.stale;
     } catch (error) {
       if (!_scopeCurrent(scope, generation)) return ChatMutationResult.stale;
       emit(
@@ -195,6 +202,42 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
         ),
       );
       return ChatMutationResult.failure;
+    }
+  }
+
+  Future<void> _refreshAfterMutation(
+    FeatureSessionScope scope,
+    int generation,
+  ) async {
+    final request = ++_request;
+    try {
+      final results = await Future.wait<Object>([
+        _repository.listGroups(scope.workspaceId),
+        _repository.unreadCount(scope.workspaceId),
+      ]);
+      if (!_current(scope, generation, request)) return;
+      final groups = results[0] as List<ChatGroup>;
+      if (groups.any((group) => group.workspaceId != scope.workspaceId)) {
+        throw const FormatException('Cross-workspace chat response');
+      }
+      emit(
+        state.copyWith(
+          groups: groups,
+          unreadCount: results[1] as int,
+          clearFailure: true,
+        ),
+      );
+    } catch (error) {
+      if (_current(scope, generation, request)) {
+        emit(
+          state.copyWith(
+            failure: _failure(
+              error,
+              'The change was saved, but chat could not be refreshed.',
+            ),
+          ),
+        );
+      }
     }
   }
 

@@ -9,14 +9,14 @@ abstract interface class ChatRepository {
     String? description,
     required List<String> memberMembershipIds,
   });
-  Future<ChatGroup> updateGroup(
+  Future<void> updateGroup(
     String workspaceId,
     String groupId, {
     required String name,
     String? description,
   });
-  Future<ChatGroup> archiveGroup(String workspaceId, String groupId);
-  Future<ChatGroup> addMembers(
+  Future<void> archiveGroup(String workspaceId, String groupId);
+  Future<void> addMembers(
     String workspaceId,
     String groupId,
     List<String> membershipIds,

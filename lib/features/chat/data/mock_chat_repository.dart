@@ -19,17 +19,17 @@ class MockChatRepository implements ChatRepository {
     required List<String> memberMembershipIds,
   }) => throw UnimplementedError();
   @override
-  Future<ChatGroup> updateGroup(
+  Future<void> updateGroup(
     String workspaceId,
     String groupId, {
     required String name,
     String? description,
   }) => throw UnimplementedError();
   @override
-  Future<ChatGroup> archiveGroup(String workspaceId, String groupId) =>
+  Future<void> archiveGroup(String workspaceId, String groupId) =>
       throw UnimplementedError();
   @override
-  Future<ChatGroup> addMembers(
+  Future<void> addMembers(
     String workspaceId,
     String groupId,
     List<String> membershipIds,

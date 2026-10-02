@@ -1,7 +1,10 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/chat/data/api_chat_repository.dart';
@@ -11,6 +14,8 @@ import 'package:shiftly/features/chat/data/chat_repository.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
+import 'package:shiftly/features/employees/data/employee_repository.dart';
 
 const _workspace = '11111111-1111-4111-8111-111111111111';
 const _otherWorkspace = '22222222-2222-4222-8222-222222222222';
@@ -54,6 +59,7 @@ void main() {
                   data: {
                     'data': [_messageJson()],
                     'nextCursor': 'opaque-cursor',
+                    'hasMore': true,
                   },
                 ),
               );
@@ -74,6 +80,157 @@ void main() {
       expect(page.messages.single.id, _message1);
       expect(page.nextCursor, 'opaque-cursor');
     });
+
+    test(
+      'parses list envelope, member wrappers, and _count fallback',
+      () async {
+        final group = ChatGroup.fromJson({
+          ..._groupJson(),
+          '_count': {'members': 2},
+          'members': [
+            {
+              'joinedAt': '2026-10-01T10:00:00Z',
+              'membership': {
+                'id': _membership,
+                'role': 'MANAGER',
+                'profile': {'id': _message2, 'fullName': 'Sam'},
+              },
+            },
+          ],
+        });
+        expect(group.memberCount, 2);
+        expect(group.members.single.membershipId, _membership);
+        expect(group.members.single.fullName, 'Sam');
+        final messageJson = _messageJson()..remove('sender');
+        final message = ChatMessage.fromJson({
+          ...messageJson,
+          'senderMembership': {
+            'id': _membership,
+            'profile': {'id': _message2, 'fullName': 'Taylor'},
+          },
+        });
+        expect(message.sender.fullName, 'Taylor');
+      },
+    );
+
+    test('validates add/remove acknowledgements and request bodies', () async {
+      final requests = <RequestOptions>[];
+      final responses = <Object?>[
+        {'addedCount': 1},
+        {'removed': true},
+      ];
+      final dio = Dio()
+        ..interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) {
+              requests.add(options);
+              handler.resolve(
+                Response<Object?>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: responses.removeAt(0),
+                ),
+              );
+            },
+          ),
+        );
+      final repository = ApiChatRepository(dio);
+      await repository.addMembers(_workspace, _group, [
+        _membership,
+        _membership,
+      ]);
+      await repository.removeMember(_workspace, _group, _membership);
+      expect(requests.first.data, {
+        'membershipIds': [_membership],
+      });
+      expect(requests.last.path, endsWith('/members/$_membership'));
+    });
+
+    test(
+      'rejects malformed successful acknowledgements as typed errors',
+      () async {
+        final dio = Dio()
+          ..interceptors.add(
+            InterceptorsWrapper(
+              onRequest: (options, handler) => handler.resolve(
+                Response<Object?>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: {'addedCount': -1},
+                ),
+              ),
+            ),
+          );
+        expect(
+          ApiChatRepository(dio).addMembers(_workspace, _group, [_membership]),
+          throwsA(isA<ApiException>()),
+        );
+      },
+    );
+
+    test('preserves typed API code and requestId', () async {
+      final dio = Dio()
+        ..interceptors.add(
+          InterceptorsWrapper(
+            onRequest: (options, handler) => handler.reject(
+              DioException(
+                requestOptions: options,
+                response: Response<Object?>(
+                  requestOptions: options,
+                  statusCode: 409,
+                  data: {
+                    'code': 'CHAT_GROUP_ARCHIVED',
+                    'message': 'provider detail must not be displayed',
+                    'requestId': 'req-chat-1',
+                  },
+                ),
+                type: DioExceptionType.badResponse,
+              ),
+            ),
+          ),
+        );
+      try {
+        await ApiChatRepository(dio).archiveGroup(_workspace, _group);
+        fail('Expected ApiException');
+      } on ApiException catch (error) {
+        expect(error.code, 'CHAT_GROUP_ARCHIVED');
+        expect(error.requestId, 'req-chat-1');
+        expect(error.message, 'This chat group is archived and read only.');
+      }
+    });
+
+    test(
+      'create trims values, omits empty description, and parses count',
+      () async {
+        late RequestOptions request;
+        final dio = Dio()
+          ..interceptors.add(
+            InterceptorsWrapper(
+              onRequest: (options, handler) {
+                request = options;
+                handler.resolve(
+                  Response<Object?>(
+                    requestOptions: options,
+                    statusCode: 201,
+                    data: {..._groupJson(), 'memberCount': 1},
+                  ),
+                );
+              },
+            ),
+          );
+        final group = await ApiChatRepository(dio).createGroup(
+          _workspace,
+          name: '  Operations  ',
+          description: '   ',
+          memberMembershipIds: [_membership, _membership],
+        );
+        expect(group.memberCount, 1);
+        expect(request.data, {
+          'name': 'Operations',
+          'memberMembershipIds': [_membership],
+        });
+      },
+    );
   });
 
   group('session isolation, pagination, idempotency, and realtime', () {
@@ -100,6 +257,46 @@ void main() {
       expect(cubit.scope?.workspaceId, _otherWorkspace);
       await cubit.close();
     });
+
+    test(
+      'successful update uses canonical refresh and retains metadata',
+      () async {
+        final canonical = _chatGroup(memberCount: 9, unreadCount: 42);
+        final repository = _FakeChatRepository()
+          ..groupLoads.add(Future.value([canonical]))
+          ..groupLoads.add(Future.value([canonical]));
+        final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+        await _pump();
+        expect(
+          await cubit.update(_group, name: 'Renamed', description: ''),
+          ChatMutationResult.success,
+        );
+        expect(cubit.state.groups.single.memberCount, 9);
+        expect(cubit.state.groups.single.unreadCount, 42);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'successful mutation retains data when canonical refresh fails',
+      () async {
+        final canonical = _chatGroup(memberCount: 4, unreadCount: 3);
+        final repository = _FakeChatRepository()
+          ..groupLoads.add(Future.value([canonical]))
+          ..groupLoads.add(
+            Future<List<ChatGroup>>.delayed(
+              const Duration(milliseconds: 50),
+              () => throw Exception('offline'),
+            ),
+          );
+        final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+        await _pump();
+        expect(await cubit.archive(_group), ChatMutationResult.success);
+        expect(cubit.state.groups.single, canonical);
+        expect(cubit.state.failure, isNotNull);
+        await cubit.close();
+      },
+    );
 
     test(
       'deduplicates cursor pages and preserves chronological order',
@@ -163,6 +360,72 @@ void main() {
       expect(repository.memberMutations, 0);
       await cubit.close();
     });
+
+    test('member mutation invalidates the canonical group list', () async {
+      final repository = _FakeChatRepository();
+      var invalidations = 0;
+      final cubit = ChatGroupDetailsCubit(
+        repository,
+        onChanged: () => invalidations++,
+      )..bind(_scope, _group);
+      await _pump();
+      expect(await cubit.addMembers([_message2]), isTrue);
+      expect(invalidations, 1);
+      expect(repository.memberMutations, 1);
+      await cubit.close();
+    });
+  });
+
+  group('chat group editor widgets', () {
+    testWidgets('uses exact limits and manager-only create control', (
+      tester,
+    ) async {
+      final managerCubit = ChatGroupsCubit(_FakeChatRepository())
+        ..bindSession(_scope);
+      await tester.pumpWidget(
+        RepositoryProvider<EmployeeRepository>.value(
+          value: _FakeEmployeeRepository(),
+          child: BlocProvider.value(
+            value: managerCubit,
+            child: const MaterialApp(home: ChatGroupsScreen()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('create-chat-group')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('create-chat-group')));
+      await tester.pumpAndSettle();
+      final fields = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .toList();
+      expect(fields.map((field) => field.maxLength), [80, 500]);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await managerCubit.close();
+
+      final employeeCubit = ChatGroupsCubit(_FakeChatRepository())
+        ..bindSession(
+          const FeatureSessionScope(
+            userId: '77777777-7777-4777-8777-777777777777',
+            workspaceId: _workspace,
+            membershipId: _membership,
+            timezone: 'Etc/UTC',
+            role: WorkspaceRole.employee,
+          ),
+        );
+      await tester.pumpWidget(
+        RepositoryProvider<EmployeeRepository>.value(
+          value: _FakeEmployeeRepository(),
+          child: BlocProvider.value(
+            value: employeeCubit,
+            child: const MaterialApp(home: ChatGroupsScreen()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('create-chat-group')), findsNothing);
+      await employeeCubit.close();
+    });
   });
 }
 
@@ -186,12 +449,16 @@ ChatMessage _message({required String id, required int minute}) =>
       'createdAt': '2026-10-01T10:0$minute:00Z',
     });
 
-ChatGroup _chatGroup({bool archived = false}) => ChatGroup(
+ChatGroup _chatGroup({
+  bool archived = false,
+  int memberCount = 1,
+  int unreadCount = 0,
+}) => ChatGroup(
   id: _group,
   workspaceId: _workspace,
   name: 'Operations',
-  memberCount: 1,
-  unreadCount: 0,
+  memberCount: memberCount,
+  unreadCount: unreadCount,
   archivedAt: archived ? DateTime.utc(2026, 10, 1) : null,
   createdAt: DateTime.utc(2026, 10, 1),
   updatedAt: DateTime.utc(2026, 10, 1),
@@ -271,13 +538,12 @@ class _FakeChatRepository implements ChatRepository {
   Future<ChatGroup> getGroup(String workspaceId, String groupId) async =>
       details;
   @override
-  Future<ChatGroup> addMembers(
+  Future<void> addMembers(
     String workspaceId,
     String groupId,
     List<String> membershipIds,
   ) async {
     memberMutations++;
-    return details;
   }
 
   @override
@@ -290,8 +556,7 @@ class _FakeChatRepository implements ChatRepository {
   }
 
   @override
-  Future<ChatGroup> archiveGroup(String workspaceId, String groupId) async =>
-      details;
+  Future<void> archiveGroup(String workspaceId, String groupId) async {}
   @override
   Future<ChatGroup> createGroup(
     String workspaceId, {
@@ -300,10 +565,40 @@ class _FakeChatRepository implements ChatRepository {
     required List<String> memberMembershipIds,
   }) async => details;
   @override
-  Future<ChatGroup> updateGroup(
+  Future<void> updateGroup(
     String workspaceId,
     String groupId, {
     required String name,
     String? description,
-  }) async => details;
+  }) async {}
 }
+
+class _FakeEmployeeRepository implements EmployeeRepository {
+  @override
+  Future<EmployeePage> listEmployees({
+    required String workspaceId,
+    String search = '',
+    EmployeeStatusFilter? status,
+    int page = 1,
+    int limit = 20,
+  }) async => EmployeePage(
+    data: const [],
+    page: page,
+    limit: limit,
+    total: 0,
+    totalPages: 1,
+  );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+Map<String, Object?> _groupJson() => {
+  'id': _group,
+  'workspaceId': _workspace,
+  'name': 'Operations',
+  'description': null,
+  'archivedAt': null,
+  'createdAt': '2026-10-01T10:00:00Z',
+  'updatedAt': '2026-10-01T10:00:00Z',
+};

@@ -23,18 +23,21 @@ class ChatGroupDetailsState extends Equatable {
 }
 
 class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
-  ChatGroupDetailsCubit(this._repository)
+  ChatGroupDetailsCubit(this._repository, {this.onChanged})
     : super(const ChatGroupDetailsState());
   final ChatRepository _repository;
+  final void Function()? onChanged;
   FeatureSessionScope? _scope;
   String? _groupId;
   var _generation = 0;
+  bool _loading = false;
 
   void bind(FeatureSessionScope scope, String groupId) {
     if (_scope == scope && _groupId == groupId) return;
     _scope = scope;
     _groupId = groupId;
     _generation++;
+    _loading = false;
     emit(const ChatGroupDetailsState());
     load();
   }
@@ -42,7 +45,9 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
   Future<void> load() async {
     final scope = _scope;
     final groupId = _groupId;
-    if (scope == null || groupId == null) return;
+    if (scope == null || groupId == null || _loading) return;
+    _loading = true;
+    final previous = state;
     final generation = _generation;
     try {
       final group = await _repository.getGroup(scope.workspaceId, groupId);
@@ -56,9 +61,12 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
       emit(
         ChatGroupDetailsState(
           loading: false,
+          group: previous.group,
           failure: _failure(error, 'Unable to load group details.'),
         ),
       );
+    } finally {
+      if (_current(scope, groupId, generation)) _loading = false;
     }
   }
 
@@ -76,14 +84,10 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
     final generation = _generation;
     emit(ChatGroupDetailsState(loading: false, group: group, mutating: true));
     try {
-      final updated = await _repository.addMembers(
-        scope.workspaceId,
-        group.id,
-        ids,
-      );
+      await _repository.addMembers(scope.workspaceId, group.id, ids);
       if (!_current(scope, group.id, generation)) return false;
-      emit(ChatGroupDetailsState(loading: false, group: updated));
-      return true;
+      onChanged?.call();
+      return await _refreshAfterMutation(scope, group, generation);
     } catch (error) {
       if (!_current(scope, group.id, generation)) return false;
       emit(
@@ -112,8 +116,8 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
     try {
       await _repository.removeMember(scope.workspaceId, group.id, membershipId);
       if (!_current(scope, group.id, generation)) return false;
-      await load();
-      return _current(scope, group.id, generation);
+      onChanged?.call();
+      return await _refreshAfterMutation(scope, group, generation);
     } catch (error) {
       if (!_current(scope, group.id, generation)) return false;
       emit(
@@ -123,6 +127,41 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
           failure: _failure(error, 'Unable to remove the member.'),
         ),
       );
+      return false;
+    }
+  }
+
+  Future<bool> _refreshAfterMutation(
+    FeatureSessionScope scope,
+    ChatGroup previous,
+    int generation,
+  ) async {
+    try {
+      final updated = await _repository.getGroup(
+        scope.workspaceId,
+        previous.id,
+      );
+      if (!_current(scope, previous.id, generation)) return false;
+      if (updated.workspaceId != scope.workspaceId ||
+          updated.id != previous.id) {
+        throw const FormatException('Invalid chat group response');
+      }
+      emit(ChatGroupDetailsState(loading: false, group: updated));
+      return true;
+    } catch (error) {
+      if (_current(scope, previous.id, generation)) {
+        emit(
+          ChatGroupDetailsState(
+            loading: false,
+            group: previous,
+            failure: _failure(
+              error,
+              'The change was saved, but group details could not be refreshed.',
+            ),
+          ),
+        );
+        return true;
+      }
       return false;
     }
   }

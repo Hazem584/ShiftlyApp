@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
@@ -13,9 +14,11 @@ class ApiChatRepository implements ChatRepository {
 
   @override
   Future<List<ChatGroup>> listGroups(String workspaceId) => _request(() async {
-    final body = (await _dio.get<Object?>(_groups(workspaceId))).data;
-    final raw = body is Map ? (body['data'] ?? body['groups'] ?? body) : body;
-    return chatList(raw, 'chat groups')
+    final body = chatMap(
+      (await _dio.get<Object?>(_groups(workspaceId))).data,
+      'chat groups response',
+    );
+    return chatList(body['data'], 'chat groups')
         .map((e) => ChatGroup.fromJson(chatMap(e, 'chat group')))
         .toList(growable: false);
   });
@@ -33,56 +36,68 @@ class ApiChatRepository implements ChatRepository {
     required String name,
     String? description,
     required List<String> memberMembershipIds,
-  }) => _request(
-    () async => _parseGroup(
+  }) => _request(() async {
+    final trimmedName = name.trim();
+    final trimmedDescription = description?.trim();
+    _validateGroupFields(trimmedName, trimmedDescription);
+    final ids = _uniqueUuids(memberMembershipIds, 'memberMembershipIds');
+    return _parseGroup(
       (await _dio.post<Object?>(
         _groups(workspaceId),
         data: {
-          'name': name.trim(),
-          'description': description?.trim(),
-          'memberMembershipIds': memberMembershipIds,
+          'name': trimmedName,
+          if (trimmedDescription?.isNotEmpty == true)
+            'description': trimmedDescription,
+          'memberMembershipIds': ids,
         },
       )).data,
-    ),
-  );
+    );
+  });
 
   @override
-  Future<ChatGroup> updateGroup(
+  Future<void> updateGroup(
     String workspaceId,
     String groupId, {
     required String name,
     String? description,
-  }) => _request(
-    () async => _parseGroup(
-      (await _dio.patch<Object?>(
-        _group(workspaceId, groupId),
-        data: {'name': name.trim(), 'description': description?.trim()},
-      )).data,
-    ),
+  }) => _request(() async {
+    final trimmedName = name.trim();
+    final trimmedDescription = description?.trim();
+    _validateGroupFields(trimmedName, trimmedDescription);
+    await _dio.patch<Object?>(
+      _group(workspaceId, groupId),
+      data: {
+        'name': trimmedName,
+        'description': trimmedDescription?.isEmpty == true
+            ? null
+            : trimmedDescription,
+      },
+    );
+  });
+
+  @override
+  Future<void> archiveGroup(String workspaceId, String groupId) => _request(
+    () async => _dio.patch<Object?>('${_group(workspaceId, groupId)}/archive'),
   );
 
   @override
-  Future<ChatGroup> archiveGroup(String workspaceId, String groupId) =>
-      _request(
-        () async => _parseGroup(
-          (await _dio.patch<Object?>('${_group(workspaceId, groupId)}/archive'))
-              .data,
-        ),
-      );
-
-  @override
-  Future<ChatGroup> addMembers(
+  Future<void> addMembers(
     String workspaceId,
     String groupId,
     List<String> membershipIds,
-  ) => _request(
-    () async => _parseGroup(
+  ) => _request(() async {
+    final body = chatMap(
       (await _dio.post<Object?>(
         '${_group(workspaceId, groupId)}/members',
-        data: {'membershipIds': membershipIds},
+        data: {'membershipIds': _uniqueUuids(membershipIds, 'membershipIds')},
       )).data,
-    ),
-  );
+      'add members acknowledgement',
+    );
+    final count = body['addedCount'];
+    if (count is! int || count < 0) {
+      throw const FormatException('Invalid add members acknowledgement');
+    }
+  });
 
   @override
   Future<void> removeMember(
@@ -90,9 +105,15 @@ class ApiChatRepository implements ChatRepository {
     String groupId,
     String membershipId,
   ) => _request(() async {
-    await _dio.delete<Object?>(
-      '${_group(workspaceId, groupId)}/members/$membershipId',
+    final body = chatMap(
+      (await _dio.delete<Object?>(
+        '${_group(workspaceId, groupId)}/members/$membershipId',
+      )).data,
+      'remove member acknowledgement',
     );
+    if (body['removed'] != true) {
+      throw const FormatException('Invalid remove member acknowledgement');
+    }
   });
 
   @override
@@ -102,6 +123,9 @@ class ApiChatRepository implements ChatRepository {
     String? cursor,
     int limit = 30,
   }) => _request(() async {
+    if (limit < 1 || limit > 100) {
+      throw const FormatException('Invalid message page limit');
+    }
     final body = chatMap(
       (await _dio.get<Object?>(
         '${_group(workspaceId, groupId)}/messages',
@@ -109,13 +133,17 @@ class ApiChatRepository implements ChatRepository {
       )).data,
       'message page',
     );
-    final raw = body['data'] ?? body['messages'];
-    final pagination = body['pagination'];
-    final next =
-        body['nextCursor'] ??
-        (pagination is Map ? pagination['nextCursor'] : null);
+    final raw = body['data'];
+    final next = body['nextCursor'];
+    final hasMore = body['hasMore'];
+    if (hasMore is! bool) {
+      throw const FormatException('Invalid pagination state');
+    }
     if (next != null && (next is! String || next.trim().isEmpty)) {
       throw const FormatException('Invalid pagination cursor');
+    }
+    if (hasMore != (next != null)) {
+      throw const FormatException('Inconsistent pagination state');
     }
     return ChatMessagePage(
       messages: chatList(raw, 'messages')
@@ -139,7 +167,7 @@ class ApiChatRepository implements ChatRepository {
           '${_group(workspaceId, groupId)}/messages',
           data: {
             'type': 'TEXT',
-            'text': text.trim(),
+            'text': _validatedMessageText(text),
             'clientMessageId': clientMessageId,
             'replyToMessageId': ?replyToMessageId,
           },
@@ -165,7 +193,7 @@ class ApiChatRepository implements ChatRepository {
           .data,
       'unread count',
     );
-    final value = body['count'] ?? body['unreadCount'];
+    final value = body['count'];
     if (value is! int || value < 0) {
       throw const FormatException('Invalid unread count');
     }
@@ -177,15 +205,46 @@ class ApiChatRepository implements ChatRepository {
       return await operation();
     } catch (error) {
       throw ApiErrorParser.parse(
-        error is DioException && error.error != null ? error.error! : error,
+        error is DioException && error.error is ApiException
+            ? error.error! as ApiException
+            : error,
       );
     }
   }
 
   ChatGroup _parseGroup(Object? value) {
-    final body = chatMap(value, 'chat group');
-    return ChatGroup.fromJson(
-      chatMap(body['data'] ?? body['group'] ?? body, 'chat group'),
-    );
+    return ChatGroup.fromJson(chatMap(value, 'chat group'));
+  }
+
+  List<String> _uniqueUuids(List<String> values, String label) {
+    if (values.length > 500) throw FormatException('Invalid $label');
+    final unique = <String>{};
+    for (final value in values) {
+      try {
+        final id = chatOptionalUuid(value);
+        if (id == null) throw const FormatException('Invalid UUID');
+        unique.add(id);
+      } on FormatException {
+        throw FormatException('Invalid $label');
+      }
+    }
+    return unique.toList(growable: false);
+  }
+
+  void _validateGroupFields(String name, String? description) {
+    if (name.isEmpty || name.length > 80) {
+      throw const FormatException('Invalid group name');
+    }
+    if (description != null && description.length > 500) {
+      throw const FormatException('Invalid group description');
+    }
+  }
+
+  String _validatedMessageText(String value) {
+    final text = value.trim();
+    if (text.isEmpty || text.length > 4000) {
+      throw const FormatException('Invalid message text');
+    }
+    return text;
   }
 }

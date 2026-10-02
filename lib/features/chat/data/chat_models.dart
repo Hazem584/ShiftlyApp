@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 final RegExp _uuid = RegExp(
-  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+  r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
 );
 
 String chatUuid(Map<String, Object?> json, String key) {
@@ -237,14 +237,29 @@ class ChatGroup extends Equatable {
     if (archivedValue != null && archivedValue is! bool) {
       throw const FormatException('Invalid archived state');
     }
+    final countValue = json['memberCount'];
+    final rawCount = json['_count'];
+    final countMap = rawCount == null ? null : chatMap(rawCount, '_count');
+    final memberCount = countValue != null
+        ? _count(countValue, 'memberCount')
+        : countMap?['members'] != null
+        ? _count(countMap!['members'], '_count.members')
+        : members.length;
+    final description = json['description'];
+    if (description != null && description is! String) {
+      throw const FormatException('Invalid description');
+    }
+    if (description is String && description.length > 500) {
+      throw const FormatException('Invalid description');
+    }
+    final name = _text(json, 'name');
+    if (name.length > 80) throw const FormatException('Invalid name');
     return ChatGroup(
       id: chatUuid(json, 'id'),
       workspaceId: chatUuid(json, 'workspaceId'),
-      name: _text(json, 'name'),
-      description: _optionalText(json['description']),
-      memberCount: json['memberCount'] == null
-          ? members.length
-          : _count(json['memberCount'], 'memberCount'),
+      name: name,
+      description: _optionalText(description),
+      memberCount: memberCount,
       unreadCount: json['unreadCount'] == null
           ? 0
           : _count(json['unreadCount'], 'unreadCount'),

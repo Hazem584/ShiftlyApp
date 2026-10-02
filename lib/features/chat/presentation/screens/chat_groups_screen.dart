@@ -133,86 +133,119 @@ class ChatGroupsScreen extends StatelessWidget {
     final name = TextEditingController();
     final description = TextEditingController();
     final selected = <String>{};
-    final submit = await showDialog<bool>(
+    await showDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Create chat group'),
-          content: SizedBox(
-            width: 440,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: name,
-                    maxLength: 100,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                  ),
-                  TextField(
-                    controller: description,
-                    maxLength: 500,
-                    decoration: const InputDecoration(
-                      labelText: 'Description (optional)',
+        builder: (context, setState) {
+          var submitting = cubit.state.mutating;
+          return AlertDialog(
+            title: const Text('Create chat group'),
+            content: SizedBox(
+              width: 440,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: name,
+                      maxLength: 80,
+                      enabled: !submitting,
+                      decoration: const InputDecoration(labelText: 'Name'),
                     ),
-                  ),
-                  const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Members'),
-                  ),
-                  if (employees.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Text(
-                        'Load active employees first, then try again.',
+                    TextField(
+                      controller: description,
+                      maxLength: 500,
+                      enabled: !submitting,
+                      decoration: const InputDecoration(
+                        labelText: 'Description (optional)',
                       ),
                     ),
-                  for (final employee in employees)
-                    CheckboxListTile(
-                      dense: true,
-                      value: selected.contains(employee.id),
-                      title: Text(employee.displayName),
-                      subtitle: Text(employee.displayEmail),
-                      onChanged: (value) => setState(
-                        () => value == true
-                            ? selected.add(employee.id)
-                            : selected.remove(employee.id),
-                      ),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Members'),
                     ),
-                ],
+                    if (employees.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Text(
+                          'No active employees are available. The manager will be included.',
+                        ),
+                      ),
+                    for (final employee in employees)
+                      CheckboxListTile(
+                        dense: true,
+                        value: selected.contains(employee.id),
+                        title: Text(employee.displayName),
+                        subtitle: Text(employee.displayEmail),
+                        onChanged: submitting
+                            ? null
+                            : (value) => setState(
+                                () => value == true
+                                    ? selected.add(employee.id)
+                                    : selected.remove(employee.id),
+                              ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Create'),
-            ),
-          ],
-        ),
+            actions: [
+              TextButton(
+                onPressed: submitting
+                    ? null
+                    : () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: submitting
+                    ? null
+                    : () async {
+                        final trimmedName = name.text.trim();
+                        final trimmedDescription = description.text.trim();
+                        if (trimmedName.isEmpty) {
+                          Fluttertoast.showToast(msg: 'Enter a group name.');
+                          return;
+                        }
+                        if (trimmedName.length > 80 ||
+                            trimmedDescription.length > 500) {
+                          Fluttertoast.showToast(
+                            msg:
+                                'Check the group name and description lengths.',
+                          );
+                          return;
+                        }
+                        setState(() => submitting = true);
+                        final result = await cubit.create(
+                          name: trimmedName,
+                          description: trimmedDescription,
+                          membershipIds: selected.toList(),
+                        );
+                        if (!dialogContext.mounted) return;
+                        if (result == ChatMutationResult.success) {
+                          Navigator.pop(dialogContext);
+                        } else {
+                          setState(() => submitting = false);
+                          Fluttertoast.showToast(
+                            msg:
+                                cubit.state.failure?.message ??
+                                'Could not create group.',
+                          );
+                        }
+                      },
+                child: submitting
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Create'),
+              ),
+            ],
+          );
+        },
       ),
     );
-    if (submit != true || !context.mounted) return;
-    if (name.text.trim().isEmpty) {
-      Fluttertoast.showToast(msg: 'Enter a group name.');
-      return;
-    }
-    final result = await context.read<ChatGroupsCubit>().create(
-      name: name.text,
-      description: description.text,
-      membershipIds: selected.toList(),
-    );
-    if (result == ChatMutationResult.failure && context.mounted) {
-      Fluttertoast.showToast(
-        msg:
-            context.read<ChatGroupsCubit>().state.failure?.message ??
-            'Could not create group.',
-      );
-    }
+    name.dispose();
+    description.dispose();
   }
 }
 
