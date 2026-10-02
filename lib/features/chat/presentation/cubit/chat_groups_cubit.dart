@@ -130,13 +130,12 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
       if (!_current(scope, generation, request)) return;
       final failure = _failure(error, 'Unable to load chat groups.');
       emit(
-        previous.groups.isNotEmpty
-            ? previous.copyWith(refreshing: false, failure: failure)
-            : ChatGroupsState(
-                loading: false,
-                unreadCount: previous.unreadCount,
-                failure: failure,
-              ),
+        state.copyWith(
+          loading: false,
+          groups: previous.groups,
+          refreshing: false,
+          failure: failure,
+        ),
       );
     } finally {
       if (_scopeCurrent(scope, generation)) {

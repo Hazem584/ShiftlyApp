@@ -497,71 +497,207 @@ void main() {
       await cubit.close();
     });
 
-    test(
-      'backwards is synchronized and conflict synchronization is bounded',
-      () async {
+    test('backwards is synchronized and not continually resent', () async {
+      var changes = 0;
+      final read = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        )
+        ..readResults.add(read.future);
+      final cubit = ChatConversationCubit(
+        repository,
+        _FakeRealtime(),
+        onChanged: () => changes++,
+      )..bind(_scope, _group);
+      await _pump();
+      read.completeError(
+        const ApiException(
+          message: 'safe',
+          code: 'CHAT_READ_POSITION_BACKWARDS',
+        ),
+      );
+      await _pump();
+      repository.messageLoads.add(
+        ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+      );
+      await cubit.load(refresh: true);
+      await _pump();
+      expect(changes, 1);
+      expect(repository.readMessageIds, [_message1]);
+      await cubit.close();
+    });
+
+    test('conflict reloads and successful retry notifies once', () async {
+      var changes = 0;
+      final firstRead = Completer<void>();
+      final reload = Completer<ChatMessagePage>();
+      final retry = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        )
+        ..messageLoads.add(reload.future)
+        ..readResults.add(firstRead.future)
+        ..readResults.add(retry.future);
+      final cubit = ChatConversationCubit(
+        repository,
+        _FakeRealtime(),
+        onChanged: () => changes++,
+      )..bind(_scope, _group);
+      await _pump();
+
+      firstRead.completeError(_readConflict());
+      await _pump();
+      expect(repository.messageLoadCount, 2);
+      expect(repository.readMessageIds, [_message1]);
+      expect(changes, 0);
+
+      reload.complete(
+        ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+      );
+      await _pump();
+      expect(repository.readMessageIds, [_message1, _message1]);
+      retry.complete();
+      await _pump();
+
+      expect(repository.messageLoadCount, 2);
+      expect(repository.readMessageIds, [_message1, _message1]);
+      expect(changes, 1);
+      await cubit.close();
+    });
+
+    test('conflict followed by backwards retry notifies once', () async {
+      var changes = 0;
+      final firstRead = Completer<void>();
+      final reload = Completer<ChatMessagePage>();
+      final retry = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        )
+        ..messageLoads.add(reload.future)
+        ..readResults.add(firstRead.future)
+        ..readResults.add(retry.future);
+      final cubit = ChatConversationCubit(
+        repository,
+        _FakeRealtime(),
+        onChanged: () => changes++,
+      )..bind(_scope, _group);
+      await _pump();
+
+      firstRead.completeError(_readConflict());
+      await _pump();
+      reload.complete(
+        ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+      );
+      await _pump();
+      retry.completeError(
+        const ApiException(
+          message: 'safe',
+          code: 'CHAT_READ_POSITION_BACKWARDS',
+        ),
+      );
+      await _pump();
+
+      expect(repository.messageLoadCount, 2);
+      expect(repository.readMessageIds, [_message1, _message1]);
+      expect(changes, 1);
+      await cubit.close();
+    });
+
+    test('repeated conflict is bounded and remains retryable', () async {
+      var changes = 0;
+      final firstRead = Completer<void>();
+      final reload = Completer<ChatMessagePage>();
+      final retry = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        )
+        ..messageLoads.add(reload.future)
+        ..readResults.add(firstRead.future)
+        ..readResults.add(retry.future);
+      final cubit = ChatConversationCubit(
+        repository,
+        _FakeRealtime(),
+        onChanged: () => changes++,
+      )..bind(_scope, _group);
+      await _pump();
+
+      firstRead.completeError(_readConflict());
+      await _pump();
+      reload.complete(
+        ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+      );
+      await _pump();
+      retry.completeError(_readConflict());
+      await _pump();
+
+      expect(repository.messageLoadCount, 2);
+      expect(repository.readMessageIds, [_message1, _message1]);
+      expect(changes, 0);
+
+      repository.messageLoads.add(
+        ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+      );
+      repository.readResults.add(Future.value());
+      await cubit.load(refresh: true);
+      await _pump();
+      expect(repository.readMessageIds, [_message1, _message1, _message1]);
+      expect(changes, 1);
+      await cubit.close();
+    });
+
+    test('conflict retry failures never refresh shared group state', () async {
+      final errors = <Object>[
+        Exception('network'),
+        const ApiException(message: 'timeout', kind: FailureKind.timeout),
+        DioException(
+          requestOptions: RequestOptions(path: '/chat/read'),
+          type: DioExceptionType.cancel,
+        ),
+        const ApiException(message: 'rate limited', statusCode: 429),
+        const ApiException(message: 'server', statusCode: 500),
+        const ApiException(message: 'gateway', statusCode: 502),
+      ];
+      for (final error in errors) {
         var changes = 0;
-        final backwards = _FakeChatRepository()
+        final firstRead = Completer<void>();
+        final reload = Completer<ChatMessagePage>();
+        final retry = Completer<void>();
+        final repository = _FakeChatRepository()
           ..messageLoads.add(
             ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
           )
-          ..readResults.add(
-            Future<void>.delayed(
-              Duration.zero,
-              () => throw const ApiException(
-                message: 'safe',
-                code: 'CHAT_READ_POSITION_BACKWARDS',
-              ),
-            ),
-          );
-        final backwardsCubit = ChatConversationCubit(
-          backwards,
+          ..messageLoads.add(reload.future)
+          ..readResults.add(firstRead.future)
+          ..readResults.add(retry.future);
+        final cubit = ChatConversationCubit(
+          repository,
           _FakeRealtime(),
           onChanged: () => changes++,
         )..bind(_scope, _group);
         await _pump();
-        expect(changes, 1);
-        expect(backwards.readMessageIds, [_message1]);
-        await backwardsCubit.close();
 
-        final conflict = _FakeChatRepository()
-          ..messageLoads.add(
-            ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
-          )
-          ..messageLoads.add(
-            ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
-          )
-          ..readResults.add(
-            Future<void>.delayed(
-              Duration.zero,
-              () => throw const ApiException(
-                message: 'sync',
-                code: 'CHAT_READ_POSITION_CONFLICT',
-              ),
-            ),
-          )
-          ..readResults.add(
-            Future<void>.delayed(
-              Duration.zero,
-              () => throw const ApiException(
-                message: 'still conflicting',
-                code: 'CHAT_READ_POSITION_CONFLICT',
-              ),
-            ),
-          );
-        var conflictChanges = 0;
-        final conflictCubit = ChatConversationCubit(
-          conflict,
-          _FakeRealtime(),
-          onChanged: () => conflictChanges++,
-        )..bind(_scope, _group);
-        await Future<void>.delayed(const Duration(milliseconds: 80));
-        expect(conflict.messageLoadCount, 2);
-        expect(conflict.readMessageIds, [_message1, _message1]);
-        expect(conflictChanges, 1);
-        await conflictCubit.close();
-      },
-    );
+        firstRead.completeError(_readConflict());
+        await _pump();
+        reload.complete(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        );
+        await _pump();
+        retry.completeError(error);
+        await _pump();
+
+        expect(repository.messageLoadCount, 2, reason: '$error');
+        expect(repository.readMessageIds, [
+          _message1,
+          _message1,
+        ], reason: '$error');
+        expect(changes, 0, reason: '$error');
+        await cubit.close();
+      }
+    });
 
     test('general mark-read failures never refresh the group list', () async {
       final errors = <Object>[
@@ -628,9 +764,192 @@ void main() {
       expect(changes, 0);
       expect(repository.messageLoadCount, 2);
     });
+
+    test('scope change invalidates an in-progress conflict reload', () async {
+      var changes = 0;
+      final firstRead = Completer<void>();
+      final oldReload = Completer<ChatMessagePage>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        )
+        ..messageLoads.add(oldReload.future)
+        ..messageLoads.add(const ChatMessagePage(messages: []))
+        ..readResults.add(firstRead.future);
+      final cubit = ChatConversationCubit(
+        repository,
+        _FakeRealtime(),
+        onChanged: () => changes++,
+      )..bind(_scope, _group);
+      await _pump();
+      firstRead.completeError(_readConflict());
+      await _pump();
+      expect(repository.messageLoadCount, 2);
+
+      cubit.bind(
+        const FeatureSessionScope(
+          userId: '77777777-7777-4777-8777-777777777777',
+          workspaceId: _otherWorkspace,
+          membershipId: _membership,
+          timezone: 'Etc/UTC',
+          role: WorkspaceRole.employee,
+        ),
+        _group,
+      );
+      await _pump();
+      oldReload.complete(
+        ChatMessagePage(messages: [_message(id: _message2, minute: 2)]),
+      );
+      await _pump();
+
+      expect(repository.messageLoadCount, 3);
+      expect(repository.readMessageIds, [_message1]);
+      expect(cubit.state.messages, isEmpty);
+      expect(changes, 0);
+      await cubit.close();
+    });
+
+    test('close invalidates an in-progress conflict reload', () async {
+      var changes = 0;
+      final firstRead = Completer<void>();
+      final reload = Completer<ChatMessagePage>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        )
+        ..messageLoads.add(reload.future)
+        ..readResults.add(firstRead.future);
+      final cubit = ChatConversationCubit(
+        repository,
+        _FakeRealtime(),
+        onChanged: () => changes++,
+      )..bind(_scope, _group);
+      await _pump();
+      firstRead.completeError(_readConflict());
+      await _pump();
+      expect(repository.messageLoadCount, 2);
+
+      await cubit.close();
+      reload.complete(
+        ChatMessagePage(messages: [_message(id: _message2, minute: 2)]),
+      );
+      await _pump();
+
+      expect(repository.readMessageIds, [_message1]);
+      expect(changes, 0);
+    });
   });
 
   group('single-flight unread refresh', () {
+    test('initial load failure preserves a newer unread refresh', () async {
+      final groups = Completer<List<ChatGroup>>();
+      final fullUnread = Completer<int>();
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(groups.future)
+        ..unreadLoads.add(fullUnread.future);
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+
+      repository.unreadLoads.add(Future.value(9));
+      await cubit.refreshUnread();
+      expect(cubit.state.unreadCount, 9);
+
+      groups.completeError(Exception('offline'));
+      fullUnread.complete(1);
+      await _pump();
+
+      expect(cubit.state.loading, isFalse);
+      expect(cubit.state.groups, isEmpty);
+      expect(cubit.state.unreadCount, 9);
+      expect(cubit.state.failure?.message, 'Unable to load chat groups.');
+      await cubit.close();
+    });
+
+    test('retained-data failure preserves groups and newer unread', () async {
+      final existing = _chatGroup(memberCount: 4);
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(Future.value([existing]))
+        ..unreadLoads.add(Future.value(3));
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+
+      final groups = Completer<List<ChatGroup>>();
+      final fullUnread = Completer<int>();
+      repository.groupLoads.add(groups.future);
+      repository.unreadLoads
+        ..add(fullUnread.future)
+        ..add(Future.value(11));
+      final refresh = cubit.load(refresh: true);
+      await _pump();
+      await cubit.refreshUnread();
+      expect(cubit.state.unreadCount, 11);
+
+      groups.completeError(Exception('offline'));
+      fullUnread.complete(2);
+      await refresh;
+
+      expect(cubit.state.groups, [existing]);
+      expect(cubit.state.unreadCount, 11);
+      expect(cubit.state.refreshing, isFalse);
+      expect(cubit.state.failure?.message, 'Unable to load chat groups.');
+      await cubit.close();
+    });
+
+    test('old load failure cannot update a new session', () async {
+      final oldGroups = Completer<List<ChatGroup>>();
+      final oldFullUnread = Completer<int>();
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(oldGroups.future)
+        ..groupLoads.add(Future.value(const []))
+        ..unreadLoads.add(oldFullUnread.future)
+        ..unreadLoads.add(Future.value(6))
+        ..unreadLoads.add(Future.value(12));
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+      await cubit.refreshUnread();
+      expect(cubit.state.unreadCount, 6);
+
+      cubit.bindSession(
+        const FeatureSessionScope(
+          userId: '77777777-7777-4777-8777-777777777777',
+          workspaceId: _otherWorkspace,
+          membershipId: _membership,
+          timezone: 'Etc/UTC',
+          role: WorkspaceRole.employee,
+        ),
+      );
+      await _pump();
+      expect(cubit.state.unreadCount, 12);
+
+      oldGroups.completeError(Exception('offline'));
+      oldFullUnread.complete(1);
+      await _pump();
+
+      expect(cubit.scope?.workspaceId, _otherWorkspace);
+      expect(cubit.state.groups, isEmpty);
+      expect(cubit.state.unreadCount, 12);
+      expect(cubit.state.failure, isNull);
+      await cubit.close();
+    });
+
+    test('close rejects a late full-load failure', () async {
+      final groups = Completer<List<ChatGroup>>();
+      final fullUnread = Completer<int>();
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(groups.future)
+        ..unreadLoads.add(fullUnread.future);
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+      final beforeClose = cubit.state;
+      await cubit.close();
+
+      groups.completeError(Exception('offline'));
+      fullUnread.complete(99);
+      await _pump();
+
+      expect(cubit.state, beforeClose);
+    });
+
     test('newer unread-only result survives an older full load', () async {
       final groups = Completer<List<ChatGroup>>();
       final fullUnread = Completer<int>();
@@ -1182,6 +1501,9 @@ void main() {
     });
   });
 }
+
+ApiException _readConflict() =>
+    const ApiException(message: 'sync', code: 'CHAT_READ_POSITION_CONFLICT');
 
 Future<void> _pump() => Future<void>.delayed(const Duration(milliseconds: 20));
 

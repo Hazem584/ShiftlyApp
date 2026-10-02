@@ -378,7 +378,6 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     if (!_scopeCurrent(scope, groupId, generation)) return;
     if (synchronized) {
       _synchronizingReadConflict = true;
-      onChanged?.call();
       await load(refresh: true);
       if (!_scopeCurrent(scope, groupId, generation)) return;
       _synchronizingReadConflict = false;
