@@ -37,10 +37,7 @@ class ChatScreen extends StatelessWidget {
           create: (_) => ChatConversationCubit(
             repository,
             context.read<ChatRealtime>(),
-            onChanged: () {
-              groups.refreshUnread();
-              groups.load(refresh: true);
-            },
+            onChanged: () => groups.load(refresh: true),
           )..bind(scope, groupId),
         ),
       ],
@@ -301,85 +298,17 @@ class _ChatViewState extends State<_ChatView> {
   }
 
   Future<void> _edit(ChatGroup group) async {
-    final name = TextEditingController(text: group.name);
-    final description = TextEditingController(text: group.description);
     final groups = context.read<ChatGroupsCubit>();
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (_, setState) {
-          final submitting = groups.state.mutating;
-          return AlertDialog(
-            title: const Text('Edit group'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: name,
-                  maxLength: 80,
-                  enabled: !submitting,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                TextField(
-                  controller: description,
-                  maxLength: 500,
-                  enabled: !submitting,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: submitting
-                    ? null
-                    : () => Navigator.pop(dialogContext),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: submitting
-                    ? null
-                    : () async {
-                        final trimmedName = name.text.trim();
-                        final trimmedDescription = description.text.trim();
-                        if (trimmedName.isEmpty) {
-                          Fluttertoast.showToast(msg: 'Enter a group name.');
-                          return;
-                        }
-                        setState(() {});
-                        final result = await groups.update(
-                          group.id,
-                          name: trimmedName,
-                          description: trimmedDescription,
-                        );
-                        if (!dialogContext.mounted) return;
-                        if (result == ChatMutationResult.success) {
-                          Navigator.pop(dialogContext);
-                          if (mounted) {
-                            context.read<ChatGroupDetailsCubit>().load();
-                          }
-                        } else {
-                          setState(() {});
-                          Fluttertoast.showToast(
-                            msg:
-                                groups.state.failure?.message ??
-                                'Could not update group.',
-                          );
-                        }
-                      },
-                child: submitting
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save'),
-              ),
-            ],
-          );
+      builder: (_) => _EditChatGroupDialog(
+        group: group,
+        groups: groups,
+        onSuccess: () {
+          if (mounted) context.read<ChatGroupDetailsCubit>().load();
         },
       ),
     );
-    name.dispose();
-    description.dispose();
   }
 
   Future<void> _archive(ChatGroup group) async {
@@ -419,6 +348,136 @@ class _ChatViewState extends State<_ChatView> {
         child: _MembersSheet(canManage: manager && !group.isArchived),
       ),
     );
+  }
+}
+
+class _EditChatGroupDialog extends StatefulWidget {
+  const _EditChatGroupDialog({
+    required this.group,
+    required this.groups,
+    required this.onSuccess,
+  });
+
+  final ChatGroup group;
+  final ChatGroupsCubit groups;
+  final VoidCallback onSuccess;
+
+  @override
+  State<_EditChatGroupDialog> createState() => _EditChatGroupDialogState();
+}
+
+class _EditChatGroupDialogState extends State<_EditChatGroupDialog> {
+  late final TextEditingController _name;
+  late final TextEditingController _description;
+  late final Object? _scope;
+  bool _closing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = TextEditingController(text: widget.group.name);
+    _description = TextEditingController(text: widget.group.description);
+    _scope = widget.groups.scope;
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      BlocConsumer<ChatGroupsCubit, ChatGroupsState>(
+        bloc: widget.groups,
+        listenWhen: (_, _) => widget.groups.scope != _scope,
+        listener: (context, _) => _close(context),
+        buildWhen: (before, after) => before.mutating != after.mutating,
+        builder: (context, groupState) {
+          final submitting = groupState.mutating;
+          return AlertDialog(
+            title: const Text('Edit group'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  key: const Key('edit-group-name'),
+                  controller: _name,
+                  maxLength: 80,
+                  enabled: !submitting,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                TextField(
+                  key: const Key('edit-group-description'),
+                  controller: _description,
+                  maxLength: 500,
+                  enabled: !submitting,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                key: const Key('edit-group-cancel'),
+                onPressed: submitting ? null : () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                key: const Key('edit-group-submit'),
+                onPressed: submitting ? null : () => _submit(context),
+                child: submitting
+                    ? const SizedBox.square(
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+
+  Future<void> _submit(BuildContext context) async {
+    final name = _name.text.trim();
+    final description = _description.text.trim();
+    if (name.isEmpty) {
+      Fluttertoast.showToast(msg: 'Enter a group name.');
+      return;
+    }
+    if (name.length > 80 || description.length > 500) {
+      Fluttertoast.showToast(
+        msg: 'Check the group name and description lengths.',
+      );
+      return;
+    }
+    if (widget.groups.scope != _scope) {
+      if (context.mounted) _close(context);
+      return;
+    }
+    final result = await widget.groups.update(
+      widget.group.id,
+      name: name,
+      description: description,
+    );
+    if (!context.mounted) return;
+    if (result == ChatMutationResult.success) {
+      _close(context);
+      widget.onSuccess();
+    } else if (result == ChatMutationResult.stale ||
+        widget.groups.scope != _scope) {
+      _close(context);
+    } else if (result == ChatMutationResult.failure) {
+      Fluttertoast.showToast(
+        msg: widget.groups.state.failure?.message ?? 'Could not update group.',
+      );
+    }
+  }
+
+  void _close(BuildContext context) {
+    if (_closing) return;
+    _closing = true;
+    Navigator.pop(context);
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/chat/data/api_chat_repository.dart';
@@ -15,6 +16,7 @@ import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit
 import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_screen.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 
 const _workspace = '11111111-1111-4111-8111-111111111111';
@@ -376,6 +378,273 @@ void main() {
     });
   });
 
+  group('monotonic read positions', () {
+    test(
+      'uses the message id tie-break and does not resend a confirmation',
+      () async {
+        final sameTime = DateTime.utc(2026, 10, 1, 10);
+        final repository = _FakeChatRepository()
+          ..messageLoads.add(
+            ChatMessagePage(
+              messages: [
+                _messageAt(_message1, sameTime),
+                _messageAt(_message2, sameTime),
+              ],
+            ),
+          );
+        final cubit = ChatConversationCubit(repository, _FakeRealtime())
+          ..bind(_scope, _group);
+        await _pump();
+        expect(repository.readMessageIds, [_message2]);
+
+        repository.messageLoads.add(
+          ChatMessagePage(messages: [_messageAt(_message2, sameTime)]),
+        );
+        await cubit.load(refresh: true);
+        await _pump();
+        expect(repository.readMessageIds, [_message2]);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'failed read remains retryable on a later canonical refresh',
+      () async {
+        final repository = _FakeChatRepository()
+          ..messageLoads.add(
+            ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+          )
+          ..readResults.add(
+            Future<void>.delayed(
+              Duration.zero,
+              () => throw Exception('offline'),
+            ),
+          );
+        final cubit = ChatConversationCubit(repository, _FakeRealtime())
+          ..bind(_scope, _group);
+        await _pump();
+        repository.messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        );
+        await cubit.load(refresh: true);
+        await _pump();
+        expect(repository.readMessageIds, [_message1, _message1]);
+        await cubit.close();
+      },
+    );
+
+    test('serializes reads and sends only a newer queued position', () async {
+      final firstRead = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        )
+        ..readResults.add(firstRead.future);
+      final cubit = ChatConversationCubit(repository, _FakeRealtime())
+        ..bind(_scope, _group);
+      await _pump();
+      repository.messageLoads.add(
+        ChatMessagePage(messages: [_message(id: _message2, minute: 2)]),
+      );
+      await cubit.load(refresh: true);
+      expect(repository.readMessageIds, [_message1]);
+      firstRead.complete();
+      await _pump();
+      expect(repository.readMessageIds, [_message1, _message2]);
+      await cubit.close();
+    });
+
+    test('ignores an older position while a newer read is active', () async {
+      final read = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message2, minute: 2)]),
+        )
+        ..readResults.add(read.future);
+      final cubit = ChatConversationCubit(repository, _FakeRealtime())
+        ..bind(_scope, _group);
+      await _pump();
+      repository.messageLoads.add(
+        ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+      );
+      await cubit.load(refresh: true);
+      read.complete();
+      await _pump();
+      expect(repository.readMessageIds, [_message2]);
+      await cubit.close();
+    });
+
+    test(
+      'backwards is synchronized and conflict synchronization is bounded',
+      () async {
+        var changes = 0;
+        final backwards = _FakeChatRepository()
+          ..messageLoads.add(
+            ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+          )
+          ..readResults.add(
+            Future<void>.delayed(
+              Duration.zero,
+              () => throw const ApiException(
+                message: 'safe',
+                code: 'CHAT_READ_POSITION_BACKWARDS',
+              ),
+            ),
+          );
+        final backwardsCubit = ChatConversationCubit(
+          backwards,
+          _FakeRealtime(),
+          onChanged: () => changes++,
+        )..bind(_scope, _group);
+        await _pump();
+        expect(changes, 1);
+        expect(backwards.readMessageIds, [_message1]);
+        await backwardsCubit.close();
+
+        final conflict = _FakeChatRepository()
+          ..messageLoads.add(
+            ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+          )
+          ..messageLoads.add(
+            ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+          )
+          ..readResults.add(
+            Future<void>.delayed(
+              Duration.zero,
+              () => throw const ApiException(
+                message: 'sync',
+                code: 'CHAT_READ_POSITION_CONFLICT',
+              ),
+            ),
+          )
+          ..readResults.add(
+            Future<void>.delayed(
+              Duration.zero,
+              () => throw const ApiException(
+                message: 'still conflicting',
+                code: 'CHAT_READ_POSITION_CONFLICT',
+              ),
+            ),
+          );
+        final conflictCubit = ChatConversationCubit(conflict, _FakeRealtime())
+          ..bind(_scope, _group);
+        await Future<void>.delayed(const Duration(milliseconds: 80));
+        expect(conflict.messageLoadCount, 2);
+        expect(conflict.readMessageIds, [_message1, _message1]);
+        await conflictCubit.close();
+      },
+    );
+
+    test('session changes and close invalidate old read completions', () async {
+      var changes = 0;
+      final read = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        )
+        ..readResults.add(read.future);
+      final realtime = _FakeRealtime();
+      final cubit = ChatConversationCubit(
+        repository,
+        realtime,
+        onChanged: () => changes++,
+      )..bind(_scope, _group);
+      await _pump();
+      cubit.bind(
+        const FeatureSessionScope(
+          userId: '77777777-7777-4777-8777-777777777777',
+          workspaceId: _otherWorkspace,
+          membershipId: _membership,
+          timezone: 'Etc/UTC',
+          role: WorkspaceRole.manager,
+        ),
+        _group,
+      );
+      await _pump();
+      read.complete();
+      realtime.insert();
+      await cubit.close();
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      expect(changes, 0);
+      expect(repository.messageLoadCount, 2);
+    });
+  });
+
+  group('single-flight unread refresh', () {
+    test(
+      'coalesces repeated triggers and applies the follow-up response',
+      () async {
+        final active = Completer<int>();
+        final repository = _FakeChatRepository()
+          ..unreadLoads.add(Future.value(1));
+        final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+        await _pump();
+        repository.unreadLoads
+          ..add(active.future)
+          ..add(Future.value(9));
+        final first = cubit.refreshUnread();
+        await cubit.refreshUnread();
+        await cubit.refreshUnread();
+        expect(repository.unreadLoadCount, 2);
+        active.complete(4);
+        await first;
+        await _pump();
+        expect(repository.unreadLoadCount, 3);
+        expect(cubit.state.unreadCount, 9);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'failure retains the badge and old-session completion is ignored',
+      () async {
+        final old = Completer<int>();
+        final repository = _FakeChatRepository()
+          ..unreadLoads.add(Future.value(5));
+        final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+        await _pump();
+        repository.unreadLoads.add(Future<int>.error(Exception('offline')));
+        await cubit.refreshUnread();
+        expect(cubit.state.unreadCount, 5);
+
+        repository.unreadLoads
+          ..add(old.future)
+          ..add(Future.value(8));
+        unawaited(cubit.refreshUnread());
+        await _pump();
+        cubit.bindSession(
+          const FeatureSessionScope(
+            userId: '77777777-7777-4777-8777-777777777777',
+            workspaceId: _otherWorkspace,
+            membershipId: _membership,
+            timezone: 'Etc/UTC',
+            role: WorkspaceRole.manager,
+          ),
+        );
+        await _pump();
+        old.complete(99);
+        await _pump();
+        expect(cubit.state.unreadCount, 8);
+        await cubit.close();
+      },
+    );
+
+    test('close prevents a late unread update', () async {
+      final late = Completer<int>();
+      final repository = _FakeChatRepository()
+        ..unreadLoads.add(Future.value(2));
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+      repository.unreadLoads.add(late.future);
+      unawaited(cubit.refreshUnread());
+      await _pump();
+      await cubit.close();
+      late.complete(50);
+      await _pump();
+      expect(cubit.state.unreadCount, 2);
+    });
+  });
+
   group('chat group editor widgets', () {
     testWidgets('uses exact limits and manager-only create control', (
       tester,
@@ -426,6 +695,242 @@ void main() {
       expect(find.byKey(const Key('create-chat-group')), findsNothing);
       await employeeCubit.close();
     });
+
+    testWidgets('create dialog tracks pending, failure, and success', (
+      tester,
+    ) async {
+      final failure = Completer<ChatGroup>();
+      final repository = _FakeChatRepository()..createResult = failure.future;
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await tester.pumpWidget(
+        RepositoryProvider<EmployeeRepository>.value(
+          value: _FakeEmployeeRepository([_employee()]),
+          child: BlocProvider.value(
+            value: cubit,
+            child: const MaterialApp(home: ChatGroupsScreen()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('create-chat-group')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('create-group-name')),
+        'Night Operations',
+      );
+      await tester.enterText(
+        find.byKey(const Key('create-group-description')),
+        'Coverage team',
+      );
+      await tester.tap(find.byKey(const Key('create-group-member-$_message2')));
+      await tester.tap(find.byKey(const Key('create-group-submit')));
+      await tester.pump();
+
+      expect(repository.createCalls, 1);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('create-group-name')))
+            .enabled,
+        isFalse,
+      );
+      expect(
+        tester
+            .widget<CheckboxListTile>(
+              find.byKey(const Key('create-group-member-$_message2')),
+            )
+            .onChanged,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<TextButton>(find.byKey(const Key('create-group-cancel')))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('create-group-submit')))
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.byKey(const Key('create-group-submit')));
+      await tester.pump();
+      expect(repository.createCalls, 1);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      failure.completeError(Exception('offline'));
+      await tester.pumpAndSettle();
+      expect(find.text('Create chat group'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('create-group-name')))
+            .controller!
+            .text,
+        'Night Operations',
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('create-group-name')))
+            .enabled,
+        isTrue,
+      );
+
+      final success = Completer<ChatGroup>();
+      repository.createResult = success.future;
+      await tester.tap(find.byKey(const Key('create-group-submit')));
+      await tester.pump();
+      expect(repository.createCalls, 2);
+      success.complete(_chatGroup());
+      await tester.pumpAndSettle();
+      expect(find.text('Create chat group'), findsNothing);
+      await cubit.close();
+    });
+
+    testWidgets('edit dialog reacts to mutation and rejects stale scope', (
+      tester,
+    ) async {
+      final update = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(Future.value([_chatGroup()]))
+        ..updateResult = update.future;
+      final groups = ChatGroupsCubit(repository)..bindSession(_scope);
+      await tester.pumpWidget(
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<ChatRepository>.value(value: repository),
+            RepositoryProvider<ChatRealtime>.value(value: _FakeRealtime()),
+            RepositoryProvider<EmployeeRepository>.value(
+              value: _FakeEmployeeRepository(),
+            ),
+          ],
+          child: BlocProvider.value(
+            value: groups,
+            child: const MaterialApp(home: ChatScreen(groupId: _group)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(PopupMenuButton<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit group'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('edit-group-name')),
+        'Updated Operations',
+      );
+      await tester.enterText(
+        find.byKey(const Key('edit-group-description')),
+        'Updated description',
+      );
+      await tester.tap(find.byKey(const Key('edit-group-submit')));
+      await tester.pump();
+
+      expect(repository.updateCalls, 1);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('edit-group-name')))
+            .enabled,
+        isFalse,
+      );
+      expect(
+        tester
+            .widget<TextButton>(find.byKey(const Key('edit-group-cancel')))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const Key('edit-group-submit')))
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.byKey(const Key('edit-group-submit')));
+      await tester.pump();
+      expect(repository.updateCalls, 1);
+
+      groups.bindSession(
+        const FeatureSessionScope(
+          userId: '77777777-7777-4777-8777-777777777777',
+          workspaceId: _otherWorkspace,
+          membershipId: _membership,
+          timezone: 'Etc/UTC',
+          role: WorkspaceRole.manager,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Edit group'), findsNothing);
+      update.complete();
+      await tester.pump();
+      expect(repository.updateCalls, 1);
+      await groups.close();
+    });
+
+    testWidgets('edit failure preserves values and success closes', (
+      tester,
+    ) async {
+      final failure = Completer<void>();
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(Future.value([_chatGroup()]))
+        ..updateResult = failure.future;
+      final groups = ChatGroupsCubit(repository)..bindSession(_scope);
+      await tester.pumpWidget(
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<ChatRepository>.value(value: repository),
+            RepositoryProvider<ChatRealtime>.value(value: _FakeRealtime()),
+            RepositoryProvider<EmployeeRepository>.value(
+              value: _FakeEmployeeRepository(),
+            ),
+          ],
+          child: BlocProvider.value(
+            value: groups,
+            child: const MaterialApp(home: ChatScreen(groupId: _group)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(PopupMenuButton<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit group'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('edit-group-name')),
+        'Preserved name',
+      );
+      await tester.enterText(
+        find.byKey(const Key('edit-group-description')),
+        'Preserved description',
+      );
+      await tester.tap(find.byKey(const Key('edit-group-submit')));
+      await tester.pump();
+      failure.completeError(Exception('offline'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit group'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('edit-group-name')))
+            .controller!
+            .text,
+        'Preserved name',
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('edit-group-description')))
+            .enabled,
+        isTrue,
+      );
+
+      final success = Completer<void>();
+      repository.updateResult = success.future;
+      await tester.tap(find.byKey(const Key('edit-group-submit')));
+      await tester.pump();
+      expect(repository.updateCalls, 2);
+      success.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('Edit group'), findsNothing);
+      await groups.close();
+    });
   });
 }
 
@@ -449,6 +954,11 @@ ChatMessage _message({required String id, required int minute}) =>
       'createdAt': '2026-10-01T10:0$minute:00Z',
     });
 
+ChatMessage _messageAt(String id, DateTime createdAt) => ChatMessage.fromJson({
+  ..._messageJson(id: id),
+  'createdAt': createdAt.toIso8601String(),
+});
+
 ChatGroup _chatGroup({
   bool archived = false,
   int memberCount = 1,
@@ -462,6 +972,18 @@ ChatGroup _chatGroup({
   archivedAt: archived ? DateTime.utc(2026, 10, 1) : null,
   createdAt: DateTime.utc(2026, 10, 1),
   updatedAt: DateTime.utc(2026, 10, 1),
+);
+
+Employee _employee() => const Employee(
+  id: _message2,
+  fullName: 'Taylor',
+  phone: null,
+  email: 'taylor@example.com',
+  jobTitle: null,
+  location: null,
+  shift: null,
+  startDate: null,
+  employmentStatus: EmploymentStatus.active,
 );
 
 class _FakeRealtime implements ChatRealtime {
@@ -488,19 +1010,31 @@ class _FakeSubscription implements ChatRealtimeSubscription {
 
 class _FakeChatRepository implements ChatRepository {
   final groupLoads = <Future<List<ChatGroup>>>[];
-  final messageLoads = <ChatMessagePage>[];
+  final messageLoads = <Object>[];
+  final unreadLoads = <Future<int>>[];
+  final readResults = <Future<void>>[];
+  final readMessageIds = <String>[];
   final sentTexts = <String>[];
   final clientIds = <String>[];
   int sendFailures = 0;
   int messageLoadCount = 0;
   int memberMutations = 0;
+  int unreadLoadCount = 0;
+  int createCalls = 0;
+  int updateCalls = 0;
   ChatGroup details = _chatGroup();
+  Future<ChatGroup>? createResult;
+  Future<void>? updateResult;
 
   @override
   Future<List<ChatGroup>> listGroups(String workspaceId) =>
       groupLoads.isEmpty ? Future.value(const []) : groupLoads.removeAt(0);
   @override
-  Future<int> unreadCount(String workspaceId) async => 0;
+  Future<int> unreadCount(String workspaceId) {
+    unreadLoadCount++;
+    return unreadLoads.isEmpty ? Future.value(0) : unreadLoads.removeAt(0);
+  }
+
   @override
   Future<ChatMessagePage> listMessages(
     String workspaceId,
@@ -509,9 +1043,11 @@ class _FakeChatRepository implements ChatRepository {
     int limit = 30,
   }) async {
     messageLoadCount++;
-    return messageLoads.isEmpty
-        ? const ChatMessagePage(messages: [])
-        : messageLoads.removeAt(0);
+    if (messageLoads.isEmpty) return const ChatMessagePage(messages: []);
+    final value = messageLoads.removeAt(0);
+    return value is Future<ChatMessagePage>
+        ? await value
+        : value as ChatMessagePage;
   }
 
   @override
@@ -529,11 +1065,11 @@ class _FakeChatRepository implements ChatRepository {
   }
 
   @override
-  Future<void> markRead(
-    String workspaceId,
-    String groupId,
-    String messageId,
-  ) async {}
+  Future<void> markRead(String workspaceId, String groupId, String messageId) {
+    readMessageIds.add(messageId);
+    return readResults.isEmpty ? Future.value() : readResults.removeAt(0);
+  }
+
   @override
   Future<ChatGroup> getGroup(String workspaceId, String groupId) async =>
       details;
@@ -563,17 +1099,27 @@ class _FakeChatRepository implements ChatRepository {
     required String name,
     String? description,
     required List<String> memberMembershipIds,
-  }) async => details;
+  }) {
+    createCalls++;
+    return createResult ?? Future.value(details);
+  }
+
   @override
   Future<void> updateGroup(
     String workspaceId,
     String groupId, {
     required String name,
     String? description,
-  }) async {}
+  }) {
+    updateCalls++;
+    return updateResult ?? Future.value();
+  }
 }
 
 class _FakeEmployeeRepository implements EmployeeRepository {
+  _FakeEmployeeRepository([this.employees = const []]);
+  final List<Employee> employees;
+
   @override
   Future<EmployeePage> listEmployees({
     required String workspaceId,
@@ -582,7 +1128,7 @@ class _FakeEmployeeRepository implements EmployeeRepository {
     int page = 1,
     int limit = 20,
   }) async => EmployeePage(
-    data: const [],
+    data: employees,
     page: page,
     limit: limit,
     total: 0,

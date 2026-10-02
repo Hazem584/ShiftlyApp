@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
+import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/chat/data/chat_member_loader.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
@@ -130,14 +131,54 @@ class ChatGroupsScreen extends StatelessWidget {
       return;
     }
     if (!context.mounted || cubit.scope != scope) return;
-    final name = TextEditingController();
-    final description = TextEditingController();
-    final selected = <String>{};
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) {
-          var submitting = cubit.state.mutating;
+      builder: (_) => _CreateChatGroupDialog(
+        cubit: cubit,
+        scope: scope,
+        employees: employees,
+      ),
+    );
+  }
+}
+
+class _CreateChatGroupDialog extends StatefulWidget {
+  const _CreateChatGroupDialog({
+    required this.cubit,
+    required this.scope,
+    required this.employees,
+  });
+
+  final ChatGroupsCubit cubit;
+  final FeatureSessionScope scope;
+  final List<Employee> employees;
+
+  @override
+  State<_CreateChatGroupDialog> createState() => _CreateChatGroupDialogState();
+}
+
+class _CreateChatGroupDialogState extends State<_CreateChatGroupDialog> {
+  final _name = TextEditingController();
+  final _description = TextEditingController();
+  final _selected = <String>{};
+  bool _closing = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      BlocConsumer<ChatGroupsCubit, ChatGroupsState>(
+        bloc: widget.cubit,
+        listenWhen: (_, _) => widget.cubit.scope != widget.scope,
+        listener: (context, _) => _close(context),
+        buildWhen: (before, after) => before.mutating != after.mutating,
+        builder: (context, groupState) {
+          final submitting = groupState.mutating;
           return AlertDialog(
             title: const Text('Create chat group'),
             content: SizedBox(
@@ -147,13 +188,15 @@ class ChatGroupsScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
-                      controller: name,
+                      key: const Key('create-group-name'),
+                      controller: _name,
                       maxLength: 80,
                       enabled: !submitting,
                       decoration: const InputDecoration(labelText: 'Name'),
                     ),
                     TextField(
-                      controller: description,
+                      key: const Key('create-group-description'),
+                      controller: _description,
                       maxLength: 500,
                       enabled: !submitting,
                       decoration: const InputDecoration(
@@ -164,25 +207,26 @@ class ChatGroupsScreen extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: Text('Members'),
                     ),
-                    if (employees.isEmpty)
+                    if (widget.employees.isEmpty)
                       const Padding(
                         padding: EdgeInsets.all(12),
                         child: Text(
                           'No active employees are available. The manager will be included.',
                         ),
                       ),
-                    for (final employee in employees)
+                    for (final employee in widget.employees)
                       CheckboxListTile(
+                        key: Key('create-group-member-${employee.id}'),
                         dense: true,
-                        value: selected.contains(employee.id),
+                        value: _selected.contains(employee.id),
                         title: Text(employee.displayName),
                         subtitle: Text(employee.displayEmail),
                         onChanged: submitting
                             ? null
                             : (value) => setState(
                                 () => value == true
-                                    ? selected.add(employee.id)
-                                    : selected.remove(employee.id),
+                                    ? _selected.add(employee.id)
+                                    : _selected.remove(employee.id),
                               ),
                       ),
                   ],
@@ -191,47 +235,13 @@ class ChatGroupsScreen extends StatelessWidget {
             ),
             actions: [
               TextButton(
-                onPressed: submitting
-                    ? null
-                    : () => Navigator.pop(dialogContext),
+                key: const Key('create-group-cancel'),
+                onPressed: submitting ? null : () => Navigator.pop(context),
                 child: const Text('Cancel'),
               ),
               FilledButton(
-                onPressed: submitting
-                    ? null
-                    : () async {
-                        final trimmedName = name.text.trim();
-                        final trimmedDescription = description.text.trim();
-                        if (trimmedName.isEmpty) {
-                          Fluttertoast.showToast(msg: 'Enter a group name.');
-                          return;
-                        }
-                        if (trimmedName.length > 80 ||
-                            trimmedDescription.length > 500) {
-                          Fluttertoast.showToast(
-                            msg:
-                                'Check the group name and description lengths.',
-                          );
-                          return;
-                        }
-                        setState(() => submitting = true);
-                        final result = await cubit.create(
-                          name: trimmedName,
-                          description: trimmedDescription,
-                          membershipIds: selected.toList(),
-                        );
-                        if (!dialogContext.mounted) return;
-                        if (result == ChatMutationResult.success) {
-                          Navigator.pop(dialogContext);
-                        } else {
-                          setState(() => submitting = false);
-                          Fluttertoast.showToast(
-                            msg:
-                                cubit.state.failure?.message ??
-                                'Could not create group.',
-                          );
-                        }
-                      },
+                key: const Key('create-group-submit'),
+                onPressed: submitting ? null : () => _submit(context),
                 child: submitting
                     ? const SizedBox.square(
                         dimension: 18,
@@ -242,10 +252,46 @@ class ChatGroupsScreen extends StatelessWidget {
             ],
           );
         },
-      ),
+      );
+
+  Future<void> _submit(BuildContext context) async {
+    final name = _name.text.trim();
+    final description = _description.text.trim();
+    if (name.isEmpty) {
+      Fluttertoast.showToast(msg: 'Enter a group name.');
+      return;
+    }
+    if (name.length > 80 || description.length > 500) {
+      Fluttertoast.showToast(
+        msg: 'Check the group name and description lengths.',
+      );
+      return;
+    }
+    if (widget.cubit.scope != widget.scope) {
+      if (context.mounted) _close(context);
+      return;
+    }
+    final result = await widget.cubit.create(
+      name: name,
+      description: description,
+      membershipIds: _selected.toList(),
     );
-    name.dispose();
-    description.dispose();
+    if (!context.mounted) return;
+    if (result == ChatMutationResult.success ||
+        result == ChatMutationResult.stale ||
+        widget.cubit.scope != widget.scope) {
+      _close(context);
+    } else if (result == ChatMutationResult.failure) {
+      Fluttertoast.showToast(
+        msg: widget.cubit.state.failure?.message ?? 'Could not create group.',
+      );
+    }
+  }
+
+  void _close(BuildContext context) {
+    if (_closing) return;
+    _closing = true;
+    Navigator.pop(context);
   }
 }
 

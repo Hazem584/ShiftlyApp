@@ -81,7 +81,10 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
   var _request = 0;
   String? _pendingClientId;
   String? _pendingText;
-  DateTime? _readAt;
+  _ReadPosition? _confirmedReadPosition;
+  _ReadPosition? _readInFlight;
+  _ReadPosition? _pendingReadPosition;
+  bool _synchronizingReadConflict = false;
   bool _loadingPage = false;
   bool _refreshQueued = false;
 
@@ -100,7 +103,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     _request++;
     _pendingClientId = null;
     _pendingText = null;
-    _readAt = null;
+    _clearReadState();
     _loadingPage = false;
     _refreshQueued = false;
     emit(const ChatConversationState());
@@ -140,7 +143,6 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
         ),
       );
       _markNewestRead(merged);
-      onChanged?.call();
     } catch (error) {
       if (!_current(scope, groupId, generation, request)) return;
       final failure = _failure(error, 'Unable to load messages.');
@@ -257,7 +259,6 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
         ),
       );
       _markNewestRead(messages);
-      onChanged?.call();
       return true;
     } catch (error) {
       if (!_scopeCurrent(scope, groupId, generation)) return false;
@@ -281,27 +282,132 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
 
   void _markNewestRead(List<ChatMessage> messages) {
     if (messages.isEmpty) return;
-    final newest = messages.last;
-    if (_readAt != null && !newest.createdAt.isAfter(_readAt!)) return;
-    _readAt = newest.createdAt;
+    final newest = messages.reduce(
+      (current, candidate) =>
+          _ReadPosition.fromMessage(candidate)
+                  .compareTo(_ReadPosition.fromMessage(current)) >
+              0
+          ? candidate
+          : current,
+    );
+    _queueRead(_ReadPosition.fromMessage(newest));
+  }
+
+  void _queueRead(_ReadPosition position) {
+    final confirmed = _confirmedReadPosition;
+    if (confirmed != null && position.compareTo(confirmed) <= 0) return;
+    final inFlight = _readInFlight;
+    if (_synchronizingReadConflict) {
+      _pendingReadPosition = _newer(_pendingReadPosition, position);
+      return;
+    }
+    if (inFlight != null) {
+      if (position.compareTo(inFlight) > 0) {
+        _pendingReadPosition = _newer(_pendingReadPosition, position);
+      }
+      return;
+    }
+    _pendingReadPosition = _newer(_pendingReadPosition, position);
+    _drainReadQueue();
+  }
+
+  void _drainReadQueue({bool allowConflictSync = true}) {
+    if (_readInFlight != null) return;
+    final pending = _pendingReadPosition;
+    final confirmed = _confirmedReadPosition;
+    if (pending == null ||
+        (confirmed != null && pending.compareTo(confirmed) <= 0)) {
+      _pendingReadPosition = null;
+      return;
+    }
+    _pendingReadPosition = null;
+    _readInFlight = pending;
     final scope = _scope;
     final groupId = _groupId;
     final generation = _generation;
-    if (scope == null || groupId == null) return;
+    if (scope == null || groupId == null) {
+      _readInFlight = null;
+      return;
+    }
     unawaited(
-      _repository
-          .markRead(scope.workspaceId, groupId, newest.id)
-          .then((_) {
-            if (_scopeCurrent(scope, groupId, generation)) onChanged?.call();
-          })
-          .catchError((Object error) {
-            if (error is ApiException &&
-                error.code == 'CHAT_READ_POSITION_CONFLICT' &&
-                _scopeCurrent(scope, groupId, generation)) {
-              _onRealtimeInsert();
-            }
-          }),
+      _sendReadPosition(
+        scope,
+        groupId,
+        generation,
+        pending,
+        allowConflictSync: allowConflictSync,
+      ),
     );
+  }
+
+  Future<void> _sendReadPosition(
+    FeatureSessionScope scope,
+    String groupId,
+    int generation,
+    _ReadPosition requested, {
+    required bool allowConflictSync,
+  }) async {
+    var synchronized = false;
+    try {
+      await _repository.markRead(
+        scope.workspaceId,
+        groupId,
+        requested.messageId,
+      );
+      if (!_readRequestCurrent(scope, groupId, generation, requested)) return;
+      _confirmedReadPosition = _newer(_confirmedReadPosition, requested);
+      onChanged?.call();
+    } catch (error) {
+      if (!_readRequestCurrent(scope, groupId, generation, requested)) return;
+      if (error is ApiException &&
+          error.code == 'CHAT_READ_POSITION_BACKWARDS') {
+        _confirmedReadPosition = _newer(_confirmedReadPosition, requested);
+        onChanged?.call();
+      } else {
+        _pendingReadPosition = _newer(_pendingReadPosition, requested);
+        synchronized =
+            error is ApiException &&
+            error.code == 'CHAT_READ_POSITION_CONFLICT' &&
+            allowConflictSync;
+        onChanged?.call();
+      }
+    } finally {
+      if (_readRequestCurrent(scope, groupId, generation, requested)) {
+        _readInFlight = null;
+      }
+    }
+    if (!_scopeCurrent(scope, groupId, generation)) return;
+    if (synchronized) {
+      _synchronizingReadConflict = true;
+      await load(refresh: true);
+      if (!_scopeCurrent(scope, groupId, generation)) return;
+      _synchronizingReadConflict = false;
+      _drainReadQueue(allowConflictSync: false);
+      return;
+    }
+    // Failures remain pending until a later safe trigger. Successful requests
+    // immediately drain a newer position that arrived while they were active.
+    if (_confirmedReadPosition != null &&
+        _confirmedReadPosition!.compareTo(requested) >= 0) {
+      _drainReadQueue();
+    }
+  }
+
+  bool _readRequestCurrent(
+    FeatureSessionScope scope,
+    String groupId,
+    int generation,
+    _ReadPosition requested,
+  ) => _scopeCurrent(scope, groupId, generation) && _readInFlight == requested;
+
+  _ReadPosition _newer(_ReadPosition? first, _ReadPosition second) =>
+      first == null || second.compareTo(first) > 0 ? second : first;
+
+  void _clearReadState() {
+    _confirmedReadPosition = null;
+    _readInFlight = null;
+    _pendingReadPosition = null;
+    _synchronizingReadConflict = false;
   }
 
   List<ChatMessage> _merge(
@@ -362,10 +468,45 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
 
   @override
   Future<void> close() async {
+    _generation++;
+    _request++;
+    _scope = null;
+    _groupId = null;
+    _loadingPage = false;
+    _refreshQueued = false;
+    _clearReadState();
     _refreshDebounce?.cancel();
-    await _subscription?.cancel();
+    _refreshDebounce = null;
+    final subscription = _subscription;
+    _subscription = null;
+    await subscription?.cancel();
     return super.close();
   }
+}
+
+class _ReadPosition implements Comparable<_ReadPosition> {
+  const _ReadPosition(this.createdAt, this.messageId);
+
+  factory _ReadPosition.fromMessage(ChatMessage message) =>
+      _ReadPosition(message.createdAt.toUtc(), message.id);
+
+  final DateTime createdAt;
+  final String messageId;
+
+  @override
+  int compareTo(_ReadPosition other) {
+    final byTime = createdAt.compareTo(other.createdAt);
+    return byTime == 0 ? messageId.compareTo(other.messageId) : byTime;
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is _ReadPosition &&
+      createdAt == other.createdAt &&
+      messageId == other.messageId;
+
+  @override
+  int get hashCode => Object.hash(createdAt, messageId);
 }
 
 String _uuidV4() {

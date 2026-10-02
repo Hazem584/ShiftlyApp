@@ -63,6 +63,9 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
   var _request = 0;
   bool _loading = false;
   bool _refreshQueued = false;
+  bool _unreadRefreshing = false;
+  bool _unreadRefreshQueued = false;
+  var _unreadRequest = 0;
 
   FeatureSessionScope? get scope => _scope;
 
@@ -76,6 +79,9 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _request++;
     _loading = false;
     _refreshQueued = false;
+    _unreadRefreshing = false;
+    _unreadRefreshQueued = false;
+    _unreadRequest++;
     emit(const ChatGroupsState());
     if (authorized != null) unawaited(load());
   }
@@ -139,13 +145,29 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
   Future<void> refreshUnread() async {
     final scope = _scope;
     if (scope == null) return;
+    if (_unreadRefreshing) {
+      _unreadRefreshQueued = true;
+      return;
+    }
+    _unreadRefreshing = true;
     final generation = _generation;
+    final request = ++_unreadRequest;
     try {
       final value = await _repository.unreadCount(scope.workspaceId);
-      if (_scopeCurrent(scope, generation)) {
+      if (_unreadCurrent(scope, generation, request)) {
         emit(state.copyWith(unreadCount: value));
       }
-    } catch (_) {}
+    } catch (_) {
+      // Background badge refreshes preserve the last canonical count.
+    } finally {
+      if (_unreadCurrent(scope, generation, request)) {
+        _unreadRefreshing = false;
+        if (_unreadRefreshQueued) {
+          _unreadRefreshQueued = false;
+          unawaited(refreshUnread());
+        }
+      }
+    }
   }
 
   Future<ChatMutationResult> create({
@@ -248,4 +270,19 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
       _scopeCurrent(scope, generation) && _request == request;
   bool _scopeCurrent(FeatureSessionScope scope, int generation) =>
       !isClosed && _scope == scope && _generation == generation;
+  bool _unreadCurrent(FeatureSessionScope scope, int generation, int request) =>
+      _scopeCurrent(scope, generation) && _unreadRequest == request;
+
+  @override
+  Future<void> close() {
+    _generation++;
+    _request++;
+    _unreadRequest++;
+    _scope = null;
+    _loading = false;
+    _refreshQueued = false;
+    _unreadRefreshing = false;
+    _unreadRefreshQueued = false;
+    return super.close();
+  }
 }
