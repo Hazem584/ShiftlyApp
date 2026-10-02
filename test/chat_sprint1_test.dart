@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/auth/data/models/current_user.dart';
@@ -379,6 +380,22 @@ void main() {
   });
 
   group('monotonic read positions', () {
+    test('successful mark-read refreshes shared group state once', () async {
+      var changes = 0;
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+        );
+      final cubit = ChatConversationCubit(
+        repository,
+        _FakeRealtime(),
+        onChanged: () => changes++,
+      )..bind(_scope, _group);
+      await _pump();
+      expect(changes, 1);
+      await cubit.close();
+    });
+
     test(
       'uses the message id tie-break and does not resend a confirmation',
       () async {
@@ -410,6 +427,7 @@ void main() {
     test(
       'failed read remains retryable on a later canonical refresh',
       () async {
+        var changes = 0;
         final repository = _FakeChatRepository()
           ..messageLoads.add(
             ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
@@ -420,15 +438,20 @@ void main() {
               () => throw Exception('offline'),
             ),
           );
-        final cubit = ChatConversationCubit(repository, _FakeRealtime())
-          ..bind(_scope, _group);
+        final cubit = ChatConversationCubit(
+          repository,
+          _FakeRealtime(),
+          onChanged: () => changes++,
+        )..bind(_scope, _group);
         await _pump();
+        expect(changes, 0);
         repository.messageLoads.add(
           ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
         );
         await cubit.load(refresh: true);
         await _pump();
         expect(repository.readMessageIds, [_message1, _message1]);
+        expect(changes, 1);
         await cubit.close();
       },
     );
@@ -526,14 +549,51 @@ void main() {
               ),
             ),
           );
-        final conflictCubit = ChatConversationCubit(conflict, _FakeRealtime())
-          ..bind(_scope, _group);
+        var conflictChanges = 0;
+        final conflictCubit = ChatConversationCubit(
+          conflict,
+          _FakeRealtime(),
+          onChanged: () => conflictChanges++,
+        )..bind(_scope, _group);
         await Future<void>.delayed(const Duration(milliseconds: 80));
         expect(conflict.messageLoadCount, 2);
         expect(conflict.readMessageIds, [_message1, _message1]);
+        expect(conflictChanges, 1);
         await conflictCubit.close();
       },
     );
+
+    test('general mark-read failures never refresh the group list', () async {
+      final errors = <Object>[
+        Exception('network'),
+        const ApiException(message: 'timeout', kind: FailureKind.timeout),
+        DioException(
+          requestOptions: RequestOptions(path: '/chat/read'),
+          type: DioExceptionType.cancel,
+        ),
+        const ApiException(message: 'rate limited', statusCode: 429),
+        const ApiException(message: 'server', statusCode: 500),
+        const ApiException(message: 'gateway', statusCode: 502),
+      ];
+      for (final error in errors) {
+        var changes = 0;
+        final repository = _FakeChatRepository()
+          ..messageLoads.add(
+            ChatMessagePage(messages: [_message(id: _message1, minute: 1)]),
+          )
+          ..readResults.add(
+            Future<void>.delayed(Duration.zero, () => throw error),
+          );
+        final cubit = ChatConversationCubit(
+          repository,
+          _FakeRealtime(),
+          onChanged: () => changes++,
+        )..bind(_scope, _group);
+        await _pump();
+        expect(changes, 0, reason: '$error');
+        await cubit.close();
+      }
+    });
 
     test('session changes and close invalidate old read completions', () async {
       var changes = 0;
@@ -571,6 +631,106 @@ void main() {
   });
 
   group('single-flight unread refresh', () {
+    test('newer unread-only result survives an older full load', () async {
+      final groups = Completer<List<ChatGroup>>();
+      final fullUnread = Completer<int>();
+      final repository = _FakeChatRepository()
+        ..unreadLoads.add(Future.value(7));
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+
+      repository.groupLoads.add(groups.future);
+      repository.unreadLoads
+        ..add(fullUnread.future)
+        ..add(Future.value(2));
+      final load = cubit.load(refresh: true);
+      await _pump();
+      await cubit.refreshUnread();
+      expect(cubit.state.unreadCount, 2);
+
+      groups.complete([_chatGroup(memberCount: 8)]);
+      fullUnread.complete(5);
+      await load;
+      expect(cubit.state.groups.single.memberCount, 8);
+      expect(cubit.state.unreadCount, 2);
+      await cubit.close();
+    });
+
+    test(
+      'newer full-load result survives an older unread-only result',
+      () async {
+        final unreadOnly = Completer<int>();
+        final repository = _FakeChatRepository()
+          ..unreadLoads.add(Future.value(1));
+        final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+        await _pump();
+
+        repository.unreadLoads.add(unreadOnly.future);
+        final unread = cubit.refreshUnread();
+        await _pump();
+        repository.groupLoads.add(Future.value([_chatGroup(memberCount: 6)]));
+        repository.unreadLoads.add(Future.value(3));
+        await cubit.load(refresh: true);
+        expect(cubit.state.unreadCount, 3);
+        unreadOnly.complete(9);
+        await unread;
+        expect(cubit.state.groups.single.memberCount, 6);
+        expect(cubit.state.unreadCount, 3);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'mutation groups apply without overwriting newer unread result',
+      () async {
+        final mutationGroups = Completer<List<ChatGroup>>();
+        final mutationUnread = Completer<int>();
+        final repository = _FakeChatRepository()
+          ..groupLoads.add(Future.value([_chatGroup()]))
+          ..unreadLoads.add(Future.value(4));
+        final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+        await _pump();
+
+        repository.groupLoads.add(mutationGroups.future);
+        repository.unreadLoads
+          ..add(mutationUnread.future)
+          ..add(Future.value(1));
+        final mutation = cubit.archive(_group);
+        await _pump();
+        await cubit.refreshUnread();
+        mutationGroups.complete([_chatGroup(memberCount: 11)]);
+        mutationUnread.complete(6);
+        expect(await mutation, ChatMutationResult.success);
+        expect(cubit.state.groups.single.memberCount, 11);
+        expect(cubit.state.unreadCount, 1);
+        await cubit.close();
+      },
+    );
+
+    test('newer unread failure does not suppress an older success', () async {
+      final groups = Completer<List<ChatGroup>>();
+      final olderUnread = Completer<int>();
+      final repository = _FakeChatRepository()
+        ..unreadLoads.add(Future.value(8));
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+
+      repository.groupLoads.add(groups.future);
+      repository.unreadLoads.add(olderUnread.future);
+      final load = cubit.load(refresh: true);
+      repository.unreadLoads.add(
+        Future<int>.delayed(Duration.zero, () => throw Exception('offline')),
+      );
+      await cubit.refreshUnread();
+      expect(cubit.state.unreadCount, 8);
+      groups.complete([_chatGroup(memberCount: 3)]);
+      olderUnread.complete(4);
+      await load;
+      expect(cubit.state.groups.single.memberCount, 3);
+      expect(cubit.state.unreadCount, 4);
+      await cubit.close();
+    });
+
     test(
       'coalesces repeated triggers and applies the follow-up response',
       () async {
@@ -641,6 +801,95 @@ void main() {
       await cubit.close();
       late.complete(50);
       await _pump();
+      expect(cubit.state.unreadCount, 2);
+    });
+
+    test(
+      'full load cannot clear unread single-flight or its queued run',
+      () async {
+        final activeUnread = Completer<int>();
+        final repository = _FakeChatRepository()
+          ..unreadLoads.add(Future.value(1));
+        final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+        await _pump();
+
+        repository.unreadLoads
+          ..add(activeUnread.future)
+          ..add(Future.value(7))
+          ..add(Future.value(9));
+        final active = cubit.refreshUnread();
+        await cubit.refreshUnread();
+        repository.groupLoads.add(Future.value([_chatGroup(memberCount: 5)]));
+        await cubit.load(refresh: true);
+        expect(cubit.state.unreadCount, 7);
+        activeUnread.complete(3);
+        await active;
+        await _pump();
+        expect(repository.unreadLoadCount, 4);
+        expect(cubit.state.unreadCount, 9);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'session change rejects old full, unread, and mutation results',
+      () async {
+        final oldGroups = Completer<List<ChatGroup>>();
+        final oldUnread = Completer<int>();
+        final repository = _FakeChatRepository()
+          ..groupLoads.add(Future.value([_chatGroup()]))
+          ..unreadLoads.add(Future.value(1));
+        final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+        await _pump();
+
+        repository.groupLoads
+          ..add(oldGroups.future)
+          ..add(Future.value(const []));
+        repository.unreadLoads
+          ..add(oldUnread.future)
+          ..add(Future.value(8));
+        final mutation = cubit.archive(_group);
+        await _pump();
+        cubit.bindSession(
+          const FeatureSessionScope(
+            userId: '77777777-7777-4777-8777-777777777777',
+            workspaceId: _otherWorkspace,
+            membershipId: _membership,
+            timezone: 'Etc/UTC',
+            role: WorkspaceRole.manager,
+          ),
+        );
+        await _pump();
+        oldGroups.complete([_chatGroup(memberCount: 99)]);
+        oldUnread.complete(99);
+        expect(await mutation, ChatMutationResult.stale);
+        await _pump();
+        expect(cubit.state.groups, isEmpty);
+        expect(cubit.state.unreadCount, 8);
+        await cubit.close();
+      },
+    );
+
+    test('close rejects late full-load and unread-only completions', () async {
+      final groups = Completer<List<ChatGroup>>();
+      final fullUnread = Completer<int>();
+      final unreadOnly = Completer<int>();
+      final repository = _FakeChatRepository()
+        ..unreadLoads.add(Future.value(2));
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+      repository.groupLoads.add(groups.future);
+      repository.unreadLoads
+        ..add(fullUnread.future)
+        ..add(unreadOnly.future);
+      final load = cubit.load(refresh: true);
+      final unread = cubit.refreshUnread();
+      await _pump();
+      await cubit.close();
+      groups.complete([_chatGroup(memberCount: 100)]);
+      fullUnread.complete(100);
+      unreadOnly.complete(100);
+      await Future.wait([load, unread]);
       expect(cubit.state.unreadCount, 2);
     });
   });

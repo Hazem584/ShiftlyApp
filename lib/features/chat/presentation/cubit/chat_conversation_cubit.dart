@@ -369,7 +369,6 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
             error is ApiException &&
             error.code == 'CHAT_READ_POSITION_CONFLICT' &&
             allowConflictSync;
-        onChanged?.call();
       }
     } finally {
       if (_readRequestCurrent(scope, groupId, generation, requested)) {
@@ -379,6 +378,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     if (!_scopeCurrent(scope, groupId, generation)) return;
     if (synchronized) {
       _synchronizingReadConflict = true;
+      onChanged?.call();
       await load(refresh: true);
       if (!_scopeCurrent(scope, groupId, generation)) return;
       _synchronizingReadConflict = false;

@@ -66,6 +66,8 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
   bool _unreadRefreshing = false;
   bool _unreadRefreshQueued = false;
   var _unreadRequest = 0;
+  var _unreadIssuedSequence = 0;
+  var _unreadAppliedSequence = 0;
 
   FeatureSessionScope? get scope => _scope;
 
@@ -82,6 +84,8 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _unreadRefreshing = false;
     _unreadRefreshQueued = false;
     _unreadRequest++;
+    _unreadIssuedSequence = 0;
+    _unreadAppliedSequence = 0;
     emit(const ChatGroupsState());
     if (authorized != null) unawaited(load());
   }
@@ -96,6 +100,7 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _loading = true;
     final generation = _generation;
     final request = ++_request;
+    final unreadSequence = ++_unreadIssuedSequence;
     final previous = state;
     emit(
       refresh && previous.groups.isNotEmpty
@@ -116,7 +121,9 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
         ChatGroupsState(
           loading: false,
           groups: groups,
-          unreadCount: results[1] as int,
+          unreadCount: _acceptUnreadResult(scope, generation, unreadSequence)
+              ? results[1] as int
+              : state.unreadCount,
         ),
       );
     } catch (error) {
@@ -152,9 +159,11 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _unreadRefreshing = true;
     final generation = _generation;
     final request = ++_unreadRequest;
+    final unreadSequence = ++_unreadIssuedSequence;
     try {
       final value = await _repository.unreadCount(scope.workspaceId);
-      if (_unreadCurrent(scope, generation, request)) {
+      if (_unreadCurrent(scope, generation, request) &&
+          _acceptUnreadResult(scope, generation, unreadSequence)) {
         emit(state.copyWith(unreadCount: value));
       }
     } catch (_) {
@@ -232,6 +241,7 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     int generation,
   ) async {
     final request = ++_request;
+    final unreadSequence = ++_unreadIssuedSequence;
     try {
       final results = await Future.wait<Object>([
         _repository.listGroups(scope.workspaceId),
@@ -245,7 +255,9 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
       emit(
         state.copyWith(
           groups: groups,
-          unreadCount: results[1] as int,
+          unreadCount: _acceptUnreadResult(scope, generation, unreadSequence)
+              ? results[1] as int
+              : state.unreadCount,
           clearFailure: true,
         ),
       );
@@ -272,6 +284,18 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
       !isClosed && _scope == scope && _generation == generation;
   bool _unreadCurrent(FeatureSessionScope scope, int generation, int request) =>
       _scopeCurrent(scope, generation) && _unreadRequest == request;
+  bool _acceptUnreadResult(
+    FeatureSessionScope scope,
+    int generation,
+    int sequence,
+  ) {
+    if (!_scopeCurrent(scope, generation) ||
+        sequence < _unreadAppliedSequence) {
+      return false;
+    }
+    _unreadAppliedSequence = sequence;
+    return true;
+  }
 
   @override
   Future<void> close() {
@@ -283,6 +307,8 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _refreshQueued = false;
     _unreadRefreshing = false;
     _unreadRefreshQueued = false;
+    _unreadIssuedSequence = 0;
+    _unreadAppliedSequence = 0;
     return super.close();
   }
 }
