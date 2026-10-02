@@ -417,3 +417,40 @@ short-lived (10 minutes), so an already-rendered image or active player may need
 fresh user action after expiry. Upload authorizations expire after two hours; the
 UI retries expired pre-finalization work with a new authorization while preserving
 the logical client message ID.
+
+### Real-device IMAGE and VOICE upload retest
+
+The signed uploader accepts only HTTPS destinations on the configured Supabase
+origin and the `/storage/v1/object/upload/sign/chat-media/` path. It rejects
+redirects, unrelated hosts or ports, userinfo, fragments, duplicate or mismatched
+tokens, and changed MIME/size metadata. When the backend URL omits `token`, the
+returned upload token is appended once while preserving existing query values.
+The exact validated `Uint8List`, content type, content length, and
+`x-upsert: false` are sent using the isolated, unauthenticated Storage Dio client.
+
+1. Cleanly uninstall and reinstall the debug application.
+2. Sign in with a non-production account.
+3. Enter an authorized, non-archived chat group.
+4. Send a small JPEG.
+5. Confirm upload initiation returns 201, Storage PUT succeeds, finalization
+   succeeds, and exactly one canonical image bubble replaces the pending item.
+6. Repeat with a valid PNG and WebP.
+7. Record and send a short voice message.
+8. Confirm `durationMs` is a positive integer, Storage succeeds, finalization
+   succeeds, and playback works.
+9. Interrupt the Storage PUT, then retry and confirm no finalization occurred for
+   the failed PUT.
+10. Interrupt finalization after Storage success, retry the same pending item, and
+    confirm the stable client message ID prevents duplication.
+11. Verify unsupported MIME, oversized content, and archived groups show safe
+    failures.
+12. Confirm another authorized session receives the canonical message through
+    Realtime invalidation and REST refresh.
+13. Inspect logs for tokens, signed URLs, Storage paths, bytes, filenames,
+    authorization headers, coordinates, personal data, and provider bodies; none
+    may appear.
+14. If finalization still returns 400, record only the backend error `code` and
+    `requestId`. `CHAT_MEDIA_OBJECT_MISSING` or `CHAT_MEDIA_OBJECT_INVALID` points
+    to the uploaded object; `CHAT_MEDIA_VERIFICATION_FAILED` points to Storage
+    access/provider configuration and requires checking deployed Storage policies
+    without weakening backend verification.

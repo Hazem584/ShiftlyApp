@@ -2,6 +2,26 @@ import 'dart:typed_data';
 
 import 'package:shiftly/features/chat/data/chat_models.dart';
 
+class ChatUploadCancellation {
+  bool _cancelled = false;
+  void Function()? _handler;
+
+  bool get isCancelled => _cancelled;
+
+  void cancel() {
+    if (_cancelled) return;
+    _cancelled = true;
+    _handler?.call();
+  }
+
+  void bind(void Function() handler) {
+    _handler = handler;
+    if (_cancelled) handler();
+  }
+
+  void unbind() => _handler = null;
+}
+
 abstract class ChatRepository {
   const ChatRepository();
 
@@ -56,6 +76,7 @@ abstract class ChatRepository {
     Uint8List bytes,
     String mimeType, {
     void Function(int sent, int total)? onProgress,
+    ChatUploadCancellation? cancellation,
   }) => throw UnsupportedError('Chat media is unavailable');
   Future<ChatMessage> finalizeUpload(
     String workspaceId,

@@ -146,6 +146,7 @@ class _MediaJob {
   Uint8List? bytes;
   final int? durationMs;
   String? uploadId;
+  ChatUploadCancellation? cancellation;
   bool running = false;
 }
 
@@ -458,6 +459,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           progress: 0,
         );
         try {
+          job.cancellation = ChatUploadCancellation();
           await _repository.uploadSigned(
             authorization,
             bytes,
@@ -467,10 +469,13 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
                 _updatePending(clientId, progress: sent / total);
               }
             },
+            cancellation: job.cancellation,
           );
         } catch (_) {
           await _cancelTracked(scope, groupId, job);
           rethrow;
+        } finally {
+          job.cancellation = null;
         }
       }
       if (!_scopeCurrent(scope, groupId, generation)) return;
@@ -510,6 +515,8 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
             const [
               'CHAT_UPLOAD_EXPIRED',
               'CHAT_UPLOAD_NOT_PENDING',
+              'CHAT_MEDIA_OBJECT_MISSING',
+              'CHAT_MEDIA_OBJECT_INVALID',
             ].contains(error.code)) {
           await _cancelTracked(scope, groupId, job);
         }
@@ -622,6 +629,8 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     String groupId,
     _MediaJob job,
   ) async {
+    job.cancellation?.cancel();
+    job.cancellation = null;
     final uploadId = job.uploadId;
     job.uploadId = null;
     if (uploadId == null) return;

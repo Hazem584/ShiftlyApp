@@ -252,12 +252,16 @@ class ChatUploadAuthorization extends Equatable {
     required this.signedUploadUrl,
     required this.uploadToken,
     required this.expiresAt,
+    this.expectedMimeType,
+    this.expectedSizeBytes,
   });
 
   final String uploadId;
   final Uri signedUploadUrl;
   final String uploadToken;
   final DateTime expiresAt;
+  final String? expectedMimeType;
+  final int? expectedSizeBytes;
 
   factory ChatUploadAuthorization.fromJson(Map<String, Object?> json) {
     final url = json['signedUploadUrl'];
@@ -281,8 +285,20 @@ class ChatUploadAuthorization extends Equatable {
     );
   }
 
+  ChatUploadAuthorization withExpectedUpload({
+    required String mimeType,
+    required int sizeBytes,
+  }) => ChatUploadAuthorization(
+    uploadId: uploadId,
+    signedUploadUrl: signedUploadUrl,
+    uploadToken: uploadToken,
+    expiresAt: expiresAt,
+    expectedMimeType: mimeType,
+    expectedSizeBytes: sizeBytes,
+  );
+
   @override
-  List<Object?> get props => [uploadId, signedUploadUrl, expiresAt];
+  List<Object?> get props => [uploadId, expiresAt];
 
   @override
   String toString() =>
@@ -295,7 +311,7 @@ class ChatMediaUrl extends Equatable {
   final DateTime expiresAt;
 
   @override
-  List<Object?> get props => [url, expiresAt];
+  List<Object?> get props => [expiresAt];
 
   @override
   String toString() => 'ChatMediaUrl(expiresAt: $expiresAt)';

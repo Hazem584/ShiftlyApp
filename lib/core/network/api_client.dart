@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shiftly/core/config/app_config.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
+import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/network/auth_interceptor.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
@@ -78,9 +79,17 @@ class _SafeNetworkInterceptor extends Interceptor {
   @override
   void onError(DioException error, ErrorInterceptorHandler handler) {
     if (kDebugMode) {
+      final parsed = error.error is ApiException
+          ? error.error! as ApiException
+          : ApiErrorParser.parse(error);
+      final code = parsed.code == null ? '' : ' code=${parsed.code}';
+      final requestId = parsed.requestId == null
+          ? ''
+          : ' requestId=${parsed.requestId}';
       debugPrint(
         'API ${error.requestOptions.method} '
-        '${error.requestOptions.uri.path} ${error.response?.statusCode ?? 'failed'}',
+        '${error.requestOptions.uri.path} '
+        '${error.response?.statusCode ?? 'failed'}$code$requestId',
       );
     }
     handler.next(error);

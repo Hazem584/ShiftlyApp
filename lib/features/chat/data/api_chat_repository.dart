@@ -5,12 +5,19 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
 
 class ApiChatRepository extends ChatRepository {
-  ApiChatRepository(this._dio, {Dio? signedUploadClient})
-    : _signedUploadClient = signedUploadClient ?? Dio();
+  ApiChatRepository(
+    this._dio, {
+    required Uri supabaseUrl,
+    Dio? signedUploadClient,
+  }) : _signedUploader = SignedChatUploadClient(
+         signedUploadClient ?? Dio(),
+         allowedSupabaseUrl: supabaseUrl,
+       );
   final Dio _dio;
-  final Dio _signedUploadClient;
+  final SignedChatUploadClient _signedUploader;
 
   String _groups(String workspaceId) => '/workspaces/$workspaceId/chat/groups';
   String _group(String workspaceId, String groupId) =>
@@ -204,7 +211,7 @@ class ApiChatRepository extends ChatRepository {
     );
     return ChatUploadAuthorization.fromJson(
       chatMap(response.data, 'upload authorization'),
-    );
+    ).withExpectedUpload(mimeType: mimeType, sizeBytes: sizeBytes);
   });
 
   @override
@@ -213,21 +220,21 @@ class ApiChatRepository extends ChatRepository {
     Uint8List bytes,
     String mimeType, {
     void Function(int sent, int total)? onProgress,
+    ChatUploadCancellation? cancellation,
   }) => _request(() async {
     if (DateTime.now().toUtc().isAfter(authorization.expiresAt)) {
       throw const FormatException('Upload authorization expired');
     }
-    await _signedUploadClient.putUri<void>(
-      authorization.signedUploadUrl,
-      data: Stream<List<int>>.value(bytes),
-      options: Options(
-        headers: {
-          Headers.contentTypeHeader: mimeType,
-          Headers.contentLengthHeader: bytes.length,
-          'x-upsert': 'false',
-        },
-      ),
-      onSendProgress: onProgress,
+    if (authorization.expectedMimeType != mimeType ||
+        authorization.expectedSizeBytes != bytes.length) {
+      throw const FormatException('Upload metadata changed after initiation');
+    }
+    await _signedUploader.upload(
+      authorization: authorization,
+      bytes: bytes,
+      mimeType: mimeType,
+      onProgress: onProgress,
+      cancellation: cancellation,
     );
   });
 
@@ -238,8 +245,13 @@ class ApiChatRepository extends ChatRepository {
     required String type,
     required String uploadId,
     required String clientMessageId,
-  }) => _request(
-    () async => ChatMessage.fromJson(
+  }) => _request(() async {
+    if (!const ['IMAGE', 'VOICE'].contains(type) ||
+        chatOptionalUuid(uploadId) == null ||
+        chatOptionalUuid(clientMessageId) == null) {
+      throw const FormatException('Invalid media finalization');
+    }
+    return ChatMessage.fromJson(
       chatMap(
         (await _dio.post<Object?>(
           '${_group(workspaceId, groupId)}/messages',
@@ -251,8 +263,8 @@ class ApiChatRepository extends ChatRepository {
         )).data,
         'message',
       ),
-    ),
-  );
+    );
+  });
 
   @override
   Future<void> cancelUpload(

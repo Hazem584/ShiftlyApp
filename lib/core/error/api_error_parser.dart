@@ -151,6 +151,19 @@ abstract final class ApiErrorParser {
         'The upload service is temporarily unavailable.',
       'CHAT_MEDIA_VERIFICATION_FAILED' =>
         'The uploaded media could not be verified.',
+      'CHAT_MEDIA_OBJECT_MISSING' =>
+        'The uploaded media could not be found. Please retry.',
+      'CHAT_MEDIA_OBJECT_INVALID' =>
+        'The uploaded media did not pass verification.',
+      'CHAT_MEDIA_UPLOAD_DESTINATION_INVALID' =>
+        'The upload destination is invalid. Please retry.',
+      'CHAT_MEDIA_UPLOAD_METADATA_CHANGED' =>
+        'The media changed after it was prepared. Please retry.',
+      'CHAT_MEDIA_STORAGE_UPLOAD_FAILED' =>
+        'The media upload failed. Please retry.',
+      'CHAT_MEDIA_UPLOAD_TIMEOUT' =>
+        'The media upload timed out. Please retry.',
+      'CHAT_MEDIA_UPLOAD_CANCELLED' => 'The media upload was cancelled.',
       'CHAT_UPLOAD_NOT_FOUND' => 'That upload is no longer available.',
       'CHAT_UPLOAD_TYPE_MISMATCH' => 'The upload does not match this message.',
       'CHAT_UPLOAD_EXPIRED' => 'The upload expired. Please try again.',

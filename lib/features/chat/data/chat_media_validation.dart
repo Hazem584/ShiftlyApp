@@ -6,13 +6,16 @@ abstract final class ChatMediaValidation {
   static const voiceMaxDurationMs = 10 * 60 * 1000;
 
   static String? imageMime(Uint8List bytes) {
-    if (bytes.length >= 3 &&
+    if (bytes.isEmpty || bytes.length > imageMaxBytes) return null;
+    if (bytes.length >= 4 &&
         bytes[0] == 0xff &&
         bytes[1] == 0xd8 &&
-        bytes[2] == 0xff) {
+        bytes[2] == 0xff &&
+        bytes[bytes.length - 2] == 0xff &&
+        bytes[bytes.length - 1] == 0xd9) {
       return 'image/jpeg';
     }
-    if (bytes.length >= 8 &&
+    if (bytes.length >= 45 &&
         _matches(bytes, const [
           0x89,
           0x50,
@@ -22,12 +25,33 @@ abstract final class ChatMediaValidation {
           0x0a,
           0x1a,
           0x0a,
+        ]) &&
+        _ascii(bytes, 12, 'IHDR') &&
+        _matchesAt(bytes, bytes.length - 12, const [
+          0,
+          0,
+          0,
+          0,
+          0x49,
+          0x45,
+          0x4e,
+          0x44,
+          0xae,
+          0x42,
+          0x60,
+          0x82,
         ])) {
       return 'image/png';
     }
-    if (bytes.length >= 12 &&
+    if (bytes.length >= 20 &&
         _ascii(bytes, 0, 'RIFF') &&
-        _ascii(bytes, 8, 'WEBP')) {
+        _littleEndianUint32(bytes, 4) + 8 == bytes.length &&
+        _ascii(bytes, 8, 'WEBP') &&
+        const [
+          'VP8 ',
+          'VP8L',
+          'VP8X',
+        ].any((value) => _ascii(bytes, 12, value))) {
       return 'image/webp';
     }
     return null;
@@ -60,11 +84,22 @@ abstract final class ChatMediaValidation {
   }
 
   static bool _matches(Uint8List bytes, List<int> signature) {
+    return _matchesAt(bytes, 0, signature);
+  }
+
+  static bool _matchesAt(Uint8List bytes, int offset, List<int> signature) {
+    if (offset < 0 || bytes.length < offset + signature.length) return false;
     for (var index = 0; index < signature.length; index++) {
-      if (bytes[index] != signature[index]) return false;
+      if (bytes[offset + index] != signature[index]) return false;
     }
     return true;
   }
+
+  static int _littleEndianUint32(Uint8List bytes, int offset) =>
+      bytes[offset] |
+      (bytes[offset + 1] << 8) |
+      (bytes[offset + 2] << 16) |
+      (bytes[offset + 3] << 24);
 
   static bool _ascii(Uint8List bytes, int offset, String value) {
     if (bytes.length < offset + value.length) return false;

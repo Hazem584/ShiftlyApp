@@ -70,6 +70,7 @@ void main() {
         );
       final page = await ApiChatRepository(
         dio,
+        supabaseUrl: Uri.parse('https://storage.example'),
       ).listMessages(_workspace, _group, cursor: 'previous-cursor', limit: 15);
       expect(
         request.path,
@@ -136,7 +137,10 @@ void main() {
             },
           ),
         );
-      final repository = ApiChatRepository(dio);
+      final repository = ApiChatRepository(
+        dio,
+        supabaseUrl: Uri.parse('https://storage.example'),
+      );
       await repository.addMembers(_workspace, _group, [
         _membership,
         _membership,
@@ -164,7 +168,10 @@ void main() {
             ),
           );
         expect(
-          ApiChatRepository(dio).addMembers(_workspace, _group, [_membership]),
+          ApiChatRepository(
+            dio,
+            supabaseUrl: Uri.parse('https://storage.example'),
+          ).addMembers(_workspace, _group, [_membership]),
           throwsA(isA<ApiException>()),
         );
       },
@@ -192,7 +199,10 @@ void main() {
           ),
         );
       try {
-        await ApiChatRepository(dio).archiveGroup(_workspace, _group);
+        await ApiChatRepository(
+          dio,
+          supabaseUrl: Uri.parse('https://storage.example'),
+        ).archiveGroup(_workspace, _group);
         fail('Expected ApiException');
       } on ApiException catch (error) {
         expect(error.code, 'CHAT_GROUP_ARCHIVED');
@@ -220,12 +230,16 @@ void main() {
               },
             ),
           );
-        final group = await ApiChatRepository(dio).createGroup(
-          _workspace,
-          name: '  Operations  ',
-          description: '   ',
-          memberMembershipIds: [_membership, _membership],
-        );
+        final group =
+            await ApiChatRepository(
+              dio,
+              supabaseUrl: Uri.parse('https://storage.example'),
+            ).createGroup(
+              _workspace,
+              name: '  Operations  ',
+              description: '   ',
+              memberMembershipIds: [_membership, _membership],
+            );
         expect(group.memberCount, 1);
         expect(request.data, {
           'name': 'Operations',

@@ -91,7 +91,10 @@ abstract final class AppBootstrap {
     final leaveRequestRepository = ApiLeaveRequestRepository(apiClient.dio);
     final notificationRepository = ApiNotificationRepository(apiClient.dio);
     final dashboardRepository = ApiDashboardRepository(apiClient.dio);
-    final chatRepository = ApiChatRepository(apiClient.dio);
+    final chatRepository = ApiChatRepository(
+      apiClient.dio,
+      supabaseUrl: config.supabaseUrl,
+    );
     return AppDependencies(
       sessionCoordinator: coordinator,
       profileRepository: profileRepository,
