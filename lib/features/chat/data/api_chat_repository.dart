@@ -10,12 +10,8 @@ import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
 class ApiChatRepository extends ChatRepository {
   ApiChatRepository(
     this._dio, {
-    required Uri supabaseUrl,
-    Dio? signedUploadClient,
-  }) : _signedUploader = SignedChatUploadClient(
-         signedUploadClient ?? Dio(),
-         allowedSupabaseUrl: supabaseUrl,
-       );
+    required ChatStorageUploader storageUploader,
+  }) : _signedUploader = SignedChatUploadClient(storageUploader);
   final Dio _dio;
   final SignedChatUploadClient _signedUploader;
 
@@ -198,6 +194,10 @@ class ApiChatRepository extends ChatRepository {
     int? durationMs,
   }) => _request(() async {
     if (!const ['IMAGE', 'VOICE'].contains(type) || sizeBytes < 1) {
+      throw const FormatException('Invalid upload metadata');
+    }
+    if ((type == 'IMAGE' && durationMs != null) ||
+        (type == 'VOICE' && (durationMs == null || durationMs < 1))) {
       throw const FormatException('Invalid upload metadata');
     }
     final response = await _dio.post<Object?>(

@@ -1,25 +1,49 @@
 import 'dart:typed_data';
 
-import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+abstract interface class ChatStorageUploader {
+  Future<void> upload({
+    required String bucket,
+    required String path,
+    required String uploadToken,
+    required Uint8List bytes,
+    required String mimeType,
+    required bool upsert,
+  });
+}
+
+class SupabaseChatStorageUploader implements ChatStorageUploader {
+  const SupabaseChatStorageUploader(this._client);
+
+  final SupabaseClient _client;
+
+  @override
+  Future<void> upload({
+    required String bucket,
+    required String path,
+    required String uploadToken,
+    required Uint8List bytes,
+    required String mimeType,
+    required bool upsert,
+  }) async {
+    await _client.storage.from(bucket).uploadBinaryToSignedUrl(
+      path,
+      uploadToken,
+      bytes,
+      FileOptions(contentType: mimeType, upsert: upsert),
+    );
+  }
+}
 
 class SignedChatUploadClient {
-  SignedChatUploadClient(this._dio, {required Uri allowedSupabaseUrl})
-    : _allowedOrigin = allowedSupabaseUrl {
-    if (allowedSupabaseUrl.scheme != 'https' ||
-        allowedSupabaseUrl.host.isEmpty ||
-        allowedSupabaseUrl.userInfo.isNotEmpty ||
-        allowedSupabaseUrl.query.isNotEmpty ||
-        allowedSupabaseUrl.fragment.isNotEmpty) {
-      throw ArgumentError('Invalid allowed Supabase origin');
-    }
-  }
+  const SignedChatUploadClient(this._uploader);
 
-  final Dio _dio;
-  final Uri _allowedOrigin;
+  final ChatStorageUploader _uploader;
 
   Future<void> upload({
     required ChatUploadAuthorization authorization,
@@ -37,53 +61,31 @@ class SignedChatUploadClient {
         kind: FailureKind.validation,
       );
     }
-    final destination = _validatedDestination(authorization);
-    final cancelToken = CancelToken();
-    cancellation?.bind(() => cancelToken.cancel());
+    if (cancellation?.isCancelled == true) throw _cancelled();
     try {
-      final response = await _dio.putUri<Object?>(
-        destination,
-        data: bytes,
-        cancelToken: cancelToken,
-        options: Options(
-          contentType: mimeType,
-          headers: {
-            Headers.contentLengthHeader: bytes.length,
-            'x-upsert': 'false',
-          },
-          followRedirects: false,
-          receiveDataWhenStatusError: false,
-          validateStatus: (_) => true,
-        ),
-        onSendProgress: onProgress,
+      await _uploader.upload(
+        bucket: authorization.bucket,
+        path: authorization.path,
+        uploadToken: authorization.uploadToken,
+        bytes: bytes,
+        mimeType: mimeType,
+        upsert: false,
       );
-      final status = response.statusCode;
-      if (status == null || status < 200 || status >= 300) {
-        throw _storageFailure(status);
-      }
+      if (cancellation?.isCancelled == true) throw _cancelled();
+      onProgress?.call(bytes.length, bytes.length);
     } on ApiException {
       rethrow;
-    } on DioException catch (error) {
-      if (CancelToken.isCancel(error)) {
-        throw const ApiException(
-          message: 'Upload cancelled.',
-          code: 'CHAT_MEDIA_UPLOAD_CANCELLED',
-          kind: FailureKind.cancelled,
-        );
-      }
-      if (error.type == DioExceptionType.connectionTimeout ||
-          error.type == DioExceptionType.sendTimeout ||
-          error.type == DioExceptionType.receiveTimeout) {
-        throw const ApiException(
-          message: 'The upload timed out. Please try again.',
-          code: 'CHAT_MEDIA_UPLOAD_TIMEOUT',
-          kind: FailureKind.timeout,
-        );
-      }
-      throw const ApiException(
+    } on StorageException catch (error) {
+      final statusCode = int.tryParse(error.statusCode ?? '');
+      throw ApiException(
+        statusCode: statusCode,
         message: 'The media upload failed. Please try again.',
         code: 'CHAT_MEDIA_STORAGE_UPLOAD_FAILED',
-        kind: FailureKind.network,
+        kind: statusCode != null && statusCode >= 500
+            ? FailureKind.server
+            : statusCode != null
+            ? FailureKind.validation
+            : FailureKind.network,
       );
     } catch (_) {
       throw const ApiException(
@@ -91,49 +93,12 @@ class SignedChatUploadClient {
         code: 'CHAT_MEDIA_STORAGE_UPLOAD_FAILED',
         kind: FailureKind.unknown,
       );
-    } finally {
-      cancellation?.unbind();
     }
   }
 
-  Uri _validatedDestination(ChatUploadAuthorization authorization) {
-    final source = authorization.signedUploadUrl;
-    const pathPrefix = '/storage/v1/object/upload/sign/chat-media/';
-    if (source.scheme != 'https' ||
-        source.host.toLowerCase() != _allowedOrigin.host.toLowerCase() ||
-        source.port != _allowedOrigin.port ||
-        source.userInfo.isNotEmpty ||
-        source.fragment.isNotEmpty ||
-        !source.path.startsWith(pathPrefix) ||
-        source.path.length <= pathPrefix.length ||
-        source.pathSegments.any((segment) => segment == '..')) {
-      throw _invalidDestination();
-    }
-    final tokenValues = source.queryParametersAll['token'];
-    if (tokenValues != null) {
-      if (tokenValues.length != 1 ||
-          tokenValues.single != authorization.uploadToken) {
-        throw _invalidDestination();
-      }
-      return source;
-    }
-    final query = <String, dynamic>{...source.queryParametersAll};
-    query['token'] = authorization.uploadToken;
-    return source.replace(queryParameters: query);
-  }
-
-  ApiException _invalidDestination() => const ApiException(
-    message: 'The upload destination is invalid. Please try again.',
-    code: 'CHAT_MEDIA_UPLOAD_DESTINATION_INVALID',
-    kind: FailureKind.validation,
-  );
-
-  ApiException _storageFailure(int? status) => ApiException(
-    statusCode: status,
-    message: 'The media upload failed. Please try again.',
-    code: 'CHAT_MEDIA_STORAGE_UPLOAD_FAILED',
-    kind: status != null && status >= 500
-        ? FailureKind.server
-        : FailureKind.validation,
+  ApiException _cancelled() => const ApiException(
+    message: 'Upload cancelled.',
+    code: 'CHAT_MEDIA_UPLOAD_CANCELLED',
+    kind: FailureKind.cancelled,
   );
 }

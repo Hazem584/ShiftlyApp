@@ -250,7 +250,7 @@ class _ChatViewState extends State<_ChatView> {
             }
             final offset = state.loadingOlder ? index - 1 : index;
             if (offset >= state.messages.length) {
-              return _PendingMediaBubble(
+              return PendingMediaBubble(
                 pending: pending[offset - state.messages.length],
                 onRetry: (id) =>
                     context.read<ChatConversationCubit>().retryMedia(id),
@@ -402,11 +402,7 @@ class _ChatViewState extends State<_ChatView> {
         return;
       }
       if (mounted) {
-        await context.read<ChatConversationCubit>().sendMedia(
-          type: 'IMAGE',
-          mimeType: mime,
-          bytes: bytes,
-        );
+        await context.read<ChatConversationCubit>().sendImage(bytes);
       }
     } catch (_) {
       Fluttertoast.showToast(msg: 'The image could not be prepared.');
@@ -480,8 +476,7 @@ class _ChatViewState extends State<_ChatView> {
         return;
       }
       if (mounted) {
-        await context.read<ChatConversationCubit>().sendMedia(
-          type: 'VOICE',
+        await context.read<ChatConversationCubit>().sendVoice(
           mimeType: 'audio/mp4',
           bytes: bytes,
           durationMs: duration,
@@ -1024,11 +1019,12 @@ class _LocationCard extends StatelessWidget {
   }
 }
 
-class _PendingMediaBubble extends StatelessWidget {
-  const _PendingMediaBubble({
+class PendingMediaBubble extends StatelessWidget {
+  const PendingMediaBubble({
     required this.pending,
     required this.onRetry,
     required this.onCancel,
+    super.key,
   });
   final PendingChatMessage pending;
   final Future<void> Function(String) onRetry;
@@ -1048,20 +1044,33 @@ class _PendingMediaBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (pending.previewBytes != null)
-            Image.memory(
-              pending.previewBytes!,
-              height: 160,
-              width: 260,
-              cacheWidth: 720,
-              fit: BoxFit.cover,
-            )
+          if (pending.mediaType == PendingChatMediaType.image)
+            if (pending.previewBytes != null)
+              Image.memory(
+                pending.previewBytes!,
+                height: 160,
+                width: 260,
+                cacheWidth: 720,
+                fit: BoxFit.cover,
+              )
+            else
+              const Row(
+                children: [
+                  Icon(Icons.image_outlined),
+                  SizedBox(width: 8),
+                  Text('Image'),
+                ],
+              )
           else
-            const Row(
+            Row(
               children: [
-                Icon(Icons.mic),
-                SizedBox(width: 8),
-                Text('Voice message'),
+                const Icon(Icons.mic),
+                const SizedBox(width: 8),
+                const Text('Voice message'),
+                if (pending.durationMs != null) ...[
+                  const SizedBox(width: 8),
+                  Text(_durationLabel(pending.durationMs!)),
+                ],
               ],
             ),
           const SizedBox(height: 8),
@@ -1098,6 +1107,13 @@ class _PendingMediaBubble extends StatelessWidget {
       ),
     ),
   );
+
+  String _durationLabel(int durationMs) {
+    final duration = Duration(milliseconds: durationMs);
+    final minutes = duration.inMinutes.toString().padLeft(2, '0');
+    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 }
 
 class _MembersSheet extends StatelessWidget {

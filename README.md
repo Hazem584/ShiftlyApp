@@ -322,8 +322,9 @@ routing, state-management, or backend mutation path.
 
 For IMAGE and VOICE, the client validates locally, calls
 `POST /workspaces/{workspaceId}/chat/groups/{groupId}/uploads`, uploads bytes with
-`PUT` to the exact returned HTTPS `signedUploadUrl` using the validated content
-type and `x-upsert: false`, and finalizes through
+the initialized `SupabaseClient` Storage API using the exact returned bucket,
+path, and upload token, the validated content type, and `upsert: false`, then
+finalizes through
 `POST /workspaces/{workspaceId}/chat/groups/{groupId}/messages`. Finalization
 uses the original upload ID and a stable UUID-v4 `clientMessageId`; only the
 canonical returned message enters history. A pre-finalization failure or user
@@ -333,9 +334,9 @@ never shown as a sent message, and the client never constructs a bucket path or
 public URL.
 
 Pending media explicitly progresses through preparing, uploading, finalizing,
-sent, failed, or cancelled. Progress is surfaced where Dio reports it. Duplicate
-execution of the same pending job is suppressed. Image preview bytes exist only
-for the pending UI and are dropped before finalization. Voice files are created
+sent, failed, or cancelled. Completion is surfaced after the Storage API returns.
+Duplicate execution of the same pending job is suppressed. Image preview bytes
+exist only for the pending UI and are dropped after canonical success. Voice files are created
 only in the OS temporary directory and deleted after reading, cancellation, or
 failure; in-memory retry data is cleared after upload/cancel/session change.
 
@@ -420,13 +421,11 @@ the logical client message ID.
 
 ### Real-device IMAGE and VOICE upload retest
 
-The signed uploader accepts only HTTPS destinations on the configured Supabase
-origin and the `/storage/v1/object/upload/sign/chat-media/` path. It rejects
-redirects, unrelated hosts or ports, userinfo, fragments, duplicate or mismatched
-tokens, and changed MIME/size metadata. When the backend URL omits `token`, the
-returned upload token is appended once while preserving existing query values.
-The exact validated `Uint8List`, content type, content length, and
-`x-upsert: false` are sent using the isolated, unauthenticated Storage Dio client.
+The signed uploader uses `uploadBinaryToSignedUrl` on the already initialized
+Supabase client. It accepts only the `chat-media` bucket, rejects empty or
+traversing paths, invalid or expired authorization records, and changed MIME/size
+metadata, and passes the backend path and token without reconstructing either.
+The exact validated `Uint8List` and content type are sent with `upsert: false`.
 
 1. Cleanly uninstall and reinstall the debug application.
 2. Sign in with a non-production account.
@@ -440,16 +439,24 @@ The exact validated `Uint8List`, content type, content length, and
    succeeds, and playback works.
 9. Interrupt the Storage PUT, then retry and confirm no finalization occurred for
    the failed PUT.
-10. Interrupt finalization after Storage success, retry the same pending item, and
+10. Send voice and immediately send image, then reverse the order; confirm each
+    pending card keeps its own type, preview/duration, bytes, MIME, and ID.
+11. Fail and retry one image and one voice upload; confirm each keeps its stable
+    logical client message ID and correct pending presentation.
+12. Disable connectivity during Storage upload; confirm finalization is not called
+    and the safe Storage failure remains retryable.
+13. Interrupt finalization after Storage success, retry the same pending item, and
     confirm the stable client message ID prevents duplication.
-11. Verify unsupported MIME, oversized content, and archived groups show safe
+14. Verify unsupported MIME, oversized content, and archived groups show safe
     failures.
-12. Confirm another authorized session receives the canonical message through
+15. Confirm another authorized session receives the canonical message through
     Realtime invalidation and REST refresh.
-13. Inspect logs for tokens, signed URLs, Storage paths, bytes, filenames,
+16. Confirm successful JPEG, PNG, WebP, and voice finalizations do not return
+    `CHAT_MEDIA_OBJECT_INVALID`, and image pending cards never say “Voice message”.
+17. Inspect logs for tokens, signed URLs, Storage paths, bytes, filenames,
     authorization headers, coordinates, personal data, and provider bodies; none
     may appear.
-14. If finalization still returns 400, record only the backend error `code` and
+18. If finalization still returns 400, record only the backend error `code` and
     `requestId`. `CHAT_MEDIA_OBJECT_MISSING` or `CHAT_MEDIA_OBJECT_INVALID` points
     to the uploaded object; `CHAT_MEDIA_VERIFICATION_FAILED` points to Storage
     access/provider configuration and requires checking deployed Storage policies

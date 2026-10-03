@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
@@ -10,7 +12,9 @@ import 'package:shiftly/features/chat/data/chat_media_validation.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_screen.dart';
 
 const workspace = '11111111-1111-4111-8111-111111111111';
 const groupId = '22222222-2222-4222-8222-222222222222';
@@ -23,9 +27,8 @@ void main() {
       'uses exact initiate, signed PUT, finalize, cancel and media paths',
       () async {
         final backend = Dio();
-        final signed = Dio();
         final requests = <RequestOptions>[];
-        final signedRequests = <RequestOptions>[];
+        final storage = _StorageUploader();
         backend.interceptors.add(
           InterceptorsWrapper(
             onRequest: (options, handler) {
@@ -35,6 +38,8 @@ void main() {
               if (path.endsWith('/uploads') && options.method == 'POST') {
                 data = {
                   'uploadId': uploadId,
+                  'bucket': 'chat-media',
+                  'path': '$workspace/$groupId/file.png',
                   'signedUploadUrl': 'https://storage.example/storage/v1/object/upload/sign/chat-media/safe',
                   'uploadToken': 'secret',
                   'expiresAt': '2099-01-01T00:00:00.000Z',
@@ -54,20 +59,9 @@ void main() {
             },
           ),
         );
-        signed.interceptors.add(
-          InterceptorsWrapper(
-            onRequest: (options, handler) {
-              signedRequests.add(options);
-              handler.resolve(
-                Response<void>(requestOptions: options, statusCode: 200),
-              );
-            },
-          ),
-        );
         final repository = ApiChatRepository(
           backend,
-          supabaseUrl: Uri.parse('https://storage.example'),
-          signedUploadClient: signed,
+          storageUploader: storage,
         );
         final authorization = await repository.initiateUpload(
           workspace,
@@ -105,17 +99,12 @@ void main() {
           'mimeType': 'image/png',
           'sizeBytes': 3,
         });
-        expect(signedRequests.single.method, 'PUT');
-        expect(signedRequests.single.uri.queryParametersAll['token'], [
-          'secret',
-        ]);
-        expect(signedRequests.single.data, isA<Uint8List>());
-        expect(signedRequests.single.data, Uint8List.fromList([1, 2, 3]));
-        expect(
-          signedRequests.single.headers[Headers.contentTypeHeader],
-          'image/png',
-        );
-        expect(signedRequests.single.headers['x-upsert'], 'false');
+        expect(storage.bucket, 'chat-media');
+        expect(storage.path, '$workspace/$groupId/file.png');
+        expect(storage.uploadToken, 'secret');
+        expect(storage.bytes, Uint8List.fromList([1, 2, 3]));
+        expect(storage.mimeType, 'image/png');
+        expect(storage.upsert, isFalse);
         expect(requests[1].data, {
           'type': 'IMAGE',
           'uploadId': uploadId,
@@ -150,6 +139,8 @@ void main() {
                       data: options.path.endsWith('/uploads')
                           ? {
                               'uploadId': uploadId,
+                              'bucket': 'chat-media',
+                              'path': '$workspace/$groupId/file',
                               'signedUploadUrl': 'https://storage.example/storage/v1/object/upload/sign/chat-media/safe?token=secret',
                               'uploadToken': 'secret',
                               'expiresAt': '2099-01-01T00:00:00.000Z',
@@ -162,7 +153,7 @@ void main() {
             );
           final repository = ApiChatRepository(
             dio,
-            supabaseUrl: Uri.parse('https://storage.example'),
+            storageUploader: _StorageUploader(),
           );
           await repository.initiateUpload(
             workspace,
@@ -212,7 +203,7 @@ void main() {
         );
       final repository = ApiChatRepository(
         dio,
-        supabaseUrl: Uri.parse('https://storage.example'),
+        storageUploader: _StorageUploader(),
       );
       await expectLater(
         repository.finalizeUpload(
@@ -343,10 +334,8 @@ void main() {
             ),
             groupId,
           );
-        final id = await cubit.sendMedia(
-          type: 'IMAGE',
-          mimeType: 'image/jpeg',
-          bytes: Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
+        final id = await cubit.sendImage(
+          Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
         );
         await _waitFor(
           () => cubit.state.pending.single.status == ChatUploadState.failed,
@@ -369,10 +358,8 @@ void main() {
         final repository = _MediaRepository()..finalizeFailures = 1;
         final cubit = ChatConversationCubit(repository, const _Realtime())
           ..bind(_scope, groupId);
-        final id = await cubit.sendMedia(
-          type: 'IMAGE',
-          mimeType: 'image/jpeg',
-          bytes: Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
+        final id = await cubit.sendImage(
+          Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
         );
         await _waitFor(
           () => cubit.state.pending.single.status == ChatUploadState.failed,
@@ -393,10 +380,8 @@ void main() {
       final repository = _MediaRepository();
       final cubit = ChatConversationCubit(repository, const _Realtime())
         ..bind(_scope, groupId);
-      await cubit.sendMedia(
-        type: 'IMAGE',
-        mimeType: 'image/jpeg',
-        bytes: Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
+      await cubit.sendImage(
+        Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
       );
       await _waitFor(() => cubit.state.messages.isNotEmpty);
       repository.listFailures = 1;
@@ -405,6 +390,179 @@ void main() {
       expect(cubit.state.pending, isEmpty);
       await cubit.close();
     });
+
+    test('voice followed by image keeps every job field isolated', () async {
+      final gate = Completer<void>();
+      final repository = _MediaRepository()..uploadGate = gate;
+      final cubit = ChatConversationCubit(repository, const _Realtime())
+        ..bind(_scope, groupId);
+      final voice = _voiceBytes();
+      final image = Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]);
+      final voiceId = await cubit.sendVoice(
+        bytes: voice,
+        mimeType: 'audio/mp4',
+        durationMs: 1234,
+      );
+      final imageId = await cubit.sendImage(image);
+      voice[0] = 99;
+      image[0] = 99;
+      await _waitFor(() => repository.uploads == 2);
+
+      expect(voiceId, isNot(imageId));
+      expect(repository.initiatedTypes, ['VOICE', 'IMAGE']);
+      expect(repository.initiatedMimes, ['audio/mp4', 'image/jpeg']);
+      expect(repository.initiatedDurations, [1234, null]);
+      expect(repository.uploadedBytes[0], _voiceBytes());
+      expect(repository.uploadedBytes[1], [0xff, 0xd8, 0xff, 0xd9]);
+      expect(
+        cubit.state.pending.map((pending) => pending.mediaType),
+        [PendingChatMediaType.voice, PendingChatMediaType.image],
+      );
+      expect(cubit.state.pending.first.durationMs, 1234);
+      expect(cubit.state.pending.last.durationMs, isNull);
+      expect(repository.finalizedTypes, isEmpty);
+
+      gate.complete();
+      await _waitFor(() => cubit.state.pending.isEmpty);
+      expect(repository.finalizedTypes, ['VOICE', 'IMAGE']);
+      await cubit.close();
+    });
+
+    test('image followed by voice keeps type, bytes, MIME and duration isolated', () async {
+      final gate = Completer<void>();
+      final repository = _MediaRepository()..uploadGate = gate;
+      final cubit = ChatConversationCubit(repository, const _Realtime())
+        ..bind(_scope, groupId);
+      await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
+      await cubit.sendVoice(
+        bytes: _voiceBytes(),
+        mimeType: 'audio/mp4',
+        durationMs: 987,
+      );
+      await _waitFor(() => repository.uploads == 2);
+      expect(repository.initiatedTypes, ['IMAGE', 'VOICE']);
+      expect(repository.initiatedDurations, [null, 987]);
+      expect(repository.uploadedMimes, ['image/jpeg', 'audio/mp4']);
+      gate.complete();
+      await _waitFor(() => cubit.state.pending.isEmpty);
+      await cubit.close();
+    });
+
+    test('object-invalid failure retains image type and request ID', () async {
+      final repository = _MediaRepository()
+        ..finalizeError = const ApiException(
+          statusCode: 400,
+          code: 'CHAT_MEDIA_OBJECT_INVALID',
+          requestId: 'req-media-1',
+          message: 'The uploaded media did not pass verification.',
+        );
+      final cubit = ChatConversationCubit(repository, const _Realtime())
+        ..bind(_scope, groupId);
+      await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
+      await _waitFor(
+        () => cubit.state.pending.single.status == ChatUploadState.failed,
+      );
+      final pending = cubit.state.pending.single;
+      expect(pending.mediaType, PendingChatMediaType.image);
+      expect(pending.failure?.requestId, 'req-media-1');
+      expect(repository.cancelled, 1);
+      await cubit.close();
+    });
+
+    test('cancellation failure does not replace the upload failure', () async {
+      final repository = _MediaRepository()
+        ..uploadFailures = 1
+        ..cancelFails = true;
+      final cubit = ChatConversationCubit(repository, const _Realtime())
+        ..bind(_scope, groupId);
+      await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
+      await _waitFor(
+        () => cubit.state.pending.single.status == ChatUploadState.failed,
+      );
+      expect(cubit.state.pending.single.failure?.message, 'Unable to send media.');
+      expect(repository.finalizedTypes, isEmpty);
+      await cubit.close();
+    });
+
+    test('mismatched canonical response does not replace another job', () async {
+      final repository = _MediaRepository()
+        ..canonicalClientId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+      final cubit = ChatConversationCubit(repository, const _Realtime())
+        ..bind(_scope, groupId);
+      await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
+      await _waitFor(
+        () => cubit.state.pending.single.status == ChatUploadState.failed,
+      );
+      expect(cubit.state.messages, isEmpty);
+      expect(cubit.state.pending.single.mediaType, PendingChatMediaType.image);
+      await cubit.close();
+    });
+
+    testWidgets('image pending UI never displays Voice message', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PendingMediaBubble(
+              pending: const PendingChatMessage(
+                clientMessageId: 'image-id',
+                mediaType: PendingChatMediaType.image,
+                status: ChatUploadState.finalizing,
+              ),
+              onRetry: (_) async {},
+              onCancel: (_) async {},
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Image'), findsOneWidget);
+      expect(find.text('Voice message'), findsNothing);
+    });
+
+    testWidgets('voice pending UI never displays as an image', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PendingMediaBubble(
+              pending: const PendingChatMessage(
+                clientMessageId: 'voice-id',
+                mediaType: PendingChatMediaType.voice,
+                status: ChatUploadState.uploading,
+                durationMs: 1500,
+              ),
+              onRetry: (_) async {},
+              onCancel: (_) async {},
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Voice message'), findsOneWidget);
+      expect(find.text('Image'), findsNothing);
+      expect(find.byType(Image), findsNothing);
+    });
+  });
+
+  test('strictly validates upload authorization fields', () {
+    Map<String, Object?> valid() => {
+      'uploadId': uploadId,
+      'bucket': 'chat-media',
+      'path': '$workspace/$groupId/file.jpg',
+      'signedUploadUrl': 'https://storage.example/signed',
+      'uploadToken': 'secret',
+      'expiresAt': '2099-01-01T00:00:00.000Z',
+    };
+    expect(ChatUploadAuthorization.fromJson(valid()).bucket, 'chat-media');
+    for (final invalid in [
+      {...valid(), 'bucket': 'other'},
+      {...valid(), 'path': '../file.jpg'},
+      {...valid(), 'path': '%2e%2e/file.jpg'},
+      {...valid(), 'uploadToken': ''},
+      {...valid(), 'expiresAt': '2020-01-01T00:00:00.000Z'},
+    ]) {
+      expect(
+        () => ChatUploadAuthorization.fromJson(invalid),
+        throwsFormatException,
+      );
+    }
   });
 }
 
@@ -422,6 +580,21 @@ Future<void> _waitFor(bool Function() condition) async {
   }
   expect(condition(), isTrue);
 }
+
+Uint8List _voiceBytes() => Uint8List.fromList([
+  0,
+  0,
+  0,
+  20,
+  0x66,
+  0x74,
+  0x79,
+  0x70,
+  0x4d,
+  0x34,
+  0x41,
+  0x20,
+]);
 
 Uint8List _pngBytes() {
   final bytes = Uint8List(45);
@@ -489,6 +662,17 @@ class _MediaRepository extends ChatRepository {
   int authorizations = 0;
   int uploads = 0;
   final clientIds = <String>[];
+  final initiatedTypes = <String>[];
+  final initiatedMimes = <String>[];
+  final initiatedSizes = <int>[];
+  final initiatedDurations = <int?>[];
+  final uploadedBytes = <Uint8List>[];
+  final uploadedMimes = <String>[];
+  final finalizedTypes = <String>[];
+  Completer<void>? uploadGate;
+  ApiException? finalizeError;
+  bool cancelFails = false;
+  String? canonicalClientId;
 
   @override
   Future<ChatMessagePage> listMessages(
@@ -513,9 +697,14 @@ class _MediaRepository extends ChatRepository {
     int? durationMs,
   }) async {
     authorizations++;
+    initiatedTypes.add(type);
+    initiatedMimes.add(mimeType);
+    initiatedSizes.add(sizeBytes);
+    initiatedDurations.add(durationMs);
     return ChatUploadAuthorization(
       uploadId: uploadId,
-      signedUploadUrl: Uri.parse('https://storage.example/signed'),
+      bucket: 'chat-media',
+      path: '$workspaceId/$groupId/file',
       uploadToken: 'not-logged',
       expiresAt: DateTime.utc(2099),
     );
@@ -530,6 +719,9 @@ class _MediaRepository extends ChatRepository {
     ChatUploadCancellation? cancellation,
   }) async {
     uploads++;
+    uploadedBytes.add(Uint8List.fromList(bytes));
+    uploadedMimes.add(mimeType);
+    if (uploadGate != null) await uploadGate!.future;
     onProgress?.call(bytes.length, bytes.length);
     if (uploadFailures-- > 0) {
       throw DioException(requestOptions: RequestOptions());
@@ -543,6 +735,7 @@ class _MediaRepository extends ChatRepository {
     String uploadId,
   ) async {
     cancelled++;
+    if (cancelFails) throw const ApiException(message: 'Safe cancel failure');
   }
 
   @override
@@ -554,10 +747,13 @@ class _MediaRepository extends ChatRepository {
     required String clientMessageId,
   }) async {
     clientIds.add(clientMessageId);
+    finalizedTypes.add(type);
+    if (finalizeError != null) throw finalizeError!;
     if (finalizeFailures-- > 0) {
       throw const ApiException(message: 'Safe ambiguous failure');
     }
-    final json = _message(type)..['clientMessageId'] = clientMessageId;
+    final json = _message(type)
+      ..['clientMessageId'] = canonicalClientId ?? clientMessageId;
     return ChatMessage.fromJson(json);
   }
 
@@ -628,4 +824,30 @@ class _Subscription implements ChatRealtimeSubscription {
   const _Subscription();
   @override
   Future<void> cancel() async {}
+}
+
+class _StorageUploader implements ChatStorageUploader {
+  String? bucket;
+  String? path;
+  String? uploadToken;
+  Uint8List? bytes;
+  String? mimeType;
+  bool? upsert;
+
+  @override
+  Future<void> upload({
+    required String bucket,
+    required String path,
+    required String uploadToken,
+    required Uint8List bytes,
+    required String mimeType,
+    required bool upsert,
+  }) async {
+    this.bucket = bucket;
+    this.path = path;
+    this.uploadToken = uploadToken;
+    this.bytes = bytes;
+    this.mimeType = mimeType;
+    this.upsert = upsert;
+  }
 }

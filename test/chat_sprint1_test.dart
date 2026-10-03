@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:shiftly/features/chat/data/api_chat_repository.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
@@ -34,6 +36,18 @@ const _scope = FeatureSessionScope(
   timezone: 'Etc/UTC',
   role: WorkspaceRole.manager,
 );
+
+class _UnusedStorageUploader implements ChatStorageUploader {
+  @override
+  Future<void> upload({
+    required String bucket,
+    required String path,
+    required String uploadToken,
+    required Uint8List bytes,
+    required String mimeType,
+    required bool upsert,
+  }) => throw UnimplementedError();
+}
 
 void main() {
   group('defensive models and repository contract', () {
@@ -70,7 +84,7 @@ void main() {
         );
       final page = await ApiChatRepository(
         dio,
-        supabaseUrl: Uri.parse('https://storage.example'),
+        storageUploader: _UnusedStorageUploader(),
       ).listMessages(_workspace, _group, cursor: 'previous-cursor', limit: 15);
       expect(
         request.path,
@@ -139,7 +153,7 @@ void main() {
         );
       final repository = ApiChatRepository(
         dio,
-        supabaseUrl: Uri.parse('https://storage.example'),
+        storageUploader: _UnusedStorageUploader(),
       );
       await repository.addMembers(_workspace, _group, [
         _membership,
@@ -170,7 +184,7 @@ void main() {
         expect(
           ApiChatRepository(
             dio,
-            supabaseUrl: Uri.parse('https://storage.example'),
+            storageUploader: _UnusedStorageUploader(),
           ).addMembers(_workspace, _group, [_membership]),
           throwsA(isA<ApiException>()),
         );
@@ -201,7 +215,7 @@ void main() {
       try {
         await ApiChatRepository(
           dio,
-          supabaseUrl: Uri.parse('https://storage.example'),
+          storageUploader: _UnusedStorageUploader(),
         ).archiveGroup(_workspace, _group);
         fail('Expected ApiException');
       } on ApiException catch (error) {
@@ -233,7 +247,7 @@ void main() {
         final group =
             await ApiChatRepository(
               dio,
-              supabaseUrl: Uri.parse('https://storage.example'),
+              storageUploader: _UnusedStorageUploader(),
             ).createGroup(
               _workspace,
               name: '  Operations  ',

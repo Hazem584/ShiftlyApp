@@ -8,6 +8,7 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
+import 'package:shiftly/features/chat/data/chat_media_validation.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
 
@@ -87,10 +88,20 @@ enum ChatUploadState {
   cancelled,
 }
 
+enum PendingChatMediaType {
+  image,
+  voice;
+
+  String get apiValue => switch (this) {
+    PendingChatMediaType.image => 'IMAGE',
+    PendingChatMediaType.voice => 'VOICE',
+  };
+}
+
 class PendingChatMessage extends Equatable {
   const PendingChatMessage({
     required this.clientMessageId,
-    required this.type,
+    required this.mediaType,
     required this.status,
     this.progress = 0,
     this.previewBytes,
@@ -99,7 +110,7 @@ class PendingChatMessage extends Equatable {
   });
 
   final String clientMessageId;
-  final String type;
+  final PendingChatMediaType mediaType;
   final ChatUploadState status;
   final double progress;
   final Uint8List? previewBytes;
@@ -114,7 +125,7 @@ class PendingChatMessage extends Equatable {
     bool clearFailure = false,
   }) => PendingChatMessage(
     clientMessageId: clientMessageId,
-    type: type,
+    mediaType: mediaType,
     status: status ?? this.status,
     progress: progress ?? this.progress,
     previewBytes: clearPreview ? null : previewBytes,
@@ -125,7 +136,7 @@ class PendingChatMessage extends Equatable {
   @override
   List<Object?> get props => [
     clientMessageId,
-    type,
+    mediaType,
     status,
     progress,
     previewBytes,
@@ -136,16 +147,23 @@ class PendingChatMessage extends Equatable {
 
 class _MediaJob {
   _MediaJob({
-    required this.type,
+    required this.clientMessageId,
+    required this.mediaType,
     required this.mimeType,
     required this.bytes,
+    required this.sizeBytes,
+    required this.previewBytes,
     this.durationMs,
   });
-  final String type;
+  final String clientMessageId;
+  final PendingChatMediaType mediaType;
   final String mimeType;
-  Uint8List? bytes;
+  final Uint8List bytes;
+  final int sizeBytes;
+  final Uint8List? previewBytes;
   final int? durationMs;
-  String? uploadId;
+  ChatUploadAuthorization? authorization;
+  bool uploaded = false;
   ChatUploadCancellation? cancellation;
   bool running = false;
 }
@@ -384,32 +402,67 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     }
   }
 
-  Future<String?> sendMedia({
-    required String type,
+  Future<String?> sendImage(Uint8List bytes) async {
+    final ownedBytes = Uint8List.fromList(bytes);
+    final mimeType = ChatMediaValidation.imageMime(ownedBytes);
+    if (mimeType == null) return null;
+    return _createMediaJob(
+      mediaType: PendingChatMediaType.image,
+      mimeType: mimeType,
+      bytes: ownedBytes,
+    );
+  }
+
+  Future<String?> sendVoice({
+    required Uint8List bytes,
+    required String mimeType,
+    required int durationMs,
+  }) async {
+    final ownedBytes = Uint8List.fromList(bytes);
+    if (!ChatMediaValidation.validVoice(
+      bytes: ownedBytes,
+      mimeType: mimeType,
+      durationMs: durationMs,
+    )) {
+      return null;
+    }
+    return _createMediaJob(
+      mediaType: PendingChatMediaType.voice,
+      mimeType: mimeType,
+      bytes: ownedBytes,
+      durationMs: durationMs,
+    );
+  }
+
+  String? _createMediaJob({
+    required PendingChatMediaType mediaType,
     required String mimeType,
     required Uint8List bytes,
     int? durationMs,
-  }) async {
-    if (_scope == null ||
-        _groupId == null ||
-        !const ['IMAGE', 'VOICE'].contains(type) ||
-        bytes.isEmpty) {
-      return null;
-    }
+  }) {
+    if (_scope == null || _groupId == null) return null;
     final clientId = _uuidV4();
-    _mediaJobs[clientId] = _MediaJob(
-      type: type,
+    final job = _MediaJob(
+      clientMessageId: clientId,
+      mediaType: mediaType,
       mimeType: mimeType,
       bytes: bytes,
+      sizeBytes: bytes.length,
+      previewBytes: mediaType == PendingChatMediaType.image
+          ? Uint8List.fromList(bytes)
+          : null,
       durationMs: durationMs,
     );
+    _mediaJobs[clientId] = job;
     _replacePending(
       PendingChatMessage(
         clientMessageId: clientId,
-        type: type,
+        mediaType: mediaType,
         status: ChatUploadState.preparing,
-        previewBytes: type == 'IMAGE' ? bytes : null,
-        durationMs: durationMs,
+        previewBytes: job.previewBytes,
+        durationMs: mediaType == PendingChatMediaType.voice
+            ? durationMs
+            : null,
       ),
     );
     unawaited(_runMedia(clientId));
@@ -426,9 +479,12 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     job.running = true;
     final generation = _generation;
     try {
-      if (job.uploadId == null) {
-        final bytes = job.bytes;
-        if (bytes == null) throw const FormatException('Media is unavailable');
+      final existingAuthorization = job.authorization;
+      if (existingAuthorization != null &&
+          !existingAuthorization.expiresAt.isAfter(DateTime.now().toUtc())) {
+        await _cancelTracked(scope, groupId, job);
+      }
+      if (job.authorization == null) {
         _updatePending(
           clientId,
           status: ChatUploadState.preparing,
@@ -437,9 +493,9 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
         final authorization = await _repository.initiateUpload(
           scope.workspaceId,
           groupId,
-          type: job.type,
+          type: job.mediaType.apiValue,
           mimeType: job.mimeType,
-          sizeBytes: bytes.length,
+          sizeBytes: job.sizeBytes,
           durationMs: job.durationMs,
         );
         if (!_scopeCurrent(scope, groupId, generation)) {
@@ -452,7 +508,11 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           );
           return;
         }
-        job.uploadId = authorization.uploadId;
+        job.authorization = authorization;
+        job.uploaded = false;
+      }
+      if (!job.uploaded) {
+        final authorization = job.authorization!;
         _updatePending(
           clientId,
           status: ChatUploadState.uploading,
@@ -462,7 +522,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           job.cancellation = ChatUploadCancellation();
           await _repository.uploadSigned(
             authorization,
-            bytes,
+            job.bytes,
             job.mimeType,
             onProgress: (sent, total) {
               if (_scopeCurrent(scope, groupId, generation) && total > 0) {
@@ -471,6 +531,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
             },
             cancellation: job.cancellation,
           );
+          job.uploaded = true;
         } catch (_) {
           await _cancelTracked(scope, groupId, job);
           rethrow;
@@ -483,19 +544,21 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
         clientId,
         status: ChatUploadState.finalizing,
         progress: 1,
-        clearPreview: true,
       );
       final canonical = await _repository.finalizeUpload(
         scope.workspaceId,
         groupId,
-        type: job.type,
-        uploadId: job.uploadId!,
+        type: job.mediaType.apiValue,
+        uploadId: job.authorization!.uploadId,
         clientMessageId: clientId,
       );
       if (!_scopeCurrent(scope, groupId, generation)) return;
       _validate([canonical], scope, groupId);
+      if (canonical.clientMessageId != job.clientMessageId ||
+          canonical.type != job.mediaType.apiValue) {
+        throw const FormatException('Mismatched canonical media message');
+      }
       _mediaJobs.remove(clientId);
-      job.bytes = null;
       final pending = state.pending
           .where((p) => p.clientMessageId != clientId)
           .toList();
@@ -537,7 +600,6 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     final groupId = _groupId;
     if (job != null && scope != null && groupId != null) {
       await _cancelTracked(scope, groupId, job);
-      job.bytes = null;
     }
     if (!isClosed) {
       emit(
@@ -631,8 +693,9 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
   ) async {
     job.cancellation?.cancel();
     job.cancellation = null;
-    final uploadId = job.uploadId;
-    job.uploadId = null;
+    final uploadId = job.authorization?.uploadId;
+    job.authorization = null;
+    job.uploaded = false;
     if (uploadId == null) return;
     try {
       await _repository.cancelUpload(scope.workspaceId, groupId, uploadId);
@@ -647,7 +710,6 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
     final jobs = _mediaJobs.values.toList();
     _mediaJobs.clear();
     for (final job in jobs) {
-      job.bytes = null;
       if (scope != null && groupId != null) {
         unawaited(_cancelTracked(scope, groupId, job));
       }

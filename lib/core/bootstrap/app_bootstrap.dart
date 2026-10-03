@@ -12,6 +12,7 @@ import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/chat/data/api_chat_repository.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
 import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/features/dashboard/data/api_dashboard_repository.dart';
@@ -93,7 +94,7 @@ abstract final class AppBootstrap {
     final dashboardRepository = ApiDashboardRepository(apiClient.dio);
     final chatRepository = ApiChatRepository(
       apiClient.dio,
-      supabaseUrl: config.supabaseUrl,
+      storageUploader: SupabaseChatStorageUploader(Supabase.instance.client),
     );
     return AppDependencies(
       sessionCoordinator: coordinator,

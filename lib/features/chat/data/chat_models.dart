@@ -41,6 +41,29 @@ String _text(Map<String, Object?> json, String key, {bool empty = false}) {
 String? _optionalText(Object? value) =>
     value is String && value.trim().isNotEmpty ? value : null;
 
+bool _validStoragePath(Object? value) {
+  if (value is! String ||
+      value.trim() != value ||
+      value.isEmpty ||
+      value.startsWith('/') ||
+      value.endsWith('/') ||
+      value.contains(r'\')) {
+    return false;
+  }
+  try {
+    return value.split('/').every((segment) {
+      final decoded = Uri.decodeComponent(segment);
+      return decoded.isNotEmpty &&
+          decoded != '.' &&
+          decoded != '..' &&
+          !decoded.contains('/') &&
+          !decoded.contains(r'\');
+    });
+  } on FormatException {
+    return false;
+  }
+}
+
 int _count(Object? value, String label) {
   if (value is! int || value < 0) throw FormatException('Invalid $label');
   return value;
@@ -249,7 +272,8 @@ class ChatLocation extends Equatable {
 class ChatUploadAuthorization extends Equatable {
   const ChatUploadAuthorization({
     required this.uploadId,
-    required this.signedUploadUrl,
+    required this.bucket,
+    required this.path,
     required this.uploadToken,
     required this.expiresAt,
     this.expectedMimeType,
@@ -257,7 +281,8 @@ class ChatUploadAuthorization extends Equatable {
   });
 
   final String uploadId;
-  final Uri signedUploadUrl;
+  final String bucket;
+  final String path;
   final String uploadToken;
   final DateTime expiresAt;
   final String? expectedMimeType;
@@ -265,6 +290,8 @@ class ChatUploadAuthorization extends Equatable {
 
   factory ChatUploadAuthorization.fromJson(Map<String, Object?> json) {
     final url = json['signedUploadUrl'];
+    final bucket = json['bucket'];
+    final path = json['path'];
     final token = json['uploadToken'];
     final expires = json['expiresAt'];
     final uri = url is String ? Uri.tryParse(url) : null;
@@ -272,14 +299,22 @@ class ChatUploadAuthorization extends Equatable {
     if (uri == null ||
         !uri.isAbsolute ||
         uri.scheme != 'https' ||
+        uri.host.isEmpty ||
+        uri.userInfo.isNotEmpty ||
+        uri.fragment.isNotEmpty ||
+        bucket != 'chat-media' ||
+        !_validStoragePath(path) ||
         token is! String ||
-        token.isEmpty ||
-        date == null) {
+        token.trim().isEmpty ||
+        date == null ||
+        !date.isUtc ||
+        !date.isAfter(DateTime.now().toUtc())) {
       throw const FormatException('Invalid upload authorization');
     }
     return ChatUploadAuthorization(
       uploadId: chatUuid(json, 'uploadId'),
-      signedUploadUrl: uri,
+      bucket: bucket as String,
+      path: path as String,
       uploadToken: token,
       expiresAt: date.toUtc(),
     );
@@ -290,7 +325,8 @@ class ChatUploadAuthorization extends Equatable {
     required int sizeBytes,
   }) => ChatUploadAuthorization(
     uploadId: uploadId,
-    signedUploadUrl: signedUploadUrl,
+    bucket: bucket,
+    path: path,
     uploadToken: uploadToken,
     expiresAt: expiresAt,
     expectedMimeType: mimeType,
