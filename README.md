@@ -377,6 +377,14 @@ tokens are never logged or placed in exception `toString()` output.
 
 ## Manual chat-media regression plan
 
+The conversation surface uses `chatview` only as a presentation and scrolling
+layer. Shiftly's existing Cubits remain authoritative for canonical messages,
+pending uploads, pagination, retries, cancellation, read state, and Realtime
+refreshes. The adapter preserves backend message and membership IDs; custom
+renderers keep signed-media URL retrieval and the single shared audio player in
+the existing application-owned lifecycle. Destructive and form workflows use
+the shared `awesome_dialog` wrapper without changing repository mutations.
+
 1. Use separate manager and employee sessions in the same group; verify both
    render all four message types and only authorized groups are visible.
 2. Send JPEG, PNG, and WebP images; verify preview/progress becomes exactly one
@@ -461,3 +469,21 @@ The exact validated `Uint8List` and content type are sent with `upsert: false`.
     to the uploaded object; `CHAT_MEDIA_VERIFICATION_FAILED` points to Storage
     access/provider configuration and requires checking deployed Storage policies
     without weakening backend verification.
+
+### Modern chat UI checks
+
+1. Verify the group list shows initials, name, last-message preview, member count,
+   timestamp, unread badge, and archived state at narrow and wide widths.
+2. Verify the chat header shows identity, member count, read-only state, and only
+   actions allowed by the current role.
+3. Send and receive text, image, voice, and location messages; verify sender-side
+   alignment, grouping order, day separators, safe unknown-type fallback, and no
+   duplicate canonical IDs.
+4. Load older pages repeatedly and verify stable ordering and scroll position;
+   then receive a Realtime refresh and verify the visible state remains coherent.
+5. Verify private images show loading and recoverable error states, open a zoomable
+   full-screen preview, and never write signed URLs to logs or persistent state.
+6. Play, pause, resume, replay, and switch between voice messages; verify only one
+   source plays, progress follows the active source, and backgrounding stops media.
+7. Exercise create, edit, archive, add-member, remove-member, cancel-upload,
+   discard-recording, and location-confirm dialogs, including failure and retry.

@@ -8,6 +8,7 @@ import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/chat/data/chat_member_loader.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
+import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_screen.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 
@@ -131,9 +132,9 @@ class ChatGroupsScreen extends StatelessWidget {
       return;
     }
     if (!context.mounted || cubit.scope != scope) return;
-    await showDialog<void>(
-      context: context,
-      builder: (_) => _CreateChatGroupDialog(
+    await ShiftlyChatDialog.showBody<void>(
+      context,
+      body: _CreateChatGroupDialog(
         cubit: cubit,
         scope: scope,
         employees: employees,
@@ -332,10 +333,20 @@ class _GroupTile extends StatelessWidget {
             ),
         ],
       ),
-      subtitle: Text(
-        group.lastMessage?.text ?? '${group.memberCount} members',
-        maxLines: narrow ? 1 : 2,
-        overflow: TextOverflow.ellipsis,
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (group.lastMessage != null)
+            Text(
+              group.lastMessage!.text ?? group.lastMessage!.type.toLowerCase(),
+              maxLines: narrow ? 1 : 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          Text(
+            '${group.memberCount} members',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ],
       ),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,

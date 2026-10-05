@@ -18,6 +18,8 @@ import 'package:shiftly/features/chat/data/chat_repository.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
+import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
+import 'package:shiftly/features/chat/presentation/widgets/messages/shiftly_chat_message_list.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -52,22 +54,20 @@ class ChatScreen extends StatelessWidget {
           )..bind(scope, groupId),
         ),
       ],
-      child: const _ChatView(),
+      child: _ChatView(groupId: groupId),
     );
   }
 }
 
 class _ChatView extends StatefulWidget {
-  const _ChatView();
+  const _ChatView({required this.groupId});
+  final String groupId;
   @override
   State<_ChatView> createState() => _ChatViewState();
 }
 
-class _ChatViewState extends State<_ChatView> {
+class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
   final _text = TextEditingController();
-  final _scroll = ScrollController();
-  bool _loadingOlder = false;
-  bool _initialPositioned = false;
   final _picker = ImagePicker();
   final _recorder = AudioRecorder();
   final _player = AudioPlayer();
@@ -81,7 +81,7 @@ class _ChatViewState extends State<_ChatView> {
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
+    WidgetsBinding.instance.addObserver(this);
     _recordState = _recorder.onStateChanged().listen((value) {
       if ((value == RecordState.stop || value == RecordState.pause) &&
           _recording) {
@@ -90,34 +90,24 @@ class _ChatViewState extends State<_ChatView> {
     });
   }
 
-  void _onScroll() async {
-    if (!_scroll.hasClients || _scroll.offset > 120 || _loadingOlder) return;
-    final cubit = context.read<ChatConversationCubit>();
-    if (!cubit.state.hasMore) return;
-    _loadingOlder = true;
-    final oldExtent = _scroll.position.maxScrollExtent;
-    await cubit.loadOlder();
-    if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scroll.hasClients) {
-          final added = _scroll.position.maxScrollExtent - oldExtent;
-          _scroll.jumpTo(
-            (_scroll.offset + added).clamp(0, _scroll.position.maxScrollExtent),
-          );
-        }
-      });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(_player.pause());
+      if (_recording) unawaited(_handleRecordingInterruption());
     }
-    _loadingOlder = false;
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _recordTimer?.cancel();
     unawaited(_recordState?.cancel());
     unawaited(_recorder.cancel());
     _recorder.dispose();
     _player.dispose();
-    _scroll.dispose();
     _text.dispose();
     super.dispose();
   }
@@ -131,7 +121,41 @@ class _ChatViewState extends State<_ChatView> {
       final manager = context.read<ChatGroupsCubit>().scope?.isManager == true;
       return Scaffold(
         appBar: AppBar(
-          title: Text(group?.name ?? 'Chat'),
+          titleSpacing: 0,
+          title: Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primaryContainer,
+                child: Text(
+                  _initials(group?.name ?? 'Chat'),
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      group?.name ?? 'Chat',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (group != null)
+                      Text(
+                        group.isArchived
+                            ? '${group.memberCount} members · Read only'
+                            : '${group.memberCount} members',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           actions: [
             IconButton(
               tooltip: 'Group members',
@@ -184,94 +208,81 @@ class _ChatViewState extends State<_ChatView> {
     },
   );
 
-  Widget
-  _messages() => BlocConsumer<ChatConversationCubit, ChatConversationState>(
-    listenWhen: (before, after) =>
-        after.messages.length > before.messages.length && !after.loadingOlder,
-    listener: (_, state) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_scroll.hasClients) return;
-        if (!_initialPositioned) {
-          _initialPositioned = true;
-          _scroll.jumpTo(_scroll.position.maxScrollExtent);
-        } else if (_scroll.position.maxScrollExtent - _scroll.offset < 500) {
-          _scroll.animateTo(
-            _scroll.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    },
+  String _initials(String value) {
+    final words = value.trim().split(RegExp(r'\s+'));
+    return words.take(2).map((word) => word[0].toUpperCase()).join();
+  }
+
+  Widget _messages() =>
+      BlocBuilder<ChatConversationCubit, ChatConversationState>(
     builder: (context, state) {
-      if (state.loading) {
-        return const Center(child: CircularProgressIndicator());
-      }
-      if (state.messages.isEmpty && state.failure != null) {
-        return Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(state.failure!.message),
-              TextButton(
-                onPressed: context.read<ChatConversationCubit>().load,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        );
-      }
-      if (state.messages.isEmpty) {
-        return const Center(
-          child: Text('No messages yet. Start the conversation.'),
-        );
-      }
-      final membershipId = context.read<ChatGroupsCubit>().scope!.membershipId;
+      final scope = context.read<ChatGroupsCubit>().scope!;
       final pending = state.pending;
-      return RefreshIndicator(
-        onRefresh: () =>
-            context.read<ChatConversationCubit>().load(refresh: true),
-        child: ListView.builder(
-          controller: _scroll,
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-          itemCount:
-              state.messages.length +
-              pending.length +
-              (state.loadingOlder ? 1 : 0),
-          itemBuilder: (_, index) {
-            if (state.loadingOlder && index == 0) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8),
-                  child: CircularProgressIndicator(),
+      return Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () => context
+                  .read<ChatConversationCubit>()
+                  .load(refresh: true),
+              child: ShiftlyChatMessageList(
+                key: ValueKey(
+                  '${scope.userId}:${scope.workspaceId}:${widget.groupId}',
                 ),
-              );
-            }
-            final offset = state.loadingOlder ? index - 1 : index;
-            if (offset >= state.messages.length) {
-              return PendingMediaBubble(
-                pending: pending[offset - state.messages.length],
-                onRetry: (id) =>
-                    context.read<ChatConversationCubit>().retryMedia(id),
-                onCancel: (id) =>
-                    context.read<ChatConversationCubit>().cancelPending(id),
-              );
-            }
-            final message = state.messages[offset];
-            return _MessageBubble(
-              message: message,
-              mine: message.sender.membershipId == membershipId,
-              repository: context.read<ChatRepository>(),
-              workspaceId: context.read<ChatGroupsCubit>().scope!.workspaceId,
-              timezone: context.read<ChatGroupsCubit>().scope!.timezone,
-              player: _player,
-            );
-          },
-        ),
+                messages: state.messages,
+                currentMembershipId: scope.membershipId,
+                loading: state.loading,
+                failureMessage: state.messages.isEmpty
+                    ? state.failure?.message
+                    : null,
+                hasMore: state.hasMore,
+                loadingOlder: state.loadingOlder,
+                onLoadOlder: context.read<ChatConversationCubit>().loadOlder,
+                onRetry: context.read<ChatConversationCubit>().load,
+                messageBuilder: (message, mine) => _MessageBubble(
+                  message: message,
+                  mine: mine,
+                  repository: context.read<ChatRepository>(),
+                  workspaceId: scope.workspaceId,
+                  timezone: scope.timezone,
+                  player: _player,
+                ),
+              ),
+            ),
+          ),
+          if (pending.isNotEmpty)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 230),
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                itemCount: pending.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 4),
+                itemBuilder: (_, index) => PendingMediaBubble(
+                  pending: pending[index],
+                  onRetry: (id) =>
+                      context.read<ChatConversationCubit>().retryMedia(id),
+                  onCancel: _confirmCancelPending,
+                ),
+              ),
+            ),
+        ],
       );
     },
   );
+
+  Future<void> _confirmCancelPending(String clientId) async {
+    final confirmed = await ShiftlyChatDialog.confirm(
+      context,
+      title: 'Cancel upload?',
+      message: 'The pending media will be removed from this conversation.',
+      confirmText: 'Cancel upload',
+      destructive: true,
+    );
+    if (confirmed && mounted) {
+      await context.read<ChatConversationCubit>().cancelPending(clientId);
+    }
+  }
 
   Widget _composer({required bool disabled}) => SafeArea(
     top: false,
@@ -295,8 +306,14 @@ class _ChatViewState extends State<_ChatView> {
                     ),
                   ],
                 ),
-              Row(
-                children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Row(
+                  children: [
                   PopupMenuButton<int>(
                     tooltip: 'Attach',
                     enabled:
@@ -307,9 +324,9 @@ class _ChatViewState extends State<_ChatView> {
                       if (value == 2) unawaited(_shareLocation());
                     },
                     itemBuilder: (_) => const [
-                      PopupMenuItem(value: 0, child: Text('Photo')),
-                      PopupMenuItem(value: 1, child: Text('Voice message')),
-                      PopupMenuItem(value: 2, child: Text('Share location')),
+                      PopupMenuItem(value: 0, child: Text('Image')),
+                      PopupMenuItem(value: 1, child: Text('Voice')),
+                      PopupMenuItem(value: 2, child: Text('Location')),
                     ],
                     icon: const Icon(Icons.add_circle_outline),
                   ),
@@ -326,15 +343,28 @@ class _ChatViewState extends State<_ChatView> {
                             ? 'This group is read only'
                             : 'Message',
                         counterText: '',
-                        border: const OutlineInputBorder(),
+                        border: InputBorder.none,
                       ),
+                      onChanged: (_) => setState(() {}),
                       onSubmitted: (_) => _send(),
                     ),
                   ),
                   IconButton(
+                    key: const Key('record-voice-message'),
+                    tooltip: 'Record voice message',
+                    onPressed:
+                        effectiveDisabled || state.sending || _mediaBusy
+                        ? null
+                        : _startRecording,
+                    icon: const Icon(Icons.mic_none_rounded),
+                  ),
+                  IconButton(
                     key: const Key('send-chat-message'),
                     tooltip: 'Send',
-                    onPressed: effectiveDisabled || state.sending
+                    onPressed:
+                        effectiveDisabled ||
+                            state.sending ||
+                            _text.text.trim().isEmpty
                         ? null
                         : _send,
                     icon: state.sending
@@ -344,7 +374,8 @@ class _ChatViewState extends State<_ChatView> {
                           )
                         : const Icon(Icons.send_rounded),
                   ),
-                ],
+                  ],
+                ),
               ),
               if (_recording)
                 Row(
@@ -449,6 +480,16 @@ class _ChatViewState extends State<_ChatView> {
 
   Future<void> _finishRecording({required bool send}) async {
     if (!_recording) return;
+    if (!send) {
+      final discard = await ShiftlyChatDialog.confirm(
+        context,
+        title: 'Discard recording?',
+        message: 'This voice recording will be permanently discarded.',
+        confirmText: 'Discard',
+        destructive: true,
+      );
+      if (!discard || !mounted || !_recording) return;
+    }
     final started = _recordStarted;
     setState(() => _recording = false);
     _recordTimer?.cancel();
@@ -559,26 +600,13 @@ class _ChatViewState extends State<_ChatView> {
         longitude: _sixDecimals(position.longitude),
       );
       if (!location.isValid || !mounted) return;
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Share this location?'),
-          content: const Text(
-            'Your current coordinates will be visible to this group.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Share'),
-            ),
-          ],
-        ),
+      final confirmed = await ShiftlyChatDialog.confirm(
+        context,
+        title: 'Share this location?',
+        message: 'Your current coordinates will be visible to this group.',
+        confirmText: 'Share',
       );
-      if (confirmed == true && mounted) {
+      if (confirmed && mounted) {
         await context.read<ChatConversationCubit>().sendLocation(location);
       }
     } on TimeoutException {
@@ -595,9 +623,9 @@ class _ChatViewState extends State<_ChatView> {
 
   Future<void> _edit(ChatGroup group) async {
     final groups = context.read<ChatGroupsCubit>();
-    await showDialog<void>(
-      context: context,
-      builder: (_) => _EditChatGroupDialog(
+    await ShiftlyChatDialog.showBody<void>(
+      context,
+      body: _EditChatGroupDialog(
         group: group,
         groups: groups,
         onSuccess: () {
@@ -608,26 +636,15 @@ class _ChatViewState extends State<_ChatView> {
   }
 
   Future<void> _archive(ChatGroup group) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Archive group?'),
-        content: const Text(
+    final confirm = await ShiftlyChatDialog.confirm(
+      context,
+      title: 'Archive group?',
+      message:
           'Messages remain readable, but no further changes or messages can be made.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Archive'),
-          ),
-        ],
-      ),
+      confirmText: 'Archive',
+      destructive: true,
     );
-    if (confirm != true || !mounted) return;
+    if (!confirm || !mounted) return;
     final result = await context.read<ChatGroupsCubit>().archive(group.id);
     if (result == ChatMutationResult.success && mounted) {
       context.read<ChatGroupDetailsCubit>().load();
@@ -793,9 +810,8 @@ class _MessageBubble extends StatelessWidget {
   final String timezone;
   final AudioPlayer player;
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-    child: Container(
+  Widget build(BuildContext context) {
+    final bubble = Container(
       constraints: const BoxConstraints(maxWidth: 520),
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
@@ -823,8 +839,36 @@ class _MessageBubble extends StatelessWidget {
           ),
         ],
       ),
-    ),
-  );
+    );
+    return Align(
+      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 570),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            if (!mine) ...[
+              CircleAvatar(
+                radius: 15,
+                backgroundImage: message.sender.avatarUrl == null
+                    ? null
+                    : NetworkImage(message.sender.avatarUrl!),
+                child: message.sender.avatarUrl == null
+                    ? Text(
+                        _initials(message.sender.displayName),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 7),
+            ],
+            Flexible(child: bubble),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _content(BuildContext context) => switch (message.type) {
     'TEXT' => Text(message.text ?? ''),
@@ -851,7 +895,7 @@ class _MessageBubble extends StatelessWidget {
   };
 }
 
-class _RemoteImage extends StatelessWidget {
+class _RemoteImage extends StatefulWidget {
   const _RemoteImage({
     required this.repository,
     required this.workspaceId,
@@ -862,14 +906,41 @@ class _RemoteImage extends StatelessWidget {
   final ChatMessage message;
 
   @override
+  State<_RemoteImage> createState() => _RemoteImageState();
+}
+
+class _RemoteImageState extends State<_RemoteImage> {
+  late Future<ChatMediaUrl> _media;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolve();
+  }
+
+  void _resolve() {
+    _media = widget.repository.mediaUrl(
+      widget.workspaceId,
+      widget.message.groupId,
+      widget.message.id,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) => FutureBuilder<ChatMediaUrl>(
-    future: repository.mediaUrl(workspaceId, message.groupId, message.id),
+    future: _media,
     builder: (context, snapshot) {
       if (snapshot.hasError) {
-        return const SizedBox(
+        return SizedBox(
           width: 220,
           height: 140,
-          child: Center(child: Icon(Icons.broken_image_outlined)),
+          child: Center(
+            child: TextButton.icon(
+              onPressed: () => setState(_resolve),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry image'),
+            ),
+          ),
         );
       }
       if (!snapshot.hasData) {
@@ -879,20 +950,75 @@ class _RemoteImage extends StatelessWidget {
           child: Center(child: CircularProgressIndicator()),
         );
       }
-      return ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 320, maxHeight: 360),
-        child: Image.network(
-          snapshot.data!.url.toString(),
-          fit: BoxFit.cover,
-          cacheWidth: 960,
-          errorBuilder: (_, _, _) => const SizedBox(
-            width: 220,
-            height: 140,
-            child: Center(child: Icon(Icons.broken_image_outlined)),
+      final url = snapshot.data!.url;
+      final heroTag = 'chat-image-${widget.message.id}';
+      return InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => _FullScreenImage(
+              url: url,
+              heroTag: heroTag,
+            ),
+          ),
+        ),
+        borderRadius: BorderRadius.circular(14),
+        child: Hero(
+          tag: heroTag,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320, maxHeight: 360),
+              child: Image.network(
+                url.toString(),
+                fit: BoxFit.cover,
+                cacheWidth: 960,
+                errorBuilder: (_, _, _) => const SizedBox(
+                  width: 220,
+                  height: 140,
+                  child: Center(child: Icon(Icons.broken_image_outlined)),
+                ),
+              ),
+            ),
           ),
         ),
       );
     },
+  );
+}
+
+class _FullScreenImage extends StatelessWidget {
+  const _FullScreenImage({required this.url, required this.heroTag});
+  final Uri url;
+  final String heroTag;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: Colors.black,
+    appBar: AppBar(
+      foregroundColor: Colors.white,
+      backgroundColor: Colors.black,
+      title: const Text('Image'),
+    ),
+    body: Center(
+      child: Hero(
+        tag: heroTag,
+        child: InteractiveViewer(
+          minScale: 0.8,
+          maxScale: 5,
+          child: Image.network(
+            url.toString(),
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const Center(
+              child: Icon(
+                Icons.broken_image_outlined,
+                color: Colors.white,
+                size: 48,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
   );
 }
 
@@ -923,28 +1049,63 @@ class _VoiceMessageState extends State<_VoiceMessage> {
           widget.player.audioSource != null &&
           widget.player.sequenceState.currentSource?.tag == widget.message.id;
       final playing = active && widget.player.playing;
+      final buffering =
+          active &&
+          (state.data?.processingState == ProcessingState.loading ||
+              state.data?.processingState == ProcessingState.buffering);
       final duration = widget.message.attachment?.durationMs ?? 0;
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            tooltip: playing ? 'Pause voice message' : 'Play voice message',
-            onPressed: _loading ? null : () => _toggle(active, playing),
-            icon: _loading
-                ? const SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(playing ? Icons.pause : Icons.play_arrow),
-          ),
-          StreamBuilder<Duration>(
-            stream: widget.player.positionStream,
-            builder: (_, position) {
-              final shown = active ? position.data?.inMilliseconds ?? 0 : 0;
-              return Text('${_duration(shown)} / ${_duration(duration)}');
-            },
-          ),
-        ],
+      return SizedBox(
+        width: 230,
+        child: Row(
+          children: [
+            IconButton.filledTonal(
+              tooltip: playing ? 'Pause voice message' : 'Play voice message',
+              onPressed: _loading || buffering
+                  ? null
+                  : () => _toggle(active, playing),
+              icon: _loading || buffering
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(
+                      state.data?.processingState == ProcessingState.completed &&
+                              active
+                          ? Icons.replay
+                          : playing
+                          ? Icons.pause
+                          : Icons.play_arrow,
+                    ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: StreamBuilder<Duration>(
+                stream: widget.player.positionStream,
+                builder: (_, position) {
+                  final shown = active
+                      ? position.data?.inMilliseconds
+                                .clamp(0, duration)
+                                .toInt() ??
+                            0
+                      : 0;
+                  final progress = duration == 0 ? 0.0 : shown / duration;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _VoiceWaveform(progress: progress),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${_duration(shown)} / ${_duration(duration)}',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       );
     },
   );
@@ -980,6 +1141,35 @@ class _VoiceMessageState extends State<_VoiceMessage> {
   String _duration(int milliseconds) {
     final seconds = (milliseconds / 1000).floor();
     return '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
+  }
+}
+
+class _VoiceWaveform extends StatelessWidget {
+  const _VoiceWaveform({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    const heights = <double>[8, 15, 11, 20, 13, 18, 9, 16, 12, 19, 10, 14];
+    return Row(
+      children: [
+        for (var index = 0; index < heights.length; index++)
+          Expanded(
+            child: Container(
+              height: heights[index],
+              margin: const EdgeInsets.symmetric(horizontal: 1.5),
+              decoration: BoxDecoration(
+                color: index / heights.length <= progress
+                    ? colors.primary
+                    : colors.outlineVariant,
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -1193,24 +1383,14 @@ class _MembersSheet extends StatelessWidget {
       );
 
   Future<void> _remove(BuildContext context, ChatMember member) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Remove member?'),
-        content: Text('${member.displayName} will lose access to this group.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+    final confirmed = await ShiftlyChatDialog.confirm(
+      context,
+      title: 'Remove member?',
+      message: '${member.displayName} will lose access to this group.',
+      confirmText: 'Remove',
+      destructive: true,
     );
-    if (confirmed == true && context.mounted) {
+    if (confirmed && context.mounted) {
       await context.read<ChatGroupDetailsCubit>().removeMember(
         member.membershipId,
       );
@@ -1236,48 +1416,88 @@ class _MembersSheet extends StatelessWidget {
     final existing = group.members.map((m) => m.membershipId).toSet();
     final choices = employees.where((e) => !existing.contains(e.id)).toList();
     final selected = <String>{};
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (_, setState) => AlertDialog(
+    var submitting = false;
+    String? failure;
+    final details = context.read<ChatGroupDetailsCubit>();
+    await ShiftlyChatDialog.showBody<void>(
+      context,
+      body: StatefulBuilder(
+        builder: (dialogContext, setState) => AlertDialog(
           title: const Text('Add members'),
           content: SizedBox(
             width: 420,
-            child: choices.isEmpty
-                ? const Text('No other active workspace members are available.')
-                : ListView(
-                    shrinkWrap: true,
-                    children: [
-                      for (final employee in choices)
-                        CheckboxListTile(
-                          value: selected.contains(employee.id),
-                          title: Text(employee.displayName),
-                          onChanged: (value) => setState(
-                            () => value == true
-                                ? selected.add(employee.id)
-                                : selected.remove(employee.id),
-                          ),
-                        ),
-                    ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (submitting) const LinearProgressIndicator(),
+                if (failure != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      failure!,
+                      style: TextStyle(
+                        color: Theme.of(dialogContext).colorScheme.error,
+                      ),
+                    ),
                   ),
+                Flexible(
+                  child: choices.isEmpty
+                      ? const Text(
+                          'No other active workspace members are available.',
+                        )
+                      : ListView(
+                          shrinkWrap: true,
+                          children: [
+                            for (final employee in choices)
+                              CheckboxListTile(
+                                value: selected.contains(employee.id),
+                                title: Text(employee.displayName),
+                                onChanged: submitting
+                                    ? null
+                                    : (value) => setState(
+                                        () => value == true
+                                            ? selected.add(employee.id)
+                                            : selected.remove(employee.id),
+                                      ),
+                              ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
+              onPressed: submitting
+                  ? null
+                  : () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: selected.isEmpty
+              onPressed: selected.isEmpty || submitting
                   ? null
-                  : () => Navigator.pop(dialogContext, true),
-              child: const Text('Add'),
+                  : () async {
+                      setState(() {
+                        submitting = true;
+                        failure = null;
+                      });
+                      final added = await details.addMembers(selected.toList());
+                      if (!dialogContext.mounted) return;
+                      if (added) {
+                        Navigator.pop(dialogContext);
+                      } else {
+                        setState(() {
+                          submitting = false;
+                          failure = details.state.failure?.message ??
+                              'Could not add members.';
+                        });
+                      }
+                    },
+              child: Text(submitting ? 'Adding…' : 'Add'),
             ),
           ],
         ),
       ),
     );
-    if (confirmed == true && context.mounted) {
-      await context.read<ChatGroupDetailsCubit>().addMembers(selected.toList());
-    }
   }
 }
