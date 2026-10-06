@@ -80,13 +80,11 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
       if (!mounted) return;
       void restoreAnchor(int attemptsRemaining) {
         if (!_scroll.hasClients) return;
-        debugPrint('RESTORE $attemptsRemaining ${_scroll.offset}');
         final anchorContext = anchor?.key.currentContext;
         final anchorBox = anchorContext?.findRenderObject();
         if (anchorBox is RenderBox &&
             anchorBox.attached &&
-            _intersectsViewport(anchorBox) &&
-            _messageId(anchorContext!) == anchor!.id) {
+            _intersectsViewport(anchorBox)) {
           final currentTop = anchorBox.localToGlobal(Offset.zero).dy;
           _scroll.jumpTo(_scroll.offset + currentTop - anchor!.top);
           return;
@@ -104,7 +102,8 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
             (message) => message.id == anchor.id,
           );
           final visibleIndices = <int>[];
-          for (final key in _messageKeys.values) {
+          for (final entry in _messageKeys.entries) {
+            final key = entry.value;
             final messageContext = key.currentContext;
             final renderObject = messageContext?.findRenderObject();
             if (messageContext == null ||
@@ -113,9 +112,8 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
                 !_intersectsViewport(renderObject)) {
               continue;
             }
-            final id = _messageId(messageContext);
             final index = widget.messages.indexWhere(
-              (message) => message.id == id,
+              (message) => message.id == entry.key,
             );
             if (index >= 0) visibleIndices.add(index);
           }
@@ -162,17 +160,6 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
       }
     }
     return null;
-  }
-
-  String? _messageId(BuildContext context) {
-    final widget = context.widget;
-    if (widget is! KeyedSubtree || widget.child is! KeyedSubtree) return null;
-    final key = (widget.child as KeyedSubtree).key;
-    if (key is! ValueKey<String>) return null;
-    const prefix = 'chat-message-';
-    return key.value.startsWith(prefix)
-        ? key.value.substring(prefix.length)
-        : null;
   }
 
   bool _intersectsViewport(RenderBox box) {
@@ -228,6 +215,17 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
               widget.messages.length +
               widget.trailingMessages.length +
               (widget.loadingOlder ? 1 : 0),
+          findChildIndexCallback: (key) {
+            if (key is! ValueKey<String>) return null;
+            const prefix = 'chat-message-';
+            if (!key.value.startsWith(prefix)) return null;
+            final id = key.value.substring(prefix.length);
+            final messageIndex = widget.messages.indexWhere(
+              (message) => message.id == id,
+            );
+            if (messageIndex < 0) return null;
+            return messageIndex + (widget.loadingOlder ? 1 : 0);
+          },
           itemBuilder: (context, index) {
             if (widget.loadingOlder && index == 0) {
               return const Center(
@@ -257,22 +255,25 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
                 previous.sender.membershipId != message.sender.membershipId ||
                 showDate;
             return KeyedSubtree(
-              key: _messageKeys.putIfAbsent(
-                message.id,
-                () => GlobalKey(debugLabel: 'chat-message-${message.id}'),
-              ),
+              key: ValueKey('chat-message-${message.id}'),
               child: KeyedSubtree(
-                key: ValueKey('chat-message-${message.id}'),
-                child: Column(
-                  children: [
-                    if (showDate) _ChatDateSeparator(date: message.createdAt),
-                    widget.messageBuilder(
-                      message,
-                      message.sender.membershipId ==
-                          widget.currentMembershipId,
-                      showSender,
-                    ),
-                  ],
+                key: _messageKeys.putIfAbsent(
+                  message.id,
+                  () => GlobalKey(debugLabel: 'chat-message-${message.id}'),
+                ),
+                child: KeyedSubtree(
+                  key: ValueKey('chat-anchor-${message.id}'),
+                  child: Column(
+                    children: [
+                      if (showDate) _ChatDateSeparator(date: message.createdAt),
+                      widget.messageBuilder(
+                        message,
+                        message.sender.membershipId ==
+                            widget.currentMembershipId,
+                        showSender,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

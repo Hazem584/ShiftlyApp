@@ -160,7 +160,7 @@ void main() {
     Finder? anchor;
     for (final message in messages) {
       final candidate = find.byKey(
-        Key('chat-message-${message.id}'),
+        Key('chat-anchor-${message.id}'),
         skipOffstage: false,
       );
       if (candidate.evaluate().isEmpty) continue;
@@ -174,7 +174,6 @@ void main() {
     final before = tester.getTopLeft(anchor!).dy;
     release.complete();
     await tester.pumpAndSettle();
-    debugPrint(messages.where((message) => find.text(message.text!, skipOffstage: false).evaluate().isNotEmpty).map((message) => message.text).join(', '));
     final after = tester.getTopLeft(anchor).dy;
 
     expect(after, closeTo(before, 1));
