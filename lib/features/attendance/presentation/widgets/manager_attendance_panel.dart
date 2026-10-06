@@ -8,6 +8,7 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/data/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_records_list.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';
@@ -295,7 +296,9 @@ class ManagerAttendancePanel extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.m),
               Text(
-                'Shift: ${WorkspaceTime.dateTime(record.shift.startsAt, timezone)}',
+                record.source == AttendanceSource.template
+                    ? 'Template: ${record.templateName ?? 'Unavailable'} • ${record.operationalDate ?? 'Unknown date'}'
+                    : 'Shift: ${record.shift == null ? 'Unavailable' : WorkspaceTime.dateTime(record.shift!.startsAt, timezone)}',
               ),
               Text(
                 'Clock-in: ${WorkspaceTime.time(record.clockInAt, timezone)}',

@@ -15,6 +15,8 @@ import 'package:shiftly/features/chat/data/chat_repository.dart';
 import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
 import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
 import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/fixed_shifts/data/api_fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/dashboard/data/api_dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/invitations/data/invitation_repository.dart';
@@ -41,6 +43,7 @@ class AppDependencies {
     required this.dashboardRepository,
     required this.chatRepository,
     required this.chatRealtime,
+    required this.fixedShiftRepository,
   });
 
   final SessionCoordinator sessionCoordinator;
@@ -55,6 +58,7 @@ class AppDependencies {
   final DashboardRepository dashboardRepository;
   final ChatRepository chatRepository;
   final ChatRealtime chatRealtime;
+  final FixedShiftRepository fixedShiftRepository;
 }
 
 abstract final class AppBootstrap {
@@ -89,6 +93,10 @@ abstract final class AppBootstrap {
     final workforceRepository = ApiWorkforceRepository(apiClient.dio);
     final shiftRepository = ApiShiftRepository(apiClient.dio);
     final attendanceRepository = ApiAttendanceRepository(apiClient.dio);
+    final fixedShiftRepository = ApiFixedShiftRepository(
+      apiClient.dio,
+      preferences,
+    );
     final leaveRequestRepository = ApiLeaveRequestRepository(apiClient.dio);
     final notificationRepository = ApiNotificationRepository(apiClient.dio);
     final dashboardRepository = ApiDashboardRepository(apiClient.dio);
@@ -109,6 +117,7 @@ abstract final class AppBootstrap {
       dashboardRepository: dashboardRepository,
       chatRepository: chatRepository,
       chatRealtime: SupabaseChatRealtime(Supabase.instance.client),
+      fixedShiftRepository: fixedShiftRepository,
     );
   }
 }

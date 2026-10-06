@@ -31,12 +31,14 @@ class SupabaseChatStorageUploader implements ChatStorageUploader {
     required String mimeType,
     required bool upsert,
   }) async {
-    await _client.storage.from(bucket).uploadBinaryToSignedUrl(
-      path,
-      uploadToken,
-      bytes,
-      FileOptions(contentType: mimeType, upsert: upsert),
-    );
+    await _client.storage
+        .from(bucket)
+        .uploadBinaryToSignedUrl(
+          path,
+          uploadToken,
+          bytes,
+          FileOptions(contentType: mimeType, upsert: upsert),
+        );
   }
 }
 

@@ -128,6 +128,36 @@ abstract final class ApiErrorParser {
         'A rejection reason is only allowed when rejecting.',
       'WORKSPACE_ACCESS_DENIED' =>
         'Your workspace membership does not allow this action.',
+      'SHIFT_TEMPLATE_MINIMUM_WORK_INVALID' =>
+        'Minimum work time cannot exceed the shift duration.',
+      'SHIFT_TEMPLATE_NAME_CONFLICT' =>
+        'An active template already uses this name.',
+      'SHIFT_TEMPLATE_NOT_FOUND' => 'That shift template could not be found.',
+      'SHIFT_TEMPLATE_ARCHIVED' =>
+        'This shift template is archived and read only.',
+      'WORK_PATTERN_EFFECTIVE_DATE_IN_PAST' =>
+        'Choose today or a future date in the workspace timezone.',
+      'WORK_PATTERN_INVALID_WEEKDAYS' => 'Select one or more unique weekdays.',
+      'WORK_PATTERN_INVALID_DATE' => 'Choose a valid effective date.',
+      'WORK_PATTERN_EMPLOYEE_NOT_ACTIVE' =>
+        'Only active employees can receive a new work pattern.',
+      'WORK_PATTERN_NOT_FOUND' => 'That employee work pattern is unavailable.',
+      'WORK_PATTERN_CONFLICT' =>
+        'The work pattern changed. Refresh before trying again.',
+      'WORKSPACE_TIMEZONE_INVALID' =>
+        'The workspace timezone is invalid. Ask a manager to correct it.',
+      'NOT_EXPECTED_WORKDAY' =>
+        'You are not scheduled to work on this operational date.',
+      'SHIFT_TEMPLATE_NOT_ELIGIBLE' =>
+        'This template is outside its current check-in window.',
+      'ATTENDANCE_ALREADY_OPEN' =>
+        'You already have an open attendance. Refresh to view it.',
+      'ATTENDANCE_OVERLAP' =>
+        'This attendance would overlap another attendance record.',
+      'ATTENDANCE_IDEMPOTENCY_CONFLICT' =>
+        'This clock-in retry no longer matches the original request.',
+      'ATTENDANCE_CONCURRENT_CONFLICT' =>
+        'Attendance changed at the same time. Refresh and retry.',
       'INVALID_DATE_RANGE' => 'The start date must not be after the end date.',
       'CHAT_GROUP_ARCHIVED' => 'This chat group is archived and read only.',
       'CHAT_GROUP_NOT_FOUND' => 'That chat group could not be found.',

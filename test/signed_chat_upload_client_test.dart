@@ -12,24 +12,27 @@ final _bytes = Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]);
 
 void main() {
   group('signed chat upload client', () {
-    test('passes exact authorization, bytes and file options to Storage', () async {
-      final uploader = _Uploader();
-      final progress = <(int, int)>[];
-      await SignedChatUploadClient(uploader).upload(
-        authorization: _authorization(),
-        bytes: _bytes,
-        mimeType: 'image/jpeg',
-        onProgress: (sent, total) => progress.add((sent, total)),
-      );
+    test(
+      'passes exact authorization, bytes and file options to Storage',
+      () async {
+        final uploader = _Uploader();
+        final progress = <(int, int)>[];
+        await SignedChatUploadClient(uploader).upload(
+          authorization: _authorization(),
+          bytes: _bytes,
+          mimeType: 'image/jpeg',
+          onProgress: (sent, total) => progress.add((sent, total)),
+        );
 
-      expect(uploader.bucket, 'chat-media');
-      expect(uploader.path, 'workspace/group/file.jpg');
-      expect(uploader.uploadToken, 'private-token');
-      expect(uploader.bytes, same(_bytes));
-      expect(uploader.mimeType, 'image/jpeg');
-      expect(uploader.upsert, isFalse);
-      expect(progress, [(_bytes.length, _bytes.length)]);
-    });
+        expect(uploader.bucket, 'chat-media');
+        expect(uploader.path, 'workspace/group/file.jpg');
+        expect(uploader.uploadToken, 'private-token');
+        expect(uploader.bytes, same(_bytes));
+        expect(uploader.mimeType, 'image/jpeg');
+        expect(uploader.upsert, isFalse);
+        expect(progress, [(_bytes.length, _bytes.length)]);
+      },
+    );
 
     test('passes voice MIME and exact voice bytes', () async {
       final voice = Uint8List.fromList([0, 0, 0, 20, 0x66, 0x74, 0x79, 0x70]);
@@ -65,20 +68,24 @@ void main() {
       expect(progress, [(_bytes.length, _bytes.length)]);
     });
 
-    test('maps provider failures without exposing authorization secrets', () async {
-      final error = await _capture(
-        SignedChatUploadClient(_Uploader(error: StateError('provider secret')))
-            .upload(
-              authorization: _authorization(),
-              bytes: _bytes,
-              mimeType: 'image/jpeg',
-            ),
-      ) as ApiException;
-      expect(error.code, 'CHAT_MEDIA_STORAGE_UPLOAD_FAILED');
-      expect(error.toString(), isNot(contains('private-token')));
-      expect(error.toString(), isNot(contains('workspace/group/file.jpg')));
-      expect(error.toString(), isNot(contains('provider secret')));
-    });
+    test(
+      'maps provider failures without exposing authorization secrets',
+      () async {
+        final error = await _capture(
+          SignedChatUploadClient(
+            _Uploader(error: StateError('provider secret')),
+          ).upload(
+            authorization: _authorization(),
+            bytes: _bytes,
+            mimeType: 'image/jpeg',
+          ),
+        ) as ApiException;
+        expect(error.code, 'CHAT_MEDIA_STORAGE_UPLOAD_FAILED');
+        expect(error.toString(), isNot(contains('private-token')));
+        expect(error.toString(), isNot(contains('workspace/group/file.jpg')));
+        expect(error.toString(), isNot(contains('provider secret')));
+      },
+    );
 
     test('rejects changed size or MIME before invoking Storage', () async {
       for (final invocation in [

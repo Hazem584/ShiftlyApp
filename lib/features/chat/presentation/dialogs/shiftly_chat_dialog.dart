@@ -37,16 +37,18 @@ abstract final class ShiftlyChatDialog {
     BuildContext context, {
     required Widget body,
     DialogType type = DialogType.noHeader,
-  }) async => (await AwesomeDialog(
-    context: context,
-    useRootNavigator: false,
-    keyboardAware: true,
-    dismissOnTouchOutside: false,
-    dismissOnBackKeyPress: false,
-    dialogType: type,
-    animType: AnimType.scale,
-    body: body,
-    dialogBackgroundColor: Theme.of(context).colorScheme.surface,
-    width: 520,
-  ).show()) as T?;
+  }) async =>
+      (await AwesomeDialog(
+            context: context,
+            useRootNavigator: false,
+            keyboardAware: true,
+            dismissOnTouchOutside: false,
+            dismissOnBackKeyPress: false,
+            dialogType: type,
+            animType: AnimType.scale,
+            body: body,
+            dialogBackgroundColor: Theme.of(context).colorScheme.surface,
+            width: 520,
+          ).show())
+          as T?;
 }

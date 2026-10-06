@@ -24,6 +24,7 @@ Future<void> main() async {
         dashboardRepository: dependencies.dashboardRepository,
         chatRepository: dependencies.chatRepository,
         chatRealtime: dependencies.chatRealtime,
+        fixedShiftRepository: dependencies.fixedShiftRepository,
       ),
     );
     unawaited(dependencies.sessionCoordinator.initialize());

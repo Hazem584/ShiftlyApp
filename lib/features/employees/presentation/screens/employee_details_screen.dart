@@ -11,6 +11,7 @@ import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.da
 import 'package:shiftly/features/employees/presentation/widgets/employee_details_header.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_details_loading.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_information_sections.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/work_pattern_section.dart';
 
 class EmployeeDetailsScreen extends StatelessWidget {
   const EmployeeDetailsScreen({required this.employeeId, super.key});
@@ -19,13 +20,15 @@ class EmployeeDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String? workspaceId;
+    var timezone = 'Etc/UTC';
     try {
-      workspaceId = context
+      final workspace = context
           .read<SessionCoordinator>()
           .state
           .activeMembership
-          ?.workspace
-          .id;
+          ?.workspace;
+      workspaceId = workspace?.id;
+      timezone = workspace?.timezone ?? timezone;
     } catch (_) {
       workspaceId = 'preview';
     }
@@ -46,6 +49,7 @@ class EmployeeDetailsScreen extends StatelessWidget {
       child: _EmployeeDetailsView(
         workspaceId: resolvedWorkspaceId,
         membershipId: employeeId,
+        timezone: timezone,
       ),
     );
   }
@@ -55,9 +59,11 @@ class _EmployeeDetailsView extends StatelessWidget {
   const _EmployeeDetailsView({
     required this.workspaceId,
     required this.membershipId,
+    required this.timezone,
   });
   final String workspaceId;
   final String membershipId;
+  final String timezone;
 
   Future<void> _changeStatus(BuildContext context, Employee employee) async {
     final suspending = employee.employmentStatus == EmploymentStatus.active;
@@ -132,6 +138,13 @@ class _EmployeeDetailsView extends StatelessWidget {
             EmployeeContactSection(employee: employee),
             const SizedBox(height: AppSpacing.l),
             EmployeeWorkSection(employee: employee),
+            const SizedBox(height: AppSpacing.l),
+            WorkPatternSection(
+              workspaceId: workspaceId,
+              membershipId: membershipId,
+              timezone: timezone,
+              canEdit: employee.employmentStatus == EmploymentStatus.active,
+            ),
             const SizedBox(height: AppSpacing.l),
             if (employee.employmentStatus == EmploymentStatus.active ||
                 employee.employmentStatus == EmploymentStatus.suspended)

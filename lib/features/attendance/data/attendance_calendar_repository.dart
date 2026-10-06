@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:shiftly/core/network/api_model_parser.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';
 import 'package:timezone/timezone.dart' as timezone;
@@ -216,10 +217,12 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
   final validAttendance = <String, AttendanceRecordApi>{};
   for (final record in attendance) {
     if (record.workspaceId == workspaceId &&
+        record.source == AttendanceSource.legacyShift &&
+        record.shift != null &&
         record.reviewStatus != AttendanceReviewStatus.rejected &&
         record.reviewStatus != AttendanceReviewStatus.unknown &&
-        record.shift.status != ShiftStatus.cancelled &&
-        record.shift.status != ShiftStatus.unknown) {
+        record.shift!.status != ShiftStatus.cancelled &&
+        record.shift!.status != ShiftStatus.unknown) {
       validAttendance.putIfAbsent(record.id, () => record);
     }
   }

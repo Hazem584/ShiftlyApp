@@ -11,6 +11,7 @@ import 'package:shiftly/features/shifts/data/shift_repository.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/manager_shifts_cubit.dart';
 import 'package:shiftly/features/shifts/presentation/widgets/shift_card.dart';
 import 'package:shiftly/features/shifts/presentation/widgets/shift_editor_dialog.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/shift_templates_screen.dart';
 
 class ManagerShiftsScreen extends StatelessWidget {
   const ManagerShiftsScreen({this.timezone = 'Etc/UTC', super.key});
@@ -33,13 +34,28 @@ class ManagerShiftsScreen extends StatelessWidget {
                 child: ScreenHeader(
                   title: 'Shift Management',
                   subtitle: 'Schedule and manage employee shifts',
-                  action: FilledButton.icon(
-                    key: const Key('create-shift'),
-                    onPressed: state.creating
-                        ? null
-                        : () => _create(context, timezone),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Create'),
+                  action: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton.filledTonal(
+                        key: const Key('fixed-shift-templates'),
+                        tooltip: 'Fixed shift templates',
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const ShiftTemplatesScreen(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.view_week_outlined),
+                      ),
+                      const SizedBox(width: 6),
+                      FilledButton(
+                        key: const Key('create-shift'),
+                        onPressed: state.creating
+                            ? null
+                            : () => _create(context, timezone),
+                        child: const Icon(Icons.add_rounded, size: 18),
+                      ),
+                    ],
                   ),
                 ),
               ),

@@ -8,10 +8,8 @@ import 'package:shiftly/features/chat/data/chat_repository.dart';
 import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
 
 class ApiChatRepository extends ChatRepository {
-  ApiChatRepository(
-    this._dio, {
-    required ChatStorageUploader storageUploader,
-  }) : _signedUploader = SignedChatUploadClient(storageUploader);
+  ApiChatRepository(this._dio, {required ChatStorageUploader storageUploader})
+    : _signedUploader = SignedChatUploadClient(storageUploader);
   final Dio _dio;
   final SignedChatUploadClient _signedUploader;
 

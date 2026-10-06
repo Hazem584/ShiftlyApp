@@ -28,8 +28,7 @@ class ShiftlyChatMessageList extends StatefulWidget {
   final Widget Function(ChatMessage message, bool mine) messageBuilder;
 
   @override
-  State<ShiftlyChatMessageList> createState() =>
-      _ShiftlyChatMessageListState();
+  State<ShiftlyChatMessageList> createState() => _ShiftlyChatMessageListState();
 }
 
 class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList> {
@@ -56,10 +55,10 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList> {
       _controller.updateOtherUser(user);
     }
     final mapped = _mappedMessages();
-    final changed = mapped.length != _controller.initialMessageList.length ||
+    final changed =
+        mapped.length != _controller.initialMessageList.length ||
         mapped.indexed.any(
-          (entry) =>
-              _controller.initialMessageList[entry.$1].id != entry.$2.id,
+          (entry) => _controller.initialMessageList[entry.$1].id != entry.$2.id,
         );
     if (changed && !_controller.messageStreamController.isClosed) {
       _controller.initialMessageList = mapped;

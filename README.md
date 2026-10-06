@@ -487,3 +487,40 @@ The exact validated `Uint8List` and content type are sent with `upsert: false`.
    source plays, progress follows the active source, and backgrounding stops media.
 7. Exercise create, edit, archive, add-member, remove-member, cancel-upload,
    discard-recording, and location-confirm dialogs, including failure and retry.
+# Fixed shifts and flexible attendance
+
+The fixed-shift feature is additive to the legacy scheduled-shift flow. Production wiring creates one `ApiFixedShiftRepository` from the existing authenticated Dio client and the existing `SharedPreferences` instance. `ManagerTemplatesCubit` and `FlexibleAttendanceCubit` are application-scoped, role-gated, and rebound whenever the authenticated feature scope changes. Employee work-pattern state is local to Employee Details. Legacy `ShiftRepository`, `AttendanceRepository`, screens, Cubits, and routes remain available.
+
+## Endpoint mapping
+
+| Flutter operation | API operation |
+| --- | --- |
+| List/create templates | `GET/POST /api/v1/workspaces/{workspaceId}/shift-templates` |
+| Template detail/edit/archive | `GET/PATCH/DELETE /api/v1/workspaces/{workspaceId}/shift-templates/{templateId}` |
+| Work-pattern history/replacement | `GET/POST /api/v1/workspaces/{workspaceId}/employees/{membershipId}/work-patterns` |
+| Employee template catalog | `GET /api/v1/shift-templates/me?workspaceId=...` |
+| Eligibility | `GET /api/v1/shift-templates/eligibility?workspaceId=...` |
+| Flexible clock-in | `POST /api/v1/attendance/flexible/clock-in` |
+| Restore active attendance | `GET /api/v1/attendance/me/current?workspaceId=...` |
+| Flexible clock-out | `POST /api/v1/attendance/{attendanceId}/clock-out` |
+
+Managers open Fixed Shift Templates from the existing Shifts header. Creating and editing uses time pickers, accessible color choices, policy controls, and a live same-day/overnight/24-hour summary. Archive is explicitly presented as a reversible-history concept rather than permanent deletion. Work patterns appear in Employee Details, show the canonical current and historical versions, accept unique weekday chips, and restrict the effective date to workspace-local today or later.
+
+Employees use the existing Attendance destination. It restores open attendance first, displays backend-calculated eligibility and recommendation, and confirms the operational date and classification before clock-in. The client sends only `workspaceId`, `shiftTemplateId`, and a UUID-v4 `clientAttendanceId`; no device timestamp is sent. The UUID and its user/workspace/membership/template scope are persisted before submission and reused after timeout, offline, cancellation, or server ambiguity. It is cleared only after canonical success or a confirmed terminal rejection. Clock-out renders the canonical response and never calculates stored worked minutes locally.
+
+All server timestamps are parsed as UTC instants and displayed with the workspace IANA timezone. Operational dates and eligibility are never recalculated on-device. Invalid IANA zones disable local calendar mutation and surface the stable backend error. Attendance decoding branches on `source`; legacy `shiftId/shift` and template snapshot fields are nullable so both record types continue to render during migration. Unknown source/classification values remain unknown and do not enable attendance actions.
+
+The only remaining fixed-shift mock is `PreviewFixedShiftRepository`, an empty adapter used when `ShiftlyApp` is launched without an authenticated session by widget previews/tests. Authenticated production startup requires explicit `FixedShiftRepository` injection and never falls back to it. The points system is intentionally deferred.
+
+## Manual ApiDog and Flutter regression plan
+
+1. Authenticate as a manager, select an active workspace, and smoke-test all legacy shift create/edit/cancel, attendance review, leave, dashboard, notification, and chat paths.
+2. In ApiDog create same-day, overnight, and equal-boundary 24-hour templates. Verify `minimumWorkMinutes` boundaries, duplicate active names, partial PATCH merged validation, archived read-only behavior, pagination, wrong-workspace IDs, and manager/employee authorization.
+3. In Flutter open Shifts > Fixed Shift Templates on a narrow Android device and a tablet. Verify loading skeleton/progress, empty, retry, pull-to-refresh, retained-data warning, long names, both themes where enabled, time pickers, color contrast, policy validation, duplicate-submit prevention, edit, and archive confirmation.
+4. Open an active employee. Create patterns effective workspace-local today and in the future, verify unique weekdays and version history/end dates, then attempt a backdate, duplicate date, concurrent replacement, suspended employee, wrong workspace, and invalid timezone. Confirm Flutter refreshes canonical history rather than editing it optimistically.
+5. As that employee, inspect Attendance before, at, and after early/grace/late window boundaries for same-day and overnight templates. Verify the recommended occurrence, other eligible occurrences, classification, late minutes, operational date, no-pattern state, no-eligible state, archived templates, and timezone/DST display against ApiDog responses.
+6. Confirm clock-in sends exactly the three documented fields and no timestamp. Simulate offline, timeout, and 502 after send; retry and verify the identical UUID returns the same attendance. Reuse that UUID with another template/workspace and confirm safe idempotency-conflict guidance.
+7. Race taps and concurrent requests. Verify one open attendance, disabled duplicate actions, canonical current restoration after force-stop/relaunch, and immediate clearing of old data on workspace switch, logout/login, suspension, role change, and session-generation change.
+8. Clock out, repeat clock-out, and verify both return the same completed attendance. Confirm server worked minutes, history, dashboard, eligibility, and notification counts refresh; then force one secondary refresh to fail and verify the successful mutation remains visible.
+9. Re-run legacy employee shift clock-in/out and mixed legacy/template attendance history. Verify template records never require `shiftId`, legacy records never fabricate a template, manager review remains functional, and calendar aggregation remains based on legacy scheduled shifts until its template-specific design is introduced.
+10. Exercise HTTP 400, 401, 403, 404, 409, 429, 500, 502, malformed 2xx, timeout, cancellation, and offline responses. Verify friendly messages and support `requestId`, with no provider detail, token, personal data, request body, or idempotency UUID in logs.

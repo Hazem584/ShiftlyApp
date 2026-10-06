@@ -460,9 +460,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
         mediaType: mediaType,
         status: ChatUploadState.preparing,
         previewBytes: job.previewBytes,
-        durationMs: mediaType == PendingChatMediaType.voice
-            ? durationMs
-            : null,
+        durationMs: mediaType == PendingChatMediaType.voice ? durationMs : null,
       ),
     );
     unawaited(_runMedia(clientId));
@@ -540,11 +538,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
         }
       }
       if (!_scopeCurrent(scope, groupId, generation)) return;
-      _updatePending(
-        clientId,
-        status: ChatUploadState.finalizing,
-        progress: 1,
-      );
+      _updatePending(clientId, status: ChatUploadState.finalizing, progress: 1);
       final canonical = await _repository.finalizeUpload(
         scope.workspaceId,
         groupId,

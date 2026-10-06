@@ -9,6 +9,8 @@ class FeatureSessionScope extends Equatable {
     required this.timezone,
     required this.role,
     this.workspaceName = '',
+    this.membershipStatus = MembershipStatus.active,
+    this.generation = 0,
   });
 
   final String userId;
@@ -17,9 +19,15 @@ class FeatureSessionScope extends Equatable {
   final String timezone;
   final WorkspaceRole role;
   final String workspaceName;
+  final MembershipStatus membershipStatus;
+  final int generation;
 
-  bool get isManager => role == WorkspaceRole.manager;
-  bool get isEmployee => role == WorkspaceRole.employee;
+  bool get isManager =>
+      role == WorkspaceRole.manager &&
+      membershipStatus == MembershipStatus.active;
+  bool get isEmployee =>
+      role == WorkspaceRole.employee &&
+      membershipStatus == MembershipStatus.active;
 
   @override
   List<Object?> get props => [
@@ -29,5 +37,7 @@ class FeatureSessionScope extends Equatable {
     timezone,
     role,
     workspaceName,
+    membershipStatus,
+    generation,
   ];
 }

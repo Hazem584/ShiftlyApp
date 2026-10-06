@@ -19,6 +19,16 @@ abstract final class WorkspaceTime {
     }
   }
 
+  static bool isValid(String ianaName) {
+    initialize();
+    try {
+      timezone.getLocation(ianaName);
+      return true;
+    } on timezone.LocationNotFoundException {
+      return false;
+    }
+  }
+
   static timezone.TZDateTime inWorkspace(DateTime utc, String ianaName) =>
       timezone.TZDateTime.from(utc.toUtc(), location(ianaName));
 

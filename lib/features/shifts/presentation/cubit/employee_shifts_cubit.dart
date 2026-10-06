@@ -6,6 +6,7 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';
 
 enum ClockMutationResult { success, failure, busy, stale }
@@ -252,7 +253,9 @@ class EmployeeShiftsCubit extends Cubit<EmployeeShiftsState> {
           : await _attendance.clockOut(shiftId);
       if (!_scopeCurrent(scope, generation)) return ClockMutationResult.stale;
       if (attendance.workspaceId != scope.workspaceId ||
-          attendance.shiftId != shiftId) {
+          attendance.shiftId != shiftId ||
+          attendance.source != AttendanceSource.legacyShift ||
+          attendance.shift == null) {
         _finishClock(
           shiftId,
           clockIn: clockIn,
@@ -275,7 +278,7 @@ class EmployeeShiftsCubit extends Cubit<EmployeeShiftsState> {
           .map(
             (item) => item.id == shiftId
                 ? item.copyWith(
-                    status: attendance.shift.status,
+                    status: attendance.shift!.status,
                     attendance: summary,
                   )
                 : item,
@@ -283,7 +286,7 @@ class EmployeeShiftsCubit extends Cubit<EmployeeShiftsState> {
           .toList(growable: false);
       final selected = state.selected?.id == shiftId
           ? state.selected!.copyWith(
-              status: attendance.shift.status,
+              status: attendance.shift!.status,
               attendance: summary,
             )
           : state.selected;

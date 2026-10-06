@@ -59,10 +59,7 @@ void main() {
             },
           ),
         );
-        final repository = ApiChatRepository(
-          backend,
-          storageUploader: storage,
-        );
+        final repository = ApiChatRepository(backend, storageUploader: storage);
         final authorization = await repository.initiateUpload(
           workspace,
           groupId,
@@ -380,9 +377,7 @@ void main() {
       final repository = _MediaRepository();
       final cubit = ChatConversationCubit(repository, const _Realtime())
         ..bind(_scope, groupId);
-      await cubit.sendImage(
-        Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
-      );
+      await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
       await _waitFor(() => cubit.state.messages.isNotEmpty);
       repository.listFailures = 1;
       await cubit.load(refresh: true);
@@ -414,10 +409,10 @@ void main() {
       expect(repository.initiatedDurations, [1234, null]);
       expect(repository.uploadedBytes[0], _voiceBytes());
       expect(repository.uploadedBytes[1], [0xff, 0xd8, 0xff, 0xd9]);
-      expect(
-        cubit.state.pending.map((pending) => pending.mediaType),
-        [PendingChatMediaType.voice, PendingChatMediaType.image],
-      );
+      expect(cubit.state.pending.map((pending) => pending.mediaType), [
+        PendingChatMediaType.voice,
+        PendingChatMediaType.image,
+      ]);
       expect(cubit.state.pending.first.durationMs, 1234);
       expect(cubit.state.pending.last.durationMs, isNull);
       expect(repository.finalizedTypes, isEmpty);
@@ -428,25 +423,28 @@ void main() {
       await cubit.close();
     });
 
-    test('image followed by voice keeps type, bytes, MIME and duration isolated', () async {
-      final gate = Completer<void>();
-      final repository = _MediaRepository()..uploadGate = gate;
-      final cubit = ChatConversationCubit(repository, const _Realtime())
-        ..bind(_scope, groupId);
-      await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
-      await cubit.sendVoice(
-        bytes: _voiceBytes(),
-        mimeType: 'audio/mp4',
-        durationMs: 987,
-      );
-      await _waitFor(() => repository.uploads == 2);
-      expect(repository.initiatedTypes, ['IMAGE', 'VOICE']);
-      expect(repository.initiatedDurations, [null, 987]);
-      expect(repository.uploadedMimes, ['image/jpeg', 'audio/mp4']);
-      gate.complete();
-      await _waitFor(() => cubit.state.pending.isEmpty);
-      await cubit.close();
-    });
+    test(
+      'image followed by voice keeps type, bytes, MIME and duration isolated',
+      () async {
+        final gate = Completer<void>();
+        final repository = _MediaRepository()..uploadGate = gate;
+        final cubit = ChatConversationCubit(repository, const _Realtime())
+          ..bind(_scope, groupId);
+        await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
+        await cubit.sendVoice(
+          bytes: _voiceBytes(),
+          mimeType: 'audio/mp4',
+          durationMs: 987,
+        );
+        await _waitFor(() => repository.uploads == 2);
+        expect(repository.initiatedTypes, ['IMAGE', 'VOICE']);
+        expect(repository.initiatedDurations, [null, 987]);
+        expect(repository.uploadedMimes, ['image/jpeg', 'audio/mp4']);
+        gate.complete();
+        await _waitFor(() => cubit.state.pending.isEmpty);
+        await cubit.close();
+      },
+    );
 
     test('object-invalid failure retains image type and request ID', () async {
       final repository = _MediaRepository()
@@ -479,26 +477,37 @@ void main() {
       await _waitFor(
         () => cubit.state.pending.single.status == ChatUploadState.failed,
       );
-      expect(cubit.state.pending.single.failure?.message, 'Unable to send media.');
+      expect(
+        cubit.state.pending.single.failure?.message,
+        'Unable to send media.',
+      );
       expect(repository.finalizedTypes, isEmpty);
       await cubit.close();
     });
 
-    test('mismatched canonical response does not replace another job', () async {
-      final repository = _MediaRepository()
-        ..canonicalClientId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-      final cubit = ChatConversationCubit(repository, const _Realtime())
-        ..bind(_scope, groupId);
-      await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
-      await _waitFor(
-        () => cubit.state.pending.single.status == ChatUploadState.failed,
-      );
-      expect(cubit.state.messages, isEmpty);
-      expect(cubit.state.pending.single.mediaType, PendingChatMediaType.image);
-      await cubit.close();
-    });
+    test(
+      'mismatched canonical response does not replace another job',
+      () async {
+        final repository = _MediaRepository()
+          ..canonicalClientId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+        final cubit = ChatConversationCubit(repository, const _Realtime())
+          ..bind(_scope, groupId);
+        await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
+        await _waitFor(
+          () => cubit.state.pending.single.status == ChatUploadState.failed,
+        );
+        expect(cubit.state.messages, isEmpty);
+        expect(
+          cubit.state.pending.single.mediaType,
+          PendingChatMediaType.image,
+        );
+        await cubit.close();
+      },
+    );
 
-    testWidgets('image pending UI never displays Voice message', (tester) async {
+    testWidgets('image pending UI never displays Voice message', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

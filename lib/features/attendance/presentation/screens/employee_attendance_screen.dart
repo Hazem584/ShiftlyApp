@@ -8,6 +8,8 @@ import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_records_list.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/employee_leave_requests_panel.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/flexible_attendance_panel.dart';
 
 class EmployeeAttendanceScreen extends StatefulWidget {
   const EmployeeAttendanceScreen({super.key});
@@ -83,11 +85,21 @@ class _AttendanceHistory extends StatelessWidget {
       BlocBuilder<EmployeeAttendanceCubit, EmployeeAttendanceState>(
         builder: (context, state) {
           if (state.initialLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+              children: [
+                FlexibleAttendancePanel(timezone: timezone),
+                const SizedBox(height: AppSpacing.l),
+                const Center(child: CircularProgressIndicator()),
+              ],
+            );
           }
           if (state.records.isEmpty) {
             return ListView(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
               children: [
+                FlexibleAttendancePanel(timezone: timezone),
+                const SizedBox(height: AppSpacing.l),
                 EmptyState(
                   icon: state.failure == null
                       ? Icons.history_toggle_off_rounded
@@ -111,12 +123,18 @@ class _AttendanceHistory extends StatelessWidget {
             );
           }
           return RefreshIndicator(
-            onRefresh: () =>
+            onRefresh: () async {
+              await Future.wait([
                 context.read<EmployeeAttendanceCubit>().load(refresh: true),
+                context.read<FlexibleAttendanceCubit>().load(refresh: true),
+              ]);
+            },
             child: ListView(
               key: const Key('employee-attendance-list'),
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
               children: [
+                FlexibleAttendancePanel(timezone: timezone),
+                const SizedBox(height: AppSpacing.l),
                 if (state.failure != null) ...[
                   Text(
                     state.failure!.message,

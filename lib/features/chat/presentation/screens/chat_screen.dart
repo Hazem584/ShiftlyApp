@@ -59,6 +59,14 @@ class ChatScreen extends StatelessWidget {
   }
 }
 
+String _nameInitials(String value) => value
+    .trim()
+    .split(RegExp(r'\s+'))
+    .where((part) => part.isNotEmpty)
+    .take(2)
+    .map((part) => part[0].toUpperCase())
+    .join();
+
 class _ChatView extends StatefulWidget {
   const _ChatView({required this.groupId});
   final String groupId;
@@ -126,9 +134,7 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.primaryContainer,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                 child: Text(
                   _initials(group?.name ?? 'Chat'),
                   style: Theme.of(context).textTheme.labelMedium,
@@ -215,61 +221,62 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
 
   Widget _messages() =>
       BlocBuilder<ChatConversationCubit, ChatConversationState>(
-    builder: (context, state) {
-      final scope = context.read<ChatGroupsCubit>().scope!;
-      final pending = state.pending;
-      return Column(
-        children: [
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () => context
-                  .read<ChatConversationCubit>()
-                  .load(refresh: true),
-              child: ShiftlyChatMessageList(
-                key: ValueKey(
-                  '${scope.userId}:${scope.workspaceId}:${widget.groupId}',
-                ),
-                messages: state.messages,
-                currentMembershipId: scope.membershipId,
-                loading: state.loading,
-                failureMessage: state.messages.isEmpty
-                    ? state.failure?.message
-                    : null,
-                hasMore: state.hasMore,
-                loadingOlder: state.loadingOlder,
-                onLoadOlder: context.read<ChatConversationCubit>().loadOlder,
-                onRetry: context.read<ChatConversationCubit>().load,
-                messageBuilder: (message, mine) => _MessageBubble(
-                  message: message,
-                  mine: mine,
-                  repository: context.read<ChatRepository>(),
-                  workspaceId: scope.workspaceId,
-                  timezone: scope.timezone,
-                  player: _player,
-                ),
-              ),
-            ),
-          ),
-          if (pending.isNotEmpty)
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 230),
-              child: ListView.separated(
-                shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                itemCount: pending.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 4),
-                itemBuilder: (_, index) => PendingMediaBubble(
-                  pending: pending[index],
-                  onRetry: (id) =>
-                      context.read<ChatConversationCubit>().retryMedia(id),
-                  onCancel: _confirmCancelPending,
+        builder: (context, state) {
+          final scope = context.read<ChatGroupsCubit>().scope!;
+          final pending = state.pending;
+          return Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () =>
+                      context.read<ChatConversationCubit>().load(refresh: true),
+                  child: ShiftlyChatMessageList(
+                    key: ValueKey(
+                      '${scope.userId}:${scope.workspaceId}:${widget.groupId}',
+                    ),
+                    messages: state.messages,
+                    currentMembershipId: scope.membershipId,
+                    loading: state.loading,
+                    failureMessage: state.messages.isEmpty
+                        ? state.failure?.message
+                        : null,
+                    hasMore: state.hasMore,
+                    loadingOlder: state.loadingOlder,
+                    onLoadOlder: context
+                        .read<ChatConversationCubit>()
+                        .loadOlder,
+                    onRetry: context.read<ChatConversationCubit>().load,
+                    messageBuilder: (message, mine) => _MessageBubble(
+                      message: message,
+                      mine: mine,
+                      repository: context.read<ChatRepository>(),
+                      workspaceId: scope.workspaceId,
+                      timezone: scope.timezone,
+                      player: _player,
+                    ),
+                  ),
                 ),
               ),
-            ),
-        ],
+              if (pending.isNotEmpty)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 230),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                    itemCount: pending.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 4),
+                    itemBuilder: (_, index) => PendingMediaBubble(
+                      pending: pending[index],
+                      onRetry: (id) =>
+                          context.read<ChatConversationCubit>().retryMedia(id),
+                      onCancel: _confirmCancelPending,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
       );
-    },
-  );
 
   Future<void> _confirmCancelPending(String clientId) async {
     final confirmed = await ShiftlyChatDialog.confirm(
@@ -314,66 +321,66 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
                 ),
                 child: Row(
                   children: [
-                  PopupMenuButton<int>(
-                    tooltip: 'Attach',
-                    enabled:
-                        !effectiveDisabled && !state.sending && !_mediaBusy,
-                    onSelected: (value) {
-                      if (value == 0) unawaited(_pickImage());
-                      if (value == 1) unawaited(_startRecording());
-                      if (value == 2) unawaited(_shareLocation());
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 0, child: Text('Image')),
-                      PopupMenuItem(value: 1, child: Text('Voice')),
-                      PopupMenuItem(value: 2, child: Text('Location')),
-                    ],
-                    icon: const Icon(Icons.add_circle_outline),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      key: const Key('chat-message-input'),
-                      controller: _text,
-                      enabled: !effectiveDisabled && !state.sending,
-                      maxLength: 4000,
-                      minLines: 1,
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: effectiveDisabled
-                            ? 'This group is read only'
-                            : 'Message',
-                        counterText: '',
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                      onSubmitted: (_) => _send(),
+                    PopupMenuButton<int>(
+                      tooltip: 'Attach',
+                      enabled:
+                          !effectiveDisabled && !state.sending && !_mediaBusy,
+                      onSelected: (value) {
+                        if (value == 0) unawaited(_pickImage());
+                        if (value == 1) unawaited(_startRecording());
+                        if (value == 2) unawaited(_shareLocation());
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: 0, child: Text('Image')),
+                        PopupMenuItem(value: 1, child: Text('Voice')),
+                        PopupMenuItem(value: 2, child: Text('Location')),
+                      ],
+                      icon: const Icon(Icons.add_circle_outline),
                     ),
-                  ),
-                  IconButton(
-                    key: const Key('record-voice-message'),
-                    tooltip: 'Record voice message',
-                    onPressed:
-                        effectiveDisabled || state.sending || _mediaBusy
-                        ? null
-                        : _startRecording,
-                    icon: const Icon(Icons.mic_none_rounded),
-                  ),
-                  IconButton(
-                    key: const Key('send-chat-message'),
-                    tooltip: 'Send',
-                    onPressed:
-                        effectiveDisabled ||
-                            state.sending ||
-                            _text.text.trim().isEmpty
-                        ? null
-                        : _send,
-                    icon: state.sending
-                        ? const SizedBox.square(
-                            dimension: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send_rounded),
-                  ),
+                    Expanded(
+                      child: TextField(
+                        key: const Key('chat-message-input'),
+                        controller: _text,
+                        enabled: !effectiveDisabled && !state.sending,
+                        maxLength: 4000,
+                        minLines: 1,
+                        maxLines: 5,
+                        decoration: InputDecoration(
+                          hintText: effectiveDisabled
+                              ? 'This group is read only'
+                              : 'Message',
+                          counterText: '',
+                          border: InputBorder.none,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                        onSubmitted: (_) => _send(),
+                      ),
+                    ),
+                    IconButton(
+                      key: const Key('record-voice-message'),
+                      tooltip: 'Record voice message',
+                      onPressed:
+                          effectiveDisabled || state.sending || _mediaBusy
+                          ? null
+                          : _startRecording,
+                      icon: const Icon(Icons.mic_none_rounded),
+                    ),
+                    IconButton(
+                      key: const Key('send-chat-message'),
+                      tooltip: 'Send',
+                      onPressed:
+                          effectiveDisabled ||
+                              state.sending ||
+                              _text.text.trim().isEmpty
+                          ? null
+                          : _send,
+                      icon: state.sending
+                          ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send_rounded),
+                    ),
                   ],
                 ),
               ),
@@ -639,8 +646,7 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
     final confirm = await ShiftlyChatDialog.confirm(
       context,
       title: 'Archive group?',
-      message:
-          'Messages remain readable, but no further changes or messages can be made.',
+      message: 'Messages remain readable, but no further changes or messages can be made.',
       confirmText: 'Archive',
       destructive: true,
     );
@@ -856,7 +862,7 @@ class _MessageBubble extends StatelessWidget {
                     : NetworkImage(message.sender.avatarUrl!),
                 child: message.sender.avatarUrl == null
                     ? Text(
-                        _initials(message.sender.displayName),
+                        _nameInitials(message.sender.displayName),
                         style: Theme.of(context).textTheme.labelSmall,
                       )
                     : null,
@@ -955,10 +961,7 @@ class _RemoteImageState extends State<_RemoteImage> {
       return InkWell(
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => _FullScreenImage(
-              url: url,
-              heroTag: heroTag,
-            ),
+            builder: (_) => _FullScreenImage(url: url, heroTag: heroTag),
           ),
         ),
         borderRadius: BorderRadius.circular(14),
@@ -1069,7 +1072,8 @@ class _VoiceMessageState extends State<_VoiceMessage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Icon(
-                      state.data?.processingState == ProcessingState.completed &&
+                      state.data?.processingState ==
+                                  ProcessingState.completed &&
                               active
                           ? Icons.replay
                           : playing
@@ -1468,9 +1472,7 @@ class _MembersSheet extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: submitting
-                  ? null
-                  : () => Navigator.pop(dialogContext),
+              onPressed: submitting ? null : () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             FilledButton(
@@ -1488,7 +1490,8 @@ class _MembersSheet extends StatelessWidget {
                       } else {
                         setState(() {
                           submitting = false;
-                          failure = details.state.failure?.message ??
+                          failure =
+                              details.state.failure?.message ??
                               'Could not add members.';
                         });
                       }

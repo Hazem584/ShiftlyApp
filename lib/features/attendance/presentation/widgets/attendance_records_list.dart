@@ -4,6 +4,7 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';
 
 class AttendanceRecordsList extends StatelessWidget {
@@ -55,7 +56,10 @@ class _AttendanceRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date = WorkspaceTime.inWorkspace(record.shift.startsAt, timezone);
+    final date = WorkspaceTime.inWorkspace(
+      record.shift?.startsAt ?? record.scheduledStartAt ?? record.clockInAt,
+      timezone,
+    );
     final (label, color, background) = switch (record.reviewStatus) {
       AttendanceReviewStatus.pending => (
         'Pending review',
@@ -107,7 +111,9 @@ class _AttendanceRecordCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  record.employee.displayName,
+                  record.source == AttendanceSource.template
+                      ? record.templateName ?? 'Fixed shift'
+                      : record.employee.displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w700),
