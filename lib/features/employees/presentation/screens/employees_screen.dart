@@ -11,6 +11,8 @@ import 'package:shiftly/features/employees/presentation/widgets/employee_search_
 import 'package:shiftly/features/employees/presentation/widgets/employees_loading.dart';
 import 'package:shiftly/features/invitations/data/invitation_repository.dart';
 
+part 'parts/employees_screen/private_pending_invitations.dart';
+
 class EmployeesScreen extends StatelessWidget {
   const EmployeesScreen({super.key});
 
@@ -116,26 +118,5 @@ class EmployeesScreen extends StatelessWidget {
               ),
       ),
     ],
-  );
-}
-
-class _PendingInvitations extends StatelessWidget {
-  const _PendingInvitations({required this.invitations});
-  final List<WorkspaceInvitation> invitations;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    key: const Key('pending-invitations'),
-    width: double.infinity,
-    margin: const EdgeInsets.fromLTRB(18, 0, 18, 10),
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Text(
-      '${invitations.length} pending invitation${invitations.length == 1 ? '' : 's'}',
-      style: const TextStyle(fontWeight: FontWeight.w600),
-    ),
   );
 }

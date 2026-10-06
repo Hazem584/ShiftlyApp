@@ -254,7 +254,7 @@ void main() {
       final setup = _coordinator(auth);
       await setup.coordinator.initialize();
       await tester.pumpWidget(
-        ShiftlyApp(
+        ShiftlyApp.preview(
           sessionCoordinator: setup.coordinator,
           notificationRepository: MockNotificationRepository(),
           dashboardRepository: MockDashboardRepository(
@@ -340,7 +340,7 @@ void main() {
       password: 'not-recorded',
     );
     await tester.pumpWidget(
-      ShiftlyApp(
+      ShiftlyApp.preview(
         sessionCoordinator: setup.coordinator,
         notificationRepository: MockNotificationRepository(),
         dashboardRepository: MockDashboardRepository(
@@ -408,7 +408,7 @@ void main() {
     final setup = _coordinator(auth);
     await setup.coordinator.initialize();
     await tester.pumpWidget(
-      ShiftlyApp(
+      ShiftlyApp.preview(
         sessionCoordinator: setup.coordinator,
         notificationRepository: MockNotificationRepository(),
         dashboardRepository: MockDashboardRepository(

@@ -353,6 +353,26 @@ void main() {
       },
     );
 
+    test('same-timestamp messages use canonical UUID ordering', () async {
+      final repository = _FakeChatRepository()
+        ..messageLoads.add(
+          ChatMessagePage(
+            messages: [
+              _message(id: _message2, minute: 1),
+              _message(id: _message1, minute: 1),
+            ],
+          ),
+        );
+      final cubit = ChatConversationCubit(repository, _FakeRealtime())
+        ..bind(_scope, _group);
+      await _pump();
+      expect(cubit.state.messages.map((message) => message.id), [
+        _message1,
+        _message2,
+      ]);
+      await cubit.close();
+    });
+
     test('reuses one clientMessageId when retrying a failed send', () async {
       final repository = _FakeChatRepository()..sendFailures = 1;
       final cubit = ChatConversationCubit(repository, _FakeRealtime());
@@ -1524,6 +1544,47 @@ void main() {
       success.complete();
       await tester.pumpAndSettle();
       expect(find.text('Edit group'), findsNothing);
+      await groups.close();
+    });
+
+    testWidgets('archived conversation is read only at compact text scale', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(320, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repository = _FakeChatRepository()
+        ..details = _chatGroup(archived: true);
+      final groups = ChatGroupsCubit(repository)..bindSession(_scope);
+      await tester.pumpWidget(
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<ChatRepository>.value(value: repository),
+            RepositoryProvider<ChatRealtime>.value(value: _FakeRealtime()),
+            RepositoryProvider<EmployeeRepository>.value(
+              value: _FakeEmployeeRepository(),
+            ),
+          ],
+          child: BlocProvider.value(
+            value: groups,
+            child: MediaQuery(
+              data: const MediaQueryData(
+                size: Size(320, 700),
+                textScaler: TextScaler.linear(1.3),
+              ),
+              child: const MaterialApp(home: ChatScreen(groupId: _group)),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('read only'), findsWidgets);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('chat-message-input')))
+            .enabled,
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
       await groups.close();
     });
   });

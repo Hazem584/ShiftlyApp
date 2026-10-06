@@ -236,7 +236,7 @@ void main() {
   });
 }
 
-Widget _app(DashboardRepository repository) => ShiftlyApp(
+Widget _app(DashboardRepository repository) => ShiftlyApp.preview(
   dashboardRepository: repository,
   employeeRepository: MockEmployeeRepository(delay: Duration.zero),
 );

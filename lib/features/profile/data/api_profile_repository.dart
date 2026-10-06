@@ -95,7 +95,5 @@ class ApiProfileRepository implements ProfileRepository {
     return Map<String, Object?>.from(data);
   }
 
-  Object _parse(Object error) => ApiErrorParser.parse(
-    error is DioException && error.error != null ? error.error! : error,
-  );
+  Object _parse(Object error) => ApiErrorParser.parse(error);
 }

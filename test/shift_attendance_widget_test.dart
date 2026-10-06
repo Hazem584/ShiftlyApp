@@ -14,7 +14,7 @@ void main() {
     addTearDown(router.dispose);
     final employees = MockEmployeeRepository(delay: Duration.zero);
     await tester.pumpWidget(
-      ShiftlyApp(
+      ShiftlyApp.preview(
         router: router,
         employeeRepository: employees,
         dashboardRepository: MockDashboardRepository(

@@ -9,6 +9,9 @@ import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cu
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_details_dialog.dart';
 
+part 'parts/leave_request_card/private_rejection_dialog.dart';
+part 'parts/leave_request_card/private_rejection_dialog_state.dart';
+
 class LeaveRequestCard extends StatelessWidget {
   const LeaveRequestCard({
     required this.request,
@@ -184,70 +187,6 @@ class LeaveRequestCard extends StatelessWidget {
           LeaveRequestDetailsDialog(request: record, timezone: timezone),
     );
   }
-}
-
-class _RejectionDialog extends StatefulWidget {
-  const _RejectionDialog({required this.employeeName});
-  final String employeeName;
-
-  @override
-  State<_RejectionDialog> createState() => _RejectionDialogState();
-}
-
-class _RejectionDialogState extends State<_RejectionDialog> {
-  final _controller = TextEditingController();
-  String? _error;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Reject request?'),
-    content: SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Explain why ${widget.employeeName}’s request is being rejected.',
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('rejection-reason'),
-            controller: _controller,
-            maxLength: 1000,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: 'Rejection reason',
-              errorText: _error,
-            ),
-          ),
-        ],
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(
-        key: const Key('confirm-reject'),
-        onPressed: () {
-          final reason = _controller.text.trim();
-          if (reason.isEmpty) {
-            setState(() => _error = 'A reason is required');
-            return;
-          }
-          Navigator.pop(context, reason);
-        },
-        child: const Text('Reject'),
-      ),
-    ],
-  );
 }
 
 String _initials(String name) {

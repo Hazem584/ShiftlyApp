@@ -41,9 +41,14 @@ class PreviewFixedShiftRepository implements FixedShiftRepository {
   Future<FlexibleAttendance?> getCurrentAttendance(String workspaceId) async =>
       null;
   @override
-  Future<PendingClockIn?> loadPendingClockIn() async => null;
+  Future<PendingClockIn?> loadPendingClockIn({
+    required String userId,
+    required String workspaceId,
+    required String membershipId,
+    required String templateId,
+  }) async => null;
   @override
-  Future<void> clearPendingClockIn() async {}
+  Future<void> clearPendingClockIn(PendingClockIn value) async {}
   @override
   Future<void> savePendingClockIn(PendingClockIn value) async {}
   @override

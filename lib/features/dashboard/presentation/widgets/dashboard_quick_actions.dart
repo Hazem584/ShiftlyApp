@@ -5,6 +5,9 @@ import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
+part 'parts/dashboard_quick_actions/private_quick_action.dart';
+part 'parts/dashboard_quick_actions/private_section_heading.dart';
+
 class DashboardQuickActions extends StatelessWidget {
   const DashboardQuickActions({required this.pendingRequests, super.key});
   final int pendingRequests;
@@ -44,62 +47,6 @@ class DashboardQuickActions extends StatelessWidget {
           ),
         ],
       ),
-    ],
-  );
-}
-
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => SurfaceCard(
-    onTap: onTap,
-    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 13),
-    child: Column(
-      children: [
-        Icon(icon, size: 21),
-        const SizedBox(height: 7),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-        ),
-      ],
-    ),
-  );
-}
-
-class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.title, this.trailing});
-  final String title;
-  final String? trailing;
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Expanded(
-        child: Text(title, style: Theme.of(context).textTheme.titleLarge),
-      ),
-      if (trailing != null)
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.field,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: Text(
-              trailing!,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-            ),
-          ),
-        ),
     ],
   );
 }

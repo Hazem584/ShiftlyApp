@@ -1,23 +1,4 @@
-class AuthSession {
-  const AuthSession({required this.accessToken});
-
-  final String accessToken;
-}
-
-class AuthenticationResult {
-  const AuthenticationResult({
-    required this.session,
-    this.emailVerificationRequired = false,
-  });
-
-  final AuthSession? session;
-  final bool emailVerificationRequired;
-}
-
-enum AuthenticationEventType { signedIn, signedOut, tokenRefreshed, other }
-
-class AuthenticationEvent {
-  const AuthenticationEvent(this.type);
-
-  final AuthenticationEventType type;
-}
+part 'parts/auth_session/auth_session.dart';
+part 'parts/auth_session/authentication_result.dart';
+part 'parts/auth_session/authentication_event_type.dart';
+part 'parts/auth_session/authentication_event.dart';

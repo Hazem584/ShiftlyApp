@@ -9,7 +9,8 @@ import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 class ApiFixedShiftRepository implements FixedShiftRepository {
   ApiFixedShiftRepository(this._dio, this._preferences);
 
-  static const _pendingKey = 'fixed_shift.pending_clock_in.v1';
+  static const _legacyPendingKey = 'fixed_shift.pending_clock_in.v1';
+  static const _pendingPrefix = 'fixed_shift.pending_clock_in.v2';
   final Dio _dio;
   final SharedPreferences _preferences;
 
@@ -189,20 +190,37 @@ class ApiFixedShiftRepository implements FixedShiftRepository {
       );
 
   @override
-  Future<PendingClockIn?> loadPendingClockIn() async {
-    final raw = _preferences.getString(_pendingKey);
+  Future<PendingClockIn?> loadPendingClockIn({
+    required String userId,
+    required String workspaceId,
+    required String membershipId,
+    required String templateId,
+  }) async {
+    await _preferences.remove(_legacyPendingKey);
+    final key = _pendingKey(userId, workspaceId, membershipId, templateId);
+    final raw = _preferences.getString(key);
     if (raw == null) return null;
     try {
       final json = ApiModelParser.map(jsonDecode(raw));
-      return PendingClockIn(
+      final pending = PendingClockIn(
         userId: ApiModelParser.string(json, 'userId'),
         workspaceId: ApiModelParser.string(json, 'workspaceId'),
         membershipId: ApiModelParser.string(json, 'membershipId'),
         templateId: ApiModelParser.string(json, 'templateId'),
         clientAttendanceId: ApiModelParser.string(json, 'clientAttendanceId'),
       );
+      if (!pending.matches(
+        userId: userId,
+        workspaceId: workspaceId,
+        membershipId: membershipId,
+        templateId: templateId,
+      )) {
+        await _preferences.remove(key);
+        return null;
+      }
+      return pending;
     } catch (_) {
-      await clearPendingClockIn();
+      await _preferences.remove(key);
       return null;
     }
   }
@@ -210,7 +228,12 @@ class ApiFixedShiftRepository implements FixedShiftRepository {
   @override
   Future<void> savePendingClockIn(PendingClockIn value) async {
     await _preferences.setString(
-      _pendingKey,
+      _pendingKey(
+        value.userId,
+        value.workspaceId,
+        value.membershipId,
+        value.templateId,
+      ),
       jsonEncode({
         'userId': value.userId,
         'workspaceId': value.workspaceId,
@@ -222,9 +245,23 @@ class ApiFixedShiftRepository implements FixedShiftRepository {
   }
 
   @override
-  Future<void> clearPendingClockIn() async {
-    await _preferences.remove(_pendingKey);
+  Future<void> clearPendingClockIn(PendingClockIn value) async {
+    await _preferences.remove(
+      _pendingKey(
+        value.userId,
+        value.workspaceId,
+        value.membershipId,
+        value.templateId,
+      ),
+    );
   }
+
+  String _pendingKey(
+    String userId,
+    String workspaceId,
+    String membershipId,
+    String templateId,
+  ) => '$_pendingPrefix.$userId.$workspaceId.$membershipId.$templateId';
 
   Future<ShiftTemplate> _template(
     Future<Response<Object?>> Function() operation,
@@ -259,9 +296,7 @@ class ApiFixedShiftRepository implements FixedShiftRepository {
     try {
       return await operation();
     } catch (error) {
-      throw ApiErrorParser.parse(
-        error is DioException && error.error != null ? error.error! : error,
-      );
+      throw ApiErrorParser.parse(error);
     }
   }
 }

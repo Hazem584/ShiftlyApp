@@ -15,7 +15,7 @@ class _CancelledImagePicker implements ProfileImagePicker {
 
 ShiftlyApp _testApp() {
   final employees = MockEmployeeRepository(delay: Duration.zero);
-  return ShiftlyApp(
+  return ShiftlyApp.preview(
     employeeRepository: employees,
     dashboardRepository: MockDashboardRepository(
       employeeRepository: employees,

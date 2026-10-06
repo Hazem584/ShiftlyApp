@@ -82,7 +82,7 @@ Future<_RoutingAuth> _pumpRole(WidgetTester tester, WorkspaceRole role) async {
   );
   await coordinator.initialize();
   await tester.pumpWidget(
-    ShiftlyApp(
+    ShiftlyApp.preview(
       sessionCoordinator: coordinator,
       notificationRepository: MockNotificationRepository(),
       dashboardRepository: MockDashboardRepository(
@@ -117,7 +117,7 @@ Future<(_RoutingAuth, _AcceptingInvitations)> _pumpNoWorkspace(
   );
   await coordinator.initialize();
   await tester.pumpWidget(
-    ShiftlyApp(
+    ShiftlyApp.preview(
       sessionCoordinator: coordinator,
       invitationRepository: invitations,
       notificationRepository: MockNotificationRepository(),

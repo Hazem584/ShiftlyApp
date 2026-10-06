@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
+part 'parts/dashboard_loading/private_skeleton.dart';
+
 class DashboardLoadingView extends StatelessWidget {
   const DashboardLoadingView({super.key});
   @override
@@ -35,23 +37,5 @@ class DashboardLoadingView extends StatelessWidget {
         ),
       ),
     ],
-  );
-}
-
-class _Skeleton extends StatelessWidget {
-  const _Skeleton({required this.height, this.width});
-  final double height;
-  final double? width;
-  @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
-    child: Container(
-      width: width ?? double.infinity,
-      height: height,
-      decoration: BoxDecoration(
-        color: AppColors.field,
-        borderRadius: BorderRadius.circular(AppRadii.l),
-      ),
-    ),
   );
 }

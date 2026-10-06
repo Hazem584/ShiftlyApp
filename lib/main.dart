@@ -2,32 +2,18 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shiftly/app.dart';
-import 'package:shiftly/core/bootstrap/app_bootstrap.dart';
 import 'package:shiftly/core/config/app_config.dart';
 import 'package:shiftly/core/config/configuration_error_app.dart';
+import 'package:shiftly/core/di/dependency_registration.dart';
+import 'package:shiftly/core/di/service_locator.dart';
+import 'package:shiftly/core/session/session_coordinator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    final dependencies = await AppBootstrap.initialize();
-    runApp(
-      ShiftlyApp(
-        sessionCoordinator: dependencies.sessionCoordinator,
-        profileRepository: dependencies.profileRepository,
-        employeeRepository: dependencies.employeeRepository,
-        invitationRepository: dependencies.invitationRepository,
-        workspaceRepository: dependencies.workspaceRepository,
-        shiftRepository: dependencies.shiftRepository,
-        attendanceRepository: dependencies.attendanceRepository,
-        leaveRequestRepository: dependencies.leaveRequestRepository,
-        notificationRepository: dependencies.notificationRepository,
-        dashboardRepository: dependencies.dashboardRepository,
-        chatRepository: dependencies.chatRepository,
-        chatRealtime: dependencies.chatRealtime,
-        fixedShiftRepository: dependencies.fixedShiftRepository,
-      ),
-    );
-    unawaited(dependencies.sessionCoordinator.initialize());
+    await DependencyRegistration.configureProduction();
+    runApp(ShiftlyApp(locator: getIt));
+    unawaited(getIt<SessionCoordinator>().initialize());
   } on AppConfigException catch (error) {
     runApp(ConfigurationErrorApp(message: error.message));
   } catch (_) {

@@ -6,7 +6,7 @@ import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 
-ShiftlyApp _appWith(MockEmployeeRepository employees) => ShiftlyApp(
+ShiftlyApp _appWith(MockEmployeeRepository employees) => ShiftlyApp.preview(
   employeeRepository: employees,
   dashboardRepository: MockDashboardRepository(
     employeeRepository: employees,

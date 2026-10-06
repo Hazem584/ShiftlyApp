@@ -17,9 +17,7 @@ class AuthenticationApiRepository implements AuthenticationRepository {
       if (data is! Map) throw const FormatException('Invalid current user');
       return CurrentUser.fromJson(Map<String, Object?>.from(data));
     } catch (error) {
-      throw ApiErrorParser.parse(
-        error is DioException && error.error != null ? error.error! : error,
-      );
+      throw ApiErrorParser.parse(error);
     }
   }
 
@@ -32,9 +30,7 @@ class AuthenticationApiRepository implements AuthenticationRepository {
     try {
       await _dio.post<Object?>(ApiEndpoints.bootstrap, data: body);
     } catch (error) {
-      throw ApiErrorParser.parse(
-        error is DioException && error.error != null ? error.error! : error,
-      );
+      throw ApiErrorParser.parse(error);
     }
   }
 }

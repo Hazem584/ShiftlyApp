@@ -1,6 +1,6 @@
 # Shiftly
 
-Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authentication, profile editing, avatar management, workspace membership, role-based routing, shifts, clock actions, and attendance use the production API while unrelated feature screens retain their mock repositories.
+Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authenticated startup uses production repositories for every feature; preview and test repositories are selected only by explicit composition.
 
 ## Configuration
 
@@ -90,9 +90,17 @@ Backend error envelopes, validation arrays, plain-text proxy failures, timeouts,
 
 ## Architecture
 
-The app retains its feature-first structure, repository injection, Cubits, GoRouter, theme, and custom toast. Shared integration code lives under `lib/core/config`, `error`, `network`, `session`, `storage`, and `utils`. Authentication owns its service wrapper, API repository, models, screens, and focused widgets under `lib/features/auth`.
+The project is feature-first. `lib/app` owns the root widget, application providers, lifecycle binding, and session-to-feature coordination. `lib/core` owns configuration, DI, errors, the single authenticated network client, routing, session, storage, theme, shared widgets, and genuinely cross-feature utilities. Each `lib/features/<feature>` tree keeps its data contracts and implementations beside its presentation Cubits, screens, and widgets; domain folders are added only where a feature has a real UI-independent domain abstraction.
 
-Production creates `ApiShiftRepository`, `ApiAttendanceRepository`, `ApiLeaveRequestRepository`, and `ApiNotificationRepository` with the existing authenticated Dio instance. Feature Cubits bind to the authenticated user, active workspace, active membership, and backend-confirmed role. A scope change clears data immediately and invalidates pending work. The mock repositories are limited to isolated tests and the no-session component preview entry point.
+`lib/core/di/dependency_registration.dart` is the production composition root. `AppConfig`, the Supabase client, SharedPreferences, and established instances are singletons. The authenticated `ApiClient`/Dio client, `SessionCoordinator`, repository abstractions, upload adapter, media Realtime source, and safe application services are lazy singletons. Fresh presentation Cubits are factories; the owning `BlocProvider` or application provider tree closes them. Locator access is confined to startup and provider/screen composition boundaries—repositories, models, and Cubit business logic continue to use constructor injection.
+
+Production calls `DependencyRegistration.configureProduction()` and fails before authenticated UI construction if configuration or a required registration is missing. It never chooses mocks based on debug/release mode. Tests can create an isolated `GetIt.asNewInstance()`, call `configureTestDependencies` with explicit fakes, and call `DependencyDisposal.reset(locator: testLocator)` in teardown. Component tests use the explicit `ShiftlyApp.preview` constructor; preview composition is not reachable from production `main.dart`.
+
+Session-bound Cubits receive a `FeatureSessionScope`. `SessionFeatureCoordinator` changes its generation only when user, workspace, membership, role, membership access, login/logout, or explicit invalidation changes the data/security scope. Token refreshes and equivalent profile/session emissions keep the generation stable. Screen Cubits are never shared globally; application Cubits are created once per `AppProviders` owner and closed there. GetIt singletons are disposed only by `DependencyDisposal`.
+
+New features should keep transport parsing and API implementations in `data`, UI-independent entities/repository interfaces in `domain` only when useful, and Cubits/screens/widgets in `presentation`. UI code must not parse JSON or depend directly on Dio, Supabase, or SharedPreferences. Register production abstractions against implementations, add a factory for screen-owned Cubits, provide explicit test replacements, and keep dependencies directed through constructors.
+
+Each meaningful public class, enum, interface, state, model, and controller has its own source file. Compatibility library files use export/`part` directives so existing imports remain stable while declarations live in focused files. Small private widget/state pairs and private implementation records used only by their owning file are the documented exception; generated files are never manually split.
 
 Backend timestamps are parsed and stored as UTC. UI entry and display use the active workspace's IANA timezone through the maintained `timezone` package; device-local time is never treated as the workspace timezone or used as an official attendance timestamp.
 
@@ -377,13 +385,14 @@ tokens are never logged or placed in exception `toString()` output.
 
 ## Manual chat-media regression plan
 
-The conversation surface uses `chatview` only as a presentation and scrolling
-layer. Shiftly's existing Cubits remain authoritative for canonical messages,
+The conversation surface uses focused custom presentation widgets and a normal
+chronological `ListView`. Shiftly's existing Cubits remain authoritative for canonical messages,
 pending uploads, pagination, retries, cancellation, read state, and Realtime
 refreshes. The adapter preserves backend message and membership IDs; custom
 renderers keep signed-media URL retrieval and the single shared audio player in
-the existing application-owned lifecycle. Destructive and form workflows use
-the shared `awesome_dialog` wrapper without changing repository mutations.
+the existing application-owned lifecycle. Destructive confirmations and form
+workflows use the shared `ShiftlyChatDialog` abstraction without changing
+repository mutations.
 
 1. Use separate manager and employee sessions in the same group; verify both
    render all four message types and only authorized groups are visible.

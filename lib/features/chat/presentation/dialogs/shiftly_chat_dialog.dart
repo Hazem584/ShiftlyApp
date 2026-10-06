@@ -9,28 +9,31 @@ abstract final class ShiftlyChatDialog {
     String confirmText = 'Confirm',
     bool destructive = false,
   }) async {
-    var confirmed = false;
-    await AwesomeDialog(
-      context: context,
-      useRootNavigator: false,
-      keyboardAware: true,
-      dismissOnTouchOutside: false,
-      dismissOnBackKeyPress: true,
-      dialogType: destructive ? DialogType.warning : DialogType.question,
-      animType: AnimType.scale,
-      title: title,
-      desc: message,
-      btnCancelText: 'Cancel',
-      btnCancelOnPress: () {},
-      btnOkText: confirmText,
-      btnOkColor: destructive
-          ? Theme.of(context).colorScheme.error
-          : Theme.of(context).colorScheme.primary,
-      btnOkOnPress: () => confirmed = true,
-      buttonsBorderRadius: BorderRadius.circular(14),
-      dialogBackgroundColor: Theme.of(context).colorScheme.surface,
-    ).show();
-    return confirmed;
+    return await showDialog<bool>(
+          context: context,
+          useRootNavigator: false,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: destructive
+                    ? FilledButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      )
+                    : null,
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(confirmText),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   static Future<T?> showBody<T>(

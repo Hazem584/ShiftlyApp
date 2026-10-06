@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
@@ -356,11 +355,7 @@ class ApiChatRepository extends ChatRepository {
     try {
       return await operation();
     } catch (error) {
-      throw ApiErrorParser.parse(
-        error is DioException && error.error is ApiException
-            ? error.error! as ApiException
-            : error,
-      );
+      throw ApiErrorParser.parse(error);
     }
   }
 

@@ -3,6 +3,8 @@ import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 
+part 'parts/dashboard_hero_section/private_hero_chip.dart';
+
 class DashboardHeroSection extends StatelessWidget {
   const DashboardHeroSection({required this.data, super.key});
   final ManagerDashboardData data;
@@ -69,37 +71,6 @@ class DashboardHeroSection extends StatelessWidget {
           ],
         ),
       ],
-    ),
-  );
-}
-
-class _HeroChip extends StatelessWidget {
-  const _HeroChip({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .18),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: Colors.white),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
     ),
   );
 }

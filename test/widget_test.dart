@@ -6,7 +6,7 @@ import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 
 ShiftlyApp _testApp() {
   final employees = MockEmployeeRepository(delay: Duration.zero);
-  return ShiftlyApp(
+  return ShiftlyApp.preview(
     employeeRepository: employees,
     dashboardRepository: MockDashboardRepository(
       employeeRepository: employees,

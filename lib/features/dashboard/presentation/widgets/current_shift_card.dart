@@ -4,6 +4,8 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 
+part 'parts/current_shift_card/private_value.dart';
+
 class DashboardDayStatusCard extends StatelessWidget {
   const DashboardDayStatusCard({required this.data, super.key});
   final ManagerDashboardData data;
@@ -46,37 +48,5 @@ class DashboardDayStatusCard extends StatelessWidget {
         ),
       ),
     ],
-  );
-}
-
-class _Value extends StatelessWidget {
-  const _Value({required this.label, required this.value, required this.color});
-
-  final String label;
-  final int value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 4),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            '$value',
-            style: Theme.of(context).textTheme.headlineSmall
-                ?.copyWith(color: color),
-          ),
-        ),
-        Text(
-          label,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
-        ),
-      ],
-    ),
   );
 }

@@ -158,7 +158,7 @@ Future<_Repository> _openProfile(
 }) async {
   final repository = _Repository(_profile(avatarUrl: avatarUrl, phone: phone));
   await tester.pumpWidget(
-    ShiftlyApp(
+    ShiftlyApp.preview(
       profileRepository: repository,
       profileImagePicker: _Picker(selection),
     ),

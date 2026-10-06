@@ -16,6 +16,7 @@ import 'package:shiftly/features/fixed_shifts/data/api_fixed_shift_repository.da
 import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/flexible_attendance_panel.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/shift_templates_screen.dart';
 
 class _Adapter implements HttpClientAdapter {
   _Adapter(this.handler);
@@ -47,10 +48,11 @@ ResponseBody _json(Object? value, {int status = 200}) =>
 Map<String, Object?> _template({
   String id = 'template-id',
   bool active = true,
+  String name = 'Night operations',
 }) => {
   'id': id,
   'workspaceId': 'workspace-id',
-  'name': 'Night operations',
+  'name': name,
   'description': null,
   'color': '#334155',
   'startMinute': 1320,
@@ -131,11 +133,21 @@ const _employeeScope = FeatureSessionScope(
   generation: 7,
 );
 
+const _managerScope = FeatureSessionScope(
+  userId: 'manager-user',
+  workspaceId: 'workspace-id',
+  membershipId: 'manager-membership-id',
+  timezone: 'Africa/Cairo',
+  role: WorkspaceRole.manager,
+  generation: 7,
+);
+
 class _FakeRepository implements FixedShiftRepository {
   PendingClockIn? pending;
   final clockInIds = <String>[];
   Completer<ShiftTemplatePage>? templateCompleter;
   var refreshFails = false;
+  List<ShiftTemplate>? templateValues;
 
   ShiftTemplate get template => ShiftTemplate.fromJson(_template());
   EligibleShiftOccurrence get occurrence => EligibleShiftOccurrence(
@@ -152,7 +164,7 @@ class _FakeRepository implements FixedShiftRepository {
   FlexibleAttendance attendance({String? clockOutAt}) =>
       FlexibleAttendance.fromJson(_attendance(clockOutAt: clockOutAt));
   ShiftTemplatePage get page => ShiftTemplatePage(
-    data: [template],
+    data: templateValues ?? [template],
     pagination: const ApiPagination(
       page: 1,
       limit: 100,
@@ -210,12 +222,29 @@ class _FakeRepository implements FixedShiftRepository {
   Future<FlexibleAttendance> flexibleClockOut(String attendanceId) async =>
       attendance(clockOutAt: '2026-10-07T03:01:00.000Z');
   @override
-  Future<PendingClockIn?> loadPendingClockIn() async => pending;
+  Future<PendingClockIn?> loadPendingClockIn({
+    required String userId,
+    required String workspaceId,
+    required String membershipId,
+    required String templateId,
+  }) async =>
+      pending?.matches(
+            userId: userId,
+            workspaceId: workspaceId,
+            membershipId: membershipId,
+            templateId: templateId,
+          ) ==
+          true
+      ? pending
+      : null;
   @override
   Future<void> savePendingClockIn(PendingClockIn value) async =>
       pending = value;
   @override
-  Future<void> clearPendingClockIn() async => pending = null;
+  Future<void> clearPendingClockIn(PendingClockIn value) async {
+    if (pending == value) pending = null;
+  }
+
   @override
   Future<ShiftTemplate> createTemplate(
     String workspaceId,
@@ -249,6 +278,20 @@ class _FakeRepository implements FixedShiftRepository {
     required List<int> expectedWeekdays,
     required String effectiveFrom,
   }) => throw UnimplementedError();
+}
+
+class _WorkPatternRaceRepository extends _FakeRepository {
+  final requests = <Completer<WorkPatternHistory>>[];
+
+  @override
+  Future<WorkPatternHistory> getWorkPatterns(
+    String workspaceId,
+    String membershipId,
+  ) {
+    final request = Completer<WorkPatternHistory>();
+    requests.add(request);
+    return request.future;
+  }
 }
 
 void main() {
@@ -424,6 +467,73 @@ void main() {
   });
 
   test(
+    'persisted clock-in idempotency is isolated across session scope',
+    () async {
+      final repository = _FakeRepository()
+        ..pending = const PendingClockIn(
+          userId: 'old-user',
+          workspaceId: 'old-workspace',
+          membershipId: 'old-membership',
+          templateId: 'template-id',
+          clientAttendanceId: '00000000-0000-4000-8000-000000000001',
+        );
+      final cubit = FlexibleAttendanceCubit(
+        repository,
+        uuid: () => '22222222-2222-4222-8222-222222222222',
+      )..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await cubit.stream.firstWhere((state) => !state.loading);
+      expect(
+        await cubit.clockIn(repository.occurrence),
+        FixedShiftMutationResult.failure,
+      );
+      expect(repository.clockInIds, ['22222222-2222-4222-8222-222222222222']);
+      expect(repository.pending?.userId, _employeeScope.userId);
+      expect(repository.pending?.workspaceId, _employeeScope.workspaceId);
+      expect(repository.pending?.membershipId, _employeeScope.membershipId);
+    },
+  );
+
+  test('persisted clock-in records use independent scoped keys', () async {
+    final client = await _client((_) => _json(null));
+    const first = PendingClockIn(
+      userId: 'user-a',
+      workspaceId: 'workspace-a',
+      membershipId: 'membership-a',
+      templateId: 'template-a',
+      clientAttendanceId: '11111111-1111-4111-8111-111111111111',
+    );
+    const second = PendingClockIn(
+      userId: 'user-b',
+      workspaceId: 'workspace-b',
+      membershipId: 'membership-b',
+      templateId: 'template-b',
+      clientAttendanceId: '22222222-2222-4222-8222-222222222222',
+    );
+    await client.repository.savePendingClockIn(first);
+    await client.repository.savePendingClockIn(second);
+    expect(
+      await client.repository.loadPendingClockIn(
+        userId: first.userId,
+        workspaceId: first.workspaceId,
+        membershipId: first.membershipId,
+        templateId: first.templateId,
+      ),
+      isNotNull,
+    );
+    await client.repository.clearPendingClockIn(first);
+    expect(
+      await client.repository.loadPendingClockIn(
+        userId: second.userId,
+        workspaceId: second.workspaceId,
+        membershipId: second.membershipId,
+        templateId: second.templateId,
+      ),
+      isNotNull,
+    );
+  });
+
+  test(
     'role and generation changes clear state and reject stale responses',
     () async {
       final repository = _FakeRepository()
@@ -501,6 +611,35 @@ void main() {
     },
   );
 
+  test('fixed-shift models reject invalid dates and negative values', () {
+    expect(
+      () => ShiftTemplate.fromJson({..._template(), 'graceMinutes': -1}),
+      throwsFormatException,
+    );
+    expect(
+      () => WorkPattern.fromJson({
+        'id': 'pattern',
+        'workspaceId': 'workspace-id',
+        'employeeMembershipId': 'membership-id',
+        'expectedWeekdays': [1],
+        'effectiveFrom': '2026-02-30',
+        'effectiveTo': null,
+        'createdAt': '2026-10-06T00:00:00Z',
+        'updatedAt': '2026-10-06T00:00:00Z',
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => ApiPagination.fromJson({
+        'page': 1,
+        'limit': 20,
+        'total': -1,
+        'totalPages': 0,
+      }),
+      throwsFormatException,
+    );
+  });
+
   testWidgets('recommended eligibility is readable on a narrow screen', (
     tester,
   ) async {
@@ -528,4 +667,100 @@ void main() {
     expect(find.textContaining('On time'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'template cards use natural height and final card clears the floating action',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 700));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repository = _FakeRepository()
+        ..templateValues = [
+          ShiftTemplate.fromJson(_template(id: 'first')),
+          ShiftTemplate.fromJson(
+            _template(
+              id: 'long',
+              name: 'Extremely long overnight customer support and operations shift',
+            ),
+          ),
+          ShiftTemplate.fromJson(_template(id: 'archived', active: false)),
+        ];
+      final cubit = ManagerTemplatesCubit(repository)
+        ..bindSession(_managerScope);
+      addTearDown(cubit.close);
+      await cubit.stream.firstWhere((state) => !state.loading);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(
+              size: Size(320, 700),
+              textScaler: TextScaler.linear(1.3),
+              viewPadding: EdgeInsets.only(bottom: 24),
+            ),
+            child: BlocProvider.value(
+              value: cubit,
+              child: const ShiftTemplatesScreen(
+                workspaceName: 'A long workspace name for compact devices',
+                timezone: 'Africa/Cairo',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(
+        find.text('Read-only history'),
+        250,
+        scrollable: find.byKey(const Key('shift-template-list')),
+      );
+      await tester.drag(
+        find.byKey(const Key('shift-template-list')),
+        const Offset(0, -180),
+      );
+      await tester.pumpAndSettle();
+      final finalField = tester.getRect(find.text('Read-only history'));
+      final floatingButton = tester.getRect(find.text('New template'));
+      expect(finalField.bottom, lessThan(floatingButton.top));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  test(
+    'work pattern loads suppress duplicates and queue one refresh',
+    () async {
+      final repository = _WorkPatternRaceRepository();
+      final cubit = WorkPatternCubit(repository);
+      addTearDown(cubit.close);
+      unawaited(
+        cubit.bind(workspaceId: 'workspace-id', membershipId: 'membership-id'),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.requests, hasLength(1));
+      unawaited(cubit.load(retain: true));
+      unawaited(cubit.load(retain: true));
+      expect(repository.requests, hasLength(1));
+      repository.requests.first.complete(
+        const WorkPatternHistory(current: null, history: []),
+      );
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.requests, hasLength(2));
+      final current = WorkPattern(
+        id: 'pattern-new',
+        workspaceId: 'workspace-id',
+        employeeMembershipId: 'membership-id',
+        expectedWeekdays: const [1, 2, 3],
+        effectiveFrom: '2026-10-06',
+        createdAt: DateTime.utc(2026, 10, 6),
+        updatedAt: DateTime.utc(2026, 10, 6),
+      );
+      repository.requests.last.complete(
+        WorkPatternHistory(current: current, history: [current]),
+      );
+      await cubit.stream.firstWhere(
+        (state) => !state.loading && state.history?.current == current,
+      );
+      expect(cubit.state.history?.current, current);
+    },
+  );
 }

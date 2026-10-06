@@ -14,7 +14,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      ShiftlyApp(
+      ShiftlyApp.preview(
         employeeRepository: MockEmployeeRepository(delay: Duration.zero),
       ),
     );
@@ -31,7 +31,7 @@ void main() {
 
   testWidgets('add employee validates required fields', (tester) async {
     await tester.pumpWidget(
-      ShiftlyApp(
+      ShiftlyApp.preview(
         employeeRepository: MockEmployeeRepository(delay: Duration.zero),
       ),
     );
@@ -55,7 +55,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      ShiftlyApp(
+      ShiftlyApp.preview(
         employeeRepository: MockEmployeeRepository(delay: Duration.zero),
       ),
     );

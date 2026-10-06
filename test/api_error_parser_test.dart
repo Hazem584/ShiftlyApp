@@ -66,6 +66,15 @@ void main() {
     expect(result.message, isNot(contains('private proxy')));
   });
 
+  test('malformed response maps still become safe typed failures', () {
+    final result = ApiErrorParser.parse(
+      _error(status: 500, data: {1: 'provider detail'}),
+    );
+    expect(result.statusCode, 500);
+    expect(result.kind, FailureKind.server);
+    expect(result.message, isNot(contains('provider detail')));
+  });
+
   test('maps timeout, network, 429 and response request id', () {
     expect(
       ApiErrorParser.parse(_error(type: DioExceptionType.receiveTimeout)).kind,
@@ -90,5 +99,39 @@ void main() {
       ).requestId,
       'header-id',
     );
+  });
+
+  test('maps protected, conflict, cancellation, and server statuses', () {
+    expect(
+      ApiErrorParser.parse(_error(status: 403)).kind,
+      FailureKind.authorization,
+    );
+    expect(
+      ApiErrorParser.parse(_error(status: 409)).kind,
+      FailureKind.validation,
+    );
+    expect(ApiErrorParser.parse(_error(status: 500)).kind, FailureKind.server);
+    expect(ApiErrorParser.parse(_error(status: 502)).kind, FailureKind.server);
+    expect(
+      ApiErrorParser.parse(_error(type: DioExceptionType.cancel)).kind,
+      FailureKind.cancelled,
+    );
+  });
+
+  test('retains a known backend business code without exposing its body', () {
+    final result = ApiErrorParser.parse(
+      _error(
+        status: 409,
+        data: {
+          'code': 'SHIFT_TEMPLATE_NAME_CONFLICT',
+          'message': 'internal collision detail',
+          'requestId': 'request-business',
+        },
+      ),
+    );
+    expect(result.code, 'SHIFT_TEMPLATE_NAME_CONFLICT');
+    expect(result.requestId, 'request-business');
+    expect(result.message, contains('already uses this name'));
+    expect(result.message, isNot(contains('internal collision detail')));
   });
 }

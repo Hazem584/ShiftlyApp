@@ -10,9 +10,19 @@ abstract final class ApiErrorParser {
         message: 'Something went wrong. Please try again.',
       );
     }
+    if (error.response == null && error.error is ApiException) {
+      return error.error! as ApiException;
+    }
     final status = error.response?.statusCode;
     final body = error.response?.data;
-    final data = body is Map ? Map<String, Object?>.from(body) : null;
+    Map<String, Object?>? data;
+    if (body is Map) {
+      try {
+        data = Map<String, Object?>.from(body);
+      } catch (_) {
+        data = null;
+      }
+    }
     final rawMessage = data?['message'];
     final validation = rawMessage is List
         ? rawMessage.whereType<String>().toList(growable: false)

@@ -5,6 +5,8 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 
+part 'parts/attendance_metrics_section/private_attendance_metric.dart';
+
 class AttendanceMetricsSection extends StatelessWidget {
   const AttendanceMetricsSection({super.key});
 
@@ -90,58 +92,5 @@ class AttendanceMetricsSection extends StatelessWidget {
         ),
       ),
     ],
-  );
-}
-
-class _AttendanceMetric extends StatelessWidget {
-  const _AttendanceMetric({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 172,
-    child: SurfaceCard(
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Flexible(
-                  child: FittedBox(
-                    alignment: Alignment.centerLeft,
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      value,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(icon, color: color, size: 27),
-        ],
-      ),
-    ),
   );
 }

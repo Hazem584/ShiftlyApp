@@ -103,9 +103,7 @@ class ApiLeaveRequestRepository implements LeaveRequestRepository {
     try {
       return await operation();
     } catch (error) {
-      throw ApiErrorParser.parse(
-        error is DioException && error.error != null ? error.error! : error,
-      );
+      throw ApiErrorParser.parse(error);
     }
   }
 }
