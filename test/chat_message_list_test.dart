@@ -102,25 +102,52 @@ void main() {
     late StateSetter update;
 
     await tester.pumpWidget(
-      StatefulBuilder(
-        builder: (context, setState) {
-          update = setState;
-          return _app(
-            messages,
-            hasMore: hasMore,
-            onLoadOlder: () async {
-              if (!requested.isCompleted) requested.complete();
-              await release.future;
-              update(() {
-                messages = [
-                  for (var i = 0; i < 20; i++) _message(i),
-                  ...messages,
-                ];
-                hasMore = false;
-              });
-            },
-          );
-        },
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(320, 700),
+            textScaler: TextScaler.linear(1.3),
+          ),
+          child: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                update = setState;
+                return ShiftlyChatMessageList(
+                  messages: messages,
+                  currentMembershipId: 'mine',
+                  loading: false,
+                  failureMessage: null,
+                  hasMore: hasMore,
+                  loadingOlder: false,
+                  onLoadOlder: () async {
+                    if (!requested.isCompleted) requested.complete();
+                    await release.future;
+                    update(() {
+                      messages = [
+                        for (var i = 0; i < 20; i++) _message(i),
+                        ...messages,
+                      ];
+                      hasMore = false;
+                    });
+                  },
+                  onRetry: () {},
+                  messageBuilder: (message, mine, _) => Align(
+                    key: Key('message-${message.id}'),
+                    alignment: mine
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 240),
+                      margin: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(8),
+                      child: Text(message.text!),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -130,10 +157,25 @@ void main() {
     );
     await tester.pump();
     await requested.future;
-    final before = tester.getTopLeft(find.text('Message 20')).dy;
+    Finder? anchor;
+    for (final message in messages) {
+      final candidate = find.byKey(
+        Key('chat-message-${message.id}'),
+        skipOffstage: false,
+      );
+      if (candidate.evaluate().isEmpty) continue;
+      final bounds = tester.getRect(candidate);
+      if (bounds.bottom > 0 && bounds.top < 700) {
+        anchor = candidate;
+        break;
+      }
+    }
+    expect(anchor, isNotNull);
+    final before = tester.getTopLeft(anchor!).dy;
     release.complete();
     await tester.pumpAndSettle();
-    final after = tester.getTopLeft(find.text('Message 20')).dy;
+    debugPrint(messages.where((message) => find.text(message.text!, skipOffstage: false).evaluate().isNotEmpty).map((message) => message.text).join(', '));
+    final after = tester.getTopLeft(anchor).dy;
 
     expect(after, closeTo(before, 1));
     expect(tester.takeException(), isNull);

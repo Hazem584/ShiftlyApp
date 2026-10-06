@@ -136,11 +136,12 @@ class _TemplateCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(999),
       border: Border.all(color: AppColors.borderColor),
     ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
+    child: Wrap(
+      spacing: 5,
+      runSpacing: 2,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Icon(icon, size: 15),
-        const SizedBox(width: 5),
         Text(text),
       ],
     ),

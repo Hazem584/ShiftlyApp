@@ -49,36 +49,49 @@ class ShiftTemplatesScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
               child: SurfaceCard(
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const CircleAvatar(child: Icon(Icons.schedule_rounded)),
-                    const SizedBox(width: AppSpacing.m),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            workspaceName ??
-                                workspace?.name ??
-                                'Current workspace',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium,
+                    Row(
+                      children: [
+                        const CircleAvatar(
+                          child: Icon(Icons.schedule_rounded),
+                        ),
+                        const SizedBox(width: AppSpacing.m),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                workspaceName ??
+                                    workspace?.name ??
+                                    'Current workspace',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              Text(
+                                '${timezone ?? workspace?.timezone ?? 'Etc/UTC'} • ${state.templates.where((item) => item.active).length} active templates',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
                           ),
-                          Text(
-                            '${timezone ?? workspace?.timezone ?? 'Etc/UTC'} • ${state.templates.where((item) => item.active).length} active templates',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    FilterChip(
-                      key: const Key('show-archived-templates'),
-                      label: const Text('Archived'),
-                      selected: state.includeArchived,
-                      onSelected: (value) => context
-                          .read<ManagerTemplatesCubit>()
-                          .load(includeArchived: value),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilterChip(
+                        key: const Key('show-archived-templates'),
+                        label: const Text('Archived'),
+                        selected: state.includeArchived,
+                        onSelected: (value) => context
+                            .read<ManagerTemplatesCubit>()
+                            .load(includeArchived: value),
+                      ),
                     ),
                   ],
                 ),

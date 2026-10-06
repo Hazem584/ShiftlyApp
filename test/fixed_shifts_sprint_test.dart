@@ -711,7 +711,12 @@ void main() {
       await tester.scrollUntilVisible(
         find.text('Read-only history'),
         250,
-        scrollable: find.byKey(const Key('shift-template-list')),
+        scrollable: find
+            .descendant(
+              of: find.byKey(const Key('shift-template-list')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
       );
       await tester.drag(
         find.byKey(const Key('shift-template-list')),
