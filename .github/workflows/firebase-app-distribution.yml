@@ -2,8 +2,9 @@ name: Firebase App Distribution
 
 on:
   push:
-    branches: [Master]
+    branches: [ Master ]
   workflow_dispatch:
+
 
 permissions:
   contents: read
@@ -17,9 +18,7 @@ concurrency:
 jobs:
   distribute:
     if: >-
-      github.repository == 'Hazem584/ShiftlyApp' &&
-      github.ref == 'refs/heads/Master' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      github.repository == 'Hazem584/ShiftlyApp' && github.ref == 'refs/heads/Master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     defaults:
@@ -32,229 +31,229 @@ jobs:
       FLUTTER_SUPPRESS_ANALYTICS: 'true'
 
     steps:
-      - name: Set private temporary path
-        run: echo "CI_PRIVATE_DIR=$RUNNER_TEMP/shiftly-distribution-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
+    - name: Set private temporary path
+      run: echo "CI_PRIVATE_DIR=$RUNNER_TEMP/shiftly-distribution-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_ENV"
 
-      - name: Check out the event HEAD
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
+    - name: Check out the event HEAD
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
 
-      # Official Linux x64 archive, preserving its Git tags and release metadata.
-      # SHA-256 published in:
-      # https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
-      - name: Install and verify Flutter 3.47.6 stable
-        env:
-          FLUTTER_RELEASE: '3.47.6'
-          FLUTTER_FRAMEWORK_REVISION: '5fc346839b5d0eef006ed8404392afb4dfae428d'
-          FLUTTER_DART_RELEASE: '3.13.5'
-          FLUTTER_ARCHIVE_SHA256: 'f1631b9c2c8b3529323db412b0d1beacf4a748f8783b0d7cf599a8fd5f461675'
-        run: |
-          set -euo pipefail
-          : "${RUNNER_TEMP:?RUNNER_TEMP must be set}"
-          [[ "$RUNNER_TEMP" == /* && "$RUNNER_TEMP" != / ]]
-          sdk_dir="$RUNNER_TEMP/shiftly-flutter-$FLUTTER_RELEASE-archive-v3"
-          # No SDK cache is restored or saved. Remove the old SHA-checkout SDK
-          # and any previous extraction; always install a verified fresh archive.
-          rm -rf -- "$RUNNER_TEMP/flutter-sdk" \
-            "$RUNNER_TEMP/shiftly-flutter-3.47.0-archive-v2" "$sdk_dir"
-          mkdir -p "$sdk_dir"
-          archive="$sdk_dir/flutter-sdk.tar.xz"
-          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
-            "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_$FLUTTER_RELEASE-stable.tar.xz" \
-            --output "$archive"
-          printf '%s  %s\n' "$FLUTTER_ARCHIVE_SHA256" "$archive" | sha256sum --check --strict
-          tar -xJf "$archive" -C "$sdk_dir"
-          rm -- "$archive"
-          "$sdk_dir/flutter/bin/flutter" --version --machine > "$sdk_dir/flutter-version.json"
-          python3 - "$sdk_dir/flutter-version.json" <<'PY'
-          import json, os, sys
+    # Official Linux x64 archive, preserving its Git tags and release metadata.
+    # SHA-256 published in:
+    # https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
+    - name: Install and verify Flutter 3.47.0 stable
+      env:
+        FLUTTER_RELEASE: '3.47.0'
+        FLUTTER_FRAMEWORK_REVISION: '4cf24164269a5ebf0c16a028a00727d0e77bbb05'
+        FLUTTER_DART_RELEASE: '3.13.0'
+        FLUTTER_ARCHIVE_SHA256: '26cd99d3d94b1367e6b50535a18aeef0282c10a535bbe3ec493534dcdab75296'
+      run: |
+        set -euo pipefail
+        : "${RUNNER_TEMP:?RUNNER_TEMP must be set}"
+        [[ "$RUNNER_TEMP" == /* && "$RUNNER_TEMP" != / ]]
+        sdk_dir="$RUNNER_TEMP/shiftly-flutter-$FLUTTER_RELEASE-archive-v3"
+        # No SDK cache is restored or saved. Remove the old SHA-checkout SDK
+        # and any previous extraction; always install a verified fresh archive.
+        rm -rf -- "$RUNNER_TEMP/flutter-sdk" \
+          "$RUNNER_TEMP/shiftly-flutter-3.47.0-archive-v2" "$sdk_dir"
+        mkdir -p "$sdk_dir"
+        archive="$sdk_dir/flutter-sdk.tar.xz"
+        curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
+          "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_$FLUTTER_RELEASE-stable.tar.xz" \
+          --output "$archive"
+        printf '%s  %s\n' "$FLUTTER_ARCHIVE_SHA256" "$archive" | sha256sum --check --strict
+        tar -xJf "$archive" -C "$sdk_dir"
+        rm -- "$archive"
+        "$sdk_dir/flutter/bin/flutter" --version --machine > "$sdk_dir/flutter-version.json"
+        python3 - "$sdk_dir/flutter-version.json" <<'PY'
+        import json, os, sys
 
-          try:
-              with open(sys.argv[1], encoding='utf-8') as source:
-                  version = json.load(source)
-          except (OSError, ValueError):
-              raise SystemExit('Flutter SDK verification failed: invalid machine-readable version metadata.')
-          expected = os.environ['FLUTTER_RELEASE']
-          actual = version.get('frameworkVersion')
-          if actual != expected:
-              raise SystemExit(
-                  f'Flutter SDK verification failed: expected {expected}, got {actual!r}. '
-                  'An unknown or mismatched SDK cannot resolve project dependencies.'
-              )
-          if version.get('channel') != 'stable' or version.get('frameworkRevision') != os.environ['FLUTTER_FRAMEWORK_REVISION']:
-              raise SystemExit('Flutter SDK verification failed: release channel or framework revision mismatch.')
-          expected_dart = os.environ['FLUTTER_DART_RELEASE']
-          if version.get('dartSdkVersion') != expected_dart:
-              raise SystemExit(f'Flutter SDK verification failed: expected Dart {expected_dart}.')
-          print(f'Verified Flutter {expected} stable / Dart {expected_dart} from the official archive.')
-          PY
-          echo "$sdk_dir/flutter/bin" >> "$GITHUB_PATH"
+        try:
+            with open(sys.argv[1], encoding='utf-8') as source:
+                version = json.load(source)
+        except (OSError, ValueError):
+            raise SystemExit('Flutter SDK verification failed: invalid machine-readable version metadata.')
+        expected = os.environ['FLUTTER_RELEASE']
+        actual = version.get('frameworkVersion')
+        if actual != expected:
+            raise SystemExit(
+                f'Flutter SDK verification failed: expected {expected}, got {actual!r}. '
+                'An unknown or mismatched SDK cannot resolve project dependencies.'
+            )
+        if version.get('channel') != 'stable' or version.get('frameworkRevision') != os.environ['FLUTTER_FRAMEWORK_REVISION']:
+            raise SystemExit('Flutter SDK verification failed: release channel or framework revision mismatch.')
+        expected_dart = os.environ['FLUTTER_DART_RELEASE']
+        if version.get('dartSdkVersion') != expected_dart:
+            raise SystemExit(f'Flutter SDK verification failed: expected Dart {expected_dart}.')
+        print(f'Verified Flutter {expected} stable / Dart {expected_dart} from the official archive.')
+        PY
+        echo "$sdk_dir/flutter/bin" >> "$GITHUB_PATH"
 
-      - name: Set up Java
-        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
-        with:
-          distribution: temurin
-          java-version: '17.0.14+7'
+    - name: Set up Java
+      uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+      with:
+        distribution: temurin
+        java-version: '17.0.14+7'
 
-      - name: Set up Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22.14.0'
+    - name: Set up Node
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: '22.14.0'
 
-      - name: Initialize tools
-        run: |
-          set -euo pipefail
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'build-tools;36.0.0'
-          npm install --global firebase-tools@14.22.0 --no-audit --no-fund
-          firebase --version
+    - name: Initialize tools
+      run: |
+        set -euo pipefail
+        "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'build-tools;36.0.0'
+        npm install --global firebase-tools@14.22.0 --no-audit --no-fund
+        firebase --version
 
-      - name: Resolve dependencies
-        run: flutter pub get
+    - name: Resolve dependencies
+      run: flutter pub get
 
-      - name: Analyze
-        run: flutter analyze --no-pub
+    - name: Analyze
+      run: flutter analyze --no-pub
 
-      - name: Test
-        run: flutter test --no-pub
+    - name: Test
+      run: flutter test --no-pub
 
-      - name: Restore private build inputs
-        env:
-          SHIFTLY_DART_DEFINES_JSON: ${{ secrets.SHIFTLY_DART_DEFINES_JSON }}
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          umask 077
-          python3 - <<'PY'
-          import base64, json, os, pathlib, re, subprocess, time
+    - name: Restore private build inputs
+      env:
+        SHIFTLY_DART_DEFINES_JSON: ${{ secrets.SHIFTLY_DART_DEFINES_JSON }}
+        FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      run: |
+        set -euo pipefail
+        umask 077
+        python3 - <<'PY'
+        import base64, json, os, pathlib, re, subprocess, time
 
-          def fail(message):
-              raise SystemExit(message)
+        def fail(message):
+            raise SystemExit(message)
 
-          required = (
-              'SHIFTLY_DART_DEFINES_JSON', 'FIREBASE_SERVICE_ACCOUNT_JSON',
-              'ANDROID_KEYSTORE_BASE64', 'ANDROID_KEYSTORE_PASSWORD',
-              'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD',
-              'FIREBASE_ANDROID_APP_ID', 'FIREBASE_TESTER_GROUPS',
-          )
-          for name in required:
-              if not os.environ.get(name, '').strip():
-                  fail(f'Missing required repository secret/variable: {name}')
-          if os.environ['ANDROID_KEY_ALIAS'] != 'shiftly':
-              fail('ANDROID_KEY_ALIAS must be shiftly.')
-          directory = pathlib.Path(os.environ['CI_PRIVATE_DIR'])
-          directory.mkdir(mode=0o700)
-          for name, filename in (
-              ('SHIFTLY_DART_DEFINES_JSON', 'dart-defines.json'),
-              ('FIREBASE_SERVICE_ACCOUNT_JSON', 'service-account.json'),
-          ):
-              try:
-                  value = json.loads(os.environ[name])
-              except ValueError:
-                  fail(f'{name} must contain valid JSON (contents withheld).')
-              if not isinstance(value, dict):
-                  fail(f'{name} must contain a JSON object.')
-              if name == 'FIREBASE_SERVICE_ACCOUNT_JSON':
-                  if value.get('type') != 'service_account' or not all(
-                      value.get(key) for key in ('project_id', 'client_email', 'private_key')
-                  ):
-                      fail('FIREBASE_SERVICE_ACCOUNT_JSON must be a service-account key.')
-              else:
-                  keys = ('SUPABASE_URL', 'SUPABASE_PUBLISHABLE_KEY', 'SHIFTLY_API_BASE_URL')
-                  if not all(isinstance(value.get(k), str) and value[k].strip() for k in keys):
-                      fail('Dart defines must include all three required nonempty string values.')
-              (directory / filename).write_text(json.dumps(value), encoding='utf-8')
-          try:
-              encoded = ''.join(os.environ['ANDROID_KEYSTORE_BASE64'].split())
-              keystore = base64.b64decode(encoded, validate=True)
-          except ValueError:
-              fail('ANDROID_KEYSTORE_BASE64 is invalid (contents withheld).')
-          if not keystore:
-              fail('Decoded Android keystore is empty.')
-          (directory / 'release.jks').write_bytes(keystore)
+        required = (
+            'SHIFTLY_DART_DEFINES_JSON', 'FIREBASE_SERVICE_ACCOUNT_JSON',
+            'ANDROID_KEYSTORE_BASE64', 'ANDROID_KEYSTORE_PASSWORD',
+            'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD',
+            'FIREBASE_ANDROID_APP_ID', 'FIREBASE_TESTER_GROUPS',
+        )
+        for name in required:
+            if not os.environ.get(name, '').strip():
+                fail(f'Missing required repository secret/variable: {name}')
+        if os.environ['ANDROID_KEY_ALIAS'] != 'shiftly':
+            fail('ANDROID_KEY_ALIAS must be shiftly.')
+        directory = pathlib.Path(os.environ['CI_PRIVATE_DIR'])
+        directory.mkdir(mode=0o700)
+        for name, filename in (
+            ('SHIFTLY_DART_DEFINES_JSON', 'dart-defines.json'),
+            ('FIREBASE_SERVICE_ACCOUNT_JSON', 'service-account.json'),
+        ):
+            try:
+                value = json.loads(os.environ[name])
+            except ValueError:
+                fail(f'{name} must contain valid JSON (contents withheld).')
+            if not isinstance(value, dict):
+                fail(f'{name} must contain a JSON object.')
+            if name == 'FIREBASE_SERVICE_ACCOUNT_JSON':
+                if value.get('type') != 'service_account' or not all(
+                    value.get(key) for key in ('project_id', 'client_email', 'private_key')
+                ):
+                    fail('FIREBASE_SERVICE_ACCOUNT_JSON must be a service-account key.')
+            else:
+                keys = ('SUPABASE_URL', 'SUPABASE_PUBLISHABLE_KEY', 'SHIFTLY_API_BASE_URL')
+                if not all(isinstance(value.get(k), str) and value[k].strip() for k in keys):
+                    fail('Dart defines must include all three required nonempty string values.')
+            (directory / filename).write_text(json.dumps(value), encoding='utf-8')
+        try:
+            encoded = ''.join(os.environ['ANDROID_KEYSTORE_BASE64'].split())
+            keystore = base64.b64decode(encoded, validate=True)
+        except ValueError:
+            fail('ANDROID_KEYSTORE_BASE64 is invalid (contents withheld).')
+        if not keystore:
+            fail('Decoded Android keystore is empty.')
+        (directory / 'release.jks').write_bytes(keystore)
 
-          # Wall-clock seconds since 2020 advance across serialized runs and reruns,
-          # including reruns of an older run_number. Never wrap or reuse a code.
-          build_number = int(time.time()) - 1577836800
-          version = re.search(r'^version:\s*\S+\+(\d+)\s*$', pathlib.Path('pubspec.yaml').read_text(), re.M)
-          if not version or not int(version[1]) < build_number <= 2100000000:
-              fail('CI versionCode must exceed pubspec versionCode and be <= 2100000000.')
-          subject = subprocess.check_output(['git', 'log', '-1', '--format=%s'], text=True).strip()
-          notes = f"Branch: {os.environ['GITHUB_REF_NAME']}\nCommit: {os.environ['GITHUB_SHA']}\nSubject: {subject}\n"
-          (directory / 'release-notes.txt').write_text(notes, encoding='utf-8')
-          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
-              output.write(f'CI_BUILD_NUMBER={build_number}\n')
-              output.write(f'ANDROID_KEYSTORE_PATH={directory / "release.jks"}\n')
-              output.write(f'GOOGLE_APPLICATION_CREDENTIALS={directory / "service-account.json"}\n')
-          PY
+        # Wall-clock seconds since 2020 advance across serialized runs and reruns,
+        # including reruns of an older run_number. Never wrap or reuse a code.
+        build_number = int(time.time()) - 1577836800
+        version = re.search(r'^version:\s*\S+\+(\d+)\s*$', pathlib.Path('pubspec.yaml').read_text(), re.M)
+        if not version or not int(version[1]) < build_number <= 2100000000:
+            fail('CI versionCode must exceed pubspec versionCode and be <= 2100000000.')
+        subject = subprocess.check_output(['git', 'log', '-1', '--format=%s'], text=True).strip()
+        notes = f"Branch: {os.environ['GITHUB_REF_NAME']}\nCommit: {os.environ['GITHUB_SHA']}\nSubject: {subject}\n"
+        (directory / 'release-notes.txt').write_text(notes, encoding='utf-8')
+        with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as output:
+            output.write(f'CI_BUILD_NUMBER={build_number}\n')
+            output.write(f'ANDROID_KEYSTORE_PATH={directory / "release.jks"}\n')
+            output.write(f'GOOGLE_APPLICATION_CREDENTIALS={directory / "service-account.json"}\n')
+        PY
 
-      - name: Build one signed release APK
-        env:
-          SHIFTLY_CI_RELEASE: 'true'
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-          flutter build apk --release --no-pub \
-            --dart-define-from-file="$CI_PRIVATE_DIR/dart-defines.json" \
-            --build-number="$CI_BUILD_NUMBER"
+    - name: Build one signed release APK
+      env:
+        SHIFTLY_CI_RELEASE: 'true'
+        ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      run: |
+        set -euo pipefail
+        flutter build apk --release --no-pub \
+          --dart-define-from-file="$CI_PRIVATE_DIR/dart-defines.json" \
+          --build-number="$CI_BUILD_NUMBER"
 
-      - name: Verify APK signature, package, and versionCode
-        run: |
-          set -euo pipefail
-          apk="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk"
-          tools="$ANDROID_HOME/build-tools/36.0.0"
-          "$tools/apksigner" verify "$apk"
-          "$tools/aapt" dump badging "$apk" > "$CI_PRIVATE_DIR/apk-badging.txt"
-          python3 - <<'PY'
-          import os, pathlib, re
-          gradle = pathlib.Path('android/app/build.gradle.kts').read_text()
-          expected = re.search(r'applicationId\s*=\s*"([^"]+)"', gradle)
-          badging = (pathlib.Path(os.environ['CI_PRIVATE_DIR']) / 'apk-badging.txt').read_text()
-          actual = re.search(r"^package: name='([^']+)' versionCode='(\d+)'", badging, re.M)
-          if not expected or not actual or actual[1] != expected[1]:
-              raise SystemExit('APK package ID does not match the Gradle applicationId.')
-          if actual[2] != os.environ['CI_BUILD_NUMBER']:
-              raise SystemExit('APK versionCode does not match the requested CI build number.')
-          print('Verified signed APK, applicationId, and versionCode.')
-          PY
+    - name: Verify APK signature, package, and versionCode
+      run: |
+        set -euo pipefail
+        apk="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk"
+        tools="$ANDROID_HOME/build-tools/36.0.0"
+        "$tools/apksigner" verify "$apk"
+        "$tools/aapt" dump badging "$apk" > "$CI_PRIVATE_DIR/apk-badging.txt"
+        python3 - <<'PY'
+        import os, pathlib, re
+        gradle = pathlib.Path('android/app/build.gradle.kts').read_text()
+        expected = re.search(r'applicationId\s*=\s*"([^"]+)"', gradle)
+        badging = (pathlib.Path(os.environ['CI_PRIVATE_DIR']) / 'apk-badging.txt').read_text()
+        actual = re.search(r"^package: name='([^']+)' versionCode='(\d+)'", badging, re.M)
+        if not expected or not actual or actual[1] != expected[1]:
+            raise SystemExit('APK package ID does not match the Gradle applicationId.')
+        if actual[2] != os.environ['CI_BUILD_NUMBER']:
+            raise SystemExit('APK versionCode does not match the requested CI build number.')
+        print('Verified signed APK, applicationId, and versionCode.')
+        PY
 
-      - name: Distribute current HEAD to Firebase testers
-        run: |
-          set -euo pipefail
-          umask 077
-          current_head="$(git ls-remote --exit-code origin refs/heads/Master | cut -f1)"
-          if [[ "$current_head" != "$GITHUB_SHA" ]]; then
-            echo 'Skipping distribution: Master has advanced beyond this commit.'
-            exit 0
-          fi
-          # Firebase prints signed download URLs. Keep all CLI output and debug
-          # files private, and show only a safe status message in Actions logs.
-          cd "$CI_PRIVATE_DIR"
-          export XDG_CONFIG_HOME="$CI_PRIVATE_DIR/firebase-config"
-          if firebase appdistribution:distribute \
-            "$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk" \
-            --app "$FIREBASE_ANDROID_APP_ID" \
-            --groups "$FIREBASE_TESTER_GROUPS" \
-            --release-notes-file "$CI_PRIVATE_DIR/release-notes.txt" \
-            --non-interactive > "$CI_PRIVATE_DIR/firebase-output.log" 2>&1; then
-            echo 'APK distributed successfully. View the release in Firebase App Distribution.'
-          else
-            echo 'Firebase distribution failed. Check app ID, service-account permissions, group aliases, and Firebase service status. CLI output withheld to protect credentials and download URLs.'
-            exit 1
-          fi
+    - name: Distribute current HEAD to Firebase testers
+      run: |
+        set -euo pipefail
+        umask 077
+        current_head="$(git ls-remote --exit-code origin refs/heads/Master | cut -f1)"
+        if [[ "$current_head" != "$GITHUB_SHA" ]]; then
+          echo 'Skipping distribution: Master has advanced beyond this commit.'
+          exit 0
+        fi
+        # Firebase prints signed download URLs. Keep all CLI output and debug
+        # files private, and show only a safe status message in Actions logs.
+        cd "$CI_PRIVATE_DIR"
+        export XDG_CONFIG_HOME="$CI_PRIVATE_DIR/firebase-config"
+        if firebase appdistribution:distribute \
+          "$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk" \
+          --app "$FIREBASE_ANDROID_APP_ID" \
+          --groups "$FIREBASE_TESTER_GROUPS" \
+          --release-notes-file "$CI_PRIVATE_DIR/release-notes.txt" \
+          --non-interactive > "$CI_PRIVATE_DIR/firebase-output.log" 2>&1; then
+          echo 'APK distributed successfully. View the release in Firebase App Distribution.'
+        else
+          echo 'Firebase distribution failed. Check app ID, service-account permissions, group aliases, and Firebase service status. CLI output withheld to protect credentials and download URLs.'
+          exit 1
+        fi
 
-      - name: Clean private files
-        if: always()
-        run: |
-          set -euo pipefail
-          expected="$RUNNER_TEMP/shiftly-distribution-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          CI_PRIVATE_DIR="${CI_PRIVATE_DIR:-$expected}"
-          [[ "$CI_PRIVATE_DIR" == "$expected" && "$CI_PRIVATE_DIR" == "$RUNNER_TEMP/"* ]]
-          rm -rf -- "$CI_PRIVATE_DIR"
+    - name: Clean private files
+      if: always()
+      run: |
+        set -euo pipefail
+        expected="$RUNNER_TEMP/shiftly-distribution-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+        CI_PRIVATE_DIR="${CI_PRIVATE_DIR:-$expected}"
+        [[ "$CI_PRIVATE_DIR" == "$expected" && "$CI_PRIVATE_DIR" == "$RUNNER_TEMP/"* ]]
+        rm -rf -- "$CI_PRIVATE_DIR"
