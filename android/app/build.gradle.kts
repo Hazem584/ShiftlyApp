@@ -4,6 +4,25 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Passwords stay in the process environment; no key.properties is generated in CI.
+val releaseSigningValues = listOf(
+    "ANDROID_KEYSTORE_PATH", "ANDROID_KEYSTORE_PASSWORD",
+    "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD",
+).associateWith { System.getenv(it)?.takeIf { value -> value.isNotBlank() } }
+val hasReleaseSigning = releaseSigningValues.values.all { it != null }
+val isReleaseTask = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+if (isReleaseTask || System.getenv("SHIFTLY_CI_RELEASE") == "true") {
+    require(hasReleaseSigning) {
+        "Release signing requires ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, " +
+            "ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD. Debug signing is not allowed."
+    }
+    require(file(releaseSigningValues.getValue("ANDROID_KEYSTORE_PATH")!!).isFile) {
+        "Release keystore file is missing."
+    }
+}
+
 android {
     namespace = "com.example.shiftly"
     compileSdk = flutter.compileSdkVersion
@@ -29,11 +48,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(releaseSigningValues.getValue("ANDROID_KEYSTORE_PATH")!!)
+                storePassword = releaseSigningValues.getValue("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = releaseSigningValues.getValue("ANDROID_KEY_ALIAS")
+                keyPassword = releaseSigningValues.getValue("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 }

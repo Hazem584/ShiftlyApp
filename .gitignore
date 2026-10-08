@@ -50,3 +50,12 @@ app.*.map.json
 # Local Dart-define configuration (examples remain tracked)
 config/*.json
 !config/*.example.json
+
+# Local Android signing and Firebase distribution credentials
+**/*.jks
+**/*.keystore
+**/key.properties
+/android/app/google-services.json
+/android/app/shiftly-testing-*.json
+**/firebase-service-account*.json
+**/firebase-debug.log

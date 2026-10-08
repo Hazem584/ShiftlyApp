@@ -2,7 +2,77 @@
 
 Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authenticated startup uses production repositories for every feature; preview and test repositories are selected only by explicit composition.
 
-## Configuration
+## Android tester distribution
+
+[Firebase App Distribution](.github/workflows/firebase-app-distribution.yml) builds a
+single signed release APK from the event commit on every push to **`Master`**
+(case-sensitive). Manual runs also require `Master`. PRs and forks cannot distribute.
+Runs share one lock; stale commits are skipped immediately before uploading. GitHub
+may replace a pending run with a newer pending run during rapid pushes, so superseded
+commits are not guaranteed a distribution.
+
+CI pins Flutter **3.47.0** (Dart **3.13.0**, exact official SDK commit), Temurin
+**17.0.14+7**, Node **22.14.0**, and Firebase CLI **14.22.0**. Actions are pinned to
+reviewed release commit SHAs. These match the Dart `^3.13.0` constraint and lockfile's
+Flutter `>=3.47.0`; the existing AGP **9.1.0** / Gradle **9.3.1** setup requires Java
+17. Existing Gradle compatibility flags and Kotlin configuration are preserved.
+See [AGP compatibility](https://developer.android.com/build/releases/agp-9-1-0-release-notes)
+and [Firebase CLI distribution](https://firebase.google.com/docs/app-distribution/android/distribute-cli).
+
+Repository **Settings → Secrets and variables → Actions** must contain:
+
+| Type | Name | Value format |
+| --- | --- | --- |
+| Variable | `FIREBASE_ANDROID_APP_ID` | Firebase Android App ID, for the registered package `com.example.shiftly` |
+| Variable | `FIREBASE_TESTER_GROUPS` | Comma-separated Firebase tester **group aliases**, with testers added |
+| Secret | `FIREBASE_SERVICE_ACCOUNT_JSON` | Complete service-account key JSON; account has Firebase App Distribution Admin (`roles/firebaseappdistro.admin`) on the testing project |
+| Secret | `SHIFTLY_DART_DEFINES_JSON` | JSON object with `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SHIFTLY_API_BASE_URL`; use the testing environment and a client-safe Supabase key |
+| Secret | `ANDROID_KEYSTORE_BASE64` | Base64 of the existing release keystore; wrapped base64 is supported |
+| Secret | `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
+| Secret | `ANDROID_KEY_ALIAS` | `shiftly` |
+| Secret | `ANDROID_KEY_PASSWORD` | Password for the `shiftly` key |
+
+For the first run, confirm App Distribution is enabled for the Firebase testing
+Android app and that the configured groups have testers. Registering that app is
+sufficient: no Firebase runtime SDK or `google-services.json` is required. Keep the
+same signing key for all updates.
+
+Review and commit the workflow, Gradle signing change, README, and `.gitignore` to
+`Master`, then push with `git push origin Master`. In GitHub **Actions → Firebase App
+Distribution**, open the push run. To start a manual run, choose **Run workflow →
+Branch: Master → Run workflow**. The workflow must be on the repository's default
+branch before GitHub exposes manual dispatch. Each run resolves dependencies,
+analyzes, and tests once; any failure stops the build and upload. Firebase release
+notes record the branch, exact commit SHA, and commit subject.
+
+Testers accept their Firebase email invitation with the invited Google account,
+open the release in Firebase App Tester, and download/install the APK. Android may
+ask them to allow installation from that source. An existing debug-signed install
+must be uninstalled before installing the release-signed app; this removes its local
+data. Later releases signed with the same key install as updates.
+
+CI versionCode is UTC seconds since 2020-01-01, computed inside the serialized job.
+It advances on reruns, including reruns of older workflow runs, and must exceed the
+current `pubspec.yaml` code (currently `1`) while staying at or below Android's
+`2100000000` limit. Builds take longer than one second; this scheme is bounded until
+2086 and fails rather than wrapping. An old commit rerun cannot upload after `Master`
+advances. Do not independently publish higher versionCodes for this testing app
+without updating this scheme.
+
+Troubleshooting: missing/invalid inputs fail by name without logging their values.
+Signing failures require checking the keystore, passwords, and `shiftly` alias in
+GitHub settings; release builds never fall back to debug signing. Local debug builds
+continue to work without signing variables. Local release builds now require
+`ANDROID_KEYSTORE_PATH` plus the three signing password/alias environment variables.
+Dependency, analysis, or test failures must be fixed before distribution. For Firebase
+upload failures, check the testing app ID/package, IAM role, group aliases, App
+Distribution setup, and service status. Firebase output is deliberately withheld
+because it contains signed download URLs; inspect releases in the Firebase console.
+Temporary configuration, credentials, keystore, and Firebase logs are deleted by an
+`always()` cleanup step, including on failures. Hosted runner teardown covers abrupt
+runner termination. No credentials or APKs are uploaded as GitHub artifacts.
+
+## App configuration
 
 The app requires three compile-time Dart defines:
 
