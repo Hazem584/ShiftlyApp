@@ -47,6 +47,7 @@ import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/points/data/mock_points_repository.dart';
 import 'package:shiftly/features/points/data/points_repository.dart';
+import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/shifts/data/mock_shift_repository.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';

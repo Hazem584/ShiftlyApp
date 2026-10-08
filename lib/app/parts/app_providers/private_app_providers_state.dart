@@ -109,7 +109,12 @@ class _AppProvidersState extends State<AppProviders> {
             : throw StateError(
                 'Authenticated apps must inject PointsRepository.',
               ));
-    _pointsCubit = _registered<PointsCubit>() ?? PointsCubit(_points);
+    _pointsCubit =
+        _registered<PointsCubit>() ??
+        PointsCubit(
+          _points,
+          intentStorage: MemoryRedemptionIntentStorage(),
+        );
     _notifications =
         widget.notificationRepository ??
         _registered<NotificationRepository>() ??
@@ -325,6 +330,7 @@ class _AppProvidersState extends State<AppProviders> {
   void _invalidateDashboardAndCalendar() {
     _dashboardCubit.invalidate();
     _attendanceCalendarCubit.invalidate();
+    unawaited(_pointsCubit.load(refresh: true));
   }
 
   T? _registered<T extends Object>() {

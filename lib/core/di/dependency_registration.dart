@@ -40,6 +40,7 @@ import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/points/data/api_points_repository.dart';
 import 'package:shiftly/features/points/data/mock_points_repository.dart';
 import 'package:shiftly/features/points/data/points_repository.dart';
+import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';
@@ -115,6 +116,9 @@ abstract final class DependencyRegistration {
       ..registerLazySingleton<PointsRepository>(
         () => ApiPointsRepository(target()),
       )
+      ..registerLazySingleton<RedemptionIntentStorage>(
+        () => SharedPreferencesRedemptionIntentStorage(target()),
+      )
       ..registerLazySingleton<FixedShiftRepository>(
         () => ApiFixedShiftRepository(target(), target()),
       )
@@ -139,7 +143,9 @@ abstract final class DependencyRegistration {
         () => SupabaseChatRealtime(target()),
       )
       ..registerFactory<DashboardCubit>(() => DashboardCubit(target()))
-      ..registerFactory<PointsCubit>(() => PointsCubit(target()))
+      ..registerFactory<PointsCubit>(
+        () => PointsCubit(target(), intentStorage: target()),
+      )
       ..registerFactory<NotificationsCubit>(() => NotificationsCubit(target()))
       ..registerFactory<ChatGroupsCubit>(() => ChatGroupsCubit(target()))
       ..registerFactory<ManagerTemplatesCubit>(
@@ -201,6 +207,9 @@ abstract final class DependencyRegistration {
       ..registerSingleton<PointsRepository>(
         pointsRepository ?? const MockPointsRepository(),
       )
+      ..registerSingleton<RedemptionIntentStorage>(
+        MemoryRedemptionIntentStorage(),
+      )
       ..registerSingleton<ProfileImagePicker>(
         profileImagePicker ?? DeviceProfileImagePicker(),
       )
@@ -208,7 +217,10 @@ abstract final class DependencyRegistration {
         () => DashboardCubit(locator<DashboardRepository>()),
       )
       ..registerFactory<PointsCubit>(
-        () => PointsCubit(locator<PointsRepository>()),
+        () => PointsCubit(
+          locator<PointsRepository>(),
+          intentStorage: locator<RedemptionIntentStorage>(),
+        ),
       )
       ..registerFactory<NotificationsCubit>(
         () => NotificationsCubit(locator<NotificationRepository>()),

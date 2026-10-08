@@ -78,11 +78,12 @@ class PerformanceThumbnail extends StatelessWidget {
                             spacing: 18,
                             runSpacing: 10,
                             children: [
-                              _Metric('${wallet.green.available}', 'GREEN'),
-                              _Metric('${wallet.red.active}', 'Active RED'),
-                              _Metric('${wallet.currentStreak}', 'Day streak'),
+                              _metric(context, '${wallet.green.available}', 'GREEN'),
+                              _metric(context, '${wallet.red.active}', 'Active RED'),
+                              _metric(context, '${wallet.currentStreak}', 'Day streak'),
                               if (wallet.greenNeededForOneRed > 0)
-                                _Metric(
+                                _metric(
+                                  context,
                                   '${wallet.greenNeededForOneRed}',
                                   'GREEN to compensate',
                                 ),
@@ -99,12 +100,7 @@ class PerformanceThumbnail extends StatelessWidget {
   }
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric(this.value, this.label);
-  final String value;
-  final String label;
-  @override
-  Widget build(BuildContext context) => Column(
+Widget _metric(BuildContext context, String value, String label) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
     children: [
@@ -112,4 +108,3 @@ class _Metric extends StatelessWidget {
       Text(label, style: Theme.of(context).textTheme.bodySmall),
     ],
   );
-}
