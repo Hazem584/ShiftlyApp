@@ -44,6 +44,9 @@ ChatMessage message(
   groupId: group,
   type: type,
   text: type == 'TEXT' ? 'fixture' : null,
+  location: type == 'LOCATION'
+      ? const ChatLocation(latitude: 0, longitude: 0)
+      : null,
   clientMessageId: clientId,
   sender: const ChatSender(
     membershipId: membership,
@@ -193,14 +196,19 @@ void main() {
   test('rapid text and location accept durably while one earlier request is blocked', () async {
     final gate = Completer<ChatMessage>();
     final repository = FixtureRepository()..sendGate = gate;
+    final racingCache = GatedMessageCache(storage);
     final cubit = ChatConversationCubit(
       repository,
       const NoopChatRealtime(),
-      messageCache: cache,
+      messageCache: racingCache,
       outbox: outbox,
-    )..bind(session, group);
-    await until(() => !cubit.state.loading);
+    );
+    addTearDown(cubit.close);
+    final loaded = cubit.stream.firstWhere((state) => !state.loading);
+    cubit.bind(session, group);
+    await loaded;
     expect(await cubit.send('  fixture one  '), isTrue);
+    await repository.firstSendStarted.future;
     expect(await cubit.send('fixture two'), isTrue);
     expect(
       await cubit.sendLocation(const ChatLocation(latitude: 0, longitude: 0)),
@@ -208,16 +216,57 @@ void main() {
     );
     expect(cubit.state.pending, hasLength(3));
     expect(cubit.state.pending.first.text, 'fixture one');
-    expect((await outbox.restore(scope)), hasLength(3));
+    final acceptedIds = cubit.state.pending
+        .map((p) => p.clientMessageId)
+        .toSet();
+    expect(acceptedIds, hasLength(3));
+    expect(
+      (await outbox.restore(scope)).map((operation) => operation.id).toSet(),
+      acceptedIds,
+    );
     expect(repository.sendIds, hasLength(1));
     final id = repository.sendIds.single;
-    gate.complete(message(20, clientId: id));
+
+    // Hold a stale empty refresh at its persistence boundary while all three
+    // sends finish. Neither its cache write nor its state emission may lose them.
+    racingCache.blockNextWrite = true;
+    final refresh = cubit.load(refresh: true);
+    await racingCache.writeStarted.future;
+    final delivered = cubit.stream.firstWhere((state) => state.pending.isEmpty);
     repository.sendGate = null;
-    await until(() => cubit.state.pending.isEmpty);
-    expect(repository.sendIds.toSet(), hasLength(3));
-    expect(cubit.state.messages, hasLength(3));
+    gate.complete(message(20, clientId: id));
+    await delivered;
+    expect(repository.sendIds, hasLength(3));
+    expect(repository.sendIds.toSet(), acceptedIds);
+    void verifyMessages(List<ChatMessage> messages) {
+      expect(messages, hasLength(3));
+      expect(messages.map((message) => message.id).toSet(), hasLength(3));
+      expect(
+        messages.map((message) => message.clientMessageId).toSet(),
+        acceptedIds,
+      );
+      expect(messages.map((message) => message.type), [
+        'TEXT',
+        'TEXT',
+        'LOCATION',
+      ]);
+    }
+
+    verifyMessages(cubit.state.messages);
+    verifyMessages((await racingCache.read(scope))!.messages);
     expect(await outbox.restore(scope), isEmpty);
-    await cubit.close();
+
+    racingCache.releaseWrite.complete();
+    await refresh;
+    verifyMessages(cubit.state.messages);
+    verifyMessages((await racingCache.read(scope))!.messages);
+    // A later server refresh repeats the same confirmations without duplicates.
+    repository.page = ChatMessagePage(
+      messages: repository.committed.values.toList(),
+    );
+    await cubit.load(refresh: true);
+    verifyMessages(cubit.state.messages);
+    verifyMessages((await racingCache.read(scope))!.messages);
   });
 
   test(
@@ -718,6 +767,7 @@ class FixtureRepository extends ChatRepository {
   Completer<ChatMessage>? sendGate;
   bool loseResponse = false;
   final List<String> sendIds = [];
+  final firstSendStarted = Completer<void>();
   final Map<String, ChatMessage> committed = {};
   int olderCalls = 0,
       urlCalls = 0,
@@ -751,7 +801,12 @@ class FixtureRepository extends ChatRepository {
     String? replyToMessageId,
   }) async {
     sendIds.add(clientMessageId);
-    if (sendGate != null) return sendGate!.future;
+    if (!firstSendStarted.isCompleted) firstSendStarted.complete();
+    if (sendGate != null) {
+      final result = await sendGate!.future;
+      committed[clientMessageId] = result;
+      return result;
+    }
     final result = committed.putIfAbsent(
       clientMessageId,
       () => message(20 + committed.length, clientId: clientMessageId),
@@ -771,7 +826,14 @@ class FixtureRepository extends ChatRepository {
     required String clientMessageId,
   }) async {
     sendIds.add(clientMessageId);
-    return message(40, type: 'LOCATION', clientId: clientMessageId);
+    return committed.putIfAbsent(
+      clientMessageId,
+      () => message(
+        40 + committed.length,
+        type: 'LOCATION',
+        clientId: clientMessageId,
+      ),
+    );
   }
 
   @override
@@ -817,6 +879,28 @@ class FixtureRepository extends ChatRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnsupportedError('Unused fixture operation');
+}
+
+class GatedMessageCache extends ChatMessageCache {
+  GatedMessageCache(super.storage);
+
+  bool blockNextWrite = false;
+  final writeStarted = Completer<void>();
+  final releaseWrite = Completer<void>();
+
+  @override
+  Future<void> write(
+    ChatCacheScope scope,
+    ChatMessagePage page, {
+    String? cursor,
+  }) async {
+    if (blockNextWrite) {
+      blockNextWrite = false;
+      writeStarted.complete();
+      await releaseWrite.future;
+    }
+    await super.write(scope, page, cursor: cursor);
+  }
 }
 
 class FixtureDownloadAdapter implements HttpClientAdapter {

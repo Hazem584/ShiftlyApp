@@ -16,23 +16,50 @@ class ChatMessageCache {
   final int conversationLimit;
   final Duration retention;
   Future<void> confirm(ChatCacheScope scope, ChatMessage message) async {
-    final page = await read(scope);
-    // A standalone sent record cannot establish coverage of a latest page.
-    if (page == null) return;
-    final values = <String, ChatMessage>{
-      for (final item in page.messages) item.id: item,
-      message.id: message,
-    };
-    if (values.length > messageLimit) return;
-    final messages = values.values.toList()
-      ..sort((a, b) {
-        final time = a.createdAt.compareTo(b.createdAt);
-        return time == 0 ? a.id.compareTo(b.id) : time;
+    final revision = storage.revision;
+    await storage.ready;
+    if (!storage.authorized(scope)) return;
+    await storage.database.transaction((transaction) async {
+      if (!storage.authorized(scope) || revision != storage.revision) return;
+      final record = storage.records.record(_key(scope, null));
+      final page = await record.get(transaction);
+      if (!storage.authorized(scope) || revision != storage.revision) return;
+      // A standalone sent record cannot establish coverage of a latest page.
+      if (page == null ||
+          (page['access'] as int) <
+              DateTime.now().subtract(retention).millisecondsSinceEpoch) {
+        return;
+      }
+      final messages = _merge(ChatMessageCodec.decode(page['messages']), [
+        message,
+      ]);
+      if (messages.length > messageLimit) return;
+      // Keep local confirmations with the page until eviction. A refresh can
+      // have captured its server snapshot before these sends were committed.
+      final confirmed = _merge(
+        ChatMessageCodec.decode(page['confirmed'] ?? const []),
+        [message],
+      );
+      await record.update(transaction, {
+        'access': DateTime.now().millisecondsSinceEpoch,
+        'messages': messages.map(ChatMessageCodec.encode).toList(),
+        'confirmed': confirmed.map(ChatMessageCodec.encode).toList(),
       });
-    await write(
-      scope,
-      ChatMessagePage(messages: messages, nextCursor: page.nextCursor),
-    );
+    });
+  }
+
+  List<ChatMessage> _merge(
+    List<ChatMessage> current,
+    List<ChatMessage> incoming,
+  ) {
+    final values = <String, ChatMessage>{
+      for (final message in current) message.id: message,
+      for (final message in incoming) message.id: message,
+    };
+    return values.values.toList()..sort((a, b) {
+      final time = a.createdAt.compareTo(b.createdAt);
+      return time == 0 ? a.id.compareTo(b.id) : time;
+    });
   }
 
   String _key(ChatCacheScope scope, String? cursor) =>
@@ -74,12 +101,24 @@ class ChatMessageCache {
     if (!storage.authorized(scope)) return;
     await storage.database.transaction((transaction) async {
       if (!storage.authorized(scope) || revision != storage.revision) return;
-      await storage.records.record(_key(scope, cursor)).put(transaction, {
+      final record = storage.records.record(_key(scope, cursor));
+      final previous = cursor == null ? await record.get(transaction) : null;
+      if (!storage.authorized(scope) || revision != storage.revision) return;
+      final confirmed =
+          previous != null &&
+              (previous['access'] as int) >=
+                  DateTime.now().subtract(retention).millisecondsSinceEpoch
+          ? ChatMessageCodec.decode(previous['confirmed'] ?? const [])
+          : <ChatMessage>[];
+      final messages = _merge(confirmed, page.messages);
+      await record.put(transaction, {
         'kind': 'page',
         'scope': scope.key,
         'user': scope.userId,
         'access': DateTime.now().millisecondsSinceEpoch,
-        'messages': page.messages.map(ChatMessageCodec.encode).toList(),
+        'messages': messages.map(ChatMessageCodec.encode).toList(),
+        if (cursor == null)
+          'confirmed': confirmed.map(ChatMessageCodec.encode).toList(),
         'next': page.nextCursor,
       });
       final rows = await storage.records.find(

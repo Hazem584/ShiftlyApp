@@ -108,7 +108,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           emit(
             state.copyWith(
               loading: false,
-              messages: _chronological(cached.messages),
+              messages: _merge(cached.messages, state.messages),
               nextCursor: cached.nextCursor,
               clearCursor: cached.nextCursor == null,
               refreshing: true,
@@ -121,6 +121,17 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
       final page = await _repository.listMessages(scope.workspaceId, groupId);
       if (!_current(scope, groupId, generation, request)) return;
       _validate(page.messages, scope, groupId);
+      try {
+        await messageCache?.write(
+          ChatCacheScope.fromSession(scope, groupId),
+          page,
+        );
+      } catch (_) {
+        /* Canonical rendering remains available if cache writes fail. */
+      }
+      if (!_current(scope, groupId, generation, request)) return;
+      // Sends may finish while persistence awaits. Merge the current state only
+      // after that await so a refresh cannot replace a newer confirmation.
       final currentMessages = state.messages;
       final overlaps =
           currentMessages.isEmpty ||
@@ -140,15 +151,6 @@ class ChatConversationCubit extends Cubit<ChatConversationState> {
           : currentMessages.isNotEmpty && _latestLoaded
           ? state.nextCursor
           : page.nextCursor;
-      try {
-        await messageCache?.write(
-          ChatCacheScope.fromSession(scope, groupId),
-          page,
-        );
-      } catch (_) {
-        /* Canonical rendering remains available if cache writes fail. */
-      }
-      if (!_current(scope, groupId, generation, request)) return;
       emit(
         ChatConversationState(
           loading: false,

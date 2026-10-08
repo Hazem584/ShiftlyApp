@@ -7,12 +7,16 @@ import 'package:shiftly/features/manager_performance/data/memory_manager_intent_
 import 'package:shiftly/features/manager_performance/data/manager_points_page.dart';
 import 'package:shiftly/features/manager_performance/data/manager_points_record.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
 import 'package:shiftly/features/manager_performance/presentation/screens/employee_performance_screen.dart';
 import 'package:shiftly/features/manager_performance/presentation/widgets/manager_action_dialog.dart';
 import 'package:shiftly/features/manager_performance/presentation/widgets/manager_form_field.dart';
 import 'package:shiftly/features/manager_performance/presentation/widgets/manager_forms.dart';
+import 'package:shiftly/features/manager_performance/presentation/widgets/manager_calendar.dart';
+import 'package:shiftly/features/points/data/points_models.dart';
+import 'package:shiftly/features/points/presentation/widgets/points_formatters.dart';
 
-import 'points_feature_test.dart' show walletJson;
+import 'points_feature_test.dart' show walletJson, dayJson;
 import 'support/manager_points_fake.dart';
 
 const scope = FeatureSessionScope(
@@ -43,6 +47,84 @@ void main() {
         ),
       ),
     ),
+  );
+
+  testWidgets(
+    'calendar dates, status details and legend fit compact scaled layouts',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final semantics = tester.ensureSemantics();
+      try {
+        for (final width in [280.0, 320.0]) {
+          tester.view.physicalSize = Size(width, 900);
+          for (final scale in [1.0, 2.0, 3.0]) {
+            await tester.pumpWidget(
+              app(
+                Builder(
+                  builder: (context) => MediaQuery(
+                    data: MediaQuery.of(context)
+                        .copyWith(textScaler: TextScaler.linear(scale)),
+                    child: Scaffold(
+                      body: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: DefaultTextStyle(
+                            style: const TextStyle(fontSize: 20, height: 1.5),
+                            child: ManagerCalendar(
+                              month: DateTime(2026, 10),
+                              state: ManagerResourceState(
+                                records: [
+                                  ManagerPointsRecord(dayJson(status: 'LATE')),
+                                ],
+                              ),
+                              timezone: scope.timezone,
+                              changeMonth: (_) {},
+                              cubit: cubit,
+                              scope: scope,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+            await tester.pumpAndSettle();
+            await tester.ensureVisible(find.text('31'));
+            await tester.pumpAndSettle();
+            expect(find.text('31'), findsOneWidget);
+            for (final status in PerformanceStatus.values) {
+              await tester.ensureVisible(find.text(statusLabel(status)));
+              await tester.pumpAndSettle();
+              expect(find.text(statusLabel(status)), findsOneWidget);
+            }
+            expect(
+              tester.takeException(),
+              isNull,
+              reason: 'width=$width, text scale=$scale',
+            );
+            await tester.ensureVisible(find.text('7'));
+            await tester.pumpAndSettle();
+            expect(
+              find.bySemanticsLabel(RegExp('2026-10-07, Late')),
+              findsOneWidget,
+            );
+            await tester.tap(find.text('7'));
+            await tester.pumpAndSettle();
+            expect(find.text('2026-10-07'), findsOneWidget);
+            expect(find.text('Evening'), findsOneWidget);
+            expect(tester.takeException(), isNull);
+            await tester.tap(find.text('Close'));
+            await tester.pumpAndSettle();
+          }
+        }
+      } finally {
+        semantics.dispose();
+      }
+    },
   );
 
   testWidgets(

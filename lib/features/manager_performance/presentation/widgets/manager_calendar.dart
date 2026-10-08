@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 
@@ -34,6 +36,7 @@ class ManagerCalendar extends StatelessWidget {
     };
     final offset = DateTime(month.year, month.month).weekday - 1;
     final count = DateTime(month.year, month.month + 1, 0).day;
+    final dayTextStyle = DefaultTextStyle.of(context).style;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -58,84 +61,106 @@ class ManagerCalendar extends StatelessWidget {
         ),
         if (state.loading) const LinearProgressIndicator(),
         if (state.error != null) Text(state.error!),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: count + offset,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            mainAxisExtent: 40 + MediaQuery.textScalerOf(context).scale(16),
-          ),
-          itemBuilder: (context, index) {
-            if (index < offset) {
-              return const SizedBox.shrink();
+        LayoutBuilder(
+          builder: (context, constraints) {
+            // Measure the actual scaled line height, including wrapping in a
+            // narrow cell, rather than treating scaled font size as its height.
+            var dateHeight = 0.0;
+            for (var number = 1; number <= count; number++) {
+              final painter = TextPainter(
+                text: TextSpan(text: '$number', style: dayTextStyle),
+                textDirection: Directionality.of(context),
+                textScaler: MediaQuery.textScalerOf(context),
+                locale: Localizations.localeOf(context),
+              )..layout(maxWidth: constraints.maxWidth / 7);
+              dateHeight = math.max(dateHeight, painter.height);
+              painter.dispose();
             }
-            final date =
-                '${month.year}-${month.month.toString().padLeft(2, '0')}-${(index - offset + 1).toString().padLeft(2, '0')}';
-            final day = days[date];
-            return Semantics(
-              label: '$date, ${statusLabel(day?.status)}',
-              child: InkWell(
-                onTap: day == null
-                    ? null
-                    : () => showDialog<void>(
-                        context: context,
-                        builder: (context) => ManagerScopedDetails(
-                          cubit: cubit,
-                          scope: scope,
-                          child: AlertDialog(
-                            title: Text(day.date.value),
-                            content: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(statusLabel(day.status)),
-                                  if (day.templateName != null)
-                                    Text(day.templateName!),
-                                  if (day.clockInAt != null)
-                                    Text(
-                                      'Clock-in: ${WorkspaceTime.dateTime(day.clockInAt!, timezone, locale: Localizations.localeOf(context).toString())}',
-                                    ),
-                                  if (day.clockOutAt != null)
-                                    Text(
-                                      'Clock-out: ${WorkspaceTime.dateTime(day.clockOutAt!, timezone, locale: Localizations.localeOf(context).toString())}',
-                                    ),
-                                  if (day.workDurationMinutes != null)
-                                    Text(
-                                      'Worked ${day.workDurationMinutes} minutes',
-                                    ),
-                                  if (day.lateMinutes != null)
-                                    Text('Late ${day.lateMinutes} minutes'),
-                                  for (final change in day.pointChanges)
-                                    Text(
-                                      '${pointLabel(change.type)} ${change.amount}',
-                                    ),
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: count + offset,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                mainAxisExtent: math.max(48, dateHeight + 18 + 12),
+              ),
+              itemBuilder: (context, index) {
+                if (index < offset) {
+                  return const SizedBox.shrink();
+                }
+                final date =
+                    '${month.year}-${month.month.toString().padLeft(2, '0')}-${(index - offset + 1).toString().padLeft(2, '0')}';
+                final day = days[date];
+                return Semantics(
+                  label: '$date, ${statusLabel(day?.status)}',
+                  child: InkWell(
+                    onTap: day == null
+                        ? null
+                        : () => showDialog<void>(
+                            context: context,
+                            builder: (context) => ManagerScopedDetails(
+                              cubit: cubit,
+                              scope: scope,
+                              child: AlertDialog(
+                                title: Text(day.date.value),
+                                content: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(statusLabel(day.status)),
+                                      if (day.templateName != null)
+                                        Text(day.templateName!),
+                                      if (day.clockInAt != null)
+                                        Text(
+                                          'Clock-in: ${WorkspaceTime.dateTime(day.clockInAt!, timezone, locale: Localizations.localeOf(context).toString())}',
+                                        ),
+                                      if (day.clockOutAt != null)
+                                        Text(
+                                          'Clock-out: ${WorkspaceTime.dateTime(day.clockOutAt!, timezone, locale: Localizations.localeOf(context).toString())}',
+                                        ),
+                                      if (day.workDurationMinutes != null)
+                                        Text(
+                                          'Worked ${day.workDurationMinutes} minutes',
+                                        ),
+                                      if (day.lateMinutes != null)
+                                        Text('Late ${day.lateMinutes} minutes'),
+                                      for (final change in day.pointChanges)
+                                        Text(
+                                          '${pointLabel(change.type)} ${change.amount}',
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Close'),
+                                  ),
                                 ],
                               ),
                             ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text('Close'),
-                              ),
-                            ],
                           ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${index - offset + 1}',
+                          style: dayTextStyle,
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('${index - offset + 1}'),
-                    if (day != null)
-                      Icon(
-                        statusIcon(day.status),
-                        size: 18,
-                        color: statusColor(context, day.status),
-                      ),
-                  ],
-                ),
-              ),
+                        if (day != null)
+                          Icon(
+                            statusIcon(day.status),
+                            size: 18,
+                            color: statusColor(context, day.status),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),
@@ -149,7 +174,7 @@ class ManagerCalendar extends StatelessWidget {
                 children: [
                   Icon(statusIcon(status), size: 18),
                   const SizedBox(width: 4),
-                  Text(statusLabel(status)),
+                  Flexible(child: Text(statusLabel(status))),
                 ],
               ),
           ],
