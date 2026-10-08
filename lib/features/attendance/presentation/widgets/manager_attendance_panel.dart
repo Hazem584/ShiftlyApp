@@ -10,6 +10,7 @@ import 'package:shiftly/features/attendance/data/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_records_list.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_rejection_dialog.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';
 
@@ -352,42 +353,13 @@ class ManagerAttendancePanel extends StatelessWidget {
   }
 
   Future<void> _reject(BuildContext context, String attendanceId) async {
-    final controller = TextEditingController();
-    final reason = await showDialog<String>(
+    final cubit = context.read<ManagerAttendanceCubit>();
+    final rejected = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Reject attendance?'),
-        content: TextField(
-          key: const Key('attendance-rejection-reason'),
-          controller: controller,
-          maxLength: 1000,
-          maxLines: 3,
-          decoration: const InputDecoration(labelText: 'Reason'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            key: const Key('confirm-reject-attendance'),
-            onPressed: () {
-              final value = controller.text.trim();
-              if (value.isNotEmpty) Navigator.pop(dialogContext, value);
-            },
-            child: const Text('Reject'),
-          ),
-        ],
-      ),
+      builder: (_) =>
+          AttendanceRejectionDialog(cubit: cubit, attendanceId: attendanceId),
     );
-    controller.dispose();
-    if (reason == null || !context.mounted) return;
-    final result = await context.read<ManagerAttendanceCubit>().review(
-      attendanceId,
-      AttendanceReviewDecision.rejected,
-      rejectionReason: reason,
-    );
-    if (context.mounted && result == AttendanceMutationResult.success) {
+    if (context.mounted && rejected == true) {
       ToastService.success(context, message: 'Attendance rejected.');
     }
   }
