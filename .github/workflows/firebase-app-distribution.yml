@@ -41,14 +41,52 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      # Official SDK tag 3.47.0, Dart 3.13.0; matches pubspec and lockfile.
-      - name: Check out pinned Flutter SDK
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          repository: flutter/flutter
-          ref: 4cf24164269a5ebf0c16a028a00727d0e77bbb05 # 3.47.0 stable
-          path: .ci-flutter
-          persist-credentials: false
+      # Official Linux x64 archive, preserving its Git tags and release metadata.
+      # SHA-256 published in:
+      # https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
+      - name: Install and verify Flutter 3.47.0 stable
+        env:
+          FLUTTER_RELEASE: '3.47.0'
+          FLUTTER_ARCHIVE_SHA256: '26cd99d3d94b1367e6b50535a18aeef0282c10a535bbe3ec493534dcdab75296'
+        run: |
+          set -euo pipefail
+          : "${RUNNER_TEMP:?RUNNER_TEMP must be set}"
+          [[ "$RUNNER_TEMP" == /* && "$RUNNER_TEMP" != / ]]
+          sdk_dir="$RUNNER_TEMP/shiftly-flutter-$FLUTTER_RELEASE-archive-v2"
+          # No SDK cache is restored or saved. Remove the old SHA-checkout SDK
+          # and any previous extraction; always install a verified fresh archive.
+          rm -rf -- "$RUNNER_TEMP/flutter-sdk" "$sdk_dir"
+          mkdir -p "$sdk_dir"
+          archive="$sdk_dir/flutter-sdk.tar.xz"
+          curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
+            "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_$FLUTTER_RELEASE-stable.tar.xz" \
+            --output "$archive"
+          printf '%s  %s\n' "$FLUTTER_ARCHIVE_SHA256" "$archive" | sha256sum --check --strict
+          tar -xJf "$archive" -C "$sdk_dir"
+          rm -- "$archive"
+          "$sdk_dir/flutter/bin/flutter" --version --machine > "$sdk_dir/flutter-version.json"
+          python3 - "$sdk_dir/flutter-version.json" <<'PY'
+          import json, os, sys
+
+          try:
+              with open(sys.argv[1], encoding='utf-8') as source:
+                  version = json.load(source)
+          except (OSError, ValueError):
+              raise SystemExit('Flutter SDK verification failed: invalid machine-readable version metadata.')
+          expected = os.environ['FLUTTER_RELEASE']
+          actual = version.get('frameworkVersion')
+          if actual != expected:
+              raise SystemExit(
+                  f'Flutter SDK verification failed: expected {expected}, got {actual!r}. '
+                  'An unknown or mismatched SDK cannot resolve project dependencies.'
+              )
+          if version.get('channel') != 'stable' or version.get('frameworkRevision') != '4cf24164269a5ebf0c16a028a00727d0e77bbb05':
+              raise SystemExit('Flutter SDK verification failed: release channel or framework revision mismatch.')
+          if version.get('dartSdkVersion') != '3.13.0':
+              raise SystemExit('Flutter SDK verification failed: expected Dart 3.13.0.')
+          print(f'Verified Flutter {expected} stable / Dart 3.13.0 from the official archive.')
+          PY
+          echo "$sdk_dir/flutter/bin" >> "$GITHUB_PATH"
 
       - name: Set up Java
         uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
@@ -64,9 +102,6 @@ jobs:
       - name: Initialize tools
         run: |
           set -euo pipefail
-          mv .ci-flutter "$RUNNER_TEMP/flutter-sdk"
-          echo "$RUNNER_TEMP/flutter-sdk/bin" >> "$GITHUB_PATH"
-          "$RUNNER_TEMP/flutter-sdk/bin/flutter" --version
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'build-tools;36.0.0'
           npm install --global firebase-tools@14.22.0 --no-audit --no-fund
           firebase --version
