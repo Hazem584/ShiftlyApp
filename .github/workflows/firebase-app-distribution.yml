@@ -43,12 +43,12 @@ jobs:
     # Official Linux x64 archive, preserving its Git tags and release metadata.
     # SHA-256 published in:
     # https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
-    - name: Install and verify Flutter 3.47.0 stable
+    - name: Install and verify Flutter 3.47.6 stable
       env:
-        FLUTTER_RELEASE: '3.47.0'
-        FLUTTER_FRAMEWORK_REVISION: '4cf24164269a5ebf0c16a028a00727d0e77bbb05'
-        FLUTTER_DART_RELEASE: '3.13.0'
-        FLUTTER_ARCHIVE_SHA256: '26cd99d3d94b1367e6b50535a18aeef0282c10a535bbe3ec493534dcdab75296'
+        FLUTTER_RELEASE: '3.47.6'
+        FLUTTER_FRAMEWORK_REVISION: '5fc346839b5d0eef006ed8404392afb4dfae428d'
+        FLUTTER_DART_RELEASE: '3.13.5'
+        FLUTTER_ARCHIVE_SHA256: 'f1631b9c2c8b3529323db412b0d1beacf4a748f8783b0d7cf599a8fd5f461675'
       run: |
         set -euo pipefail
         : "${RUNNER_TEMP:?RUNNER_TEMP must be set}"
