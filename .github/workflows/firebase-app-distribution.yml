@@ -44,18 +44,21 @@ jobs:
       # Official Linux x64 archive, preserving its Git tags and release metadata.
       # SHA-256 published in:
       # https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
-      - name: Install and verify Flutter 3.47.0 stable
+      - name: Install and verify Flutter 3.47.6 stable
         env:
-          FLUTTER_RELEASE: '3.47.0'
-          FLUTTER_ARCHIVE_SHA256: '26cd99d3d94b1367e6b50535a18aeef0282c10a535bbe3ec493534dcdab75296'
+          FLUTTER_RELEASE: '3.47.6'
+          FLUTTER_FRAMEWORK_REVISION: '5fc346839b5d0eef006ed8404392afb4dfae428d'
+          FLUTTER_DART_RELEASE: '3.13.5'
+          FLUTTER_ARCHIVE_SHA256: 'f1631b9c2c8b3529323db412b0d1beacf4a748f8783b0d7cf599a8fd5f461675'
         run: |
           set -euo pipefail
           : "${RUNNER_TEMP:?RUNNER_TEMP must be set}"
           [[ "$RUNNER_TEMP" == /* && "$RUNNER_TEMP" != / ]]
-          sdk_dir="$RUNNER_TEMP/shiftly-flutter-$FLUTTER_RELEASE-archive-v2"
+          sdk_dir="$RUNNER_TEMP/shiftly-flutter-$FLUTTER_RELEASE-archive-v3"
           # No SDK cache is restored or saved. Remove the old SHA-checkout SDK
           # and any previous extraction; always install a verified fresh archive.
-          rm -rf -- "$RUNNER_TEMP/flutter-sdk" "$sdk_dir"
+          rm -rf -- "$RUNNER_TEMP/flutter-sdk" \
+            "$RUNNER_TEMP/shiftly-flutter-3.47.0-archive-v2" "$sdk_dir"
           mkdir -p "$sdk_dir"
           archive="$sdk_dir/flutter-sdk.tar.xz"
           curl --fail --location --retry 3 --proto '=https' --tlsv1.2 \
@@ -80,11 +83,12 @@ jobs:
                   f'Flutter SDK verification failed: expected {expected}, got {actual!r}. '
                   'An unknown or mismatched SDK cannot resolve project dependencies.'
               )
-          if version.get('channel') != 'stable' or version.get('frameworkRevision') != '4cf24164269a5ebf0c16a028a00727d0e77bbb05':
+          if version.get('channel') != 'stable' or version.get('frameworkRevision') != os.environ['FLUTTER_FRAMEWORK_REVISION']:
               raise SystemExit('Flutter SDK verification failed: release channel or framework revision mismatch.')
-          if version.get('dartSdkVersion') != '3.13.0':
-              raise SystemExit('Flutter SDK verification failed: expected Dart 3.13.0.')
-          print(f'Verified Flutter {expected} stable / Dart 3.13.0 from the official archive.')
+          expected_dart = os.environ['FLUTTER_DART_RELEASE']
+          if version.get('dartSdkVersion') != expected_dart:
+              raise SystemExit(f'Flutter SDK verification failed: expected Dart {expected_dart}.')
+          print(f'Verified Flutter {expected} stable / Dart {expected_dart} from the official archive.')
           PY
           echo "$sdk_dir/flutter/bin" >> "$GITHUB_PATH"
 

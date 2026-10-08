@@ -11,7 +11,7 @@ Runs share one lock; stale commits are skipped immediately before uploading. Git
 may replace a pending run with a newer pending run during rapid pushes, so superseded
 commits are not guaranteed a distribution.
 
-CI pins Flutter **3.47.0** (Dart **3.13.0**, official Linux x64 SDK archive), Temurin
+CI pins Flutter **3.47.6** (Dart **3.13.5**, official Linux x64 SDK archive), Temurin
 **17.0.14+7**, Node **22.14.0**, and Firebase CLI **14.22.0**. Actions are pinned to
 reviewed release commit SHAs. These match the Dart `^3.13.0` constraint and lockfile's
 Flutter `>=3.47.0`; the existing AGP **9.1.0** / Gradle **9.3.1** setup requires Java
