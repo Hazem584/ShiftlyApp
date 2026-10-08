@@ -37,6 +37,10 @@ import 'package:shiftly/features/notifications/presentation/cubit/notifications_
 import 'package:shiftly/features/profile/data/api_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
+import 'package:shiftly/features/points/data/api_points_repository.dart';
+import 'package:shiftly/features/points/data/mock_points_repository.dart';
+import 'package:shiftly/features/points/data/points_repository.dart';
+import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';
 import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
@@ -108,6 +112,9 @@ abstract final class DependencyRegistration {
       ..registerLazySingleton<DashboardRepository>(
         () => ApiDashboardRepository(target()),
       )
+      ..registerLazySingleton<PointsRepository>(
+        () => ApiPointsRepository(target()),
+      )
       ..registerLazySingleton<FixedShiftRepository>(
         () => ApiFixedShiftRepository(target(), target()),
       )
@@ -132,6 +139,7 @@ abstract final class DependencyRegistration {
         () => SupabaseChatRealtime(target()),
       )
       ..registerFactory<DashboardCubit>(() => DashboardCubit(target()))
+      ..registerFactory<PointsCubit>(() => PointsCubit(target()))
       ..registerFactory<NotificationsCubit>(() => NotificationsCubit(target()))
       ..registerFactory<ChatGroupsCubit>(() => ChatGroupsCubit(target()))
       ..registerFactory<ManagerTemplatesCubit>(
@@ -158,6 +166,7 @@ abstract final class DependencyRegistration {
     required ChatRepository chatRepository,
     required ChatRealtime chatRealtime,
     required FixedShiftRepository fixedShiftRepository,
+    PointsRepository? pointsRepository,
     ProfileImagePicker? profileImagePicker,
   }) {
     if (locator.isRegistered<SessionCoordinator>()) {
@@ -189,11 +198,17 @@ abstract final class DependencyRegistration {
       ..registerSingleton<ChatRepository>(chatRepository)
       ..registerSingleton<ChatRealtime>(chatRealtime)
       ..registerSingleton<FixedShiftRepository>(fixedShiftRepository)
+      ..registerSingleton<PointsRepository>(
+        pointsRepository ?? const MockPointsRepository(),
+      )
       ..registerSingleton<ProfileImagePicker>(
         profileImagePicker ?? DeviceProfileImagePicker(),
       )
       ..registerFactory<DashboardCubit>(
         () => DashboardCubit(locator<DashboardRepository>()),
+      )
+      ..registerFactory<PointsCubit>(
+        () => PointsCubit(locator<PointsRepository>()),
       )
       ..registerFactory<NotificationsCubit>(
         () => NotificationsCubit(locator<NotificationRepository>()),

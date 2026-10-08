@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
@@ -154,6 +155,7 @@ void main() {
     expect(find.text('Employee workspace'), findsOneWidget);
     expect(find.text('Hello, Preview employee'), findsOneWidget);
     expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Performance'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
     expect(find.byKey(const Key('notification-bell')), findsOneWidget);
     expect(find.byKey(const Key('employee-switch-workspace')), findsOneWidget);
@@ -164,6 +166,23 @@ void main() {
       ),
       findsOneWidget,
     );
+
+    await tester.tap(find.text('Performance'));
+    await tester.pumpAndSettle();
+    expect(find.text('My Performance'), findsWidgets);
+
+    await tester.tap(find.text('Overview'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('performance-thumbnail')));
+    await tester.pumpAndSettle();
+    expect(find.text('My Performance'), findsWidgets);
+
+    final shellContext = tester.element(
+      find.byKey(const Key('employee-bottom-navigation')),
+    );
+    GoRouter.of(shellContext).go('/employee?tab=performance');
+    await tester.pumpAndSettle();
+    expect(find.text('My Performance'), findsWidgets);
   });
 
   testWidgets('logout replaces protected manager navigation with login', (

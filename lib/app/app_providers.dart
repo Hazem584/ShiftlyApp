@@ -45,6 +45,9 @@ import 'package:shiftly/features/profile/data/mock_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:shiftly/features/points/data/mock_points_repository.dart';
+import 'package:shiftly/features/points/data/points_repository.dart';
+import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/shifts/data/mock_shift_repository.dart';
 import 'package:shiftly/features/shifts/data/shift_repository.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit.dart';
@@ -76,6 +79,7 @@ class AppProviders extends StatefulWidget {
     this.chatRepository,
     this.chatRealtime,
     this.fixedShiftRepository,
+    this.pointsRepository,
   });
 
   /// Supplying a locator selects authenticated production composition.
@@ -98,6 +102,7 @@ class AppProviders extends StatefulWidget {
   final ChatRepository? chatRepository;
   final ChatRealtime? chatRealtime;
   final FixedShiftRepository? fixedShiftRepository;
+  final PointsRepository? pointsRepository;
 
   @override
   State<AppProviders> createState() => _AppProvidersState();

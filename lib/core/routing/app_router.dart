@@ -67,6 +67,7 @@ GoRouter createAppRouter({
           'shifts' => 1,
           'attendance' || 'leave' => 2,
           'chat' => 3,
+          'performance' || 'points' => 4,
           _ => 0,
         },
       ),

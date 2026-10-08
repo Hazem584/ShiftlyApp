@@ -29,6 +29,8 @@ class _AppProvidersState extends State<AppProviders> {
   late final FixedShiftRepository _fixedShifts;
   late final ManagerTemplatesCubit _managerTemplatesCubit;
   late final FlexibleAttendanceCubit _flexibleAttendanceCubit;
+  late final PointsRepository _points;
+  late final PointsCubit _pointsCubit;
   late final SessionCoordinator? _sessionCoordinator;
   StreamSubscription<Object?>? _sessionSubscription;
   _SessionRouterRefresh? _sessionRefresh;
@@ -99,6 +101,15 @@ class _AppProvidersState extends State<AppProviders> {
             : throw StateError(
                 'Authenticated apps must inject FixedShiftRepository.',
               ));
+    _points =
+        widget.pointsRepository ??
+        _registered<PointsRepository>() ??
+        (widget.preview
+            ? const MockPointsRepository()
+            : throw StateError(
+                'Authenticated apps must inject PointsRepository.',
+              ));
+    _pointsCubit = _registered<PointsCubit>() ?? PointsCubit(_points);
     _notifications =
         widget.notificationRepository ??
         _registered<NotificationRepository>() ??
@@ -221,6 +232,7 @@ class _AppProvidersState extends State<AppProviders> {
     _chatGroupsCubit.close();
     _managerTemplatesCubit.close();
     _flexibleAttendanceCubit.close();
+    _pointsCubit.close();
     _sessionSubscription?.cancel();
     _sessionRefresh?.dispose();
     if (widget.locator == null) unawaited(widget.sessionCoordinator?.close());
@@ -244,6 +256,7 @@ class _AppProvidersState extends State<AppProviders> {
         RepositoryProvider<ChatRepository>.value(value: _chat),
         RepositoryProvider<ChatRealtime>.value(value: _chatRealtime),
         RepositoryProvider<FixedShiftRepository>.value(value: _fixedShifts),
+        RepositoryProvider<PointsRepository>.value(value: _points),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -262,6 +275,7 @@ class _AppProvidersState extends State<AppProviders> {
           BlocProvider.value(value: _chatGroupsCubit),
           BlocProvider.value(value: _managerTemplatesCubit),
           BlocProvider.value(value: _flexibleAttendanceCubit),
+          BlocProvider.value(value: _pointsCubit),
         ],
         child: MaterialApp.router(
           title: AppStrings.appName,
@@ -305,6 +319,7 @@ class _AppProvidersState extends State<AppProviders> {
     _chatGroupsCubit.bindSession(featureScope);
     _managerTemplatesCubit.bindSession(featureScope);
     _flexibleAttendanceCubit.bindSession(featureScope);
+    _pointsCubit.bindSession(featureScope);
   }
 
   void _invalidateDashboardAndCalendar() {

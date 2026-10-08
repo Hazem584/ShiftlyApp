@@ -212,6 +212,17 @@ abstract final class ApiErrorParser {
       'CHAT_MESSAGE_HAS_NO_MEDIA' => 'This message has no available media.',
       'CHAT_READ_MESSAGE_INVALID' =>
         'The selected message cannot be used as a read position.',
+      'POINTS_INSUFFICIENT_GREEN' =>
+        'You do not have enough GREEN points for this redemption.',
+      'POINTS_INSUFFICIENT_RED' =>
+        'You do not have an active RED point to compensate.',
+      'POINTS_REDEMPTION_CONFLICT' =>
+        'This redemption conflicts with an earlier request. Refresh and retry.',
+      'POINTS_POLICY_DISABLED' || 'POINTS_COMPENSATION_DISABLED' =>
+        'Points redemption is currently disabled for this workspace.',
+      'POINTS_HISTORICAL_CONTEXT_UNAVAILABLE' => 'This date is unresolved because historical work context is unavailable.',
+      'POINTS_BALANCE_INVARIANT_VIOLATION' =>
+        'Your points balance needs support review.',
       _ => switch (status) {
         400 => 'Please check the information you entered.',
         401 => 'Your session has expired. Please sign in again.',

@@ -9,6 +9,7 @@ import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_loading.dart';
+import 'package:shiftly/features/points/presentation/widgets/performance_thumbnail.dart';
 
 part 'parts/employee_dashboard_screen/private_employee_dashboard.dart';
 part 'parts/employee_dashboard_screen/private_shift_card.dart';

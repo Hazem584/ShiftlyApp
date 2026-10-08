@@ -31,6 +31,8 @@ class _EmployeeDashboard extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.m),
+        const PerformanceThumbnail(),
+        const SizedBox(height: AppSpacing.m),
         _ShiftCard(
           title: "Today's shift",
           shift: data.todayShift,

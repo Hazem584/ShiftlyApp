@@ -20,6 +20,7 @@ class ShiftlyApp extends AppProviders {
     super.chatRepository,
     super.chatRealtime,
     super.fixedShiftRepository,
+    super.pointsRepository,
   });
 
   /// Explicit preview/test composition with constructor-provided replacements.
@@ -41,5 +42,6 @@ class ShiftlyApp extends AppProviders {
     super.chatRepository,
     super.chatRealtime,
     super.fixedShiftRepository,
+    super.pointsRepository,
   });
 }

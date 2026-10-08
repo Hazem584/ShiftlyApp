@@ -8,6 +8,7 @@ import 'package:shiftly/features/notifications/presentation/widgets/notification
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
+import 'package:shiftly/features/points/presentation/screens/my_performance_screen.dart';
 
 part 'parts/employee_shell_screen/private_employee_shell_screen_state.dart';
 
