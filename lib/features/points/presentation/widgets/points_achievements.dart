@@ -21,10 +21,7 @@ class PointsAchievements extends StatelessWidget {
       Text('Achievements', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 8),
       if (items.isEmpty)
-        PointsEmpty(
-          icon: Icons.emoji_events_outlined,
-          text: emptyText,
-        )
+        PointsEmpty(icon: Icons.emoji_events_outlined, text: emptyText)
       else
         Wrap(
           spacing: 10,

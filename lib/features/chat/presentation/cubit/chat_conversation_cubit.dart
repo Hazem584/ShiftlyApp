@@ -11,6 +11,10 @@ import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_media_validation.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/data/cache/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
+import 'package:shiftly/features/chat/data/outbox/chat_outbox_operation.dart';
+import 'package:shiftly/features/chat/data/outbox/chat_outbox_storage.dart';
 
 part 'parts/chat_conversation_cubit/chat_conversation_state.dart';
 part 'parts/chat_conversation_cubit/chat_upload_state.dart';
@@ -18,7 +22,7 @@ part 'parts/chat_conversation_cubit/pending_chat_media_type.dart';
 part 'parts/chat_conversation_cubit/pending_chat_message.dart';
 part 'parts/chat_conversation_cubit/chat_conversation_cubit.dart';
 
-part 'parts/chat_conversation_cubit/private_media_job.dart';
+part 'parts/chat_conversation_cubit/chat_outbox_pipeline.dart';
 part 'parts/chat_conversation_cubit/private_read_position.dart';
 
 String _uuidV4() {

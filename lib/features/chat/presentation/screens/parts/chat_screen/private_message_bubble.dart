@@ -9,6 +9,7 @@ class _MessageBubble extends StatelessWidget {
     required this.workspaceId,
     required this.timezone,
     required this.player,
+    this.playback,
   });
   final ChatMessage message;
   final bool mine;
@@ -17,6 +18,7 @@ class _MessageBubble extends StatelessWidget {
   final String workspaceId;
   final String timezone;
   final AudioPlayer player;
+  final ChatPlaybackCoordinator? playback;
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -106,6 +108,7 @@ class _MessageBubble extends StatelessWidget {
       workspaceId: workspaceId,
       message: message,
       player: player,
+      playback: playback,
     ),
     'LOCATION' => _LocationCard(location: message.location),
     _ => const Row(

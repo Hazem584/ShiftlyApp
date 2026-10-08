@@ -16,7 +16,10 @@ abstract final class _NotificationNavigator {
       return;
     }
     final notifications = context.read<NotificationsCubit>();
-    if (notifications.scope != scope) { _unavailable(context); return; }
+    if (notifications.scope != scope) {
+      _unavailable(context);
+      return;
+    }
     final destination = _destination(scope, notification);
     if (destination == null) {
       if ({
@@ -45,7 +48,9 @@ abstract final class _NotificationNavigator {
         navigator.pop();
         await route?.completed;
       }
-      if (notifications.scope == scope) { router.go(destination.location); }
+      if (notifications.scope == scope) {
+        router.go(destination.location);
+      }
     } catch (_) {
       if (context.mounted) _unavailable(context);
     }

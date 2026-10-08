@@ -12,6 +12,7 @@ class ChatConversationState extends Equatable {
     this.failure,
     this.pending = const [],
     this.accessLost = false,
+    this.historyGap = false,
   });
   final bool loading;
   final List<ChatMessage> messages;
@@ -23,6 +24,7 @@ class ChatConversationState extends Equatable {
   final Failure? failure;
   final List<PendingChatMessage> pending;
   final bool accessLost;
+  final bool historyGap;
   bool get hasMore => nextCursor != null;
 
   ChatConversationState copyWith({
@@ -39,6 +41,7 @@ class ChatConversationState extends Equatable {
     bool clearFailure = false,
     List<PendingChatMessage>? pending,
     bool? accessLost,
+    bool? historyGap,
   }) => ChatConversationState(
     loading: loading ?? this.loading,
     messages: messages ?? this.messages,
@@ -50,6 +53,7 @@ class ChatConversationState extends Equatable {
     failure: clearFailure ? null : failure ?? this.failure,
     pending: pending ?? this.pending,
     accessLost: accessLost ?? this.accessLost,
+    historyGap: historyGap ?? this.historyGap,
   );
 
   @override
@@ -64,5 +68,6 @@ class ChatConversationState extends Equatable {
     failure,
     pending,
     accessLost,
+    historyGap,
   ];
 }

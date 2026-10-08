@@ -1,4 +1,13 @@
 import 'package:dio/dio.dart';
+
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
+import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
+import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
+import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
+import 'package:shiftly/features/chat/data/outbox/chat_outbox_storage.dart';
+import 'package:shiftly/features/chat/data/outbox/chat_outbox_coordinator.dart';
 import 'package:shiftly/features/manager_performance/data/api_manager_points_repository.dart';
 import 'package:shiftly/features/manager_performance/data/manager_points_repository.dart';
 import 'package:shiftly/features/manager_performance/data/manager_intent_storage.dart';
@@ -63,7 +72,26 @@ abstract final class DependencyRegistration {
       publishableKey: config.supabasePublishableKey,
     );
     final preferences = await SharedPreferences.getInstance();
+    final support = await getApplicationSupportDirectory();
+    final chatStorage = await ChatCacheDatabase.open(
+      Directory('${support.path}/private-chat-v1'),
+    );
     target
+      ..registerSingleton<ChatCacheDatabase>(
+        chatStorage,
+        dispose: (storage) => storage.close(),
+      )
+      ..registerLazySingleton<ChatMessageCache>(
+        () => ChatMessageCache(target()),
+      )
+      ..registerLazySingleton<ChatOutboxCoordinator>(ChatOutboxCoordinator.new)
+      ..registerLazySingleton<ChatOutboxStorage>(
+        () => ChatOutboxStorage(target(), coordinator: target()),
+      )
+      ..registerLazySingleton<ChatMediaCache>(
+        () => ChatMediaCache(target()),
+        dispose: (cache) => cache.close(),
+      )
       ..registerSingleton<AppConfig>(config)
       ..registerSingleton<SupabaseClient>(Supabase.instance.client)
       ..registerSingleton<SharedPreferences>(preferences)
@@ -159,7 +187,14 @@ abstract final class DependencyRegistration {
         () => PointsCubit(target(), intentStorage: target()),
       )
       ..registerFactory<NotificationsCubit>(() => NotificationsCubit(target()))
-      ..registerFactory<ChatGroupsCubit>(() => ChatGroupsCubit(target()))
+      ..registerFactory<ChatGroupsCubit>(
+        () => ChatGroupsCubit(
+          target(),
+          messageCache: target(),
+          outbox: target(),
+          mediaCache: target(),
+        ),
+      )
       ..registerFactory<ManagerTemplatesCubit>(
         () => ManagerTemplatesCubit(target()),
       )

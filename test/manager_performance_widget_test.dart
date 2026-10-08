@@ -35,10 +35,13 @@ void main() {
   Widget app(Widget child, {bool scaled = false}) => BlocProvider.value(
     value: cubit,
     child: MaterialApp(
-      home: Builder(builder: (context) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scaled ? 2 : 1)),
-        child: child,
-      )),
+      home: Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(scaled ? 2 : 1)),
+          child: child,
+        ),
+      ),
     ),
   );
 
@@ -60,8 +63,11 @@ void main() {
         repository.calls.every((call) => call['target'] == 'membership-a'),
         isTrue,
       );
-      await tester.scrollUntilVisible(find.text('Adjust points'), 250,
-        scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        find.text('Adjust points'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
       expect(find.text('Adjust points'), findsOneWidget);
       expect(find.text('Grant BLUE'), findsOneWidget);

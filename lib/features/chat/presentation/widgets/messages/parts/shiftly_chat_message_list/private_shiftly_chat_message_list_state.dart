@@ -43,8 +43,13 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
         widget.messages.last.sender.membershipId == widget.currentMembershipId;
     final pendingAdded =
         widget.trailingMessages.length > oldWidget.trailingMessages.length;
+    final canonicalReplacement =
+        widget.trailingMessages.length < oldWidget.trailingMessages.length;
     final wasNearBottom = _nearBottom;
-    if (firstLoad || sentByMe || pendingAdded || (appended && wasNearBottom)) {
+    if (firstLoad ||
+        (sentByMe && !canonicalReplacement) ||
+        pendingAdded ||
+        (appended && wasNearBottom)) {
       _initialPositioned = true;
       _programmaticScroll = true;
       _afterLayout(_scrollToBottom);
@@ -135,16 +140,22 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.loading && widget.messages.isEmpty) {
+    if (widget.loading &&
+        widget.messages.isEmpty &&
+        widget.trailingMessages.isEmpty) {
       return const _ChatLoadingSkeleton();
     }
-    if (widget.failureMessage != null && widget.messages.isEmpty) {
+    if (widget.failureMessage != null &&
+        widget.messages.isEmpty &&
+        widget.trailingMessages.isEmpty) {
       return _LoadError(
         message: widget.failureMessage!,
         onRetry: widget.onRetry,
       );
     }
-    if (widget.messages.isEmpty) return const _EmptyConversation();
+    if (widget.messages.isEmpty && widget.trailingMessages.isEmpty) {
+      return const _EmptyConversation();
+    }
     return Stack(
       children: [
         ListView.builder(
@@ -157,6 +168,12 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
               widget.trailingMessages.length +
               (widget.loadingOlder ? 1 : 0),
           findChildIndexCallback: (key) {
+            final pending = widget.trailingMessages.indexWhere(
+              (widget) => widget.key == key,
+            );
+            if (pending >= 0) {
+              return widget.trailingMessages.length - 1 - pending;
+            }
             if (key is! ValueKey<String>) return null;
             const prefix = 'chat-message-';
             if (!key.value.startsWith(prefix)) return null;

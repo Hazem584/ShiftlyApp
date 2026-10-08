@@ -9,6 +9,10 @@ class PendingChatMessage extends Equatable {
     this.previewBytes,
     this.durationMs,
     this.failure,
+    this.text,
+    this.location,
+    this.localPath,
+    this.canCancel = true,
   });
 
   final String clientMessageId;
@@ -18,6 +22,10 @@ class PendingChatMessage extends Equatable {
   final Uint8List? previewBytes;
   final int? durationMs;
   final Failure? failure;
+  final String? text;
+  final ChatLocation? location;
+  final String? localPath;
+  final bool canCancel;
 
   PendingChatMessage copyWith({
     ChatUploadState? status,
@@ -33,6 +41,10 @@ class PendingChatMessage extends Equatable {
     previewBytes: clearPreview ? null : previewBytes,
     durationMs: durationMs,
     failure: clearFailure ? null : failure ?? this.failure,
+    text: text,
+    location: location,
+    localPath: localPath,
+    canCancel: canCancel,
   );
 
   @override
@@ -44,5 +56,9 @@ class PendingChatMessage extends Equatable {
     previewBytes,
     durationMs,
     failure,
+    text,
+    location,
+    localPath,
+    canCancel,
   ];
 }

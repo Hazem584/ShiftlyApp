@@ -16,8 +16,11 @@ class ApiManagerPointsRepository implements ManagerPointsRepository {
   void bindSession(FeatureSessionScope? scope) {
     _scopeCancellation?.cancel('Manager session scope changed');
     _scopeCancellation = CancelToken();
-    if (scope == null) { _scopeCancellation!.cancel('Manager access unavailable'); }
+    if (scope == null) {
+      _scopeCancellation!.cancel('Manager access unavailable');
+    }
   }
+
   void _policy(Map<String, Object?> json) {
     OperationalDate.parse(ApiModelParser.string(json, 'effectiveFrom'));
     for (final key in const ['streakRewardEnabled', 'isEnabled']) {
@@ -63,7 +66,10 @@ class ApiManagerPointsRepository implements ManagerPointsRepository {
     String? target,
   }) => _request(() async {
     final map = ApiModelParser.map(
-        (await _dio.get<Object?>(_path(workspace, resource, target), cancelToken: _scopeCancellation)).data,
+      (await _dio.get<Object?>(
+        _path(workspace, resource, target),
+        cancelToken: _scopeCancellation,
+      )).data,
       resource,
     );
     if (resource.isEmpty) {

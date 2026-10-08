@@ -1,9 +1,10 @@
 part of '../../chat_group_details_cubit.dart';
 
 class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
-  ChatGroupDetailsCubit(this._repository, {this.onChanged})
+  ChatGroupDetailsCubit(this._repository, {this.onChanged, this.cacheDatabase})
     : super(const ChatGroupDetailsState());
   final ChatRepository _repository;
+  final ChatCacheDatabase? cacheDatabase;
   final void Function()? onChanged;
   FeatureSessionScope? _scope;
   String? _groupId;
@@ -27,15 +28,35 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
     _loading = true;
     final previous = state;
     final generation = _generation;
+    final cacheRevision = cacheDatabase?.revision;
     try {
       final group = await _repository.getGroup(scope.workspaceId, groupId);
       if (!_current(scope, groupId, generation)) return;
+      if (cacheRevision != cacheDatabase?.revision) return;
       if (group.workspaceId != scope.workspaceId || group.id != groupId) {
         throw const FormatException('Invalid chat group response');
       }
       emit(ChatGroupDetailsState(loading: false, group: group));
+      cacheDatabase?.grant(
+        ChatCacheScope.fromSession(scope, groupId),
+        archived: group.isArchived,
+      );
     } catch (error) {
       if (!_current(scope, groupId, generation)) return;
+      if (error is ApiException &&
+          (error.statusCode == 403 ||
+              (error.statusCode == 404 &&
+                  error.code == 'CHAT_GROUP_NOT_FOUND'))) {
+        await cacheDatabase?.revoke(ChatCacheScope.fromSession(scope, groupId));
+        if (!_current(scope, groupId, generation)) return;
+        emit(
+          ChatGroupDetailsState(
+            loading: false,
+            failure: _failure(error, 'Chat access unavailable.'),
+          ),
+        );
+        return;
+      }
       emit(
         ChatGroupDetailsState(
           loading: false,

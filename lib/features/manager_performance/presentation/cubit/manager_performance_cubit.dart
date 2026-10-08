@@ -27,6 +27,7 @@ class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
     repository.bindSession(null);
     return super.close();
   }
+
   int _epoch = 0;
   FeatureSessionScope? _deniedScope;
   Future<void>? _mutation;

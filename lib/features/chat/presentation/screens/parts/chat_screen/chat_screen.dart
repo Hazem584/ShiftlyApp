@@ -6,7 +6,7 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groups = context.read<ChatGroupsCubit>();
+    final groups = context.watch<ChatGroupsCubit>();
     final scope = groups.scope;
     if (scope == null) {
       return const Scaffold(
@@ -15,17 +15,23 @@ class ChatScreen extends StatelessWidget {
     }
     final repository = context.read<ChatRepository>();
     return MultiBlocProvider(
+      key: ValueKey(
+        '${scope.userId}:${scope.workspaceId}:${scope.generation}:$groupId',
+      ),
       providers: [
         BlocProvider(
           create: (_) => ChatGroupDetailsCubit(
             repository,
             onChanged: () => groups.load(refresh: true),
+            cacheDatabase: groups.messageCache?.storage,
           )..bind(scope, groupId),
         ),
         BlocProvider(
           create: (_) => ChatConversationCubit(
             repository,
             context.read<ChatRealtime>(),
+            messageCache: groups.messageCache,
+            outbox: groups.outbox,
             onChanged: () => groups.load(refresh: true),
           )..bind(scope, groupId),
         ),

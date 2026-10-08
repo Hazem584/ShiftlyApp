@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,6 +16,9 @@ import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/chat_media_validation.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/data/cache/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
+import 'package:shiftly/features/chat/presentation/chat_playback_coordinator.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
@@ -38,7 +42,6 @@ part 'parts/chat_screen/private_full_screen_image.dart';
 part 'parts/chat_screen/private_voice_message.dart';
 part 'parts/chat_screen/private_voice_message_state.dart';
 part 'parts/chat_screen/private_location_card.dart';
-part 'parts/chat_screen/private_pending_text_bubble.dart';
 part 'parts/chat_screen/private_members_sheet.dart';
 
 String _nameInitials(String value) => value

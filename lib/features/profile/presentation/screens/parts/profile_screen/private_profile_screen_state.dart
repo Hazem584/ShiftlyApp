@@ -60,6 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ProfileHeader(profile: profile),
                       const SizedBox(height: AppSpacing.m),
                       ProfileInformationSection(profile: profile),
+                      const ChatCacheSettingsTile(),
                       if (widget.onLogout != null) ...[
                         const SizedBox(height: AppSpacing.l),
                         OutlinedButton.icon(

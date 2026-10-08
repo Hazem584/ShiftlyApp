@@ -5,17 +5,31 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
   final _picker = ImagePicker();
   final _recorder = AudioRecorder();
   final _player = AudioPlayer();
+  ChatPlaybackCoordinator? _playback;
   StreamSubscription<RecordState>? _recordState;
   Timer? _recordTimer;
+  Timer? _accessTimer;
   DateTime? _recordStarted;
   bool _recording = false;
   bool _mediaBusy = false;
+  bool _savingText = false;
+  Uint8List? _preparedImage;
+  String? _preparedVoicePath;
+  int? _preparedVoiceDuration;
   String? _recordPath;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final cache = context.read<ChatGroupsCubit>().mediaCache;
+    if (cache != null) _playback = ChatPlaybackCoordinator(_player, cache);
+    _accessTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        unawaited(context.read<ChatGroupDetailsCubit>().load());
+      }
+    });
     _recordState = _recorder.onStateChanged().listen((value) {
       if ((value == RecordState.stop || value == RecordState.pause) &&
           _recording) {
@@ -26,10 +40,18 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(context.read<ChatGroupDetailsCubit>().load());
+      unawaited(context.read<ChatConversationCubit>().load(refresh: true));
+    }
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
-      unawaited(_player.pause());
+      if (_playback != null) {
+        _playback!.pause();
+      } else {
+        unawaited(_player.pause());
+      }
       if (_recording) unawaited(_handleRecordingInterruption());
     }
   }
@@ -38,161 +60,226 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _recordTimer?.cancel();
+    _accessTimer?.cancel();
     unawaited(_recordState?.cancel());
     unawaited(_recorder.cancel());
     _recorder.dispose();
+    _playback?.close();
     _player.dispose();
+    if (_preparedVoicePath case final path?) {
+      unawaited(File(path).delete().catchError((Object _) => File(path)));
+    }
+    if (_recordPath case final path?) {
+      unawaited(File(path).delete().catchError((Object _) => File(path)));
+    }
     _text.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) => BlocBuilder<ChatGroupDetailsCubit, ChatGroupDetailsState>(
-    builder: (context, details) {
-      final group = details.group;
-      final manager = context.read<ChatGroupsCubit>().scope?.isManager == true;
-      return Scaffold(
-        appBar: AppBar(
-          titleSpacing: 0,
-          title: Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                child: Text(
-                  _initials(group?.name ?? 'Chat'),
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) =>
+      BlocListener<ChatConversationCubit, ChatConversationState>(
+        listenWhen: (previous, current) =>
+            !previous.accessLost && current.accessLost,
+        listener: (_, _) {
+          _text.clear();
+          _preparedImage = null;
+          if (_preparedVoicePath case final path?) {
+            unawaited(File(path).delete().catchError((Object _) => File(path)));
+          }
+          _preparedVoicePath = null;
+          _preparedVoiceDuration = null;
+          unawaited(_player.stop());
+          unawaited(_player.setAudioSources([]));
+          unawaited(_handleRecordingInterruption());
+          setState(() {});
+        },
+        child: BlocBuilder<ChatGroupDetailsCubit, ChatGroupDetailsState>(
+          builder: (context, details) {
+            if (context.read<ChatConversationCubit>().state.accessLost) {
+              return const Scaffold(
+                body: Center(child: Text('Chat access unavailable.')),
+              );
+            }
+            final group = details.group;
+            final manager =
+                context.read<ChatGroupsCubit>().scope?.isManager == true;
+            return Scaffold(
+              appBar: AppBar(
+                titleSpacing: 0,
+                title: Row(
                   children: [
-                    Text(
-                      group?.name ?? 'Chat',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (group != null)
-                      Text(
-                        group.isArchived
-                            ? '${group.memberCount} members · Read only'
-                            : '${group.memberCount} members',
-                        style: Theme.of(context).textTheme.labelSmall,
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .primaryContainer,
+                      child: Text(
+                        _initials(group?.name ?? 'Chat'),
+                        style: Theme.of(context).textTheme.labelMedium,
                       ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            group?.name ?? 'Chat',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (group != null)
+                            Text(
+                              group.isArchived
+                                  ? '${group.memberCount} members · Read only'
+                                  : '${group.memberCount} members',
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              tooltip: 'Group members',
-              onPressed: group == null ? null : () => _showMembers(group),
-              icon: const Icon(Icons.group_outlined),
-            ),
-            if (manager && group != null && !group.isArchived)
-              PopupMenuButton<String>(
-                onSelected: (value) =>
-                    value == 'edit' ? _edit(group) : _archive(group),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'edit', child: Text('Edit group')),
-                  PopupMenuItem(value: 'archive', child: Text('Archive group')),
-                ],
-              ),
-          ],
-        ),
-        body: Column(
-          children: [
-            if (details.failure != null)
-              MaterialBanner(
-                content: Text(details.failure!.message),
                 actions: [
-                  TextButton(
-                    onPressed: context.read<ChatGroupDetailsCubit>().load,
-                    child: const Text('Retry'),
+                  IconButton(
+                    tooltip: 'Group members',
+                    onPressed: group == null ? null : () => _showMembers(group),
+                    icon: const Icon(Icons.group_outlined),
                   ),
+                  if (manager && group != null && !group.isArchived)
+                    PopupMenuButton<String>(
+                      onSelected: (value) =>
+                          value == 'edit' ? _edit(group) : _archive(group),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: 'edit', child: Text('Edit group')),
+                        PopupMenuItem(
+                          value: 'archive',
+                          child: Text('Archive group'),
+                        ),
+                      ],
+                    ),
                 ],
               ),
-            if (group?.isArchived == true)
-              ColoredBox(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      Icon(Icons.archive_outlined, size: 18),
-                      Text('Archived group — read only'),
-                    ],
-                  ),
-                ),
+              body: Column(
+                children: [
+                  if (details.failure != null)
+                    MaterialBanner(
+                      content: Text(details.failure!.message),
+                      actions: [
+                        TextButton(
+                          onPressed: context.read<ChatGroupDetailsCubit>().load,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  if (group?.isArchived == true)
+                    ColoredBox(
+                      color: Theme.of(context).colorScheme.secondaryContainer,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            Icon(Icons.archive_outlined, size: 18),
+                            Text('Archived group — read only'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  Expanded(child: _messages()),
+                  _composer(disabled: group == null || group.isArchived),
+                ],
               ),
-            Expanded(child: _messages()),
-            _composer(disabled: group == null || group.isArchived),
-          ],
+            );
+          },
         ),
       );
-    },
-  );
 
   String _initials(String value) {
     final words = value.trim().split(RegExp(r'\s+'));
     return words.take(2).map((word) => word[0].toUpperCase()).join();
   }
 
-  Widget _messages() =>
-      BlocBuilder<ChatConversationCubit, ChatConversationState>(
-        builder: (context, state) {
-          final scope = context.read<ChatGroupsCubit>().scope!;
-          return RefreshIndicator(
-            onRefresh: () =>
-                context.read<ChatConversationCubit>().load(refresh: true),
-            child: ShiftlyChatMessageList(
-              key: ValueKey(
-                '${scope.userId}:${scope.workspaceId}:${widget.groupId}',
-              ),
-              messages: state.messages,
-              currentMembershipId: scope.membershipId,
-              loading: state.loading,
-              failureMessage: state.messages.isEmpty
-                  ? state.failure?.message
-                  : null,
-              hasMore: state.hasMore,
-              loadingOlder: state.loadingOlder,
-              onLoadOlder: context.read<ChatConversationCubit>().loadOlder,
-              onRetry: context.read<ChatConversationCubit>().load,
-              trailingMessages: [
-                if (state.sending && _text.text.trim().isNotEmpty)
-                  _PendingTextBubble(text: _text.text.trim()),
-                for (final pending in state.pending)
-                  PendingMediaBubble(
-                    key: ValueKey(pending.clientMessageId),
-                    pending: pending,
-                    onRetry: (id) =>
-                        context.read<ChatConversationCubit>().retryMedia(id),
-                    onCancel: _confirmCancelPending,
-                  ),
-              ],
-              messageBuilder: (message, mine, showSender) => _MessageBubble(
-                message: message,
-                mine: mine,
-                showSender: showSender,
-                repository: context.read<ChatRepository>(),
-                workspaceId: scope.workspaceId,
-                timezone: scope.timezone,
-                player: _player,
+  Widget
+  _messages() => BlocBuilder<ChatConversationCubit, ChatConversationState>(
+    builder: (context, state) {
+      final scope = context.read<ChatGroupsCubit>().scope;
+      if (scope == null || state.accessLost) {
+        return const Center(child: Text('Chat access unavailable.'));
+      }
+      return Column(
+        children: [
+          if (state.historyGap)
+            TextButton(
+              onPressed: state.loadingOlder
+                  ? null
+                  : context.read<ChatConversationCubit>().loadOlder,
+              child: const Text('History has a gap — load missing messages'),
+            ),
+          if (state.failure != null && state.messages.isNotEmpty)
+            TextButton(
+              onPressed: () =>
+                  context.read<ChatConversationCubit>().load(refresh: true),
+              child: const Text('Refresh unavailable — retry'),
+            ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () =>
+                  context.read<ChatConversationCubit>().load(refresh: true),
+              child: ShiftlyChatMessageList(
+                key: ValueKey(
+                  '${scope.userId}:${scope.workspaceId}:${widget.groupId}',
+                ),
+                messages: state.messages,
+                currentMembershipId: scope.membershipId,
+                loading: state.loading,
+                failureMessage: state.messages.isEmpty
+                    ? state.failure?.message
+                    : null,
+                hasMore: state.hasMore,
+                loadingOlder: state.loadingOlder,
+                onLoadOlder: context.read<ChatConversationCubit>().loadOlder,
+                onRetry: context.read<ChatConversationCubit>().load,
+                trailingMessages: [
+                  for (final pending in state.pending)
+                    PendingMediaBubble(
+                      key: ValueKey(pending.clientMessageId),
+                      pending: pending,
+                      player: _player,
+                      playback: _playback,
+                      cacheScope: ChatCacheScope.fromSession(
+                        scope,
+                        widget.groupId,
+                      ),
+                      onRetry: (id) =>
+                          context.read<ChatConversationCubit>().retryMedia(id),
+                      onCancel: _confirmCancelPending,
+                    ),
+                ],
+                messageBuilder: (message, mine, showSender) => _MessageBubble(
+                  message: message,
+                  mine: mine,
+                  showSender: showSender,
+                  repository: context.read<ChatRepository>(),
+                  workspaceId: scope.workspaceId,
+                  timezone: scope.timezone,
+                  player: _player,
+                  playback: _playback,
+                ),
               ),
             ),
-          );
-        },
+          ),
+        ],
       );
+    },
+  );
 
   Future<void> _confirmCancelPending(String clientId) async {
     final confirmed = await ShiftlyChatDialog.confirm(
@@ -217,6 +304,22 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (_preparedImage != null || _preparedVoicePath != null)
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Prepared media was not saved. Retry to keep it.',
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _mediaBusy || effectiveDisabled
+                          ? null
+                          : _retryPreparedMedia,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
               if (state.failedText != null)
                 Row(
                   children: [
@@ -239,8 +342,7 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
                   children: [
                     PopupMenuButton<int>(
                       tooltip: 'Attach',
-                      enabled:
-                          !effectiveDisabled && !state.sending && !_mediaBusy,
+                      enabled: !effectiveDisabled && !_mediaBusy,
                       onSelected: (value) {
                         if (value == 0) unawaited(_pickImage());
                         if (value == 1) unawaited(_startRecording());
@@ -257,7 +359,7 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
                       child: TextField(
                         key: const Key('chat-message-input'),
                         controller: _text,
-                        enabled: !effectiveDisabled && !state.sending,
+                        enabled: !effectiveDisabled,
                         maxLength: 4000,
                         minLines: 1,
                         maxLines: 5,
@@ -275,8 +377,7 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
                     IconButton(
                       key: const Key('record-voice-message'),
                       tooltip: 'Record voice message',
-                      onPressed:
-                          effectiveDisabled || state.sending || _mediaBusy
+                      onPressed: effectiveDisabled || _mediaBusy
                           ? null
                           : _startRecording,
                       icon: const Icon(Icons.mic_none_rounded),
@@ -286,16 +387,11 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
                       tooltip: 'Send',
                       onPressed:
                           effectiveDisabled ||
-                              state.sending ||
+                              _savingText ||
                               _text.text.trim().isEmpty
                           ? null
                           : _send,
-                      icon: state.sending
-                          ? const SizedBox.square(
-                              dimension: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send_rounded),
+                      icon: const Icon(Icons.send_rounded),
                     ),
                   ],
                 ),
@@ -326,6 +422,8 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
   );
 
   Future<void> _send() async {
+    if (_savingText) return;
+    final input = _text.text;
     final text = _text.text.trim();
     if (text.isEmpty) return;
     if (text.length > 4000) {
@@ -334,8 +432,17 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
       );
       return;
     }
-    final sent = await context.read<ChatConversationCubit>().send(text);
-    if (sent && mounted) _text.clear();
+    setState(() => _savingText = true);
+    final accepted = await context.read<ChatConversationCubit>().send(text);
+    if (mounted) {
+      if (accepted && _text.text == input) _text.clear();
+      setState(() => _savingText = false);
+      if (!accepted) {
+        Fluttertoast.showToast(
+          msg: 'Message was not saved. Keep your input and retry.',
+        );
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -356,7 +463,9 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
         return;
       }
       if (mounted) {
-        await context.read<ChatConversationCubit>().sendImage(bytes);
+        _preparedImage = bytes;
+        final id = await context.read<ChatConversationCubit>().sendImage(bytes);
+        if (id != null) _preparedImage = null;
       }
     } catch (_) {
       Fluttertoast.showToast(msg: 'The image could not be prepared.');
@@ -417,6 +526,7 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
     setState(() => _recording = false);
     _recordTimer?.cancel();
     String? path;
+    bool accepted = false;
     try {
       if (!send) {
         await _recorder.cancel();
@@ -440,22 +550,30 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
         return;
       }
       if (mounted) {
-        await context.read<ChatConversationCubit>().sendVoice(
+        _preparedVoicePath = path;
+        _preparedVoiceDuration = duration;
+        final id = await context.read<ChatConversationCubit>().sendVoice(
           mimeType: 'audio/mp4',
           bytes: bytes,
           durationMs: duration,
         );
+        accepted = id != null;
+        if (accepted) {
+          _preparedVoicePath = null;
+          _preparedVoiceDuration = null;
+        }
       }
     } catch (_) {
       Fluttertoast.showToast(msg: 'The recording could not be prepared.');
     } finally {
-      if (path != null) {
+      if (path != null && (accepted || _preparedVoicePath != path)) {
         try {
           await File(path).delete();
         } catch (_) {}
       }
       _recordPath = null;
       _recordStarted = null;
+      if (mounted) setState(() {});
     }
   }
 
@@ -477,6 +595,35 @@ class _ChatViewState extends State<_ChatView> with WidgetsBindingObserver {
     if (mounted) {
       setState(() {});
       Fluttertoast.showToast(msg: 'Recording was interrupted.');
+    }
+  }
+
+  Future<void> _retryPreparedMedia() async {
+    setState(() => _mediaBusy = true);
+    try {
+      final conversation = context.read<ChatConversationCubit>();
+      if (_preparedImage case final bytes?) {
+        if (await conversation.sendImage(bytes) != null) _preparedImage = null;
+      }
+      if (_preparedVoicePath case final path?) {
+        final bytes = await File(path).readAsBytes();
+        if (await conversation.sendVoice(
+              bytes: bytes,
+              mimeType: 'audio/mp4',
+              durationMs: _preparedVoiceDuration!,
+            ) !=
+            null) {
+          await File(path).delete();
+          _preparedVoicePath = null;
+          _preparedVoiceDuration = null;
+        }
+      }
+    } catch (_) {
+      Fluttertoast.showToast(
+        msg: 'Media could not be saved. Retry when storage is available.',
+      );
+    } finally {
+      if (mounted) setState(() => _mediaBusy = false);
     }
   }
 

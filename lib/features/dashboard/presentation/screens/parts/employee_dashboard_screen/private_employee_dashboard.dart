@@ -33,12 +33,16 @@ class _EmployeeDashboard extends StatelessWidget {
         const SizedBox(height: AppSpacing.m),
         const PerformanceThumbnail(),
         const SizedBox(height: AppSpacing.m),
-        Card(child: ListTile(
-          leading: const Icon(Icons.schedule),
-          title: const Text('Fixed shifts'),
-          subtitle: const Text('View available templates and clock in or out'),
-          onTap: () => context.go('/employee?tab=shifts'),
-        )),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.schedule),
+            title: const Text('Fixed shifts'),
+            subtitle: const Text(
+              'View available templates and clock in or out',
+            ),
+            onTap: () => context.go('/employee?tab=shifts'),
+          ),
+        ),
         if (data.todayShift != null)
           _ShiftCard(
             title: 'Legacy scheduled shift',

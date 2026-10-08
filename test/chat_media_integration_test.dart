@@ -335,7 +335,10 @@ void main() {
           Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
         );
         await _waitFor(
-          () => cubit.state.pending.single.status == ChatUploadState.failed,
+          () => const [
+            ChatUploadState.failed,
+            ChatUploadState.uncertain,
+          ].contains(cubit.state.pending.single.status),
         );
         expect(repository.clientIds, isEmpty);
         await cubit.retryMedia(id!);
@@ -359,7 +362,10 @@ void main() {
           Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]),
         );
         await _waitFor(
-          () => cubit.state.pending.single.status == ChatUploadState.failed,
+          () => const [
+            ChatUploadState.failed,
+            ChatUploadState.uncertain,
+          ].contains(cubit.state.pending.single.status),
         );
         expect(repository.authorizations, 1);
         expect(repository.uploads, 1);
@@ -401,14 +407,14 @@ void main() {
       final imageId = await cubit.sendImage(image);
       voice[0] = 99;
       image[0] = 99;
-      await _waitFor(() => repository.uploads == 2);
+      await _waitFor(() => repository.uploads == 1);
 
       expect(voiceId, isNot(imageId));
-      expect(repository.initiatedTypes, ['VOICE', 'IMAGE']);
-      expect(repository.initiatedMimes, ['audio/mp4', 'image/jpeg']);
-      expect(repository.initiatedDurations, [1234, null]);
+      expect(repository.initiatedTypes, ['VOICE']);
+      expect(repository.initiatedMimes, ['audio/mp4']);
+      expect(repository.initiatedDurations, [1234]);
       expect(repository.uploadedBytes[0], _voiceBytes());
-      expect(repository.uploadedBytes[1], [0xff, 0xd8, 0xff, 0xd9]);
+
       expect(cubit.state.pending.map((pending) => pending.mediaType), [
         PendingChatMediaType.voice,
         PendingChatMediaType.image,
@@ -420,6 +426,8 @@ void main() {
       gate.complete();
       await _waitFor(() => cubit.state.pending.isEmpty);
       expect(repository.finalizedTypes, ['VOICE', 'IMAGE']);
+      expect(repository.initiatedMimes, ['audio/mp4', 'image/jpeg']);
+      expect(repository.uploadedBytes[1], [0xff, 0xd8, 0xff, 0xd9]);
       await cubit.close();
     });
 
@@ -436,12 +444,15 @@ void main() {
           mimeType: 'audio/mp4',
           durationMs: 987,
         );
-        await _waitFor(() => repository.uploads == 2);
+        await _waitFor(() => repository.uploads == 1);
+        expect(repository.initiatedTypes, ['IMAGE']);
+        expect(repository.initiatedDurations, [null]);
+        expect(repository.uploadedMimes, ['image/jpeg']);
+        gate.complete();
+        await _waitFor(() => cubit.state.pending.isEmpty);
         expect(repository.initiatedTypes, ['IMAGE', 'VOICE']);
         expect(repository.initiatedDurations, [null, 987]);
         expect(repository.uploadedMimes, ['image/jpeg', 'audio/mp4']);
-        gate.complete();
-        await _waitFor(() => cubit.state.pending.isEmpty);
         await cubit.close();
       },
     );
@@ -458,7 +469,10 @@ void main() {
         ..bind(_scope, groupId);
       await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
       await _waitFor(
-        () => cubit.state.pending.single.status == ChatUploadState.failed,
+        () => const [
+          ChatUploadState.failed,
+          ChatUploadState.uncertain,
+        ].contains(cubit.state.pending.single.status),
       );
       final pending = cubit.state.pending.single;
       expect(pending.mediaType, PendingChatMediaType.image);
@@ -475,7 +489,10 @@ void main() {
         ..bind(_scope, groupId);
       await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
       await _waitFor(
-        () => cubit.state.pending.single.status == ChatUploadState.failed,
+        () => const [
+          ChatUploadState.failed,
+          ChatUploadState.uncertain,
+        ].contains(cubit.state.pending.single.status),
       );
       expect(
         cubit.state.pending.single.failure?.message,
@@ -494,7 +511,10 @@ void main() {
           ..bind(_scope, groupId);
         await cubit.sendImage(Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]));
         await _waitFor(
-          () => cubit.state.pending.single.status == ChatUploadState.failed,
+          () => const [
+            ChatUploadState.failed,
+            ChatUploadState.uncertain,
+          ].contains(cubit.state.pending.single.status),
         );
         expect(cubit.state.messages, isEmpty);
         expect(

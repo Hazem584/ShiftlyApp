@@ -1,7 +1,15 @@
 part of '../../chat_groups_cubit.dart';
 
 class ChatGroupsCubit extends Cubit<ChatGroupsState> {
-  ChatGroupsCubit(this._repository) : super(const ChatGroupsState());
+  ChatGroupsCubit(
+    this._repository, {
+    this.messageCache,
+    this.mediaCache,
+    this.outbox,
+  }) : super(const ChatGroupsState());
+  final ChatMessageCache? messageCache;
+  final ChatMediaCache? mediaCache;
+  final ChatOutboxStorage? outbox;
   final ChatRepository _repository;
   FeatureSessionScope? _scope;
   var _generation = 0;
@@ -21,6 +29,7 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
         ? scope
         : null;
     if (_scope == authorized) return;
+    messageCache?.storage.bindSession(authorized);
     _scope = authorized;
     _generation++;
     _request++;
@@ -45,6 +54,7 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _loading = true;
     final generation = _generation;
     final request = ++_request;
+    final cacheRevision = messageCache?.storage.revision;
     final unreadSequence = ++_unreadIssuedSequence;
     final previous = state;
     emit(
@@ -58,9 +68,27 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
         _repository.unreadCount(scope.workspaceId),
       ]);
       if (!_current(scope, generation, request)) return;
+      if (cacheRevision != messageCache?.storage.revision) return;
       final groups = results[0] as List<ChatGroup>;
       if (groups.any((group) => group.workspaceId != scope.workspaceId)) {
         throw const FormatException('Cross-workspace chat response');
+      }
+      final ids = groups.map((group) => group.id).toSet();
+      for (final former in previous.groups) {
+        if (!ids.contains(former.id)) {
+          unawaited(
+            messageCache?.storage.revoke(
+                  ChatCacheScope.fromSession(scope, former.id),
+                ) ??
+                Future<void>.value(),
+          );
+        }
+      }
+      for (final group in groups) {
+        messageCache?.storage.grant(
+          ChatCacheScope.fromSession(scope, group.id),
+          archived: group.isArchived,
+        );
       }
       emit(
         ChatGroupsState(

@@ -378,7 +378,8 @@ void main() {
       final cubit = ChatConversationCubit(repository, _FakeRealtime());
       cubit.bind(_scope, _group);
       await _pump();
-      expect(await cubit.send('  hello  '), isFalse);
+      expect(await cubit.send('  hello  '), isTrue);
+      await _pump();
       expect(await cubit.retrySend(), isTrue);
       expect(repository.sentTexts, ['hello', 'hello']);
       expect(repository.clientIds.toSet(), hasLength(1));
@@ -1720,7 +1721,11 @@ class _FakeChatRepository extends ChatRepository {
     sentTexts.add(text);
     clientIds.add(clientMessageId);
     if (sendFailures-- > 0) throw Exception('offline');
-    return _message(id: _message2, minute: 2);
+    return ChatMessage.fromJson({
+      ..._messageJson(id: _message2),
+      'clientMessageId': clientMessageId,
+      'createdAt': '2026-10-01T10:02:00Z',
+    });
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'manager_points_page.dart';
 import 'manager_points_record.dart';
+
 import 'package:shiftly/core/session/feature_scope.dart';
 
 abstract interface class ManagerPointsRepository {

@@ -95,15 +95,45 @@ class _VoiceMessageState extends State<_VoiceMessage> {
   Future<void> _toggle(bool active, bool playing) async {
     try {
       if (active && playing) {
+        if (widget.playback != null) {
+          widget.playback!.pause();
+          return;
+        }
         await widget.player.pause();
         return;
       }
-      if (active &&
-          widget.player.processingState != ProcessingState.completed) {
-        await widget.player.play();
+      setState(() => _loading = true);
+      final groups = context.read<ChatGroupsCubit>();
+      final cache = groups.mediaCache;
+      final scope = groups.scope;
+      if (cache != null && scope != null) {
+        final key = ChatCacheScope.fromSession(scope, widget.message.groupId);
+        if (widget.playback != null) {
+          await widget.playback!.play(key, widget.message, widget.repository);
+          return;
+        }
+        final file = await cache.resolve(
+          key,
+          widget.message,
+          widget.repository,
+        );
+        if (!mounted || !cache.storage.authorized(key)) return;
+        cache.pin(file);
+        try {
+          await widget.player.setAudioSource(
+            AudioSource.uri(Uri.file(file.path), tag: widget.message.id),
+          );
+          if (!mounted || !cache.storage.authorized(key)) {
+            await widget.player.stop();
+            return;
+          }
+          setState(() => _loading = false);
+          await widget.player.play();
+        } finally {
+          cache.unpin(file);
+        }
         return;
       }
-      setState(() => _loading = true);
       final media = await widget.repository.mediaUrl(
         widget.workspaceId,
         widget.message.groupId,
@@ -112,6 +142,8 @@ class _VoiceMessageState extends State<_VoiceMessage> {
       await widget.player.setAudioSource(
         AudioSource.uri(media.url, tag: widget.message.id),
       );
+      if (!mounted) return;
+      setState(() => _loading = false);
       await widget.player.play();
     } catch (_) {
       Fluttertoast.showToast(msg: 'This voice message is unavailable.');
