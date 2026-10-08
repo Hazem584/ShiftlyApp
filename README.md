@@ -26,6 +26,15 @@ metadata is preserved. CI discards the old shallow-checkout installation and use
 a fresh extraction without restoring or saving an SDK cache; an unknown version
 fails immediately instead of changing dependency constraints.
 
+Release builds capture verbose output in a private temporary log. On failure,
+`tool/ci/summarize_release_failure.py` reports compiler switches, compiler stack
+frames, and any reported app source locations. Paths, positional arguments, Dart
+defines (including encoded values), and option values are redacted. The raw log
+is deleted with the other private inputs and is never uploaded as an artifact.
+If a frontend crash has no source location, use the redacted invocation and stack
+to construct a minimal reproduction with placeholder configuration for an upstream
+Dart report; do not infer an offending plugin from a preceding Gradle warning.
+
 Repository **Settings → Secrets and variables → Actions** must contain:
 
 | Type | Name | Value format |
