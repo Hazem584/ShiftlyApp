@@ -21,7 +21,7 @@ class ManagerResourceList extends StatelessWidget {
   final VoidCallback reload;
   final VoidCallback? more;
   final void Function(ManagerPointsRecord)? onRecord;
-  String _date(ManagerPointsRecord record, String key) {
+  String _date(BuildContext context, ManagerPointsRecord record, String key) {
     final value = record.fields[key];
     if (value is! String) {
       return 'Unknown';
@@ -29,7 +29,11 @@ class ManagerResourceList extends StatelessWidget {
     final parsed = DateTime.tryParse(value);
     return parsed == null
         ? 'Unknown'
-        : WorkspaceTime.dateTime(parsed, timezone);
+        : WorkspaceTime.dateTime(
+            parsed,
+            timezone,
+            locale: Localizations.localeOf(context).toString(),
+          );
   }
 
   @override
@@ -132,7 +136,7 @@ class ManagerResourceList extends StatelessWidget {
         Text(
           'Cycle: ${record.text('cycle')} · Threshold: ${record.text('threshold')}',
         ),
-        Text(_date(record, 'createdAt')),
+        Text(_date(context, record, 'createdAt')),
         if (record.fields['employeeMembershipId'] is String)
           TextButton(
             onPressed: () => context.push(
@@ -146,7 +150,7 @@ class ManagerResourceList extends StatelessWidget {
       return [
         Text('Status: ${record.text('status')}'),
         Text(record.text('reason')),
-        Text(_date(record, 'createdAt')),
+        Text(_date(context, record, 'createdAt')),
         OutlinedButton(
           onPressed: () => onRecord?.call(record),
           child: const Text('View dispute'),
@@ -172,7 +176,7 @@ class ManagerResourceList extends StatelessWidget {
         Text(
           record.fields['operationalDate'] is String
               ? record.text('operationalDate')
-              : _date(record, 'createdAt'),
+              : _date(context, record, 'createdAt'),
         ),
         if (record.fields['reversedEntryId'] != null)
           Text('Reverses entry ${record.text('reversedEntryId')}'),
@@ -186,9 +190,9 @@ class ManagerResourceList extends StatelessWidget {
       ),
       Text(record.text('reason').replaceAll('_', ' ')),
       Text(record.text('explanation')),
-      Text(_date(record, 'createdAt')),
+      Text(_date(context, record, 'createdAt')),
       if (record.reversed) ...[
-        Text('Reversed: ${_date(record, 'reversedAt')}'),
+        Text('Reversed: ${_date(context, record, 'reversedAt')}'),
         Text(record.text('reversalReason')),
         Text(record.text('reversalExplanation')),
       ],

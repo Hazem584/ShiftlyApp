@@ -169,7 +169,7 @@ class _ShiftEditorDialogState extends State<ShiftEditorDialog> {
       lastDate: DateTime(2100),
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
+    final time = await ClockTimePicker.show(
       context: context,
       initialTime: TimeOfDay.fromDateTime(current),
     );

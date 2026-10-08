@@ -202,8 +202,22 @@ void _showDay(
                 : null,
           ),
           if (day.templateName != null) detailRow('Shift', day.templateName!),
-          detailRow('Clock in', WorkspaceTime.time(day.clockInAt, timezone)),
-          detailRow('Clock out', WorkspaceTime.time(day.clockOutAt, timezone)),
+          detailRow(
+            'Clock in',
+            WorkspaceTime.time(
+              day.clockInAt,
+              timezone,
+              locale: Localizations.localeOf(context).toString(),
+            ),
+          ),
+          detailRow(
+            'Clock out',
+            WorkspaceTime.time(
+              day.clockOutAt,
+              timezone,
+              locale: Localizations.localeOf(context).toString(),
+            ),
+          ),
           if (day.workDurationMinutes != null)
             detailRow('Worked', '${day.workDurationMinutes} minutes'),
           if (day.lateMinutes != null)

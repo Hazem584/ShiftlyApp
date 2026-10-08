@@ -16,12 +16,16 @@ class ManagerAuditDialog extends StatelessWidget {
   final ManagerPointsRecord record;
   final ManagerPerformanceCubit cubit;
   final FeatureSessionScope scope;
-  String _date(String field) {
+  String _date(BuildContext context, String field) {
     final value = record.fields[field];
     final parsed = value is String ? DateTime.tryParse(value) : null;
     return parsed == null
         ? 'Unknown'
-        : WorkspaceTime.dateTime(parsed, scope.timezone);
+        : WorkspaceTime.dateTime(
+            parsed,
+            scope.timezone,
+            locale: Localizations.localeOf(context).toString(),
+          );
   }
 
   @override
@@ -38,11 +42,11 @@ class ManagerAuditDialog extends StatelessWidget {
             Text('ID: ${record.id}'),
             Text('Reason: ${record.text('reason')}'),
             Text(record.text('explanation')),
-            Text('Created: ${_date('createdAt')}'),
+            Text('Created: ${_date(context, 'createdAt')}'),
             Text('Actor membership: ${record.text('createdByMembershipId')}'),
             Text('Policy version: ${record.text('policyVersionId')}'),
             if (record.reversed) ...[
-              Text('Reversed: ${_date('reversedAt')}'),
+              Text('Reversed: ${_date(context, 'reversedAt')}'),
               Text(record.text('reversalReason')),
               Text(record.text('reversalExplanation')),
             ],

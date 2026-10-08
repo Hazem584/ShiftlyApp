@@ -99,12 +99,16 @@ class _TemplateEditorDialogState extends State<_TemplateEditorDialog> {
                     OutlinedButton.icon(
                       onPressed: state.saving ? null : () => _pick(true),
                       icon: const Icon(Icons.login_rounded),
-                      label: Text('Start ${_start.format(context)}'),
+                      label: Text(
+                        'Start ${ClockTime.format(_start.hour, _start.minute, locale: Localizations.localeOf(context).toString())}',
+                      ),
                     ),
                     OutlinedButton.icon(
                       onPressed: state.saving ? null : () => _pick(false),
                       icon: const Icon(Icons.logout_rounded),
-                      label: Text('End ${_end.format(context)}'),
+                      label: Text(
+                        'End ${ClockTime.format(_end.hour, _end.minute, locale: Localizations.localeOf(context).toString())}',
+                      ),
                     ),
                   ],
                 ),
@@ -181,7 +185,7 @@ class _TemplateEditorDialogState extends State<_TemplateEditorDialog> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${_start.format(context)} – ${_end.format(context)} • ${_duration(_input.durationMinutes)} • ${_input.durationMinutes == 1440
+                    '${ClockTime.format(_start.hour, _start.minute, locale: Localizations.localeOf(context).toString())} – ${ClockTime.format(_end.hour, _end.minute, locale: Localizations.localeOf(context).toString())} • ${_duration(_input.durationMinutes)} • ${_input.durationMinutes == 1440
                         ? '24-hour'
                         : _input.endMinute <= _input.startMinute
                         ? 'Overnight'
@@ -234,7 +238,7 @@ class _TemplateEditorDialogState extends State<_TemplateEditorDialog> {
   );
 
   Future<void> _pick(bool start) async {
-    final value = await showTimePicker(
+    final value = await ClockTimePicker.show(
       context: context,
       initialTime: start ? _start : _end,
     );

@@ -12,6 +12,8 @@ class _TimeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => OutlinedButton(
     onPressed: onPressed,
-    child: Text('$label: ${value.format(context)}'),
+    child: Text(
+      '$label: ${ClockTime.format(value.hour, value.minute, locale: Localizations.localeOf(context).toString())}',
+    ),
   );
 }

@@ -57,8 +57,10 @@ class _GroupTile extends StatelessWidget {
         children: [
           if (group.lastMessage != null)
             Text(
-              MaterialLocalizations.of(context).formatTimeOfDay(
-                TimeOfDay.fromDateTime(group.lastMessage!.createdAt.toLocal()),
+              WorkspaceTime.time(
+                group.lastMessage!.createdAt,
+                context.read<ChatGroupsCubit>().scope?.timezone ?? 'Etc/UTC',
+                locale: Localizations.localeOf(context).toString(),
               ),
               style: Theme.of(context).textTheme.labelSmall,
             ),

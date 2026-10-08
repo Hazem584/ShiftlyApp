@@ -168,9 +168,11 @@ class EmployeeShiftsScreen extends StatelessWidget {
               ShiftStatusBadge(status: record.status),
               const SizedBox(height: AppSpacing.m),
               Text(
-                'Starts: ${WorkspaceTime.dateTime(record.startsAt, timezone)}',
+                'Starts: ${WorkspaceTime.dateTime(record.startsAt, timezone, locale: Localizations.localeOf(context).toString())}',
               ),
-              Text('Ends: ${WorkspaceTime.dateTime(record.endsAt, timezone)}'),
+              Text(
+                'Ends: ${WorkspaceTime.dateTime(record.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+              ),
               Text('Break: ${record.breakMinutes} minutes'),
               if (record.notes != null) ...[
                 const SizedBox(height: AppSpacing.s),
@@ -179,10 +181,10 @@ class EmployeeShiftsScreen extends StatelessWidget {
               if (record.attendance case final attendance?) ...[
                 const SizedBox(height: AppSpacing.m),
                 Text(
-                  'Clock-in: ${WorkspaceTime.time(attendance.clockInAt, timezone)}',
+                  'Clock-in: ${WorkspaceTime.time(attendance.clockInAt, timezone, locale: Localizations.localeOf(context).toString())}',
                 ),
                 Text(
-                  'Clock-out: ${WorkspaceTime.time(attendance.clockOutAt, timezone)}',
+                  'Clock-out: ${WorkspaceTime.time(attendance.clockOutAt, timezone, locale: Localizations.localeOf(context).toString())}',
                 ),
                 Text(attendanceReviewLabel(attendance.reviewStatus)),
               ],

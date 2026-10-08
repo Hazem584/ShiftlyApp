@@ -1,3 +1,5 @@
+import 'package:shiftly/core/utils/clock_time.dart';
+import 'package:shiftly/core/utils/clock_time_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/services/toast_service.dart';
@@ -228,8 +230,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
 
 TimeOfDay _tod(int minute) =>
     TimeOfDay(hour: minute ~/ 60, minute: minute % 60);
-String _time(int minute) =>
-    '${(minute ~/ 60).toString().padLeft(2, '0')}:${(minute % 60).toString().padLeft(2, '0')}';
+
 String _duration(int minutes) => '${minutes ~/ 60}h ${minutes % 60}m';
 Color _color(String value) {
   final hex = value.replaceFirst('#', '');

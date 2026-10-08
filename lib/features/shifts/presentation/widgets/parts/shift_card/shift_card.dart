@@ -43,14 +43,18 @@ class ShiftCard extends StatelessWidget {
               ),
               const SizedBox(height: 3),
               Text(
-                WorkspaceTime.dateTime(shift.startsAt, timezone),
+                WorkspaceTime.dateTime(
+                  shift.startsAt,
+                  timezone,
+                  locale: Localizations.localeOf(context).toString(),
+                ),
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,
                 ),
               ),
               Text(
-                'to ${WorkspaceTime.dateTime(shift.endsAt, timezone)}',
+                'to ${WorkspaceTime.dateTime(shift.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,

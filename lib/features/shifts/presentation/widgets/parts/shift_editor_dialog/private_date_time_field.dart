@@ -24,7 +24,7 @@ class _DateTimeField extends StatelessWidget {
     title: Text(label),
     subtitle: Text(
       '${value.year}-${_two(value.month)}-${_two(value.day)} '
-      '${_two(value.hour)}:${_two(value.minute)} · $timezone',
+      '${ClockTime.wallTime(value, locale: Localizations.localeOf(context).toString())} · $timezone',
     ),
   );
 

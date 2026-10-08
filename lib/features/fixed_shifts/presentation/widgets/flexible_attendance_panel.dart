@@ -188,7 +188,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${WorkspaceTime.time(entry.scheduledStartAt, timezone)} – ${WorkspaceTime.time(entry.scheduledEndAt, timezone)}',
+              '${WorkspaceTime.time(entry.scheduledStartAt, timezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.time(entry.scheduledEndAt, timezone, locale: Localizations.localeOf(context).toString())}',
             ),
             Text('Operational date: ${entry.operationalDate}'),
             Text(

@@ -1,5 +1,6 @@
 import 'package:timezone/data/latest.dart' as timezone_data;
 import 'package:timezone/timezone.dart' as timezone;
+import 'package:shiftly/core/utils/clock_time.dart';
 
 abstract final class WorkspaceTime {
   static bool _initialized = false;
@@ -68,19 +69,17 @@ abstract final class WorkspaceTime {
     required int day,
   }) => '$year-${_two(month)}-${_two(day)}';
 
-  static String dateTime(DateTime utc, String ianaName) {
+  static String dateTime(DateTime utc, String ianaName, {String? locale}) {
     final value = inWorkspace(utc, ianaName);
     final month = _two(value.month);
     final day = _two(value.day);
-    final hour = _two(value.hour);
-    final minute = _two(value.minute);
-    return '${value.year}-$month-$day $hour:$minute ${value.timeZoneName}';
+    return '${value.year}-$month-$day ${ClockTime.wallTime(value, locale: locale)} ${value.timeZoneName}';
   }
 
-  static String time(DateTime? utc, String ianaName) {
+  static String time(DateTime? utc, String ianaName, {String? locale}) {
     if (utc == null) return 'Not recorded';
     final value = inWorkspace(utc, ianaName);
-    return '${_two(value.hour)}:${_two(value.minute)} ${value.timeZoneName}';
+    return '${ClockTime.wallTime(value, locale: locale)} ${value.timeZoneName}';
   }
 
   static String _two(int value) => value.toString().padLeft(2, '0');

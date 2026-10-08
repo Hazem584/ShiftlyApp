@@ -43,7 +43,11 @@ class ChatMessageCache {
     if (!storage.authorized(scope)) return null;
     final record = storage.records.record(_key(scope, cursor));
     final value = await record.get(storage.database);
-    if (!storage.authorized(scope) || revision != storage.revision || value == null) return null;
+    if (!storage.authorized(scope) ||
+        revision != storage.revision ||
+        value == null) {
+      return null;
+    }
     if ((value['access'] as int) <
         DateTime.now().subtract(retention).millisecondsSinceEpoch) {
       await record.delete(storage.database);

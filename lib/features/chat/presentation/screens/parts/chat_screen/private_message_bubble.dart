@@ -54,7 +54,11 @@ class _MessageBubble extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  WorkspaceTime.time(message.createdAt, timezone),
+                  WorkspaceTime.time(
+                    message.createdAt,
+                    timezone,
+                    locale: Localizations.localeOf(context).toString(),
+                  ),
                   style: Theme.of(context).textTheme.labelSmall
                       ?.copyWith(color: foreground.withValues(alpha: .72)),
                 ),

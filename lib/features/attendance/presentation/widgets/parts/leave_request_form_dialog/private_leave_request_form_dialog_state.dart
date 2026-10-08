@@ -163,7 +163,7 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
   }
 
   Future<void> _pickTime({required bool start}) async {
-    final picked = await showTimePicker(
+    final picked = await ClockTimePicker.show(
       context: context,
       initialTime: start ? _startTime : _endTime,
     );

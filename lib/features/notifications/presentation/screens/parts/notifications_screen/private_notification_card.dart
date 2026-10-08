@@ -73,7 +73,7 @@ class _NotificationCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${presentation.label} · ${WorkspaceTime.dateTime(notification.createdAt, timezone)}',
+                      '${presentation.label} · ${WorkspaceTime.dateTime(notification.createdAt, timezone, locale: Localizations.localeOf(context).toString())}',
                       style: const TextStyle(
                         color: AppColors.lighterGray,
                         fontSize: 11,

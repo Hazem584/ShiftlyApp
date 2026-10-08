@@ -540,7 +540,9 @@ extension ChatOutboxPipeline on ChatConversationCubit {
     _generation++;
     _request++;
     if (!isClosed) {
-      _emitOutboxState(const ChatConversationState(loading: false, accessLost: true));
+      _emitOutboxState(
+        const ChatConversationState(loading: false, accessLost: true),
+      );
     }
   }
 
@@ -549,7 +551,9 @@ extension ChatOutboxPipeline on ChatConversationCubit {
     _cancelPendingForOldScope();
     _cancelRealtime();
     if (!isClosed) {
-      _emitOutboxState(const ChatConversationState(loading: false, accessLost: true));
+      _emitOutboxState(
+        const ChatConversationState(loading: false, accessLost: true),
+      );
     }
     if (key != null) await outbox?.storage.revoke(key);
   }

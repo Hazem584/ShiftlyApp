@@ -61,7 +61,7 @@ class _EligibilityTile extends StatelessWidget {
             ],
           ),
           subtitle: Text(
-            '${WorkspaceTime.time(entry.scheduledStartAt, timezone)} – ${WorkspaceTime.time(entry.scheduledEndAt, timezone)}\n${entry.operationalDate} • $status${entry.lateMinutes > 0 ? ' • ${entry.lateMinutes} min late' : ''}',
+            '${WorkspaceTime.time(entry.scheduledStartAt, timezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.time(entry.scheduledEndAt, timezone, locale: Localizations.localeOf(context).toString())}\n${entry.operationalDate} • $status${entry.lateMinutes > 0 ? ' • ${entry.lateMinutes} min late' : ''}',
           ),
           trailing: busy
               ? const SizedBox.square(

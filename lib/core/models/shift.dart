@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:shiftly/core/utils/clock_time.dart';
 
 class Shift extends Equatable {
   const Shift({
@@ -13,13 +14,10 @@ class Shift extends Equatable {
   final DateTime startTime;
   final DateTime endTime;
 
-  String get timeRange => '${_format(startTime)} – ${_format(endTime)}';
+  String get timeRange => formattedTimeRange();
 
-  static String _format(DateTime value) {
-    final hour = value.hour % 12 == 0 ? 12 : value.hour % 12;
-    final minute = value.minute.toString().padLeft(2, '0');
-    return '$hour:$minute ${value.hour >= 12 ? 'PM' : 'AM'}';
-  }
+  String formattedTimeRange({String? locale}) =>
+      '${ClockTime.wallTime(startTime, locale: locale)} – ${ClockTime.wallTime(endTime, locale: locale)}';
 
   @override
   List<Object?> get props => [id, name, startTime, endTime];

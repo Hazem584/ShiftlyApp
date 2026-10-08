@@ -299,13 +299,13 @@ class ManagerAttendancePanel extends StatelessWidget {
               Text(
                 record.source == AttendanceSource.template
                     ? 'Template: ${record.templateName ?? 'Unavailable'} • ${record.operationalDate ?? 'Unknown date'}'
-                    : 'Shift: ${record.shift == null ? 'Unavailable' : WorkspaceTime.dateTime(record.shift!.startsAt, timezone)}',
+                    : 'Shift: ${record.shift == null ? 'Unavailable' : WorkspaceTime.dateTime(record.shift!.startsAt, timezone, locale: Localizations.localeOf(context).toString())}',
               ),
               Text(
-                'Clock-in: ${WorkspaceTime.time(record.clockInAt, timezone)}',
+                'Clock-in: ${WorkspaceTime.time(record.clockInAt, timezone, locale: Localizations.localeOf(context).toString())}',
               ),
               Text(
-                'Clock-out: ${WorkspaceTime.time(record.clockOutAt, timezone)}',
+                'Clock-out: ${WorkspaceTime.time(record.clockOutAt, timezone, locale: Localizations.localeOf(context).toString())}',
               ),
               Text('Late: ${record.minutesLate} minutes'),
               if (record.workedMinutes != null)

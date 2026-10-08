@@ -55,7 +55,7 @@ class _TemplateCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '${_time(template.startMinute)} – ${_time(template.endMinute)}  •  ${_duration(template.durationMinutes)}',
+              '${ClockTime.minutes(template.startMinute, locale: Localizations.localeOf(context).toString())} – ${ClockTime.minutes(template.endMinute, locale: Localizations.localeOf(context).toString())}  •  ${_duration(template.durationMinutes)}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             if (template.overnight)

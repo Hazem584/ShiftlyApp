@@ -33,12 +33,13 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
           LeaveDetailRow(
             icon: Icons.calendar_today_outlined,
             text:
-                'Starts: ${WorkspaceTime.dateTime(request.startsAt, timezone)}',
+                'Starts: ${WorkspaceTime.dateTime(request.startsAt, timezone, locale: Localizations.localeOf(context).toString())}',
           ),
           const SizedBox(height: 8),
           LeaveDetailRow(
             icon: Icons.event_available_outlined,
-            text: 'Ends: ${WorkspaceTime.dateTime(request.endsAt, timezone)}',
+            text:
+                'Ends: ${WorkspaceTime.dateTime(request.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
           ),
           const SizedBox(height: 8),
           LeaveDetailRow(icon: Icons.notes_rounded, text: request.reason),
@@ -46,14 +47,14 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
           LeaveDetailRow(
             icon: Icons.schedule_rounded,
             text:
-                'Submitted: ${WorkspaceTime.dateTime(request.createdAt, timezone)}',
+                'Submitted: ${WorkspaceTime.dateTime(request.createdAt, timezone, locale: Localizations.localeOf(context).toString())}',
           ),
           if (request.reviewedAt != null) ...[
             const SizedBox(height: 8),
             LeaveDetailRow(
               icon: Icons.fact_check_outlined,
               text:
-                  'Reviewed: ${WorkspaceTime.dateTime(request.reviewedAt!, timezone)}',
+                  'Reviewed: ${WorkspaceTime.dateTime(request.reviewedAt!, timezone, locale: Localizations.localeOf(context).toString())}',
             ),
           ],
           if (request.rejectionReason?.isNotEmpty == true) ...[

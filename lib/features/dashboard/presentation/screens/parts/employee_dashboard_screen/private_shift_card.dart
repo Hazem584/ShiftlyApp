@@ -30,8 +30,8 @@ class _ShiftCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '${WorkspaceTime.time(shift!.startsAt, timezone)} – '
-                      '${WorkspaceTime.time(shift!.endsAt, timezone)}',
+                      '${WorkspaceTime.time(shift!.startsAt, timezone, locale: Localizations.localeOf(context).toString())} – '
+                      '${WorkspaceTime.time(shift!.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
                       maxLines: 2,
                     ),
                   ),

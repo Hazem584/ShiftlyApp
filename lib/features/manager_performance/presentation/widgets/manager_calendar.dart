@@ -95,11 +95,11 @@ class ManagerCalendar extends StatelessWidget {
                                     Text(day.templateName!),
                                   if (day.clockInAt != null)
                                     Text(
-                                      'Clock-in: ${WorkspaceTime.dateTime(day.clockInAt!, timezone)}',
+                                      'Clock-in: ${WorkspaceTime.dateTime(day.clockInAt!, timezone, locale: Localizations.localeOf(context).toString())}',
                                     ),
                                   if (day.clockOutAt != null)
                                     Text(
-                                      'Clock-out: ${WorkspaceTime.dateTime(day.clockOutAt!, timezone)}',
+                                      'Clock-out: ${WorkspaceTime.dateTime(day.clockOutAt!, timezone, locale: Localizations.localeOf(context).toString())}',
                                     ),
                                   if (day.workDurationMinutes != null)
                                     Text(

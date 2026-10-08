@@ -34,6 +34,7 @@ class PointsHistory extends StatelessWidget {
                           WorkspaceTime.dateTime(
                             entry.createdAt,
                             state.wallet!.timezone,
+                            locale: Localizations.localeOf(context).toString(),
                           ),
                     ),
                     trailing: Text(

@@ -18,11 +18,11 @@ class _EmployeeDayRow extends StatelessWidget {
         .toUpperCase();
     final details = <String>[
       if (entry.shift != null)
-        'Shift ${WorkspaceTime.time(entry.shift!.startsAt, timezone)}–${WorkspaceTime.time(entry.shift!.endsAt, timezone)}',
+        'Shift ${WorkspaceTime.time(entry.shift!.startsAt, timezone, locale: Localizations.localeOf(context).toString())}–${WorkspaceTime.time(entry.shift!.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
       if (entry.attendance != null)
-        'In ${WorkspaceTime.time(entry.attendance!.clockInAt, timezone)}',
+        'In ${WorkspaceTime.time(entry.attendance!.clockInAt, timezone, locale: Localizations.localeOf(context).toString())}',
       if (entry.attendance?.clockOutAt != null)
-        'Out ${WorkspaceTime.time(entry.attendance!.clockOutAt, timezone)}',
+        'Out ${WorkspaceTime.time(entry.attendance!.clockOutAt, timezone, locale: Localizations.localeOf(context).toString())}',
       if ((entry.attendance?.minutesLate ?? 0) > 0)
         '${entry.attendance!.minutesLate} min late',
       if (entry.leave != null) _leaveLabel(entry.leave!.type),

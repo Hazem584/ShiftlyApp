@@ -19,8 +19,8 @@ class _ShiftTile extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
     ),
     subtitle: Text(
-      '${WorkspaceTime.time(shift.startsAt, timezone)} – '
-      '${WorkspaceTime.time(shift.endsAt, timezone)}',
+      '${WorkspaceTime.time(shift.startsAt, timezone, locale: Localizations.localeOf(context).toString())} – '
+      '${WorkspaceTime.time(shift.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     ),

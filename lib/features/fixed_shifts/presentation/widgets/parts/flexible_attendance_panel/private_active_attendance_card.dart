@@ -52,12 +52,12 @@ class _ActiveAttendanceCard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          'Clocked in: ${WorkspaceTime.dateTime(attendance.clockInAt, attendance.workspaceTimezone ?? timezone)}',
+          'Clocked in: ${WorkspaceTime.dateTime(attendance.clockInAt, attendance.workspaceTimezone ?? timezone, locale: Localizations.localeOf(context).toString())}',
         ),
         if (attendance.scheduledStartAt != null &&
             attendance.scheduledEndAt != null)
           Text(
-            'Schedule: ${WorkspaceTime.time(attendance.scheduledStartAt, timezone)} – ${WorkspaceTime.time(attendance.scheduledEndAt, timezone)}',
+            'Schedule: ${WorkspaceTime.time(attendance.scheduledStartAt, timezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.time(attendance.scheduledEndAt, timezone, locale: Localizations.localeOf(context).toString())}',
           ),
         Text(
           'Operational date: ${attendance.operationalDate ?? 'Unavailable'}',

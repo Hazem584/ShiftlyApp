@@ -97,7 +97,7 @@ class _EmployeeDashboard extends StatelessWidget {
                         key: Key('employee-dashboard-leave-${request.id}'),
                         title: Text(_leaveType(request.type)),
                         subtitle: Text(
-                          '${WorkspaceTime.dateTime(request.startsAt, data.timezone)}\n'
+                          '${WorkspaceTime.dateTime(request.startsAt, data.timezone, locale: Localizations.localeOf(context).toString())}\n'
                           '${request.reason}',
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,

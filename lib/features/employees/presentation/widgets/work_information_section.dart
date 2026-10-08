@@ -91,7 +91,7 @@ class WorkInformationSection extends StatelessWidget {
                 (shift) => DropdownMenuItem(
                   value: shift,
                   child: Text(
-                    '${shift.name} • ${shift.timeRange}',
+                    '${shift.name} • ${shift.formattedTimeRange(locale: Localizations.localeOf(context).toString())}',
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

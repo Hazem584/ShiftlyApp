@@ -1,3 +1,4 @@
+import 'package:shiftly/core/utils/clock_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
@@ -8,8 +9,6 @@ import 'flexible_attendance_panel.dart';
 
 class EmployeeFixedShiftsScreen extends StatelessWidget {
   const EmployeeFixedShiftsScreen({super.key});
-  String _time(int minute) =>
-      '${(minute ~/ 60).toString().padLeft(2, '0')}:${(minute % 60).toString().padLeft(2, '0')}';
   @override
   Widget build(BuildContext context) {
     final timezone =
@@ -59,7 +58,7 @@ class EmployeeFixedShiftsScreen extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(
-                            '${_time(template.startMinute)} – ${_time(template.endMinute)}${template.overnight ? ' (overnight)' : ''}',
+                            '${ClockTime.minutes(template.startMinute, locale: Localizations.localeOf(context).toString())} – ${ClockTime.minutes(template.endMinute, locale: Localizations.localeOf(context).toString())}${template.overnight ? ' (overnight)' : ''}',
                           ),
                           Text(
                             'Duration: ${template.durationMinutes ~/ 60}h ${template.durationMinutes % 60}m',

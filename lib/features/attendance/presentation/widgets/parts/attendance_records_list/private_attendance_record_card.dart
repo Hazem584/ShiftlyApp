@@ -78,8 +78,8 @@ class _AttendanceRecordCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'In: ${WorkspaceTime.time(record.clockInAt, timezone)}  '
-                  'Out: ${WorkspaceTime.time(record.clockOutAt, timezone)}',
+                  'In: ${WorkspaceTime.time(record.clockInAt, timezone, locale: Localizations.localeOf(context).toString())}  '
+                  'Out: ${WorkspaceTime.time(record.clockOutAt, timezone, locale: Localizations.localeOf(context).toString())}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,

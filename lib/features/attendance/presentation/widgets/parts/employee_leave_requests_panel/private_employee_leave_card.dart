@@ -68,7 +68,7 @@ class _EmployeeLeaveCard extends StatelessWidget {
         LeaveDetailRow(
           icon: Icons.calendar_today_outlined,
           text:
-              '${WorkspaceTime.dateTime(request.startsAt, timezone)} – ${WorkspaceTime.dateTime(request.endsAt, timezone)}',
+              '${WorkspaceTime.dateTime(request.startsAt, timezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.dateTime(request.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
         ),
         const SizedBox(height: 7),
         LeaveDetailRow(icon: Icons.notes_rounded, text: request.reason),
