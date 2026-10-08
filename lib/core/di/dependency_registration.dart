@@ -1,4 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:shiftly/features/manager_performance/data/api_manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/data/manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/data/manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/data/preferences_manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/data/memory_manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/data/unavailable_manager_points_repository.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/config/app_config.dart';
@@ -116,6 +122,12 @@ abstract final class DependencyRegistration {
       ..registerLazySingleton<PointsRepository>(
         () => ApiPointsRepository(target()),
       )
+      ..registerLazySingleton<ManagerPointsRepository>(
+        () => ApiManagerPointsRepository(target()),
+      )
+      ..registerLazySingleton<ManagerIntentStorage>(
+        () => PreferencesManagerIntentStorage(target()),
+      )
       ..registerLazySingleton<RedemptionIntentStorage>(
         () => SharedPreferencesRedemptionIntentStorage(target()),
       )
@@ -173,6 +185,7 @@ abstract final class DependencyRegistration {
     required ChatRealtime chatRealtime,
     required FixedShiftRepository fixedShiftRepository,
     PointsRepository? pointsRepository,
+    ManagerPointsRepository? managerPointsRepository,
     ProfileImagePicker? profileImagePicker,
   }) {
     if (locator.isRegistered<SessionCoordinator>()) {
@@ -207,6 +220,10 @@ abstract final class DependencyRegistration {
       ..registerSingleton<PointsRepository>(
         pointsRepository ?? const MockPointsRepository(),
       )
+      ..registerSingleton<ManagerPointsRepository>(
+        managerPointsRepository ?? const UnavailableManagerPointsRepository(),
+      )
+      ..registerSingleton<ManagerIntentStorage>(MemoryManagerIntentStorage())
       ..registerSingleton<RedemptionIntentStorage>(
         MemoryRedemptionIntentStorage(),
       )

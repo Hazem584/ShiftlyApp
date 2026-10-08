@@ -80,6 +80,13 @@ class _EmployeeDetailsView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
           children: [
             EmployeeDetailsHeader(employee: employee),
+            ListTile(
+              key: const Key('employee-performance-link'),
+              leading: const Icon(Icons.insights_outlined),
+              title: const Text('Employee Performance'),
+              onTap: () =>
+                  context.push(AppRoutes.employeePerformance(membershipId)),
+            ),
             const SizedBox(height: AppSpacing.l),
             EmployeeContactSection(employee: employee),
             const SizedBox(height: AppSpacing.l),

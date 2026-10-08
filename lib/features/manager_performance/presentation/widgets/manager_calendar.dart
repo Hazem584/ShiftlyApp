@@ -1,0 +1,160 @@
+import 'package:flutter/material.dart';
+import 'package:shiftly/core/session/feature_scope.dart';
+
+import '../cubit/manager_performance_cubit.dart';
+import 'manager_scoped_details.dart';
+
+import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/features/points/data/points_models.dart';
+import 'package:shiftly/features/points/presentation/widgets/points_formatters.dart';
+
+import '../cubit/manager_resource_state.dart';
+
+class ManagerCalendar extends StatelessWidget {
+  const ManagerCalendar({
+    required this.month,
+    required this.state,
+    required this.timezone,
+    required this.changeMonth,
+    required this.cubit,
+    required this.scope,
+    super.key,
+  });
+  final DateTime month;
+  final ManagerPerformanceCubit cubit;
+  final FeatureSessionScope? scope;
+  final ManagerResourceState state;
+  final String timezone;
+  final void Function(DateTime) changeMonth;
+  @override
+  Widget build(BuildContext context) {
+    final days = {
+      for (final record in state.records)
+        record.id: PerformanceDay.fromJson(record.fields),
+    };
+    final offset = DateTime(month.year, month.month).weekday - 1;
+    final count = DateTime(month.year, month.month + 1, 0).day;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(monthLabel(month))),
+            IconButton(
+              tooltip: 'Previous month',
+              onPressed: month.year == 2000 && month.month == 1
+                  ? null
+                  : () => changeMonth(DateTime(month.year, month.month - 1)),
+              icon: const Icon(Icons.chevron_left),
+            ),
+            IconButton(
+              tooltip: 'Next month',
+              onPressed: month.year == 2100 && month.month == 12
+                  ? null
+                  : () => changeMonth(DateTime(month.year, month.month + 1)),
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ],
+        ),
+        if (state.loading) const LinearProgressIndicator(),
+        if (state.error != null) Text(state.error!),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: count + offset,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            mainAxisExtent: 40 + MediaQuery.textScalerOf(context).scale(16),
+          ),
+          itemBuilder: (context, index) {
+            if (index < offset) {
+              return const SizedBox.shrink();
+            }
+            final date =
+                '${month.year}-${month.month.toString().padLeft(2, '0')}-${(index - offset + 1).toString().padLeft(2, '0')}';
+            final day = days[date];
+            return Semantics(
+              label: '$date, ${statusLabel(day?.status)}',
+              child: InkWell(
+                onTap: day == null
+                    ? null
+                    : () => showDialog<void>(
+                        context: context,
+                        builder: (context) => ManagerScopedDetails(
+                          cubit: cubit,
+                          scope: scope,
+                          child: AlertDialog(
+                            title: Text(day.date.value),
+                            content: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(statusLabel(day.status)),
+                                  if (day.templateName != null)
+                                    Text(day.templateName!),
+                                  if (day.clockInAt != null)
+                                    Text(
+                                      'Clock-in: ${WorkspaceTime.dateTime(day.clockInAt!, timezone)}',
+                                    ),
+                                  if (day.clockOutAt != null)
+                                    Text(
+                                      'Clock-out: ${WorkspaceTime.dateTime(day.clockOutAt!, timezone)}',
+                                    ),
+                                  if (day.workDurationMinutes != null)
+                                    Text(
+                                      'Worked ${day.workDurationMinutes} minutes',
+                                    ),
+                                  if (day.lateMinutes != null)
+                                    Text('Late ${day.lateMinutes} minutes'),
+                                  for (final change in day.pointChanges)
+                                    Text(
+                                      '${pointLabel(change.type)} ${change.amount}',
+                                    ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('${index - offset + 1}'),
+                    if (day != null)
+                      Icon(
+                        statusIcon(day.status),
+                        size: 18,
+                        color: statusColor(context, day.status),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final status in PerformanceStatus.values)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(statusIcon(status), size: 18),
+                  const SizedBox(width: 4),
+                  Text(statusLabel(status)),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}

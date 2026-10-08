@@ -17,7 +17,9 @@ import 'package:shiftly/features/employees/presentation/screens/add_employee_scr
 import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employees_screen.dart';
 import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
-import 'package:shiftly/features/shifts/presentation/screens/manager_shifts_screen.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/shift_templates_screen.dart';
+import 'package:shiftly/features/manager_performance/presentation/screens/manager_performance_screen.dart';
+import 'package:shiftly/features/manager_performance/presentation/screens/employee_performance_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
 
@@ -83,7 +85,14 @@ GoRouter createAppRouter({
               routes: [
                 GoRoute(
                   path: 'shifts',
-                  builder: (_, _) => ManagerShiftsScreen(
+                  builder: (_, _) => ShiftTemplatesScreen(
+                    workspaceName:
+                        sessionCoordinator
+                            ?.state
+                            .activeMembership
+                            ?.workspace
+                            .name ??
+                        'Current workspace',
                     timezone:
                         sessionCoordinator
                             ?.state
@@ -92,6 +101,18 @@ GoRouter createAppRouter({
                             .timezone ??
                         'Etc/UTC',
                   ),
+                ),
+                GoRoute(
+                  path: 'performance',
+                  builder: (_, _) => const ManagerPerformanceScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'employees/:membershipId',
+                      builder: (_, state) => EmployeePerformanceScreen(
+                        membershipId: state.pathParameters['membershipId']!,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

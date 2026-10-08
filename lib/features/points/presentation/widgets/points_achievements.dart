@@ -7,10 +7,12 @@ class PointsAchievements extends StatelessWidget {
   const PointsAchievements({
     required this.items,
     required this.timezone,
+    this.emptyText = 'Your active GOLD badges will appear here.',
     super.key,
   });
   final List<Achievement> items;
   final String timezone;
+  final String emptyText;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -19,9 +21,9 @@ class PointsAchievements extends StatelessWidget {
       Text('Achievements', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 8),
       if (items.isEmpty)
-        const PointsEmpty(
+        PointsEmpty(
           icon: Icons.emoji_events_outlined,
-          text: 'Your active GOLD badges will appear here.',
+          text: emptyText,
         )
       else
         Wrap(

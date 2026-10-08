@@ -42,8 +42,8 @@ class EmployeeShiftsScreen extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.fromLTRB(18, 14, 18, 0),
                   child: ScreenHeader(
-                    title: 'My Shifts',
-                    subtitle: 'Your schedule for this workspace',
+                    title: 'Legacy shifts',
+                    subtitle: 'Historical assigned schedules',
                   ),
                 ),
                 SizedBox(
@@ -53,11 +53,9 @@ class EmployeeShiftsScreen extends StatelessWidget {
                         ? Icons.event_available_outlined
                         : Icons.cloud_off_outlined,
                     title: state.failure == null
-                        ? 'No shifts assigned'
+                        ? 'No legacy shift history'
                         : 'Could not load shifts',
-                    message:
-                        state.failure?.message ??
-                        'Assigned shifts will appear here.',
+                    message: state.failure?.message ?? 'Use Fixed shifts for available templates and attendance.',
                   ),
                 ),
               ],
@@ -83,8 +81,8 @@ class EmployeeShiftsScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
             children: [
               const ScreenHeader(
-                title: 'My Shifts',
-                subtitle: 'Your schedule for this workspace',
+                title: 'Legacy shifts',
+                subtitle: 'Historical assigned schedules and active clock-out',
               ),
               if (state.failure != null) ...[
                 const SizedBox(height: AppSpacing.s),
@@ -95,7 +93,10 @@ class EmployeeShiftsScreen extends StatelessWidget {
               ],
               if (upcoming.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.l),
-                Text('Upcoming', style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  'Legacy schedules',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 const SizedBox(height: AppSpacing.s),
                 for (final shift in upcoming) ...[
                   ShiftCard(
@@ -185,42 +186,31 @@ class EmployeeShiftsScreen extends StatelessWidget {
                 ),
                 Text(attendanceReviewLabel(attendance.reviewStatus)),
               ],
-              if (record.canClockIn || record.canClockOut) ...[
+              if (record.canClockOut) ...[
                 const SizedBox(height: AppSpacing.l),
                 BlocBuilder<EmployeeShiftsCubit, EmployeeShiftsState>(
                   builder: (context, state) {
-                    final clockingIn = state.clockingInIds.contains(record.id);
                     final clockingOut = state.clockingOutIds.contains(
                       record.id,
                     );
                     return FilledButton.icon(
-                      key: Key(
-                        record.canClockIn
-                            ? 'clock-in-${record.id}'
-                            : 'clock-out-${record.id}',
-                      ),
-                      onPressed: clockingIn || clockingOut
+                      key: Key('clock-out-${record.id}'),
+                      onPressed: clockingOut
                           ? null
                           : () async {
-                              final result = record.canClockIn
-                                  ? await context
-                                        .read<EmployeeShiftsCubit>()
-                                        .clockIn(record.id)
-                                  : await context
-                                        .read<EmployeeShiftsCubit>()
-                                        .clockOut(record.id);
+                              final result = await context
+                                  .read<EmployeeShiftsCubit>()
+                                  .clockOut(record.id);
                               if (!context.mounted) return;
                               if (result == ClockMutationResult.success) {
                                 Navigator.pop(sheetContext);
                                 ToastService.success(
                                   context,
-                                  message: record.canClockIn
-                                      ? 'Clock-in recorded.'
-                                      : 'Clock-out recorded.',
+                                  message: 'Clock-out recorded.',
                                 );
                               }
                             },
-                      icon: clockingIn || clockingOut
+                      icon: clockingOut
                           ? const SizedBox.square(
                               dimension: 20,
                               child: CircularProgressIndicator(
@@ -229,7 +219,7 @@ class EmployeeShiftsScreen extends StatelessWidget {
                               ),
                             )
                           : const Icon(Icons.fingerprint_rounded),
-                      label: Text(record.canClockIn ? 'Clock in' : 'Clock out'),
+                      label: const Text('Clock out'),
                     );
                   },
                 ),

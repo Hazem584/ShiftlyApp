@@ -15,15 +15,26 @@ abstract final class _NotificationNavigator {
       _unavailable(context);
       return;
     }
+    final notifications = context.read<NotificationsCubit>();
+    if (notifications.scope != scope) { _unavailable(context); return; }
     final destination = _destination(scope, notification);
-    if (destination == null) return;
+    if (destination == null) {
+      if ({
+        NotificationType.shiftAssigned,
+        NotificationType.shiftUpdated,
+        NotificationType.shiftCancelled,
+      }.contains(notification.type)) {
+        _unavailable(context);
+      }
+      return;
+    }
     if (!_uuid.hasMatch(destination.id)) {
       _unavailable(context);
       return;
     }
     try {
       final valid = await _exists(context, scope, destination);
-      if (!context.mounted || !valid) {
+      if (!context.mounted || !valid || notifications.scope != scope) {
         if (context.mounted) _unavailable(context);
         return;
       }
@@ -34,7 +45,7 @@ abstract final class _NotificationNavigator {
         navigator.pop();
         await route?.completed;
       }
-      router.go(destination.location);
+      if (notifications.scope == scope) { router.go(destination.location); }
     } catch (_) {
       if (context.mounted) _unavailable(context);
     }

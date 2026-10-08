@@ -1,5 +1,11 @@
 import 'dart:async';
 
+import 'package:shiftly/features/manager_performance/data/manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/data/manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/data/memory_manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/data/unavailable_manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';

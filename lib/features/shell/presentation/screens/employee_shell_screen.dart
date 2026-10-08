@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/attendance/presentation/screens/employee_attendance_screen.dart';
 import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
-import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/employee_fixed_shifts_screen.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';

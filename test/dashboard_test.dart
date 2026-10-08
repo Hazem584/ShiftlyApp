@@ -199,7 +199,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Hello, Ahmed Mohamed'), findsOneWidget);
     expect(find.textContaining('Africa/Cairo'), findsOneWidget);
-    expect(find.text("Today's shift"), findsOneWidget);
+    expect(find.text('Fixed shifts'), findsOneWidget);
     expect(find.text('Pending leave'), findsOneWidget);
     expect(find.text('Total employees'), findsNothing);
   });

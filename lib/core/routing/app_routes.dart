@@ -1,6 +1,9 @@
 abstract final class AppRoutes {
   static const dashboard = '/dashboard';
   static const managerShifts = '/dashboard/shifts';
+  static const managerPerformance = '/dashboard/performance';
+  static String employeePerformance(String membershipId) =>
+      '/dashboard/performance/employees/$membershipId';
   static const employees = '/employees';
   static const addEmployee = '/employees/add';
   static String employeeDetails(String id) => '/employees/$id';

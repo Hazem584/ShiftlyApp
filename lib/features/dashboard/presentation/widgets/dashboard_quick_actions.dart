@@ -20,6 +20,14 @@ class DashboardQuickActions extends StatelessWidget {
         trailing: '$pendingRequests pending',
       ),
       const SizedBox(height: AppSpacing.s),
+      ListTile(
+        leading: const Icon(Icons.insights_outlined),
+        title: const Text('Performance'),
+        subtitle: const Text(
+          'Employee Points, policies, disputes and warnings',
+        ),
+        onTap: () => context.push(AppRoutes.managerPerformance),
+      ),
       Row(
         children: [
           Expanded(

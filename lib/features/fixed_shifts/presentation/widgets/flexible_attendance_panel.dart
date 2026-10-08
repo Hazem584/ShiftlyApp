@@ -66,7 +66,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
                     ),
                     Text(
                       current.source == AttendanceSource.legacyShift
-                          ? 'Use the existing Shifts screen to manage this scheduled shift.'
+                          ? 'Open My Shifts, then Legacy shift history / active clock-out to finish this attendance.'
                           : 'Refresh before taking another attendance action.',
                     ),
                   ],

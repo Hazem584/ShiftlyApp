@@ -31,6 +31,7 @@ class _AppProvidersState extends State<AppProviders> {
   late final FlexibleAttendanceCubit _flexibleAttendanceCubit;
   late final PointsRepository _points;
   late final PointsCubit _pointsCubit;
+  late final ManagerPerformanceCubit _managerPerformanceCubit;
   late final SessionCoordinator? _sessionCoordinator;
   StreamSubscription<Object?>? _sessionSubscription;
   _SessionRouterRefresh? _sessionRefresh;
@@ -112,6 +113,16 @@ class _AppProvidersState extends State<AppProviders> {
     _pointsCubit =
         _registered<PointsCubit>() ??
         PointsCubit(_points, intentStorage: MemoryRedemptionIntentStorage());
+    _managerPerformanceCubit = ManagerPerformanceCubit(
+      _registered<ManagerPointsRepository>() ??
+          const UnavailableManagerPointsRepository(),
+      _registered<ManagerIntentStorage>() ?? MemoryManagerIntentStorage(),
+      onChanged: () {
+        _dashboardCubit.invalidate();
+        _attendanceCalendarCubit.invalidate();
+        unawaited(_pointsCubit.load(refresh: true));
+      },
+    );
     _notifications =
         widget.notificationRepository ??
         _registered<NotificationRepository>() ??
@@ -209,6 +220,7 @@ class _AppProvidersState extends State<AppProviders> {
       _dashboardCubit.bindSession(previewScope);
       _chatGroupsCubit.bindSession(previewScope);
       _managerTemplatesCubit.bindSession(previewScope);
+      _managerPerformanceCubit.bindSession(previewScope);
     } else {
       _sessionSubscription = coordinator.stream.listen(
         _featureCoordinator.bind,
@@ -235,6 +247,7 @@ class _AppProvidersState extends State<AppProviders> {
     _managerTemplatesCubit.close();
     _flexibleAttendanceCubit.close();
     _pointsCubit.close();
+    _managerPerformanceCubit.close();
     _sessionSubscription?.cancel();
     _sessionRefresh?.dispose();
     if (widget.locator == null) unawaited(widget.sessionCoordinator?.close());
@@ -278,6 +291,7 @@ class _AppProvidersState extends State<AppProviders> {
           BlocProvider.value(value: _managerTemplatesCubit),
           BlocProvider.value(value: _flexibleAttendanceCubit),
           BlocProvider.value(value: _pointsCubit),
+          BlocProvider.value(value: _managerPerformanceCubit),
         ],
         child: MaterialApp.router(
           title: AppStrings.appName,
@@ -322,12 +336,14 @@ class _AppProvidersState extends State<AppProviders> {
     _managerTemplatesCubit.bindSession(featureScope);
     _flexibleAttendanceCubit.bindSession(featureScope);
     _pointsCubit.bindSession(featureScope);
+    _managerPerformanceCubit.bindSession(featureScope);
   }
 
   void _invalidateDashboardAndCalendar() {
     _dashboardCubit.invalidate();
     _attendanceCalendarCubit.invalidate();
     unawaited(_pointsCubit.load(refresh: true));
+    _managerPerformanceCubit.invalidate();
   }
 
   T? _registered<T extends Object>() {

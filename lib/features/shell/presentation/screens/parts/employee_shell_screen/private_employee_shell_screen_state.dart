@@ -53,7 +53,7 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
           index: _selectedIndex,
           children: const [
             EmployeeDashboardScreen(),
-            EmployeeShiftsScreen(),
+            EmployeeFixedShiftsScreen(),
             EmployeeAttendanceScreen(),
             ChatGroupsScreen(embedded: true),
             MyPerformanceScreen(),
