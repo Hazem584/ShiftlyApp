@@ -140,10 +140,7 @@ class _TemplateCard extends StatelessWidget {
       spacing: 5,
       runSpacing: 2,
       crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Icon(icon, size: 15),
-        Text(text),
-      ],
+      children: [Icon(icon, size: 15), Text(text)],
     ),
   );
 }

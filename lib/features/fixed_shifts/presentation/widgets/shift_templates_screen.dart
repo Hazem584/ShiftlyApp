@@ -54,9 +54,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const CircleAvatar(
-                          child: Icon(Icons.schedule_rounded),
-                        ),
+                        const CircleAvatar(child: Icon(Icons.schedule_rounded)),
                         const SizedBox(width: AppSpacing.m),
                         Expanded(
                           child: Column(

@@ -112,10 +112,30 @@ void main() {
     expect(find.text('Deactivate employee?'), findsOneWidget);
     await tester.tap(find.byKey(const Key('confirm-deactivate-employee')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('reactivate-employee')),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('employee-details-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.byKey(const Key('reactivate-employee')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('reactivate-employee')));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('deactivate-employee')),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('employee-details-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.byKey(const Key('deactivate-employee')), findsOneWidget);
     ToastService.dismissAll();
   });

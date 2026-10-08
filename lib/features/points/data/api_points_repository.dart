@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
+import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/network/api_model_parser.dart';
 import 'package:shiftly/features/points/data/points_models.dart';
 import 'package:shiftly/features/points/data/points_repository.dart';
@@ -75,7 +76,23 @@ class ApiPointsRepository implements PointsRepository {
 
   @override
   Future<void> redeem(RedemptionIntent intent) => _request(() async {
-    await _dio.post<Object?>('/points/me/redemptions', data: intent.toJson());
+    final response = await _dio.post<Object?>(
+      '/points/me/redemptions',
+      data: intent.toJson(),
+    );
+    final body = response.data;
+    if ((response.statusCode != 200 && response.statusCode != 201) ||
+        body is! Map ||
+        body['id'] is! String ||
+        (body['id'] as String).isEmpty ||
+        body['workspaceId'] != intent.workspaceId ||
+        body['redPoints'] != intent.redPoints ||
+        body['clientRedemptionId'] != intent.clientRedemptionId) {
+      throw ApiException(
+        message: 'The redemption response could not be confirmed. Retry the saved operation.',
+        requestId: response.headers.value('x-request-id'),
+      );
+    }
   });
 
   Future<T> _request<T>(Future<T> Function() operation) async {

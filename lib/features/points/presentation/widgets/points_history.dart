@@ -16,26 +16,41 @@ class PointsHistory extends StatelessWidget {
       Text('Recent activity', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 8),
       if (state.history.isEmpty)
-        const PointsEmpty(icon: Icons.receipt_long_outlined, text: 'No points activity yet.')
+        const PointsEmpty(
+          icon: Icons.receipt_long_outlined,
+          text: 'No points activity yet.',
+        )
       else
         Card(
           clipBehavior: Clip.antiAlias,
           child: Column(
-            children: state.history.map((entry) => ListTile(
-              leading: CircleAvatar(child: Icon(pointIcon(entry.type))),
-              title: Text(reasonLabel(entry.reason)),
-              subtitle: Text(entry.operationalDate?.value ?? WorkspaceTime.dateTime(entry.createdAt, state.wallet!.timezone)),
-              trailing: Text(
-                '${entry.amount > 0 ? '+' : ''}${entry.amount} ${pointLabel(entry.type)}',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            )).toList(),
+            children: state.history
+                .map(
+                  (entry) => ListTile(
+                    leading: CircleAvatar(child: Icon(pointIcon(entry.type))),
+                    title: Text(reasonLabel(entry.reason)),
+                    subtitle: Text(
+                      entry.operationalDate?.value ??
+                          WorkspaceTime.dateTime(
+                            entry.createdAt,
+                            state.wallet!.timezone,
+                          ),
+                    ),
+                    trailing: Text(
+                      '${entry.amount > 0 ? '+' : ''}${entry.amount} ${pointLabel(entry.type)}',
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                )
+                .toList(),
           ),
         ),
       if (state.hasMoreHistory)
         Center(
           child: TextButton(
-            onPressed: state.loadingMoreHistory ? null : context.read<PointsCubit>().loadMoreHistory,
+            onPressed: state.loadingMoreHistory
+                ? null
+                : context.read<PointsCubit>().loadMoreHistory,
             child: Text(state.loadingMoreHistory ? 'Loading…' : 'Load more'),
           ),
         ),

@@ -229,7 +229,12 @@ void main() {
           });
         }
         if (options.path.endsWith('/achievements')) return jsonResponse([]);
-        if (options.method == 'POST') return jsonResponse({'id': 'redemption'});
+        if (options.method == 'POST') {
+          return jsonResponse({
+            'id': 'redemption',
+            ...Map<String, Object>.from(options.data as Map),
+          });
+        }
         return jsonResponse(walletJson());
       });
       final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/v1'))
@@ -264,6 +269,41 @@ void main() {
       expect(adapter.requests[2].queryParameters['limit'], 100);
       expect(page.data.single.id, 'entry-1');
       expect(adapter.requests.last.data, intent.toJson());
+    },
+  );
+
+  test(
+    'repository requires the original canonical redemption payload',
+    () async {
+      const intent = RedemptionIntent(
+        workspaceId: workspaceId,
+        redPoints: 1,
+        clientRedemptionId: 'original-key',
+      );
+      Object response = {'id': 'operation'};
+      final adapter = _Adapter((_) => jsonResponse(response));
+      final dio = Dio(BaseOptions(baseUrl: 'https://example.test/api/v1'))
+        ..httpClientAdapter = adapter;
+      final repository = ApiPointsRepository(dio);
+      await expectLater(
+        repository.redeem(intent),
+        throwsA(isA<ApiException>()),
+      );
+      response = {
+        'id': 'operation',
+        ...intent.toJson(),
+        'clientRedemptionId': 'other-key',
+      };
+      await expectLater(
+        repository.redeem(intent),
+        throwsA(isA<ApiException>()),
+      );
+      response = {'id': 'operation', ...intent.toJson()};
+      await repository.redeem(intent);
+      expect(
+        adapter.requests.map((r) => r.data).toList(),
+        List.filled(3, intent.toJson()),
+      );
     },
   );
 
@@ -394,83 +434,92 @@ void main() {
       await recovered.close();
     });
 
-    test('blocks a fresh action while an earlier intent is unresolved', () async {
-      final repository = FakePointsRepository()
-        ..redemptionError = const ApiException(
-          message: 'offline',
-          kind: FailureKind.network,
+    test(
+      'blocks a fresh action while an earlier intent is unresolved',
+      () async {
+        final repository = FakePointsRepository()
+          ..redemptionError = const ApiException(
+            message: 'offline',
+            kind: FailureKind.network,
+          );
+        var generated = 0;
+        final cubit = PointsCubit(
+          repository,
+          uuidV4: () => 'key-${++generated}',
+        )..bindSession(employeeScope);
+        await Future<void>.delayed(Duration.zero);
+        await cubit.redeem(1);
+        await cubit.redeem(1);
+        expect(repository.redemptions, hasLength(1));
+        expect(generated, 1);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'logout clears memory without submitting another scope intent',
+      () async {
+        final storage = MemoryRedemptionIntentStorage();
+        await storage.write(
+          employeeScope,
+          const RedemptionIntent(
+            workspaceId: workspaceId,
+            redPoints: 1,
+            clientRedemptionId: 'scope-a-key',
+          ),
         );
-      var generated = 0;
-      final cubit = PointsCubit(
-        repository,
-        uuidV4: () => 'key-${++generated}',
-      )..bindSession(employeeScope);
-      await Future<void>.delayed(Duration.zero);
-      await cubit.redeem(1);
-      await cubit.redeem(1);
-      expect(repository.redemptions, hasLength(1));
-      expect(generated, 1);
-      await cubit.close();
-    });
+        final repository = FakePointsRepository();
+        final cubit = PointsCubit(repository, intentStorage: storage)
+          ..bindSession(employeeScope);
+        await Future<void>.delayed(Duration.zero);
+        cubit.bindSession(null);
+        expect(cubit.state.hasUnresolvedRedemption, isFalse);
+        cubit.bindSession(
+          const FeatureSessionScope(
+            userId: 'user-2',
+            workspaceId: 'workspace-2',
+            membershipId: 'member-2',
+            timezone: 'Etc/UTC',
+            role: WorkspaceRole.employee,
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(repository.redemptions, isEmpty);
+        await cubit.close();
+      },
+    );
 
-    test('logout clears memory without submitting another scope intent', () async {
-      final storage = MemoryRedemptionIntentStorage();
-      await storage.write(
-        employeeScope,
-        const RedemptionIntent(
-          workspaceId: workspaceId,
-          redPoints: 1,
-          clientRedemptionId: 'scope-a-key',
-        ),
-      );
-      final repository = FakePointsRepository();
-      final cubit = PointsCubit(repository, intentStorage: storage)
-        ..bindSession(employeeScope);
-      await Future<void>.delayed(Duration.zero);
-      cubit.bindSession(null);
-      expect(cubit.state.hasUnresolvedRedemption, isFalse);
-      cubit.bindSession(
-        const FeatureSessionScope(
-          userId: 'user-2',
-          workspaceId: 'workspace-2',
-          membershipId: 'member-2',
-          timezone: 'Etc/UTC',
-          role: WorkspaceRole.employee,
-        ),
-      );
-      await Future<void>.delayed(Duration.zero);
-      expect(repository.redemptions, isEmpty);
-      await cubit.close();
-    });
-
-    test('out-of-order month responses cannot replace the selected month', () async {
-      final repository = FakePointsRepository();
-      final october = Completer<List<PerformanceDay>>();
-      final november = Completer<List<PerformanceDay>>();
-      var controlled = false;
-      repository.calendarLoader = (year, month) {
-        if (!controlled) return Future.value(repository.calendar);
-        return month == 10 ? october.future : november.future;
-      };
-      final cubit = PointsCubit(repository)..bindSession(employeeScope);
-      await Future<void>.delayed(Duration.zero);
-      await Future<void>.delayed(Duration.zero);
-      controlled = true;
-      final old = cubit.changeMonth(DateTime(2026, 10));
-      final latest = cubit.changeMonth(DateTime(2026, 11));
-      november.complete([
-        PerformanceDay.fromJson({
-          ...dayJson(),
-          'operationalDate': '2026-11-03',
-        }),
-      ]);
-      await latest;
-      october.complete([PerformanceDay.fromJson(dayJson())]);
-      await old;
-      expect(cubit.state.visibleMonth?.month, 11);
-      expect(cubit.state.visibleCalendar.single.date.month, 11);
-      await cubit.close();
-    });
+    test(
+      'out-of-order month responses cannot replace the selected month',
+      () async {
+        final repository = FakePointsRepository();
+        final october = Completer<List<PerformanceDay>>();
+        final november = Completer<List<PerformanceDay>>();
+        var controlled = false;
+        repository.calendarLoader = (year, month) {
+          if (!controlled) return Future.value(repository.calendar);
+          return month == 10 ? october.future : november.future;
+        };
+        final cubit = PointsCubit(repository)..bindSession(employeeScope);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        controlled = true;
+        final old = cubit.changeMonth(DateTime(2026, 10));
+        final latest = cubit.changeMonth(DateTime(2026, 11));
+        november.complete([
+          PerformanceDay.fromJson({
+            ...dayJson(),
+            'operationalDate': '2026-11-03',
+          }),
+        ]);
+        await latest;
+        october.complete([PerformanceDay.fromJson(dayJson())]);
+        await old;
+        expect(cubit.state.visibleMonth?.month, 11);
+        expect(cubit.state.visibleCalendar.single.date.month, 11);
+        await cubit.close();
+      },
+    );
   });
 
   testWidgets('320 width renders semantics, legend and pending details', (

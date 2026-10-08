@@ -7,7 +7,7 @@ part 'parts/shiftly_chat_message_list/private_chat_loading_skeleton.dart';
 part 'parts/shiftly_chat_message_list/private_empty_conversation.dart';
 part 'parts/shiftly_chat_message_list/private_load_error.dart';
 
-/// Renders the canonical oldest-to-newest conversation with a normal list.
+/// Renders the canonical oldest-to-newest conversation from the newest edge.
 /// The Cubit owns ordering and de-duplication; this widget owns only scrolling.
 class ShiftlyChatMessageList extends StatefulWidget {
   const ShiftlyChatMessageList({

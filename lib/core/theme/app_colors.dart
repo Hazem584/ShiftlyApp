@@ -23,5 +23,4 @@ class AppColors {
   static const Color purpleSoft = Color(0xFFF2E5FF);
   static const Color lightGreen = success;
   static const Color secondaryColor = success;
-  
 }

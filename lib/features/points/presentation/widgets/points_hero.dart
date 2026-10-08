@@ -20,7 +20,10 @@ class PointsHero extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('My Performance', style: Theme.of(context).textTheme.headlineSmall),
+        Text(
+          'My Performance',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         const SizedBox(height: 4),
         Text('${wallet.workspaceName} · ${wallet.timezone}'),
         const SizedBox(height: 20),
@@ -28,8 +31,18 @@ class PointsHero extends StatelessWidget {
           spacing: 28,
           runSpacing: 14,
           children: [
-            _heroValue(context, '${wallet.green.available}', 'Available GREEN', Icons.eco_rounded),
-            _heroValue(context, '${wallet.currentStreak}', 'Current streak', Icons.local_fire_department_rounded),
+            _heroValue(
+              context,
+              '${wallet.green.available}',
+              'Available GREEN',
+              Icons.eco_rounded,
+            ),
+            _heroValue(
+              context,
+              '${wallet.currentStreak}',
+              'Current streak',
+              Icons.local_fire_department_rounded,
+            ),
           ],
         ),
       ],
@@ -37,17 +50,21 @@ class PointsHero extends StatelessWidget {
   );
 }
 
-Widget _heroValue(BuildContext context, String value, String label, IconData icon) =>
-    Semantics(
-      label: '$label: $value',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon),
-          const SizedBox(height: 4),
-          Text(value, style: Theme.of(context).textTheme.headlineSmall),
-          Text(label),
-        ],
-      ),
-    );
+Widget _heroValue(
+  BuildContext context,
+  String value,
+  String label,
+  IconData icon,
+) => Semantics(
+  label: '$label: $value',
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(icon),
+      const SizedBox(height: 4),
+      Text(value, style: Theme.of(context).textTheme.headlineSmall),
+      Text(label),
+    ],
+  ),
+);

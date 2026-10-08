@@ -111,10 +111,7 @@ class _AppProvidersState extends State<AppProviders> {
               ));
     _pointsCubit =
         _registered<PointsCubit>() ??
-        PointsCubit(
-          _points,
-          intentStorage: MemoryRedemptionIntentStorage(),
-        );
+        PointsCubit(_points, intentStorage: MemoryRedemptionIntentStorage());
     _notifications =
         widget.notificationRepository ??
         _registered<NotificationRepository>() ??

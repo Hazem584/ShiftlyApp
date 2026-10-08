@@ -20,8 +20,8 @@ class PointsCubit extends Cubit<PointsState> {
     RedemptionIntentStorage? intentStorage,
     String Function()? uuidV4,
   }) : _intentStorage = intentStorage ?? MemoryRedemptionIntentStorage(),
-      _uuidV4 = uuidV4 ?? const Uuid().v4,
-      super(const PointsState());
+       _uuidV4 = uuidV4 ?? const Uuid().v4,
+       super(const PointsState());
 
   static const historyPageSize = 20;
   final PointsRepository _repository;
@@ -29,6 +29,11 @@ class PointsCubit extends Cubit<PointsState> {
   final String Function() _uuidV4;
   FeatureSessionScope? _scope;
   RedemptionIntent? _unresolvedIntent;
+  Object? _redemptionClaim;
+  bool _intentReady = false;
+  final Map<String, Future<void>> _scopeOperations = {};
+  String _intentScopeKey(FeatureSessionScope scope) =>
+      '${scope.userId}:${scope.workspaceId}:${scope.membershipId}';
   Future<void>? _activeFullLoad;
   var _queuedFullLoad = false;
   var _generation = 0;
@@ -49,6 +54,8 @@ class PointsCubit extends Cubit<PointsState> {
     _activeFullLoad = null;
     _queuedFullLoad = false;
     _unresolvedIntent = null;
+    _redemptionClaim = null;
+    _intentReady = false;
     emit(const PointsState());
     if (employee == null) return;
     final generation = _generation;
@@ -57,14 +64,41 @@ class PointsCubit extends Cubit<PointsState> {
   }
 
   Future<void> _restoreIntent(FeatureSessionScope scope, int generation) async {
-    final intent = await _intentStorage.read(scope);
-    if (!_current(scope, generation) || intent == null) return;
-    _unresolvedIntent = intent;
-    emit(state.copyWith(
-      hasUnresolvedRedemption: true,
-      unresolvedRedPoints: intent.redPoints,
-      canRetryRedemption: true,
-    ));
+    final claim = Object();
+    _redemptionClaim = claim;
+    emit(state.copyWith(redeeming: true));
+    try {
+      // A scope may be rebound while its previous storage write is in flight.
+      await _scopeOperations[_intentScopeKey(scope)];
+      final intent = await _intentStorage.read(scope);
+      if (!_current(scope, generation)) return;
+      _unresolvedIntent = intent;
+      _intentReady = true;
+      if (intent != null) {
+        emit(
+          state.copyWith(
+            hasUnresolvedRedemption: true,
+            unresolvedRedPoints: intent.redPoints,
+            canRetryRedemption: true,
+          ),
+        );
+      }
+    } catch (_) {
+      if (_current(scope, generation)) {
+        emit(
+          state.copyWith(
+            partialFailure: const Failure(
+              message: 'Saved redemption could not be checked. Try again before starting a new operation.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (identical(_redemptionClaim, claim)) {
+        _redemptionClaim = null;
+        if (_current(scope, generation)) emit(state.copyWith(redeeming: false));
+      }
+    }
   }
 
   Future<void> load({bool refresh = false}) async {
@@ -96,21 +130,35 @@ class PointsCubit extends Cubit<PointsState> {
     final calendarId = ++_calendarRequestId;
     final historyId = ++_historyRequestId;
     final achievementId = ++_achievementRequestId;
-    emit(state.copyWith(
-      visibleMonth: month,
-      refreshing: refresh || state.wallet != null,
-      loadingCalendar: true,
-      loadingMoreHistory: false,
-      clearFailure: true,
-      clearPartialFailure: true,
-      clearCalendarFailure: true,
-      clearDomainCode: true,
-    ));
+    emit(
+      state.copyWith(
+        visibleMonth: month,
+        refreshing: refresh || state.wallet != null,
+        loadingCalendar: true,
+        loadingMoreHistory: false,
+        clearFailure: true,
+        clearPartialFailure: true,
+        clearCalendarFailure: true,
+        clearDomainCode: true,
+      ),
+    );
 
     final results = await Future.wait<Object?>([
       _capture(() => _repository.loadWallet(scope.workspaceId)),
-      _capture(() => _repository.loadCalendar(scope.workspaceId, month.year, month.month)),
-      _capture(() => _repository.loadHistory(scope.workspaceId, page: 1, limit: historyPageSize)),
+      _capture(
+        () => _repository.loadCalendar(
+          scope.workspaceId,
+          month.year,
+          month.month,
+        ),
+      ),
+      _capture(
+        () => _repository.loadHistory(
+          scope.workspaceId,
+          page: 1,
+          limit: historyPageSize,
+        ),
+      ),
       _capture(() => _repository.loadAchievements(scope.workspaceId)),
     ]);
     if (!_current(scope, generation)) return;
@@ -123,12 +171,21 @@ class PointsCubit extends Cubit<PointsState> {
       if (wallet is PointsRequestFailure) failures.add(wallet.failure);
     }
     final calendar = results[1];
-    if (calendarId == _calendarRequestId && _sameMonth(next.visibleMonth, month)) {
+    if (calendarId == _calendarRequestId &&
+        _sameMonth(next.visibleMonth, month)) {
       if (calendar is List<PerformanceDay>) {
-        next = next.copyWith(calendar: calendar, calendarMonth: month, loadingCalendar: false, clearCalendarFailure: true);
+        next = next.copyWith(
+          calendar: calendar,
+          calendarMonth: month,
+          loadingCalendar: false,
+          clearCalendarFailure: true,
+        );
       } else if (calendar is PointsRequestFailure) {
         failures.add(calendar.failure);
-        next = next.copyWith(loadingCalendar: false, calendarFailure: calendar.failure);
+        next = next.copyWith(
+          loadingCalendar: false,
+          calendarFailure: calendar.failure,
+        );
       }
     }
     final history = results[2];
@@ -146,18 +203,29 @@ class PointsCubit extends Cubit<PointsState> {
     }
     final achievements = results[3];
     if (achievementId == _achievementRequestId) {
-      if (achievements is List<Achievement>) next = next.copyWith(achievements: achievements);
-      if (achievements is PointsRequestFailure) failures.add(achievements.failure);
+      if (achievements is List<Achievement>) {
+        next = next.copyWith(achievements: achievements);
+      }
+      if (achievements is PointsRequestFailure) {
+        failures.add(achievements.failure);
+      }
     }
     final walletUnavailable = next.wallet == null;
-    emit(next.copyWith(
-      initialLoading: false,
-      refreshing: false,
-      failure: walletUnavailable ? failures.firstOrNull ?? const Failure(message: 'Unable to load your performance.') : null,
-      partialFailure: !walletUnavailable && failures.isNotEmpty ? failures.first : null,
-      clearFailure: !walletUnavailable,
-      clearPartialFailure: !walletUnavailable && failures.isEmpty,
-    ));
+    emit(
+      next.copyWith(
+        initialLoading: false,
+        refreshing: false,
+        failure: walletUnavailable
+            ? failures.firstOrNull ??
+                  const Failure(message: 'Unable to load your performance.')
+            : null,
+        partialFailure: !walletUnavailable && failures.isNotEmpty
+            ? failures.first
+            : null,
+        clearFailure: !walletUnavailable,
+        clearPartialFailure: !walletUnavailable && failures.isEmpty,
+      ),
+    );
   }
 
   Future<void> changeMonth(DateTime month) async {
@@ -166,114 +234,240 @@ class PointsCubit extends Cubit<PointsState> {
     final normalized = DateTime(month.year, month.month);
     final generation = _generation;
     final requestId = ++_calendarRequestId;
-    emit(state.copyWith(visibleMonth: normalized, loadingCalendar: true, clearCalendarFailure: true, clearPartialFailure: true));
-    final result = await _capture(() => _repository.loadCalendar(scope.workspaceId, normalized.year, normalized.month));
-    if (!_current(scope, generation) || requestId != _calendarRequestId || !_sameMonth(state.visibleMonth, normalized)) return;
+    emit(
+      state.copyWith(
+        visibleMonth: normalized,
+        loadingCalendar: true,
+        clearCalendarFailure: true,
+        clearPartialFailure: true,
+      ),
+    );
+    final result = await _capture(
+      () => _repository.loadCalendar(
+        scope.workspaceId,
+        normalized.year,
+        normalized.month,
+      ),
+    );
+    if (!_current(scope, generation) ||
+        requestId != _calendarRequestId ||
+        !_sameMonth(state.visibleMonth, normalized)) {
+      return;
+    }
     if (result is List<PerformanceDay>) {
-      emit(state.copyWith(calendar: result, calendarMonth: normalized, loadingCalendar: false, clearCalendarFailure: true));
+      emit(
+        state.copyWith(
+          calendar: result,
+          calendarMonth: normalized,
+          loadingCalendar: false,
+          clearCalendarFailure: true,
+        ),
+      );
     } else if (result is PointsRequestFailure) {
-      emit(state.copyWith(loadingCalendar: false, calendarFailure: result.failure, partialFailure: result.failure));
+      emit(
+        state.copyWith(
+          loadingCalendar: false,
+          calendarFailure: result.failure,
+          partialFailure: result.failure,
+        ),
+      );
     }
   }
 
   Future<void> loadMoreHistory() async {
     final scope = _scope;
-    if (scope == null || state.loadingMoreHistory || !state.hasMoreHistory) return;
+    if (scope == null || state.loadingMoreHistory || !state.hasMoreHistory) {
+      return;
+    }
     final generation = _generation;
     final requestId = _historyRequestId;
     final requestedPage = state.historyPage + 1;
     emit(state.copyWith(loadingMoreHistory: true, clearPartialFailure: true));
-    final result = await _capture(() => _repository.loadHistory(scope.workspaceId, page: requestedPage, limit: historyPageSize));
+    final result = await _capture(
+      () => _repository.loadHistory(
+        scope.workspaceId,
+        page: requestedPage,
+        limit: historyPageSize,
+      ),
+    );
     if (!_current(scope, generation) || requestId != _historyRequestId) return;
-    if (result is PointsHistoryPage && result.pagination.page == requestedPage) {
-      emit(state.copyWith(
-        history: _deduplicate([...state.history, ...result.data]),
-        historyPage: result.pagination.page,
-        historyTotalPages: result.pagination.totalPages,
-        loadingMoreHistory: false,
-      ));
+    if (result is PointsHistoryPage &&
+        result.pagination.page == requestedPage) {
+      emit(
+        state.copyWith(
+          history: _deduplicate([...state.history, ...result.data]),
+          historyPage: result.pagination.page,
+          historyTotalPages: result.pagination.totalPages,
+          loadingMoreHistory: false,
+        ),
+      );
     } else {
-      emit(state.copyWith(
-        loadingMoreHistory: false,
-        partialFailure: result is PointsRequestFailure ? result.failure : const Failure(message: 'Unable to load more history.'),
-      ));
+      emit(
+        state.copyWith(
+          loadingMoreHistory: false,
+          partialFailure: result is PointsRequestFailure
+              ? result.failure
+              : const Failure(message: 'Unable to load more history.'),
+        ),
+      );
     }
   }
 
   Future<void> redeem(int redPoints, {bool retry = false}) async {
     final scope = _scope;
-    if (scope == null || state.redeeming || redPoints < 1) return;
-    final pending = _unresolvedIntent;
-    if (pending != null && !retry) {
-      emit(state.copyWith(
-        canRetryRedemption: true,
-        hasUnresolvedRedemption: true,
-        unresolvedRedPoints: pending.redPoints,
-        partialFailure: const Failure(message: 'An earlier redemption is unresolved. Retry that operation before starting another.'),
-      ));
+    if (scope == null || _redemptionClaim != null || redPoints < 1) return;
+    final generation = _generation;
+    if (!_intentReady) {
+      await _restoreIntent(scope, generation);
       return;
     }
-    final request = pending ?? RedemptionIntent(workspaceId: scope.workspaceId, redPoints: redPoints, clientRedemptionId: _uuidV4());
-    if (request.workspaceId != scope.workspaceId || request.redPoints != redPoints) return;
-    final generation = _generation;
-    if (pending == null) {
-      try {
-        await _intentStorage.write(scope, request);
-      } catch (_) {
-        if (_current(scope, generation)) {
-          emit(state.copyWith(partialFailure: const Failure(message: 'The redemption could not be saved safely and was not submitted.')));
-        }
+    final pending = _unresolvedIntent;
+    if (pending != null && !retry) {
+      emit(
+        state.copyWith(
+          canRetryRedemption: true,
+          hasUnresolvedRedemption: true,
+          unresolvedRedPoints: pending.redPoints,
+          partialFailure: const Failure(
+            message: 'An earlier redemption is unresolved. Retry that operation before starting another.',
+          ),
+        ),
+      );
+      return;
+    }
+    // Claim synchronously, before generating an identity or awaiting storage.
+    final claim = Object();
+    _redemptionClaim = claim;
+    final completion = Completer<void>();
+    final scopeKey = _intentScopeKey(scope);
+    _scopeOperations[scopeKey] = completion.future;
+    try {
+      final request =
+          pending ??
+          RedemptionIntent(
+            workspaceId: scope.workspaceId,
+            redPoints: redPoints,
+            clientRedemptionId: _uuidV4(),
+          );
+      if (request.workspaceId != scope.workspaceId ||
+          request.redPoints != redPoints) {
         return;
       }
-      if (!_current(scope, generation)) return;
-      _unresolvedIntent = request;
-    }
-    emit(state.copyWith(
-      redeeming: true,
-      hasUnresolvedRedemption: true,
-      unresolvedRedPoints: request.redPoints,
-      clearFailure: true,
-      clearPartialFailure: true,
-      clearDomainCode: true,
-      redemptionSucceeded: false,
-      canRetryRedemption: false,
-    ));
-    try {
-      await _repository.redeem(request);
-      if (!_current(scope, generation)) return;
-      await _intentStorage.clear(scope, request.clientRedemptionId);
-      if (!_current(scope, generation)) return;
-      _unresolvedIntent = null;
-      emit(state.copyWith(
-        redeeming: false,
-        redemptionSucceeded: true,
-        hasUnresolvedRedemption: false,
-        unresolvedRedPoints: 0,
-        canRetryRedemption: false,
-      ));
-      await load(refresh: true);
-      if (_current(scope, generation)) emit(state.copyWith(redemptionSucceeded: true));
-    } catch (error) {
-      if (!_current(scope, generation)) return;
-      final api = error is ApiException ? error : null;
-      final terminal = _isConfirmedTerminal(api);
-      if (terminal) {
-        await _intentStorage.clear(scope, request.clientRedemptionId);
+      emit(
+        state.copyWith(
+          redeeming: true,
+          clearPartialFailure: true,
+          clearDomainCode: true,
+          redemptionSucceeded: false,
+          canRetryRedemption: false,
+        ),
+      );
+      if (pending == null) {
+        try {
+          await _intentStorage.write(scope, request);
+        } catch (_) {
+          // A storage implementation may throw after persisting. Re-read before
+          // allowing another UUID; if the read fails, keep fresh actions blocked.
+          RedemptionIntent? saved;
+          var checked = false;
+          try {
+            saved = await _intentStorage.read(scope);
+            checked = true;
+          } catch (_) {}
+          if (_current(scope, generation)) {
+            _unresolvedIntent = saved;
+            _intentReady = checked;
+            emit(
+              state.copyWith(
+                redeeming: false,
+                hasUnresolvedRedemption: saved != null,
+                unresolvedRedPoints: saved?.redPoints ?? 0,
+                canRetryRedemption: saved != null,
+                partialFailure: const Failure(
+                  message: 'The redemption could not be saved safely and was not submitted.',
+                ),
+              ),
+            );
+          }
+          return;
+        }
         if (!_current(scope, generation)) return;
-        _unresolvedIntent = null;
+        _unresolvedIntent = request;
       }
-      emit(state.copyWith(
-        redeeming: false,
-        partialFailure: _failure(error),
-        domainCode: api?.statusCode == 409 ? api?.code : null,
-        hasUnresolvedRedemption: !terminal,
-        unresolvedRedPoints: terminal ? 0 : request.redPoints,
-        canRetryRedemption: !terminal,
-      ));
+      emit(
+        state.copyWith(
+          hasUnresolvedRedemption: true,
+          unresolvedRedPoints: request.redPoints,
+        ),
+      );
+      Object? submissionError;
+      try {
+        await _repository.redeem(request);
+      } catch (error) {
+        submissionError = error;
+      }
+      if (!_current(scope, generation)) return;
+      final api = submissionError is ApiException ? submissionError : null;
+      final resolved = submissionError == null || _isConfirmedTerminal(api);
+      var cleared = false;
+      if (resolved) {
+        try {
+          await _intentStorage.clear(scope, request.clientRedemptionId);
+          cleared = true;
+        } catch (_) {}
+        if (!_current(scope, generation)) return;
+        if (cleared) _unresolvedIntent = null;
+      }
+      emit(
+        state.copyWith(
+          redeeming: false,
+          redemptionSucceeded: submissionError == null,
+          hasUnresolvedRedemption: !cleared,
+          unresolvedRedPoints: cleared ? 0 : request.redPoints,
+          canRetryRedemption: !cleared,
+          partialFailure: submissionError != null
+              ? _failure(submissionError)
+              : !cleared
+              ? const Failure(
+                  message: 'Redemption succeeded, but its saved recovery record could not be cleared. Retry the same operation.',
+                )
+              : null,
+          domainCode: api?.statusCode == 409 ? api?.code : null,
+        ),
+      );
+      if (submissionError == null) {
+        await load(refresh: true);
+        if (_current(scope, generation)) {
+          emit(state.copyWith(redemptionSucceeded: true));
+        }
+      }
+    } finally {
+      completion.complete();
+      if (identical(_scopeOperations[scopeKey], completion.future)) {
+        _scopeOperations.remove(scopeKey);
+      }
+      if (identical(_redemptionClaim, claim)) {
+        _redemptionClaim = null;
+        if (_current(scope, generation) && state.redeeming) {
+          emit(state.copyWith(redeeming: false));
+        }
+      }
     }
   }
 
-  bool _isConfirmedTerminal(ApiException? error) => error != null && error.statusCode != null && error.statusCode! >= 400 && error.statusCode! < 500 && error.kind != FailureKind.cancelled && error.kind != FailureKind.timeout && error.kind != FailureKind.network;
+  // The backend checks the original key under the wallet lock before these
+  // business rejections. Auth, rate limits, unknown responses and key/payload
+  // conflicts do not resolve an uncertain logical operation.
+  bool _isConfirmedTerminal(ApiException? error) =>
+      error?.statusCode == 409 &&
+      error?.kind == FailureKind.validation &&
+      const {
+        'POINTS_INSUFFICIENT_GREEN',
+        'POINTS_INSUFFICIENT_RED',
+        'POINTS_POLICY_DISABLED',
+        'POINTS_COMPENSATION_DISABLED',
+        'POINTS_MONTHLY_LIMIT_EXCEEDED',
+      }.contains(error?.code);
 
   Future<Object?> _capture<T>(Future<T> Function() operation) async {
     try {
@@ -288,7 +482,11 @@ class PointsCubit extends Cubit<PointsState> {
     return entries.where((entry) => ids.add(entry.id)).toList(growable: false);
   }
 
-  Failure _failure(Object error) => error is ApiException ? error.toFailure() : const Failure(message: 'Something went wrong. Please try again.');
-  bool _current(FeatureSessionScope scope, int generation) => !isClosed && _scope == scope && _generation == generation;
-  bool _sameMonth(DateTime? left, DateTime right) => left?.year == right.year && left?.month == right.month;
+  Failure _failure(Object error) => error is ApiException
+      ? error.toFailure()
+      : const Failure(message: 'Something went wrong. Please try again.');
+  bool _current(FeatureSessionScope scope, int generation) =>
+      !isClosed && _scope == scope && _generation == generation;
+  bool _sameMonth(DateTime? left, DateTime right) =>
+      left?.year == right.year && left?.month == right.month;
 }

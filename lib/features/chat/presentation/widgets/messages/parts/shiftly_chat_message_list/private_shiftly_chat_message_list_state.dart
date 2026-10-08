@@ -9,9 +9,7 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
   bool _anchorLoadInFlight = false;
   final Map<String, GlobalKey> _messageKeys = {};
 
-  bool get _nearBottom =>
-      !_scroll.hasClients ||
-      _scroll.position.maxScrollExtent - _scroll.offset < 120;
+  bool get _nearBottom => !_scroll.hasClients || _scroll.offset < 120;
 
   @override
   void initState() {
@@ -51,6 +49,21 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
       _programmaticScroll = true;
       _afterLayout(_scrollToBottom);
     } else if (appended) {
+      final anchor = _visibleMessage();
+      if (anchor != null) {
+        _afterLayout(() {
+          final box = anchor.key.currentContext?.findRenderObject();
+          if (box is RenderBox && box.attached && _scroll.hasClients) {
+            final change = anchor.top - box.localToGlobal(Offset.zero).dy;
+            _scroll.jumpTo(
+              (_scroll.offset + change).clamp(
+                _scroll.position.minScrollExtent,
+                _scroll.position.maxScrollExtent,
+              ),
+            );
+          }
+        });
+      }
       setState(() => _showNewMessages = true);
     }
   }
@@ -58,7 +71,7 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
   void _onScroll() {
     if (!_scroll.hasClients) return;
     if (!_programmaticScroll &&
-        _scroll.offset <= 80 &&
+        _scroll.position.maxScrollExtent - _scroll.offset <= 80 &&
         widget.hasMore &&
         !widget.loadingOlder &&
         !_anchorLoadInFlight) {
@@ -72,103 +85,30 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
   Future<void> _loadOlderPreservingAnchor() async {
     if (!_scroll.hasClients || _anchorLoadInFlight) return;
     _anchorLoadInFlight = true;
-    final beforeExtent = _scroll.position.maxScrollExtent;
-    final beforeOffset = _scroll.offset;
-    final anchor = _visibleAnchor();
     try {
+      // Older messages append at the far edge of a reverse viewport, keeping
+      // visible children and their pixels stable without estimated extents.
       await widget.onLoadOlder();
-      if (!mounted) return;
-      void restoreAnchor(int attemptsRemaining) {
-        if (!_scroll.hasClients) return;
-        final anchorContext = anchor?.key.currentContext;
-        final anchorBox = anchorContext?.findRenderObject();
-        if (anchorBox is RenderBox &&
-            anchorBox.attached &&
-            _intersectsViewport(anchorBox)) {
-          final currentTop = anchorBox.localToGlobal(Offset.zero).dy;
-          _scroll.jumpTo(_scroll.offset + currentTop - anchor!.top);
-          return;
-        }
-        if (attemptsRemaining == 8) {
-          final added = _scroll.position.maxScrollExtent - beforeExtent;
-          _scroll.jumpTo(
-            (beforeOffset + added).clamp(
-              _scroll.position.minScrollExtent,
-              _scroll.position.maxScrollExtent,
-            ),
-          );
-        } else if (anchor != null) {
-          final anchorIndex = widget.messages.indexWhere(
-            (message) => message.id == anchor.id,
-          );
-          final visibleIndices = <int>[];
-          for (final entry in _messageKeys.entries) {
-            final key = entry.value;
-            final messageContext = key.currentContext;
-            final renderObject = messageContext?.findRenderObject();
-            if (messageContext == null ||
-                renderObject is! RenderBox ||
-                !renderObject.attached ||
-                !_intersectsViewport(renderObject)) {
-              continue;
-            }
-            final index = widget.messages.indexWhere(
-              (message) => message.id == entry.key,
-            );
-            if (index >= 0) visibleIndices.add(index);
-          }
-          visibleIndices.sort();
-          if (anchorIndex >= 0 && visibleIndices.isNotEmpty) {
-            final direction = visibleIndices.first > anchorIndex ? -1 : 1;
-            final target =
-                _scroll.offset +
-                direction * _scroll.position.viewportDimension * .75;
-            _scroll.jumpTo(
-              target.clamp(
-                _scroll.position.minScrollExtent,
-                _scroll.position.maxScrollExtent,
-              ),
-            );
-          }
-        }
-        if (attemptsRemaining > 0) {
-          _afterLayout(() => restoreAnchor(attemptsRemaining - 1));
-        }
-      }
-
-      _afterLayout(() => restoreAnchor(8));
     } finally {
       _anchorLoadInFlight = false;
     }
   }
 
-  ({String id, GlobalKey key, double top})? _visibleAnchor() {
+  ({GlobalKey key, double top})? _visibleMessage() {
     final viewport = context.findRenderObject();
     if (viewport is! RenderBox || !viewport.attached) return null;
-    final viewportTop = viewport.localToGlobal(Offset.zero).dy;
-    final viewportBottom = viewportTop + viewport.size.height;
+    final top = viewport.localToGlobal(Offset.zero).dy;
     for (final message in widget.messages) {
       final key = _messageKeys[message.id];
-      final renderObject = key?.currentContext?.findRenderObject();
-      if (key == null || renderObject is! RenderBox || !renderObject.attached) {
-        continue;
-      }
-      final top = renderObject.localToGlobal(Offset.zero).dy;
-      final bottom = top + renderObject.size.height;
-      if (bottom > viewportTop && top < viewportBottom) {
-        return (id: message.id, key: key, top: top);
+      final box = key?.currentContext?.findRenderObject();
+      if (key != null && box is RenderBox && box.attached) {
+        final y = box.localToGlobal(Offset.zero).dy;
+        if (y + box.size.height > top && y < top + viewport.size.height) {
+          return (key: key, top: y);
+        }
       }
     }
     return null;
-  }
-
-  bool _intersectsViewport(RenderBox box) {
-    final viewport = context.findRenderObject();
-    if (viewport is! RenderBox || !viewport.attached) return false;
-    final viewportTop = viewport.localToGlobal(Offset.zero).dy;
-    final viewportBottom = viewportTop + viewport.size.height;
-    final top = box.localToGlobal(Offset.zero).dy;
-    return top + box.size.height > viewportTop && top < viewportBottom;
   }
 
   void _afterLayout(VoidCallback callback) {
@@ -183,7 +123,7 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
     _programmaticScroll = true;
     _scroll
         .animateTo(
-          _scroll.position.maxScrollExtent,
+          0,
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
         )
@@ -210,6 +150,7 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
         ListView.builder(
           key: const Key('chat-message-list'),
           controller: _scroll,
+          reverse: true,
           padding: EdgeInsets.fromLTRB(12, 12, 12, widget.bottomPadding),
           itemCount:
               widget.messages.length +
@@ -224,21 +165,28 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
               (message) => message.id == id,
             );
             if (messageIndex < 0) return null;
-            return messageIndex + (widget.loadingOlder ? 1 : 0);
+            return widget.trailingMessages.length +
+                widget.messages.length -
+                1 -
+                messageIndex;
           },
           itemBuilder: (context, index) {
-            if (widget.loadingOlder && index == 0) {
+            if (index < widget.trailingMessages.length) {
+              return widget.trailingMessages[widget.trailingMessages.length -
+                  1 -
+                  index];
+            }
+            final messageIndex =
+                widget.messages.length -
+                1 -
+                (index - widget.trailingMessages.length);
+            if (messageIndex < 0) {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(12),
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
               );
-            }
-            final messageIndex = index - (widget.loadingOlder ? 1 : 0);
-            if (messageIndex >= widget.messages.length) {
-              return widget.trailingMessages[messageIndex -
-                  widget.messages.length];
             }
             final message = widget.messages[messageIndex];
             final previous = messageIndex == 0
@@ -256,25 +204,25 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
                 showDate;
             return KeyedSubtree(
               key: ValueKey('chat-message-${message.id}'),
-              child: KeyedSubtree(
-                key: _messageKeys.putIfAbsent(
-                  message.id,
-                  () => GlobalKey(debugLabel: 'chat-message-${message.id}'),
-                ),
-                child: KeyedSubtree(
-                  key: ValueKey('chat-anchor-${message.id}'),
-                  child: Column(
-                    children: [
-                      if (showDate) _ChatDateSeparator(date: message.createdAt),
-                      widget.messageBuilder(
+              child: Column(
+                children: [
+                  if (showDate) _ChatDateSeparator(date: message.createdAt),
+                  KeyedSubtree(
+                    key: _messageKeys.putIfAbsent(
+                      message.id,
+                      () => GlobalKey(debugLabel: 'chat-message-${message.id}'),
+                    ),
+                    child: KeyedSubtree(
+                      key: ValueKey('chat-anchor-${message.id}'),
+                      child: widget.messageBuilder(
                         message,
                         message.sender.membershipId ==
                             widget.currentMembershipId,
                         showSender,
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             );
           },

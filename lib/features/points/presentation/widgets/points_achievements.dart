@@ -4,7 +4,11 @@ import 'package:shiftly/features/points/data/points_models.dart';
 import 'package:shiftly/features/points/presentation/widgets/points_empty.dart';
 
 class PointsAchievements extends StatelessWidget {
-  const PointsAchievements({required this.items, required this.timezone, super.key});
+  const PointsAchievements({
+    required this.items,
+    required this.timezone,
+    super.key,
+  });
   final List<Achievement> items;
   final String timezone;
 
@@ -15,15 +19,27 @@ class PointsAchievements extends StatelessWidget {
       Text('Achievements', style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: 8),
       if (items.isEmpty)
-        const PointsEmpty(icon: Icons.emoji_events_outlined, text: 'Your active GOLD badges will appear here.')
+        const PointsEmpty(
+          icon: Icons.emoji_events_outlined,
+          text: 'Your active GOLD badges will appear here.',
+        )
       else
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: items.map((item) => Chip(
-            avatar: const Icon(Icons.emoji_events_rounded, color: Colors.amber),
-            label: Text('${_achievementLabel(item.type)} · ${WorkspaceTime.dateKey(item.earnedAt, timezone)}'),
-          )).toList(),
+          children: items
+              .map(
+                (item) => Chip(
+                  avatar: const Icon(
+                    Icons.emoji_events_rounded,
+                    color: Colors.amber,
+                  ),
+                  label: Text(
+                    '${_achievementLabel(item.type)} · ${WorkspaceTime.dateKey(item.earnedAt, timezone)}',
+                  ),
+                ),
+              )
+              .toList(),
         ),
     ],
   );

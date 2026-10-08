@@ -102,10 +102,12 @@ class PointsState extends Equatable {
     historyPage: historyPage ?? this.historyPage,
     historyTotalPages: historyTotalPages ?? this.historyTotalPages,
     failure: clearFailure ? null : failure ?? this.failure,
-    partialFailure:
-        clearPartialFailure ? null : partialFailure ?? this.partialFailure,
-    calendarFailure:
-        clearCalendarFailure ? null : calendarFailure ?? this.calendarFailure,
+    partialFailure: clearPartialFailure
+        ? null
+        : partialFailure ?? this.partialFailure,
+    calendarFailure: clearCalendarFailure
+        ? null
+        : calendarFailure ?? this.calendarFailure,
     domainCode: clearDomainCode ? null : domainCode ?? this.domainCode,
   );
 

@@ -21,9 +21,14 @@ class PointsInlineFailure extends StatelessWidget {
                 context: context,
                 builder: (_) => AlertDialog(
                   title: const Text('Support details'),
-                  content: SelectableText('Request ID: ${state.partialFailure!.requestId}'),
+                  content: SelectableText(
+                    'Request ID: ${state.partialFailure!.requestId}',
+                  ),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
                   ],
                 ),
               ),

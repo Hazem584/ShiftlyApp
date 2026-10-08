@@ -22,7 +22,9 @@ class SharedPreferencesRedemptionIntentStorage
     try {
       final decoded = jsonDecode(value);
       if (decoded is! Map) return null;
-      final intent = RedemptionIntent.fromJson(Map<String, Object?>.from(decoded));
+      final intent = RedemptionIntent.fromJson(
+        Map<String, Object?>.from(decoded),
+      );
       return intent.workspaceId == scope.workspaceId ? intent : null;
     } on FormatException {
       return null;
@@ -34,13 +36,19 @@ class SharedPreferencesRedemptionIntentStorage
     if (intent.workspaceId != scope.workspaceId) {
       throw StateError('Redemption intent does not match the active scope');
     }
-    if (!await _preferences.setString(_key(scope), jsonEncode(intent.toJson()))) {
+    if (!await _preferences.setString(
+      _key(scope),
+      jsonEncode(intent.toJson()),
+    )) {
       throw StateError('Unable to persist redemption intent');
     }
   }
 
   @override
-  Future<void> clear(FeatureSessionScope scope, String clientRedemptionId) async {
+  Future<void> clear(
+    FeatureSessionScope scope,
+    String clientRedemptionId,
+  ) async {
     final current = await read(scope);
     if (current?.clientRedemptionId != clientRedemptionId) return;
     final removed = await _preferences.remove(_key(scope));

@@ -4,17 +4,24 @@ import 'package:shiftly/features/points/data/points_models.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 
 class PointsRedemption extends StatelessWidget {
-  const PointsRedemption({required this.wallet, required this.state, super.key});
+  const PointsRedemption({
+    required this.wallet,
+    required this.state,
+    super.key,
+  });
   final PointsWallet wallet;
   final PointsState state;
 
   @override
   Widget build(BuildContext context) {
-    final eligible = wallet.maxRedeemable > 0 &&
+    final eligible =
+        wallet.maxRedeemable > 0 &&
         !state.redeeming &&
         !state.hasUnresolvedRedemption;
-    final progress =
-        (wallet.green.available / wallet.greenCostPerRed).clamp(0.0, 1.0);
+    final progress = (wallet.green.available / wallet.greenCostPerRed).clamp(
+      0.0,
+      1.0,
+    );
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: Padding(
@@ -22,15 +29,20 @@ class PointsRedemption extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Compensate RED', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Compensate RED',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 6),
             Text('${wallet.greenCostPerRed} GREEN compensates 1 RED'),
             const SizedBox(height: 12),
             LinearProgressIndicator(value: progress),
             const SizedBox(height: 8),
-            Text(wallet.greenNeededForOneRed == 0
-                ? 'You have enough GREEN for your next compensation.'
-                : '${wallet.greenNeededForOneRed} more GREEN needed.'),
+            Text(
+              wallet.greenNeededForOneRed == 0
+                  ? 'You have enough GREEN for your next compensation.'
+                  : '${wallet.greenNeededForOneRed} more GREEN needed.',
+            ),
             if (state.domainCode != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -44,9 +56,9 @@ class PointsRedemption extends StatelessWidget {
                 onPressed: state.redeeming
                     ? null
                     : () => context.read<PointsCubit>().redeem(
-                          state.unresolvedRedPoints,
-                          retry: true,
-                        ),
+                        state.unresolvedRedPoints,
+                        retry: true,
+                      ),
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Retry same redemption'),
               ),
@@ -84,12 +96,19 @@ Future<void> _confirm(BuildContext context, PointsWallet wallet) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Compensate 1 RED?', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Compensate 1 RED?',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 10),
             Text('Exact cost: ${wallet.greenCostPerRed} GREEN'),
-            Text('Estimated remaining balance: ${wallet.green.available - wallet.greenCostPerRed} GREEN'),
+            Text(
+              'Estimated remaining balance: ${wallet.green.available - wallet.greenCostPerRed} GREEN',
+            ),
             const SizedBox(height: 6),
-            const Text('Your wallet will refresh from the server after confirmation.'),
+            const Text(
+              'Your wallet will refresh from the server after confirmation.',
+            ),
             const SizedBox(height: 18),
             Row(
               children: [
@@ -122,8 +141,7 @@ Future<void> _confirm(BuildContext context, PointsWallet wallet) async {
 String _domainMessage(String code) => switch (code) {
   'POINTS_INSUFFICIENT_GREEN' => 'You do not have enough GREEN points.',
   'POINTS_INSUFFICIENT_RED' => 'There is no active RED point to compensate.',
-  'POINTS_REDEMPTION_CONFLICT' =>
-    'This redemption conflicts with an earlier request. Refresh and try again.',
+  'POINTS_REDEMPTION_CONFLICT' => 'The saved redemption conflicts with the server record. Keep this recovery key and contact support.',
   'POINTS_POLICY_DISABLED' || 'POINTS_COMPENSATION_DISABLED' =>
     'Redemption is currently disabled for this workspace.',
   'POINTS_BALANCE_INVARIANT_VIOLATION' =>
