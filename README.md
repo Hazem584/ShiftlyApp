@@ -27,8 +27,12 @@ a fresh extraction without restoring or saving an SDK cache; an unknown version
 fails immediately instead of changing dependency constraints.
 
 Release builds capture verbose output in a private temporary log. On failure,
-`tool/ci/summarize_release_failure.py` reports compiler switches, compiler stack
-frames, and any reported app source locations. Paths, positional arguments, Dart
+`tool/ci/summarize_release_failure.py` reports known failed Flutter targets and
+Gradle tasks, allowlisted error signatures and exception types, subprocess exit
+codes, compiler switches, compiler/tool stack frames, and reported app source
+locations. A frontend invocation alone does not prove a compiler crash. Unknown
+exception messages remain private; absence of a signature does not rule out that
+failure. Paths, positional arguments, Dart
 defines (including encoded values), and option values are redacted. The raw log
 is deleted with the other private inputs and is never uploaded as an artifact.
 If a frontend crash has no source location, use the redacted invocation and stack
