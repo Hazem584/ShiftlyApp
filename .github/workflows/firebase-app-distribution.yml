@@ -278,10 +278,43 @@ jobs:
         PY
 
     - name: Distribute current HEAD to Firebase testers
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
         umask 077
-        current_head="$(git ls-remote --exit-code origin refs/heads/Master | cut -f1)"
+        # Checkout deliberately does not persist Git credentials. Authenticate
+        # this read-only HEAD check with the ephemeral job token via the API.
+        current_head="$(python3 - <<'PY'
+        import json, os, re, urllib.error, urllib.request
+
+        request = urllib.request.Request(
+            f"{os.environ['GITHUB_API_URL']}/repos/{os.environ['GITHUB_REPOSITORY']}/git/ref/heads/Master",
+            headers={
+                'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2026-03-10',
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                reference = json.load(response)
+        except urllib.error.HTTPError as error:
+            raise SystemExit(f'Master HEAD check failed: GitHub API HTTP {error.code}; distribution stopped.')
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+            raise SystemExit('Master HEAD check failed: GitHub API request or response invalid; distribution stopped.')
+        obj = reference.get('object') if isinstance(reference, dict) else None
+        sha = obj.get('sha') if isinstance(obj, dict) else None
+        if not (
+            isinstance(reference, dict) and reference.get('ref') == 'refs/heads/Master'
+            and isinstance(obj, dict) and obj.get('type') == 'commit'
+            and isinstance(sha, str) and re.fullmatch(r'[0-9a-f]{40}', sha)
+        ):
+            raise SystemExit('Master HEAD check failed: invalid branch reference; distribution stopped.')
+        print(sha)
+        PY
+        )"
+        unset GH_TOKEN
         if [[ "$current_head" != "$GITHUB_SHA" ]]; then
           echo 'Skipping distribution: Master has advanced beyond this commit.'
           exit 0

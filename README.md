@@ -10,6 +10,10 @@ single signed release APK from the event commit on every push to **`Master`**
 Runs share one lock; stale commits are skipped immediately before uploading. GitHub
 may replace a pending run with a newer pending run during rapid pushes, so superseded
 commits are not guaranteed a distribution.
+The pre-upload HEAD check uses GitHub's [reference API](https://docs.github.com/en/rest/git/refs#get-a-reference)
+with the automatic job token and `contents: read`; checkout keeps
+`persist-credentials: false`. No extra secret or personal access token is needed.
+An API failure stops distribution rather than bypassing the stale-commit check.
 
 CI pins Flutter **3.47.6** (Dart **3.13.5**, official Linux x64 SDK archive), Temurin
 **17.0.14+7**, Node **22.14.0**, and Firebase CLI **14.22.0**. Actions are pinned to
