@@ -1,3 +1,4 @@
+import 'package:shiftly/features/fixed_shifts/data/extra_shift_repository.dart';
 import 'package:dio/dio.dart';
 
 import 'dart:io';
@@ -161,6 +162,9 @@ abstract final class DependencyRegistration {
       )
       ..registerLazySingleton<FixedShiftRepository>(
         () => ApiFixedShiftRepository(target(), target()),
+      )
+      ..registerLazySingleton<ExtraShiftRepository>(
+        () => target<FixedShiftRepository>() as ExtraShiftRepository,
       )
       ..registerLazySingleton<ProfileRepository>(
         () => ApiProfileRepository(

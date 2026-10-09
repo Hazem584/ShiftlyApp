@@ -242,11 +242,11 @@ class _TemplateEditorDialogState extends State<_TemplateEditorDialog> {
       context: context,
       initialTime: start ? _start : _end,
     );
-    if (value != null) setState(() => start ? _start = value : _end = value);
+    if (value != null) { setState(() => start ? _start = value : _end = value); }
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) { return; }
     final validation = _input.validate();
     if (validation != null) {
       setState(() => _localError = validation);

@@ -19,8 +19,13 @@ class ApiException implements Exception {
   final String? path;
   final FailureKind kind;
 
-  Failure toFailure() =>
-      Failure(message: message, kind: kind, requestId: requestId);
+  Failure toFailure() => Failure(
+    message: message,
+    kind: kind,
+    requestId: requestId,
+    code: code,
+    statusCode: statusCode,
+  );
 
   @override
   String toString() =>

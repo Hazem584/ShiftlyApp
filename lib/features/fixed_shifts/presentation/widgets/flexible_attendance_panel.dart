@@ -1,3 +1,7 @@
+import 'eligibility_tile.dart';
+import 'active_attendance_card.dart';
+import 'attendance_presentation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/services/toast_service.dart';
@@ -6,9 +10,6 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
-
-part 'parts/flexible_attendance_panel/private_eligibility_tile.dart';
-part 'parts/flexible_attendance_panel/private_active_attendance_card.dart';
 
 class FlexibleAttendancePanel extends StatelessWidget {
   const FlexibleAttendancePanel({required this.timezone, super.key});
@@ -34,9 +35,34 @@ class FlexibleAttendancePanel extends StatelessWidget {
           ),
         );
       }
+      if (state.recovery != null)
+        { return SurfaceCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('Clock-in outcome needs confirmation'),
+              Text(
+                'Saved ' +
+                    (state.recovery!.occurrenceKind ?? 'unknown') +
+                    ' occurrence on ' +
+                    (state.recovery!.operationalDate ?? 'unknown date') +
+                    '. A new shift is blocked until recovery finishes.',
+              ),
+              if (state.failure != null) Text(state.failure!.message),
+              FilledButton(
+                onPressed: state.submittingTemplateId != null
+                    ? null
+                    : () => context
+                          .read<FlexibleAttendanceCubit>()
+                          .recoverClockIn(),
+                child: const Text('Recover saved clock-in'),
+              ),
+            ],
+          ),
+        ); }
       final current = state.current;
       if (current != null && current.isOpen && current.isActionable) {
-        return _ActiveAttendanceCard(
+        return ActiveAttendanceCard(
           attendance: current,
           timezone: timezone,
           busy: state.clockingOut,
@@ -76,7 +102,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
           ),
         );
       }
-      final entries = state.eligibility?.eligibleTemplates ?? const [];
+      final entries = state.eligibility?.authorizedOccurrences ?? const [];
       return SurfaceCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,6 +133,25 @@ class FlexibleAttendancePanel extends StatelessWidget {
                 ),
               ],
             ),
+            if (state.eligibility?.status == 'SHIFT_ASSIGNMENT_REQUIRED')
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'Ask your manager to assign your baseline fixed shift. Explicitly authorized extras remain optional.',
+                ),
+              ),
+            if (state.eligibility?.openAttendanceId != null)
+              const Text(
+                'Attendance is already open. Refresh to restore it before another action.',
+              ),
+            if (current != null && !current.isOpen)
+              Text(
+                'Attendance ' +
+                    (current.occurrenceKind ?? 'historical') +
+                    ' on ' +
+                    (current.operationalDate ?? 'unrecorded date') +
+                    ' is used and cannot be reopened.',
+              ),
             if (state.failure != null) ...[
               const SizedBox(height: 6),
               Text(
@@ -131,10 +176,11 @@ class FlexibleAttendancePanel extends StatelessWidget {
                   ),
                 ],
               ),
-              if (state.templates.isNotEmpty) ...[
+              if (state.templates.isNotEmpty &&
+                  state.eligibility?.status == 'ASSIGNED') ...[
                 const SizedBox(height: 12),
                 Text(
-                  'Available templates',
+                  'Assigned shift schedule',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 6),
@@ -145,7 +191,9 @@ class FlexibleAttendancePanel extends StatelessWidget {
                     for (final template in state.templates)
                       Chip(
                         avatar: CircleAvatar(
-                          backgroundColor: _color(template.color),
+                          backgroundColor: attendanceTemplateColor(
+                            template.color,
+                          ),
                         ),
                         label: Text(
                           template.name,
@@ -158,11 +206,16 @@ class FlexibleAttendancePanel extends StatelessWidget {
             ] else ...[
               const SizedBox(height: 10),
               for (final entry in entries) ...[
-                _EligibilityTile(
+                EligibilityTile(
                   entry: entry,
                   timezone: timezone,
                   busy: state.submittingTemplateId != null,
-                  onTap: entry.canClockIn
+                  onTap:
+                      entry.canClockIn &&
+                          !state.recoveryBlocked &&
+                          !state.refreshing &&
+                          state.failure == null &&
+                          state.eligibility?.openAttendanceId == null
                       ? () => _clockIn(context, entry)
                       : null,
                 ),
@@ -192,7 +245,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
             ),
             Text('Operational date: ${entry.operationalDate}'),
             Text(
-              'Classification: ${_classification(entry.classification)}${entry.lateMinutes > 0 ? ' • ${entry.lateMinutes} min late' : ''}',
+              'Classification: ${attendanceClassificationLabel(entry.classification)}${entry.lateMinutes > 0 ? ' • ${entry.lateMinutes} min late' : ''}',
             ),
           ],
         ),
@@ -209,7 +262,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
         ],
       ),
     );
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed != true || !context.mounted) { return; }
     final result = await context.read<FlexibleAttendanceCubit>().clockIn(entry);
     if (context.mounted && result == FixedShiftMutationResult.success) {
       ToastService.success(context, message: 'Clock-in confirmed.');
@@ -237,34 +290,10 @@ class FlexibleAttendancePanel extends StatelessWidget {
         ],
       ),
     );
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed != true || !context.mounted) { return; }
     final result = await context.read<FlexibleAttendanceCubit>().clockOut();
     if (context.mounted && result == FixedShiftMutationResult.success) {
       ToastService.success(context, message: 'Clock-out confirmed.');
     }
   }
-}
-
-String _classification(AttendanceClassification value) => switch (value) {
-  AttendanceClassification.early => 'Early',
-  AttendanceClassification.onTime => 'On time',
-  AttendanceClassification.late => 'Late',
-  AttendanceClassification.unknown => 'Status unavailable',
-};
-IconData _classificationIcon(AttendanceClassification value) => switch (value) {
-  AttendanceClassification.early => Icons.fast_forward_rounded,
-  AttendanceClassification.onTime => Icons.check_circle_outline,
-  AttendanceClassification.late => Icons.warning_amber_rounded,
-  AttendanceClassification.unknown => Icons.help_outline_rounded,
-};
-String _elapsed(Duration value) {
-  final safe = value.isNegative ? Duration.zero : value;
-  return '${safe.inHours}h ${safe.inMinutes.remainder(60)}m';
-}
-
-Color _color(String value) {
-  final hex = value.replaceFirst('#', '');
-  return hex.length == 6
-      ? Color(int.tryParse('FF$hex', radix: 16) ?? 0xFF334155)
-      : const Color(0xFF334155);
 }

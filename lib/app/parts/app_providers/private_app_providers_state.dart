@@ -310,6 +310,7 @@ class _AppProvidersState extends State<AppProviders> {
           );
     return ShiftlyAppLifecycleListener(
       onResumed: () {
+        unawaited(_flexibleAttendanceCubit.load(refresh: true));
         unawaited(_notificationsCubit.refreshUnreadCount());
         unawaited(_chatGroupsCubit.refreshUnread());
         _dashboardCubit.invalidate();

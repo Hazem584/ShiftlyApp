@@ -1,3 +1,12 @@
+import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/core/utils/workspace_timestamp_input.dart';
+import 'package:shiftly/features/fixed_shifts/data/extra_authorization.dart';
+import 'package:shiftly/features/fixed_shifts/data/extra_authorization_page.dart';
+import 'package:shiftly/features/fixed_shifts/data/extra_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/assignment_form.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shift_form.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -76,6 +85,9 @@ Map<String, Object?> _attendance({String? clockOutAt}) => {
   'shiftTemplateId': 'template-id',
   'clientAttendanceId': '11111111-1111-4111-8111-111111111111',
   'source': 'TEMPLATE',
+  'occurrenceKind': 'BASELINE',
+  'assignmentId': 'assignment-id',
+  'extraAuthorizationId': null,
   'templateName': 'Night operations',
   'workspaceTimezone': 'Africa/Cairo',
   'operationalDate': '2026-10-06T00:00:00.000Z',
@@ -151,6 +163,11 @@ class _FakeRepository implements FixedShiftRepository {
 
   ShiftTemplate get template => ShiftTemplate.fromJson(_template());
   EligibleShiftOccurrence get occurrence => EligibleShiftOccurrence(
+    occurrenceKind: 'BASELINE',
+    assignmentId: 'assignment-id',
+    eligible: true,
+    alreadyUsed: false,
+    timezone: 'Africa/Cairo',
     template: template,
     operationalDate: '2026-10-06',
     scheduledStartAt: DateTime.utc(2026, 10, 6, 19),
@@ -186,17 +203,19 @@ class _FakeRepository implements FixedShiftRepository {
     int page = 1,
     int limit = 100,
   }) async {
-    if (refreshFails) throw const ApiException(message: 'offline');
+    if (refreshFails) { throw const ApiException(message: 'offline'); }
     return this.page;
   }
 
   @override
   Future<TemplateEligibility> getEligibility(String workspaceId) async {
-    if (refreshFails) throw const ApiException(message: 'offline');
+    if (refreshFails) { throw const ApiException(message: 'offline'); }
     return TemplateEligibility(
       workspaceId: workspaceId,
       timezone: 'Africa/Cairo',
       evaluatedAt: DateTime.utc(2026, 10, 6, 19),
+      status: 'ASSIGNED',
+      authorizedOccurrences: [occurrence],
       recommended: occurrence,
       eligibleTemplates: [occurrence],
     );
@@ -210,6 +229,8 @@ class _FakeRepository implements FixedShiftRepository {
     required String workspaceId,
     required String shiftTemplateId,
     required String clientAttendanceId,
+    String? assignmentId,
+    String? extraAuthorizationId,
   }) async {
     clockInIds.add(clientAttendanceId);
     if (clockInIds.length == 1) {
@@ -232,17 +253,21 @@ class _FakeRepository implements FixedShiftRepository {
             userId: userId,
             workspaceId: workspaceId,
             membershipId: membershipId,
-            templateId: templateId,
+            templateId: pending!.templateId,
           ) ==
           true
       ? pending
       : null;
   @override
+  Future<FlexibleAttendance?> findPendingAttendance(
+    PendingClockIn value,
+  ) async => null;
+  @override
   Future<void> savePendingClockIn(PendingClockIn value) async =>
       pending = value;
   @override
   Future<void> clearPendingClockIn(PendingClockIn value) async {
-    if (pending == value) pending = null;
+    if (pending == value) { pending = null; }
   }
 
   @override
@@ -269,12 +294,15 @@ class _FakeRepository implements FixedShiftRepository {
   @override
   Future<WorkPatternHistory> getWorkPatterns(
     String workspaceId,
-    String membershipId,
-  ) async => const WorkPatternHistory(current: null, history: []);
+    String membershipId, {
+    int page = 1,
+    int limit = 20,
+  }) async => const WorkPatternHistory(current: null, history: []);
   @override
   Future<WorkPattern> replaceWorkPattern(
     String workspaceId,
     String membershipId, {
+    required String shiftTemplateId,
     required List<int> expectedWeekdays,
     required String effectiveFrom,
   }) => throw UnimplementedError();
@@ -286,8 +314,10 @@ class _WorkPatternRaceRepository extends _FakeRepository {
   @override
   Future<WorkPatternHistory> getWorkPatterns(
     String workspaceId,
-    String membershipId,
-  ) {
+    String membershipId, {
+    int page = 1,
+    int limit = 20,
+  }) {
     final request = Completer<WorkPatternHistory>();
     requests.add(request);
     return request.future;
@@ -295,6 +325,7 @@ class _WorkPatternRaceRepository extends _FakeRepository {
 }
 
 void main() {
+  assignedSprintTests();
   test('manager template repository uses exact paths, query, payload, and archive verb', () async {
     final client = await _client(
       (options) => _json(
@@ -344,11 +375,21 @@ void main() {
       if (options.uri.path.endsWith('/work-patterns')) {
         return _json(
           options.method == 'GET'
-              ? {'current': null, 'history': []}
+              ? {
+                  'current': null,
+                  'history': [],
+                  'pagination': {
+                    'page': 1,
+                    'limit': 20,
+                    'total': 0,
+                    'totalPages': 0,
+                  },
+                }
               : {
                   'id': 'pattern-id',
                   'workspaceId': 'workspace-id',
                   'employeeMembershipId': 'membership-id',
+                  'shiftTemplateId': 'template-id',
                   'expectedWeekdays': [1, 3],
                   'effectiveFrom': '2026-10-06',
                   'effectiveTo': null,
@@ -385,6 +426,7 @@ void main() {
     await client.repository.replaceWorkPattern(
       'workspace-id',
       'membership-id',
+      shiftTemplateId: 'template-id',
       expectedWeekdays: [3, 1],
       effectiveFrom: '2026-10-06',
     );
@@ -446,6 +488,7 @@ void main() {
     final repository = _FakeRepository();
     final cubit = FlexibleAttendanceCubit(
       repository,
+      now: () => DateTime.utc(2026, 10, 6, 19),
       uuid: () => '11111111-1111-4111-8111-111111111111',
     )..bindSession(_employeeScope);
     addTearDown(cubit.close);
@@ -455,10 +498,7 @@ void main() {
       FixedShiftMutationResult.failure,
     );
     expect(repository.pending, isNotNull);
-    expect(
-      await cubit.clockIn(repository.occurrence),
-      FixedShiftMutationResult.success,
-    );
+    expect(await cubit.recoverClockIn(), FixedShiftMutationResult.success);
     expect(repository.clockInIds, [
       '11111111-1111-4111-8111-111111111111',
       '11111111-1111-4111-8111-111111111111',
@@ -500,6 +540,9 @@ void main() {
       userId: 'user-a',
       workspaceId: 'workspace-a',
       membershipId: 'membership-a',
+      occurrenceKind: 'BASELINE',
+      assignmentId: 'assignment-a',
+      operationalDate: '2026-10-06',
       templateId: 'template-a',
       clientAttendanceId: '11111111-1111-4111-8111-111111111111',
     );
@@ -507,6 +550,9 @@ void main() {
       userId: 'user-b',
       workspaceId: 'workspace-b',
       membershipId: 'membership-b',
+      occurrenceKind: 'EXTRA',
+      extraAuthorizationId: 'extra-b',
+      operationalDate: '2026-10-07',
       templateId: 'template-b',
       clientAttendanceId: '22222222-2222-4222-8222-222222222222',
     );
@@ -737,7 +783,11 @@ void main() {
       final cubit = WorkPatternCubit(repository);
       addTearDown(cubit.close);
       unawaited(
-        cubit.bind(workspaceId: 'workspace-id', membershipId: 'membership-id'),
+        cubit.bind(
+          workspaceId: 'workspace-id',
+          membershipId: 'membership-id',
+          scope: _managerScope,
+        ),
       );
       await Future<void>.delayed(Duration.zero);
       expect(repository.requests, hasLength(1));
@@ -768,4 +818,952 @@ void main() {
       expect(cubit.state.history?.current, current);
     },
   );
+}
+
+Map<String, Object?> _savedSchedule() => {
+  'id': 'template-id',
+  'name': 'Saved night schedule',
+  'color': '#334155',
+  'timezone': 'Africa/Cairo',
+  'conversionPolicy': 'POSTGRES_V1',
+  'startMinute': 1320,
+  'endMinute': 360,
+  'graceMinutes': 10,
+  'allowedEarlyCheckInMinutes': 30,
+  'allowedLateCheckInMinutes': 120,
+  'minimumWorkMinutes': 420,
+};
+Map<String, Object?> _occurrenceJson({
+  String kind = 'BASELINE',
+  bool used = false,
+  bool eligible = true,
+}) => {
+  'template': {
+    ..._template(),
+    'timezone': 'Africa/Cairo',
+    'conversionPolicy': 'POSTGRES_V1',
+  },
+  'occurrenceKind': kind,
+  'assignmentId': kind == 'BASELINE' ? 'assignment-id' : null,
+  'extraAuthorizationId': kind == 'EXTRA' ? 'extra-id' : null,
+  'operationalDate': '2026-10-06',
+  'scheduledStartAt': '2026-10-06T19:00:00Z',
+  'scheduledEndAt': '2026-10-07T03:00:00Z',
+  'checkInWindowStart': '2026-10-06T18:30:00Z',
+  'checkInWindowEnd': '2026-10-06T21:00:00Z',
+  'expectedClockInClassification': 'ON_TIME',
+  'lateMinutes': 0,
+  'recommended': true,
+  'eligible': eligible && !used,
+  'alreadyUsed': used,
+};
+Map<String, Object?> _extraJson(
+  Map<String, Object?> payload, {
+  String status = 'AUTHORIZED',
+}) => {
+  ...payload,
+  'id': 'extra-id',
+  'workspaceId': 'workspace-id',
+  'employeeMembershipId': 'membership-id',
+  'status': status,
+  'createdByMembershipId': _managerScope.membershipId,
+  'createdAt': '2026-10-06T12:00:00Z',
+  'occurrenceSnapshot': _savedSchedule(),
+  'consumedAt': status == 'CONSUMED' ? '2026-10-06T23:00:00Z' : null,
+  'revokedAt': status == 'REVOKED' ? '2026-10-06T13:00:00Z' : null,
+  'revokedByMembershipId': status == 'REVOKED'
+      ? _managerScope.membershipId
+      : null,
+  'attendance': status == 'CONSUMED'
+      ? [
+          {
+            ..._attendance(clockOutAt: payload['actualClockOutAt'] as String?),
+            'occurrenceKind': 'EXTRA',
+            'assignmentId': null,
+            'extraAuthorizationId': 'extra-id',
+            'enteredByMembershipId': _managerScope.membershipId,
+            'reviewStatus': 'APPROVED',
+          },
+        ]
+      : [],
+};
+Map<String, Object?> _extraPayload() => {
+  'shiftTemplateId': 'template-id',
+  'operationalDate': '2026-10-06',
+  'reason': 'ADDITIONAL_SHIFT',
+  'explanation': 'Evening inventory coverage',
+};
+
+class _ControlledRepository extends _FakeRepository {
+  String kind = 'BASELINE', eligibilityStatus = 'ASSIGNED';
+  bool used = false, uncertain = false, lookupFails = false;
+  FlexibleAttendance? current, saved;
+  Completer<FlexibleAttendance>? clockInCompleter;
+  final payloads = <Map<String, Object?>>[];
+  @override
+  EligibleShiftOccurrence get occurrence =>
+      EligibleShiftOccurrence.fromJson(_occurrenceJson(kind: kind, used: used));
+  @override
+  Future<TemplateEligibility> getEligibility(String workspaceId) async {
+    if (refreshFails)
+      { throw const ApiException(message: 'offline', kind: FailureKind.network); }
+    return TemplateEligibility(
+      workspaceId: workspaceId,
+      timezone: 'Africa/Cairo',
+      evaluatedAt: DateTime.utc(2026, 10, 6, 19),
+      status: eligibilityStatus,
+      recommended: occurrence.canClockIn ? occurrence : null,
+      eligibleTemplates: occurrence.canClockIn ? [occurrence] : [],
+      authorizedOccurrences: [occurrence],
+    );
+  }
+
+  @override
+  Future<FlexibleAttendance?> getCurrentAttendance(String workspaceId) async =>
+      current;
+  @override
+  Future<FlexibleAttendance?> findPendingAttendance(
+    PendingClockIn value,
+  ) async {
+    if (lookupFails)
+      { throw const ApiException(message: 'offline', kind: FailureKind.network); }
+    return saved;
+  }
+
+  @override
+  Future<FlexibleAttendance> flexibleClockIn({
+    required String workspaceId,
+    required String shiftTemplateId,
+    required String clientAttendanceId,
+    String? assignmentId,
+    String? extraAuthorizationId,
+  }) async {
+    payloads.add({
+      'workspaceId': workspaceId,
+      'shiftTemplateId': shiftTemplateId,
+      'clientAttendanceId': clientAttendanceId,
+      if (assignmentId != null) 'assignmentId': assignmentId,
+      if (extraAuthorizationId != null)
+        'extraAuthorizationId': extraAuthorizationId,
+    });
+    if (clockInCompleter != null) { return clockInCompleter!.future; }
+    final canonical = FlexibleAttendance.fromJson({
+      ..._attendance(),
+      'clientAttendanceId': clientAttendanceId,
+      'occurrenceKind': kind,
+      'assignmentId': assignmentId,
+      'extraAuthorizationId': extraAuthorizationId,
+    });
+    if (uncertain)
+      { throw const ApiException(message: 'timeout', kind: FailureKind.timeout); }
+    used = true;
+    current = canonical;
+    saved = canonical;
+    return canonical;
+  }
+
+  @override
+  Future<FlexibleAttendance> flexibleClockOut(String attendanceId) async {
+    final canonical = FlexibleAttendance.fromJson({
+      ..._attendance(clockOutAt: '2026-10-06T20:00:00Z'),
+      'occurrenceKind': kind,
+      'assignmentId': kind == 'BASELINE' ? 'assignment-id' : null,
+      'extraAuthorizationId': kind == 'EXTRA' ? 'extra-id' : null,
+    });
+    current = null;
+    saved = canonical;
+    used = true;
+    return canonical;
+  }
+}
+
+class _ExtraRepository implements ExtraShiftRepository {
+  String? stored;
+  bool uncertain = false, refreshFails = false, reject = false;
+  Completer<ExtraAuthorization>? completer;
+  final requests = <Map<String, Object?>>[];
+  final canonical = <String, ExtraAuthorization>{};
+  @override
+  Future<String?> readExtraIntent(FeatureSessionScope scope) async => stored;
+  @override
+  Future<void> saveExtraIntent(FeatureSessionScope scope, String intent) async {
+    if (stored != null && stored != intent)
+      { throw StateError('Conflicting recovery'); }
+    stored = intent;
+  }
+
+  @override
+  Future<void> clearExtraIntent(
+    FeatureSessionScope scope,
+    String intent,
+  ) async {
+    if (stored == intent) { stored = null; }
+  }
+
+  @override
+  Future<ExtraAuthorizationPage> listExtras(
+    String workspaceId,
+    String membershipId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    if (refreshFails)
+      { throw const ApiException(message: 'offline', kind: FailureKind.network); }
+    return ExtraAuthorizationPage(
+      canonical.values.toList(),
+      const ApiPagination(page: 1, limit: 20, total: 0, totalPages: 0),
+    );
+  }
+
+  @override
+  Future<ExtraAuthorization> createExtra(
+    String workspaceId,
+    String membershipId,
+    Map<String, Object?> payload, {
+    required bool actual,
+  }) async {
+    requests.add(Map.from(payload));
+    expect(
+      stored,
+      isNotNull,
+      reason: 'intent must be durable before HTTP submission',
+    );
+    if (reject)
+      { throw const ApiException(
+        message: 'Overlap',
+        code: 'EXTRA_SCHEDULE_OVERLAP',
+        statusCode: 409,
+      ); }
+    if (completer != null) { return completer!.future; }
+    final key = payload['clientAuthorizationId'] as String;
+    final saved = canonical.putIfAbsent(
+      key,
+      () => ExtraAuthorization(
+        _extraJson(payload, status: actual ? 'CONSUMED' : 'AUTHORIZED'),
+      ),
+    );
+    if (uncertain)
+      { throw const ApiException(message: 'timeout', kind: FailureKind.timeout); }
+    return saved;
+  }
+
+  @override
+  Future<ExtraAuthorization> revokeExtra(
+    String workspaceId,
+    String membershipId,
+    String authorizationId,
+  ) async => ExtraAuthorization(
+    _extraJson({
+      ..._extraPayload(),
+      'clientAuthorizationId': '11111111-1111-4111-8111-111111111111',
+    }, status: 'REVOKED'),
+  );
+}
+
+class _AssignmentRepository extends _FakeRepository {
+  bool reject = false, failRefresh = false;
+  WorkPattern? value;
+  int mutations = 0;
+  @override
+  Future<WorkPatternHistory> getWorkPatterns(
+    String workspaceId,
+    String membershipId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    if (failRefresh && value != null)
+      { throw const ApiException(message: 'offline', kind: FailureKind.network); }
+    return WorkPatternHistory(
+      current: null,
+      history: value == null ? [] : [value!],
+    );
+  }
+
+  @override
+  Future<WorkPattern> replaceWorkPattern(
+    String workspaceId,
+    String membershipId, {
+    required String shiftTemplateId,
+    required List<int> expectedWeekdays,
+    required String effectiveFrom,
+  }) async {
+    mutations++;
+    if (reject)
+      { throw const ApiException(
+        message: 'Captured occurrence',
+        code: 'ASSIGNMENT_OCCURRENCE_CAPTURED',
+        statusCode: 409,
+      ); }
+    value = WorkPattern.fromJson({
+      'id': 'new-assignment',
+      'workspaceId': workspaceId,
+      'employeeMembershipId': membershipId,
+      'shiftTemplateId': shiftTemplateId,
+      'assignmentSnapshot': _savedSchedule(),
+      'expectedWeekdays': expectedWeekdays,
+      'effectiveFrom': effectiveFrom,
+      'effectiveTo': null,
+      'createdAt': '2026-10-06T00:00:00Z',
+      'updatedAt': '2026-10-06T00:00:00Z',
+    });
+    return value!;
+  }
+}
+
+void assignedSprintTests() {
+  test(
+    'shared attendance history retains nullable occurrence linkage and audit',
+    () {
+      final json = {
+        ..._attendance(),
+        'employee': {
+          'id': 'employee-membership-id',
+          'profileId': 'profile-id',
+          'role': 'EMPLOYEE',
+          'status': 'ACTIVE',
+        },
+      };
+      final baseline = AttendanceRecordApi.fromJson(json);
+      expect(baseline.assignmentId, 'assignment-id');
+      final extra = AttendanceRecordApi.fromJson({
+        ...json,
+        'occurrenceKind': 'EXTRA',
+        'assignmentId': null,
+        'extraAuthorizationId': 'extra-id',
+        'enteredByMembershipId': 'manager-membership',
+      });
+      expect(extra.assignmentId, isNull);
+      expect(extra.extraAuthorizationId, 'extra-id');
+      expect(extra.enteredByMembershipId, 'manager-membership');
+      final old = AttendanceRecordApi.fromJson({
+        ...json,
+        'occurrenceKind': null,
+        'assignmentId': null,
+      });
+      expect(old.occurrenceKind, isNull);
+      expect(old.assignmentId, isNull);
+      expect(old.scheduledStartAt, baseline.scheduledStartAt);
+    },
+  );
+
+  test('unupgraded eligibility cannot grant employee clock-in', () async {
+    final repository = _ControlledRepository()..eligibilityStatus = 'UNKNOWN';
+    final cubit = FlexibleAttendanceCubit(repository)
+      ..bindSession(_employeeScope);
+    addTearDown(cubit.close);
+    await cubit.stream.firstWhere((state) => !state.loading);
+    expect(
+      await cubit.clockIn(repository.occurrence),
+      FixedShiftMutationResult.failure,
+    );
+    expect(repository.payloads, isEmpty);
+  });
+  test('an uncertain baseline never becomes an extra retry', () async {
+    final repository = _ControlledRepository()..uncertain = true;
+    final cubit = FlexibleAttendanceCubit(repository)
+      ..bindSession(_employeeScope);
+    addTearDown(cubit.close);
+    await cubit.stream.firstWhere((state) => !state.loading);
+    await cubit.clockIn(repository.occurrence);
+    final original = repository.pending;
+    repository.kind = 'EXTRA';
+    expect(
+      await cubit.clockIn(repository.occurrence),
+      FixedShiftMutationResult.failure,
+    );
+    expect(repository.pending, same(original));
+    expect(repository.payloads, hasLength(1));
+    expect(
+      repository.payloads.first.containsKey('extraAuthorizationId'),
+      isFalse,
+    );
+  });
+  test(
+    'business errors preserve safe metadata without provider diagnostics',
+    () async {
+      final client = await _client(
+        (_) => _json({
+          'statusCode': 409,
+          'code': 'EXTRA_SCHEDULE_OVERLAP',
+          'message': 'private database constraint text',
+          'requestId': 'request-safe',
+        }, status: 409),
+      );
+      try {
+        await client.repository.createExtra(
+          'workspace-id',
+          'membership-id',
+          _extraPayload(),
+          actual: false,
+        );
+        fail('Expected safe conflict');
+      } on ApiException catch (error) {
+        expect(error.code, 'EXTRA_SCHEDULE_OVERLAP');
+        expect(error.statusCode, 409);
+        expect(error.requestId, 'request-safe');
+        expect(error.message, isNot(contains('database')));
+        expect(error.toFailure().code, error.code);
+        expect(error.toFailure().statusCode, 409);
+      }
+    },
+  );
+
+  test(
+    'defensive occurrence models deny missing IDs, enums, policies and usage',
+    () {
+      for (final patch in <Map<String, Object?>>[
+        {'occurrenceKind': 'UNKNOWN'},
+        {'assignmentId': null},
+        {'alreadyUsed': true},
+        {'eligible': false},
+        {'expectedClockInClassification': 'UNKNOWN'},
+        {
+          'template': {..._template(), 'conversionPolicy': 'FUTURE_V2'},
+        },
+        {'template': _template(active: false)},
+        {'alreadyUsed': null},
+      ]) {
+        expect(
+          EligibleShiftOccurrence.fromJson({..._occurrenceJson(), ...patch})
+              .canClockIn,
+          isFalse,
+        );
+      }
+      expect(
+        EligibleShiftOccurrence.fromJson(_occurrenceJson(kind: 'EXTRA'))
+            .canClockIn,
+        isTrue,
+      );
+      final legacy = WorkPattern.fromJson({
+        'id': 'old',
+        'workspaceId': 'workspace-id',
+        'employeeMembershipId': 'membership-id',
+        'expectedWeekdays': [1],
+        'effectiveFrom': '2026-01-01',
+        'createdAt': '2026-01-01T00:00:00Z',
+        'updatedAt': '2026-01-01T00:00:00Z',
+      });
+      expect(legacy.assignmentSnapshot, isNull);
+      expect(legacy.shiftTemplateId, isNull);
+    },
+  );
+  test(
+    'baseline and extra HTTP payloads contain only their canonical linkage',
+    () async {
+      final client = await _client((_) => _json(_attendance(), status: 201));
+      await client.repository.flexibleClockIn(
+        workspaceId: 'workspace-id',
+        shiftTemplateId: 'template-id',
+        clientAttendanceId: 'key',
+        assignmentId: 'assignment-id',
+      );
+      await client.repository.flexibleClockIn(
+        workspaceId: 'workspace-id',
+        shiftTemplateId: 'template-id',
+        clientAttendanceId: 'key-2',
+        extraAuthorizationId: 'extra-id',
+      );
+      expect(client.adapter.requests.first.data, {
+        'workspaceId': 'workspace-id',
+        'shiftTemplateId': 'template-id',
+        'clientAttendanceId': 'key',
+        'assignmentId': 'assignment-id',
+      });
+      expect(client.adapter.requests.last.data, {
+        'workspaceId': 'workspace-id',
+        'shiftTemplateId': 'template-id',
+        'clientAttendanceId': 'key-2',
+        'extraAuthorizationId': 'extra-id',
+      });
+    },
+  );
+  test(
+    'manager extras use exact pagination, paths, verbs and canonical response',
+    () async {
+      final payload = {
+        ..._extraPayload(),
+        'clientAuthorizationId': '11111111-1111-4111-8111-111111111111',
+      };
+      final client = await _client((options) {
+        if (options.method == 'GET') { return _json(_page(_extraJson(payload))); }
+        return _json(
+          _extraJson(
+            options.method == 'DELETE'
+                ? payload
+                : Map<String, Object?>.from(options.data as Map),
+            status: options.method == 'DELETE'
+                ? 'REVOKED'
+                : options.path.endsWith('/attendance')
+                ? 'CONSUMED'
+                : 'AUTHORIZED',
+          ),
+        );
+      });
+      await client.repository.listExtras(
+        'workspace-id',
+        'membership-id',
+        page: 2,
+        limit: 20,
+      );
+      final created = await client.repository.createExtra(
+        'workspace-id',
+        'membership-id',
+        payload,
+        actual: false,
+      );
+      await client.repository.revokeExtra(
+        'workspace-id',
+        'membership-id',
+        created.id,
+      );
+      final actual = {
+        ...payload,
+        'actualClockInAt': '2026-10-06T19:00:00Z',
+        'actualClockOutAt': '2026-10-06T23:00:00Z',
+      };
+      final saved = await client.repository.createExtra(
+        'workspace-id',
+        'membership-id',
+        actual,
+        actual: true,
+      );
+      expect(client.adapter.requests.first.queryParameters, {
+        'page': 2,
+        'limit': 20,
+      });
+      expect(
+        client.adapter.requests[1].path,
+        '/workspaces/workspace-id/employees/membership-id/extra-shifts',
+      );
+      expect(client.adapter.requests[1].data, payload);
+      expect(client.adapter.requests[2].method, 'DELETE');
+      expect(client.adapter.requests[2].data, isNull);
+      expect(
+        client.adapter.requests.last.path,
+        '/workspaces/workspace-id/employees/membership-id/extra-shifts/attendance',
+      );
+      expect(client.adapter.requests.last.data, actual);
+      expect(saved.status, 'CONSUMED');
+      expect(saved.schedule.name, 'Saved night schedule');
+    },
+  );
+  test('legacy stored clock-in is quarantined without deletion or replay', () async {
+    SharedPreferences.setMockInitialValues({
+      'fixed_shift.pending_clock_in.v1': '{old-operation}',
+      'fixed_shift.pending_clock_in.v2.user-a.workspace-a.membership-a.template-a':
+          '{old-scoped-operation}',
+    });
+    final preferences = await SharedPreferences.getInstance();
+    final repository = ApiFixedShiftRepository(Dio(), preferences);
+    await expectLater(
+      repository.loadPendingClockIn(
+        userId: 'user-a',
+        workspaceId: 'workspace-a',
+        membershipId: 'membership-a',
+        templateId: 'template-a',
+      ),
+      throwsFormatException,
+    );
+    expect(
+      preferences.getString('fixed_shift.pending_clock_in.v1'),
+      '{old-operation}',
+    );
+    expect(preferences.getKeys(), hasLength(2));
+  });
+  test(
+    'durable extras cannot overwrite another intent and are scope isolated',
+    () async {
+      final client = await _client((_) => _json(null));
+      await client.repository.saveExtraIntent(_managerScope, 'first');
+      await expectLater(
+        client.repository.saveExtraIntent(_managerScope, 'second'),
+        throwsStateError,
+      );
+      const other = FeatureSessionScope(
+        userId: 'another',
+        workspaceId: 'workspace-id',
+        membershipId: 'manager-membership',
+        timezone: 'UTC',
+        role: WorkspaceRole.manager,
+      );
+      expect(await client.repository.readExtraIntent(other), isNull);
+      await client.repository.clearExtraIntent(_managerScope, 'second');
+      expect(await client.repository.readExtraIntent(_managerScope), 'first');
+    },
+  );
+  for (final kind in ['BASELINE', 'EXTRA']) {
+    test('$kind early clock-out leaves occurrence consumed', () async {
+      final repository = _ControlledRepository()..kind = kind;
+      final cubit = FlexibleAttendanceCubit(repository)
+        ..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await cubit.stream.firstWhere((s) => !s.loading);
+      final original = repository.occurrence;
+      expect(await cubit.clockIn(original), FixedShiftMutationResult.success);
+      expect(await cubit.clockOut(), FixedShiftMutationResult.success);
+      expect(await cubit.clockIn(original), FixedShiftMutationResult.failure);
+      expect(repository.payloads, hasLength(1));
+      expect(cubit.state.current?.clockOutAt, isNotNull);
+    });
+  }
+  test('rejected occurrence remains used after refresh', () async {
+    final repository = _ControlledRepository()..used = true;
+    repository.saved = FlexibleAttendance.fromJson({
+      ..._attendance(),
+      'reviewStatus': 'REJECTED',
+    });
+    final cubit = FlexibleAttendanceCubit(repository)
+      ..bindSession(_employeeScope);
+    addTearDown(cubit.close);
+    await cubit.stream.firstWhere((s) => !s.loading);
+    expect(repository.saved!.isOpen, isFalse);
+    expect(
+      await cubit.clockIn(repository.occurrence),
+      FixedShiftMutationResult.failure,
+    );
+    expect(repository.payloads, isEmpty);
+  });
+  test(
+    'duplicate taps and stale employee responses never update switched state',
+    () async {
+      final repository = _ControlledRepository()
+        ..clockInCompleter = Completer<FlexibleAttendance>();
+      final cubit = FlexibleAttendanceCubit(repository)
+        ..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await cubit.stream.firstWhere((s) => !s.loading);
+      final first = cubit.clockIn(repository.occurrence);
+      expect(
+        await cubit.clockIn(repository.occurrence),
+        FixedShiftMutationResult.busy,
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.payloads, hasLength(1));
+      cubit.bindSession(null);
+      repository.clockInCompleter!.complete(repository.attendance());
+      expect(await first, FixedShiftMutationResult.stale);
+      expect(cubit.state.current, isNull);
+      expect(repository.pending, isNotNull);
+    },
+  );
+  test(
+    'expired baseline recovery cannot submit against a later occurrence',
+    () async {
+      final repository = _ControlledRepository()..uncertain = true;
+      final cubit = FlexibleAttendanceCubit(
+        repository,
+        now: () => DateTime.utc(2026, 10, 9),
+      )..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await cubit.stream.firstWhere((s) => !s.loading);
+      await cubit.clockIn(repository.occurrence);
+      expect(await cubit.recoverClockIn(), FixedShiftMutationResult.failure);
+      expect(repository.payloads, hasLength(1));
+      expect(repository.pending, isNotNull);
+      expect(cubit.state.recoveryBlocked, isTrue);
+    },
+  );
+  test(
+    'restart recovery resolves a closed canonical attendance without POST',
+    () async {
+      final repository = _ControlledRepository()..uncertain = true;
+      final first = FlexibleAttendanceCubit(repository)
+        ..bindSession(_employeeScope);
+      await first.stream.firstWhere((s) => !s.loading);
+      await first.clockIn(repository.occurrence);
+      repository.saved = FlexibleAttendance.fromJson({
+        ..._attendance(clockOutAt: '2026-10-06T20:00:00Z'),
+        'clientAttendanceId': repository.pending!.clientAttendanceId,
+      });
+      await first.close();
+      final restored = FlexibleAttendanceCubit(repository)
+        ..bindSession(_employeeScope);
+      addTearDown(restored.close);
+      await restored.stream.firstWhere((s) => !s.loading);
+      expect(restored.state.recovery, isNotNull);
+      expect(await restored.recoverClockIn(), FixedShiftMutationResult.success);
+      expect(repository.payloads, hasLength(1));
+      expect(restored.state.current?.clockOutAt, isNotNull);
+      expect(repository.pending, isNull);
+    },
+  );
+  test(
+    'canonical clock-in success survives a failed follow-up refresh',
+    () async {
+      final repository = _ControlledRepository();
+      final cubit = FlexibleAttendanceCubit(
+        repository,
+        onAttendanceChanged: () {
+          repository.refreshFails = true;
+        },
+      )..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await cubit.stream.firstWhere((s) => !s.loading);
+      expect(
+        await cubit.clockIn(repository.occurrence),
+        FixedShiftMutationResult.success,
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.current, isNotNull);
+      expect(cubit.state.recoveryBlocked, isTrue);
+      expect(repository.pending, isNull);
+    },
+  );
+  test(
+    'manager extra restart recovery preserves UUID and normalized payload',
+    () async {
+      final repository = _ExtraRepository()..uncertain = true;
+      final first = ExtraShiftsCubit(repository)
+        ..bind(_managerScope, 'membership-id');
+      await first.stream.firstWhere((s) => !s.loading);
+      expect(
+        await first.create({
+          ..._extraPayload(),
+          'explanation': '  Evening   coverage  ',
+        }, actual: false),
+        isFalse,
+      );
+      final intent = repository.stored;
+      expect(intent, isNotNull);
+      await first.close();
+      repository.uncertain = false;
+      final restored = ExtraShiftsCubit(repository)
+        ..bind(_managerScope, 'membership-id');
+      addTearDown(restored.close);
+      await restored.stream.firstWhere((s) => !s.loading);
+      expect(await restored.create(_extraPayload(), actual: true), isFalse);
+      expect(await restored.recover(), isTrue);
+      expect(repository.requests[0], repository.requests[1]);
+      expect(repository.requests.first['explanation'], 'Evening coverage');
+      expect(repository.stored, isNull);
+      expect(repository.canonical, hasLength(1));
+    },
+  );
+  test('manager entry and revocation retain canonical response after refresh failure', () async {
+    final repository = _ExtraRepository();
+    final cubit = ExtraShiftsCubit(
+      repository,
+      onChanged: () {
+        repository.refreshFails = true;
+      },
+    )..bind(_managerScope, 'membership-id');
+    addTearDown(cubit.close);
+    await cubit.stream.firstWhere((s) => !s.loading);
+    expect(
+      await cubit.create({
+        ..._extraPayload(),
+        'actualClockInAt': '2026-10-06T19:00:00Z',
+        'actualClockOutAt': '2026-10-06T23:00:00Z',
+      }, actual: true),
+      isTrue,
+    );
+    expect(cubit.state.canonical?.status, 'CONSUMED');
+    expect(cubit.state.failure, isNotNull);
+    expect(await cubit.revoke(cubit.state.canonical!), isFalse);
+  });
+  test('manager-only extras block duplicate submissions and reject stale responses', () async {
+    final repository = _ExtraRepository()
+      ..completer = Completer<ExtraAuthorization>();
+    final cubit = ExtraShiftsCubit(repository)
+      ..bind(_employeeScope, 'membership-id');
+    expect(await cubit.create(_extraPayload(), actual: false), isFalse);
+    expect(repository.requests, isEmpty);
+    cubit.bind(_managerScope, 'membership-id');
+    await cubit.stream.firstWhere((s) => !s.loading);
+    final first = cubit.create(_extraPayload(), actual: false);
+    expect(await cubit.create(_extraPayload(), actual: false), isFalse);
+    await Future<void>.delayed(Duration.zero);
+    cubit.bind(null, 'membership-id');
+    repository.completer!.complete(
+      ExtraAuthorization(_extraJson(repository.requests.first)),
+    );
+    expect(await first, isFalse);
+    expect(cubit.state.canonical, isNull);
+    expect(repository.stored, isNotNull);
+    await cubit.close();
+  });
+  test(
+    'future assignment retains saved schedule and success on refresh failure',
+    () async {
+      final repository = _AssignmentRepository()..failRefresh = true;
+      final cubit = WorkPatternCubit(repository);
+      addTearDown(cubit.close);
+      await cubit.bind(
+        workspaceId: 'workspace-id',
+        membershipId: 'membership-id',
+        scope: _managerScope,
+      );
+      expect(
+        await cubit.replace(
+          shiftTemplateId: 'template-id',
+          weekdays: {1, 3},
+          effectiveFrom: '2099-10-10',
+        ),
+        FixedShiftMutationResult.success,
+      );
+      expect(
+        cubit.state.history?.history.first.assignmentSnapshot?.name,
+        'Saved night schedule',
+      );
+      expect(cubit.state.history?.current, isNull);
+      expect(cubit.state.failure, isNotNull);
+    },
+  );
+  test(
+    'actual timestamp input handles timezone offsets, overnight and DST',
+    () {
+      expect(
+        WorkspaceTimestampInput.parse(
+          '2026-10-06T22:00:00+03:00',
+          'Africa/Cairo',
+        ),
+        DateTime.utc(2026, 10, 6, 19),
+      );
+      expect(
+        WorkspaceTimestampInput.parse(
+          '2026-11-01T01:30:00-04:00',
+          'America/New_York',
+        ),
+        DateTime.utc(2026, 11, 1, 5, 30),
+      );
+      expect(
+        WorkspaceTimestampInput.parse(
+          '2026-11-01T01:30:00-05:00',
+          'America/New_York',
+        ),
+        DateTime.utc(2026, 11, 1, 6, 30),
+      );
+      for (final input in [
+        '2026-03-08T02:30:00-05:00',
+        '2026-03-08T02:30:00-04:00',
+        '2026-02-30T12:00:00-05:00',
+        '2026-10-06T22:00:00',
+      ]) {
+        expect(
+          () => WorkspaceTimestampInput.parse(input, 'America/New_York'),
+          throwsFormatException,
+        );
+      }
+      expect(
+        () => WorkspaceTimestampInput.parse(
+          '2026-10-06T22:00:00+02:00',
+          'Africa/Cairo',
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => WorkspaceTimestampInput.validateRange(
+          DateTime.utc(2026, 10, 6, 23),
+          DateTime.utc(2026, 10, 7, 3),
+          DateTime.utc(2026, 10, 7, 4),
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => WorkspaceTimestampInput.validateRange(
+          DateTime.utc(2026, 10, 7),
+          DateTime.utc(2026, 10, 6),
+          DateTime.utc(2026, 10, 9),
+        ),
+        throwsFormatException,
+      );
+    },
+  );
+  testWidgets(
+    'assignment failed save retains input and dialog at compact text scale',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final repository = _AssignmentRepository()..reject = true;
+      final cubit = WorkPatternCubit(repository);
+      addTearDown(cubit.close);
+      await cubit.bind(
+        workspaceId: 'workspace-id',
+        membershipId: 'membership-id',
+        scope: _managerScope,
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData.dark(useMaterial3: true),
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+            child: Scaffold(
+              body: Builder(
+                builder: (c) => TextButton(
+                  onPressed: () => showDialog<void>(
+                    context: c,
+                    builder: (_) => AssignmentForm(
+                      repository: repository,
+                      cubit: cubit,
+                      workspaceId: 'workspace-id',
+                      timezone: 'Africa/Cairo',
+                    ),
+                  ),
+                  child: const Text('Open assignment'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open assignment'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Night operations').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('weekday-1')));
+      await tester.tap(find.byKey(const Key('weekday-1')));
+      await tester.pump();
+      await tester.tap(find.text('Review replacement'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm-work-pattern')));
+      await tester.pumpAndSettle();
+      expect(find.text('Assign a fixed shift'), findsOneWidget);
+      expect(find.text('Captured occurrence'), findsOneWidget);
+      expect(
+        tester.widget<FilterChip>(find.byKey(const Key('weekday-1'))).selected,
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('extra form controllers survive closing dialog transitions', (
+    tester,
+  ) async {
+    final repository = _ExtraRepository();
+    final cubit = ExtraShiftsCubit(repository)
+      ..bind(_managerScope, 'membership-id');
+    addTearDown(cubit.close);
+    await cubit.stream.firstWhere((s) => !s.loading);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (c) => TextButton(
+              onPressed: () => showDialog<void>(
+                context: c,
+                builder: (_) => ExtraShiftForm(
+                  repository: _FakeRepository(),
+                  cubit: cubit,
+                  workspaceId: 'workspace-id',
+                  timezone: 'Africa/Cairo',
+                  actual: true,
+                ),
+              ),
+              child: const Text('Open extra'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open extra'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'Inventory coverage');
+    await tester.tap(find.text('Cancel'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(repository.requests, isEmpty);
+  });
 }

@@ -14,9 +14,10 @@ class _AttendanceRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final savedTimezone = record.workspaceTimezone ?? timezone;
     final date = WorkspaceTime.inWorkspace(
       record.shift?.startsAt ?? record.scheduledStartAt ?? record.clockInAt,
-      timezone,
+      savedTimezone,
     );
     final (label, color, background) = switch (record.reviewStatus) {
       AttendanceReviewStatus.pending => (
@@ -76,10 +77,28 @@ class _AttendanceRecordCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
+                if (record.source == AttendanceSource.template)
+                  Text(
+                    record.occurrenceKind == 'EXTRA'
+                        ? 'EXTRA (optional; no automatic BLUE)'
+                        : record.occurrenceKind == 'BASELINE'
+                        ? 'BASELINE'
+                        : 'Historical template attendance; assignment evidence not recorded',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (record.source == AttendanceSource.template)
+                  Text(
+                    'Operational date: ' +
+                        (record.operationalDate?.split('T').first ??
+                            'Not recorded') +
+                        ' / ' +
+                        savedTimezone,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 const SizedBox(height: 3),
                 Text(
-                  'In: ${WorkspaceTime.time(record.clockInAt, timezone, locale: Localizations.localeOf(context).toString())}  '
-                  'Out: ${WorkspaceTime.time(record.clockOutAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                  'In: ${WorkspaceTime.time(record.clockInAt, savedTimezone, locale: Localizations.localeOf(context).toString())}  '
+                  'Out: ${WorkspaceTime.time(record.clockOutAt, savedTimezone, locale: Localizations.localeOf(context).toString())}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
@@ -88,7 +107,13 @@ class _AttendanceRecordCard extends StatelessWidget {
                 Text(
                   record.isOpen
                       ? 'Open attendance'
-                      : '${record.workedMinutes ?? 0} minutes worked',
+                      : record.reviewStatus ==
+                                AttendanceReviewStatus.rejected &&
+                            record.clockOutAt == null
+                      ? 'Rejected; occurrence remains used'
+                      : record.workedMinutes == null
+                      ? 'Duration not recorded'
+                      : '${record.workedMinutes} minutes worked',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,

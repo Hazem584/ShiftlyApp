@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
+
+import 'work_pattern_view.dart';
+
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
-
-part 'parts/work_pattern_section/private_work_pattern_view.dart';
-part 'parts/work_pattern_section/private_pattern_dialog.dart';
-part 'parts/work_pattern_section/private_pattern_dialog_state.dart';
-part 'parts/work_pattern_section/private_weekday_row.dart';
 
 class WorkPatternSection extends StatelessWidget {
   const WorkPatternSection({
@@ -26,16 +22,32 @@ class WorkPatternSection extends StatelessWidget {
   final bool canEdit;
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    key: ValueKey('$workspaceId|$membershipId|$canEdit'),
-    create: (context) =>
-        (getIt.isRegistered<WorkPatternCubit>()
-              ? getIt<WorkPatternCubit>()
-              : WorkPatternCubit(context.read<FixedShiftRepository>()))
-          ..bind(workspaceId: workspaceId, membershipId: membershipId),
-    child: _WorkPatternView(timezone: timezone, canEdit: canEdit),
-  );
+  Widget build(BuildContext context) {
+    final manager = context.watch<ManagerPerformanceCubit>();
+    final scope = manager.state.scope;
+    if (scope == null || !scope.isManager || scope.workspaceId != workspaceId)
+      { return const SizedBox.shrink(); }
+    return BlocProvider(
+      key: ValueKey((scope, membershipId, canEdit)),
+      create: (_) =>
+          WorkPatternCubit(
+            getIt.isRegistered<FixedShiftRepository>()
+                ? getIt<FixedShiftRepository>()
+                : context.read<FixedShiftRepository>(),
+            onChanged: () {
+              manager.invalidate();
+              manager.onChanged?.call();
+            },
+          )..bind(
+            workspaceId: workspaceId,
+            membershipId: membershipId,
+            scope: scope,
+          ),
+      child: WorkPatternView(
+        workspaceId: workspaceId,
+        timezone: timezone,
+        canEdit: canEdit,
+      ),
+    );
+  }
 }
-
-String _dateKey(DateTime value) =>
-    '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';

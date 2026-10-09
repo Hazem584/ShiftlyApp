@@ -285,67 +285,91 @@ class ManagerAttendancePanel extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.l),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                record.employee.displayName,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: AppSpacing.m),
-              Text(
-                record.source == AttendanceSource.template
-                    ? 'Template: ${record.templateName ?? 'Unavailable'} • ${record.operationalDate ?? 'Unknown date'}'
-                    : 'Shift: ${record.shift == null ? 'Unavailable' : WorkspaceTime.dateTime(record.shift!.startsAt, timezone, locale: Localizations.localeOf(context).toString())}',
-              ),
-              Text(
-                'Clock-in: ${WorkspaceTime.time(record.clockInAt, timezone, locale: Localizations.localeOf(context).toString())}',
-              ),
-              Text(
-                'Clock-out: ${WorkspaceTime.time(record.clockOutAt, timezone, locale: Localizations.localeOf(context).toString())}',
-              ),
-              Text('Late: ${record.minutesLate} minutes'),
-              if (record.workedMinutes != null)
-                Text('Worked: ${record.workedMinutes} minutes'),
-              if (record.rejectionReason != null) ...[
-                const SizedBox(height: AppSpacing.s),
-                Text('Rejection reason: ${record.rejectionReason}'),
-              ],
-              if (record.canReview) ...[
-                const SizedBox(height: AppSpacing.l),
-                FilledButton.icon(
-                  key: const Key('approve-attendance'),
-                  onPressed: () async {
-                    final result = await context
-                        .read<ManagerAttendanceCubit>()
-                        .review(record.id, AttendanceReviewDecision.approved);
-                    if (!context.mounted) return;
-                    if (result == AttendanceMutationResult.success) {
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.l),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  record.employee.displayName,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: AppSpacing.m),
+                Text(
+                  record.source == AttendanceSource.template
+                      ? 'Template: ${record.templateName ?? 'Unavailable'} • ${record.operationalDate ?? 'Unknown date'}'
+                      : 'Shift: ${record.shift == null ? 'Unavailable' : WorkspaceTime.dateTime(record.shift!.startsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                ),
+                Text(
+                  'Clock-in: ${WorkspaceTime.time(record.clockInAt, record.workspaceTimezone ?? timezone, locale: Localizations.localeOf(context).toString())}',
+                ),
+                Text(
+                  'Clock-out: ${WorkspaceTime.time(record.clockOutAt, record.workspaceTimezone ?? timezone, locale: Localizations.localeOf(context).toString())}',
+                ),
+                if (record.source == AttendanceSource.template) ...[
+                  Text(
+                    record.occurrenceKind == 'EXTRA'
+                        ? 'EXTRA: no baseline substitution or automatic BLUE'
+                        : record.occurrenceKind == 'BASELINE'
+                        ? 'BASELINE attendance'
+                        : 'Historical template attendance; assignment evidence not recorded',
+                  ),
+                  if (record.assignmentId != null)
+                    Text('Assignment: ${record.assignmentId}'),
+                  if (record.extraAuthorizationId != null)
+                    Text('Extra authorization: ${record.extraAuthorizationId}'),
+                  if (record.enteredByMembershipId != null)
+                    Text(
+                      'Entered by membership: ${record.enteredByMembershipId}',
+                    ),
+                  if (record.scheduledStartAt != null &&
+                      record.scheduledEndAt != null)
+                    Text(
+                      'Saved schedule: ${WorkspaceTime.dateTime(record.scheduledStartAt!, record.workspaceTimezone ?? timezone)} to ${WorkspaceTime.dateTime(record.scheduledEndAt!, record.workspaceTimezone ?? timezone)}',
+                    ),
+                ],
+                Text('Late: ${record.minutesLate} minutes'),
+                if (record.workedMinutes != null)
+                  Text('Worked: ${record.workedMinutes} minutes'),
+                if (record.rejectionReason != null) ...[
+                  const SizedBox(height: AppSpacing.s),
+                  Text('Rejection reason: ${record.rejectionReason}'),
+                ],
+                if (record.canReview) ...[
+                  const SizedBox(height: AppSpacing.l),
+                  FilledButton.icon(
+                    key: const Key('approve-attendance'),
+                    onPressed: () async {
+                      final result = await context
+                          .read<ManagerAttendanceCubit>()
+                          .review(record.id, AttendanceReviewDecision.approved);
+                      if (!context.mounted) return;
+                      if (result == AttendanceMutationResult.success) {
+                        Navigator.pop(sheetContext);
+                        ToastService.success(
+                          context,
+                          message: 'Attendance approved.',
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.check_rounded),
+                    label: const Text('Approve'),
+                  ),
+                  const SizedBox(height: AppSpacing.s),
+                  OutlinedButton.icon(
+                    key: const Key('reject-attendance'),
+                    onPressed: () {
                       Navigator.pop(sheetContext);
-                      ToastService.success(
-                        context,
-                        message: 'Attendance approved.',
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.check_rounded),
-                  label: const Text('Approve'),
-                ),
-                const SizedBox(height: AppSpacing.s),
-                OutlinedButton.icon(
-                  key: const Key('reject-attendance'),
-                  onPressed: () {
-                    Navigator.pop(sheetContext);
-                    _reject(context, record.id);
-                  },
-                  icon: const Icon(Icons.close_rounded),
-                  label: const Text('Reject'),
-                ),
+                      _reject(context, record.id);
+                    },
+                    icon: const Icon(Icons.close_rounded),
+                    label: const Text('Reject'),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

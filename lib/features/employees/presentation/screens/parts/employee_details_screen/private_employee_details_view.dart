@@ -99,6 +99,13 @@ class _EmployeeDetailsView extends StatelessWidget {
               canEdit: employee.employmentStatus == EmploymentStatus.active,
             ),
             const SizedBox(height: AppSpacing.l),
+            ExtraShiftsSection(
+              workspaceId: workspaceId,
+              membershipId: membershipId,
+              timezone: timezone,
+              canEdit: employee.employmentStatus == EmploymentStatus.active,
+            ),
+            const SizedBox(height: AppSpacing.l),
             if (employee.employmentStatus == EmploymentStatus.active ||
                 employee.employmentStatus == EmploymentStatus.suspended)
               FilledButton.tonalIcon(

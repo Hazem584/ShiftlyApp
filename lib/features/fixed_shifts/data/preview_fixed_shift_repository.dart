@@ -35,8 +35,10 @@ class PreviewFixedShiftRepository implements FixedShiftRepository {
   @override
   Future<WorkPatternHistory> getWorkPatterns(
     String workspaceId,
-    String membershipId,
-  ) async => const WorkPatternHistory(current: null, history: []);
+    String membershipId, {
+    int page = 1,
+    int limit = 20,
+  }) async => const WorkPatternHistory(current: null, history: []);
   @override
   Future<FlexibleAttendance?> getCurrentAttendance(String workspaceId) async =>
       null;
@@ -49,6 +51,10 @@ class PreviewFixedShiftRepository implements FixedShiftRepository {
   }) async => null;
   @override
   Future<void> clearPendingClockIn(PendingClockIn value) async {}
+  @override
+  Future<FlexibleAttendance?> findPendingAttendance(
+    PendingClockIn value,
+  ) async => null;
   @override
   Future<void> savePendingClockIn(PendingClockIn value) async {}
   @override
@@ -76,6 +82,7 @@ class PreviewFixedShiftRepository implements FixedShiftRepository {
   Future<WorkPattern> replaceWorkPattern(
     String workspaceId,
     String membershipId, {
+    required String shiftTemplateId,
     required List<int> expectedWeekdays,
     required String effectiveFrom,
   }) async => _unsupported();
@@ -84,6 +91,8 @@ class PreviewFixedShiftRepository implements FixedShiftRepository {
     required String workspaceId,
     required String shiftTemplateId,
     required String clientAttendanceId,
+    String? assignmentId,
+    String? extraAuthorizationId,
   }) async => _unsupported();
   @override
   Future<FlexibleAttendance> flexibleClockOut(String attendanceId) async =>

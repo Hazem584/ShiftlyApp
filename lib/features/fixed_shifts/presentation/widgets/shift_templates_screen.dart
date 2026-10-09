@@ -110,7 +110,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context, ManagerTemplatesState state) {
-    if (state.loading) return const Center(child: CircularProgressIndicator());
+    if (state.loading) { return const Center(child: CircularProgressIndicator()); }
     if (state.templates.isEmpty) {
       return RefreshIndicator(
         onRefresh: () =>
@@ -197,7 +197,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
   }
 
   Future<void> _archive(BuildContext context, ShiftTemplate template) async {
-    if (!template.active) return;
+    if (!template.active) { return; }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -218,7 +218,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
         ],
       ),
     );
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed != true || !context.mounted) { return; }
     final result = await context.read<ManagerTemplatesCubit>().archive(
       template.id,
     );

@@ -11,6 +11,11 @@ class AttendanceRecordApi extends Equatable {
     required this.minutesLate,
     required this.createdAt,
     required this.updatedAt,
+    this.occurrenceKind,
+    this.assignmentId,
+    this.extraAuthorizationId,
+    this.enteredByMembershipId,
+    this.clientAttendanceId,
     this.source = AttendanceSource.legacyShift,
     this.shift,
     required this.employee,
@@ -30,6 +35,11 @@ class AttendanceRecordApi extends Equatable {
     this.clockInClassification,
   });
 
+  final String? occurrenceKind,
+      assignmentId,
+      extraAuthorizationId,
+      enteredByMembershipId,
+      clientAttendanceId;
   final String id;
   final String workspaceId;
   final String? shiftId;
@@ -57,7 +67,8 @@ class AttendanceRecordApi extends Equatable {
   final AttendanceShiftSummary? shift;
   final ShiftEmployeeSummary employee;
 
-  bool get isOpen => clockOutAt == null;
+  bool get isOpen =>
+      clockOutAt == null && reviewStatus != AttendanceReviewStatus.rejected;
   bool get canReview =>
       reviewStatus == AttendanceReviewStatus.pending &&
       source != AttendanceSource.unknown;
@@ -65,6 +76,17 @@ class AttendanceRecordApi extends Equatable {
   factory AttendanceRecordApi.fromJson(
     Map<String, Object?> json,
   ) => AttendanceRecordApi(
+    occurrenceKind: ApiModelParser.optionalString(json['occurrenceKind']),
+    assignmentId: ApiModelParser.optionalString(json['assignmentId']),
+    extraAuthorizationId: ApiModelParser.optionalString(
+      json['extraAuthorizationId'],
+    ),
+    enteredByMembershipId: ApiModelParser.optionalString(
+      json['enteredByMembershipId'],
+    ),
+    clientAttendanceId: ApiModelParser.optionalString(
+      json['clientAttendanceId'],
+    ),
     id: ApiModelParser.string(json, 'id'),
     workspaceId: ApiModelParser.string(json, 'workspaceId'),
     shiftId: ApiModelParser.optionalString(json['shiftId']),
@@ -107,6 +129,11 @@ class AttendanceRecordApi extends Equatable {
 
   @override
   List<Object?> get props => [
+    occurrenceKind,
+    assignmentId,
+    extraAuthorizationId,
+    enteredByMembershipId,
+    clientAttendanceId,
     id,
     workspaceId,
     shiftId,
