@@ -11,24 +11,39 @@ class DashboardHeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
+    padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
       gradient: const LinearGradient(
-        colors: [AppColors.ink, AppColors.orange, AppColors.teal],
-        stops: [0, .55, 1],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [AppColors.ink, AppColors.inkMuted, AppColors.orange],
+        stops: [0, .62, 1],
       ),
       borderRadius: BorderRadius.circular(AppRadii.xl),
+      boxShadow: AppShadows.soft,
     ),
     child: Stack(
       children: [
         Positioned(
-          right: -32,
-          top: -45,
+          right: -28,
+          top: -40,
           child: Container(
-            width: 125,
-            height: 125,
+            width: 140,
+            height: 140,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: .10),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        Positioned(
+          right: 28,
+          bottom: -36,
+          child: Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              color: AppColors.teal.withValues(alpha: .18),
               shape: BoxShape.circle,
             ),
           ),
@@ -37,19 +52,20 @@ class DashboardHeroSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Good morning, Manager! 👋',
+              'Good morning, Manager!',
               style: Theme.of(context).textTheme.titleLarge
-                  ?.copyWith(color: Colors.white, fontSize: 20),
+                  ?.copyWith(color: Colors.white, fontSize: 22),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               "Here's what's happening with your team today.",
               style: TextStyle(
-                color: Colors.white.withValues(alpha: .85),
-                fontSize: 12,
+                color: Colors.white.withValues(alpha: .88),
+                fontSize: 13,
+                height: 1.4,
               ),
             ),
-            const SizedBox(height: 17),
+            const SizedBox(height: 18),
             Wrap(
               spacing: 8,
               runSpacing: 8,

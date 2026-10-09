@@ -32,8 +32,9 @@ class EmployeesScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
               child: ScreenHeader(
+                icon: Icons.groups_rounded,
                 title: 'Employee Management',
-                subtitle: 'Manage your team and their information',
+                subtitle: 'Search, invite, and manage your team in one place',
                 action: FilledButton.icon(
                   onPressed: () => _openAddEmployee(context),
                   icon: const Icon(Icons.add_rounded, size: 18),
@@ -104,6 +105,13 @@ class EmployeesScreen extends StatelessWidget {
                 message: state.query.isEmpty
                     ? 'Invite your first team member to get started.'
                     : 'Try another name or clear your search.',
+                action: state.query.isEmpty
+                    ? FilledButton.icon(
+                        onPressed: () => _openAddEmployee(context),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Invite employee'),
+                      )
+                    : null,
               )
             : EmployeeList(
                 employees: state.employees,

@@ -6,6 +6,7 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/auth_brand_header.dart';
 
 part 'parts/login_screen/private_login_screen_state.dart';
 

@@ -39,18 +39,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Icons.schedule_rounded, size: 52),
-                        const SizedBox(height: AppSpacing.m),
-                        Text(
-                          'Welcome to Shiftly',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Sign in to continue to your workspace',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.textSecondary),
+                        const AuthBrandHeader(
+                          title: 'Welcome to Shiftly',
+                          subtitle: 'Sign in to continue to your workspace. Use the email your manager invited.',
                         ),
                         if (state.status == SessionStatus.unauthenticated &&
                             state.failure != null) ...[
@@ -72,6 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           autofillHints: const [AutofillHints.email],
                           decoration: const InputDecoration(
                             labelText: 'Email',
+                            hintText: 'you@company.com',
                             prefixIcon: Icon(Icons.email_outlined),
                           ),
                           validator: (value) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/ease_hint.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
@@ -49,6 +50,7 @@ class DashboardScreen extends StatelessWidget {
     color: AppColors.ink,
     child: ListView(
       key: const Key('dashboard-content'),
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 30),
       children: [
         DashboardTopBar(
@@ -66,6 +68,11 @@ class DashboardScreen extends StatelessWidget {
         ],
         const SizedBox(height: AppSpacing.m),
         DashboardHeroSection(data: data),
+        const SizedBox(height: AppSpacing.m),
+        const EaseHint(
+          icon: Icons.touch_app_outlined,
+          message: 'Tap a card or Quick action to jump to employees, shifts, or leave reviews.',
+        ),
         const SizedBox(height: AppSpacing.m),
         DashboardMetricsGrid(data: data),
         const SizedBox(height: AppSpacing.l),

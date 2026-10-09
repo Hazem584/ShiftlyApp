@@ -4,6 +4,7 @@ import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 
 part 'parts/attendance_metrics_section/private_attendance_metric.dart';
 
@@ -54,41 +55,65 @@ class AttendanceMetricsSection extends StatelessWidget {
         },
       ),
       const SizedBox(height: AppSpacing.m),
-      const SizedBox(
-        height: 104,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _AttendanceMetric(
-                label: 'Attendance Rate',
-                value: '94.2%',
-                icon: Icons.trending_up_rounded,
-                color: AppColors.success,
+      BlocBuilder<ManagerAttendanceCubit, ManagerAttendanceState>(
+        builder: (context, state) => LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 640
+                ? 3
+                : MediaQuery.textScalerOf(context).scale(14) > 21
+                ? 1
+                : 2;
+            final width = (constraints.maxWidth - 10 * (columns - 1)) / columns;
+            final unavailable =
+                state.initialLoading ||
+                (state.failure != null && state.records.isEmpty);
+            final metrics = [
+              (
+                'Attendance records',
+                state.records.length,
+                Icons.fact_check_outlined,
+                AppColors.ink,
               ),
-              SizedBox(width: 10),
-              _AttendanceMetric(
-                label: 'Hours Worked',
-                value: '168h',
-                icon: Icons.schedule_rounded,
-                color: AppColors.ink,
+              (
+                'Open attendance',
+                state.records.where((record) => record.isOpen).length,
+                Icons.login_rounded,
+                AppColors.teal,
               ),
-              SizedBox(width: 10),
-              _AttendanceMetric(
-                label: 'Avg Hours/Day',
-                value: '8.4h',
-                icon: Icons.calendar_month_outlined,
-                color: AppColors.orange,
+              (
+                'Needs review',
+                state.records.where((record) => record.canReview).length,
+                Icons.approval_outlined,
+                AppColors.orange,
               ),
-              SizedBox(width: 10),
-              _AttendanceMetric(
-                label: 'Leave Requests',
-                value: '1',
-                icon: Icons.error_outline_rounded,
-                color: AppColors.warning,
-              ),
-            ],
-          ),
+            ];
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final metric in metrics)
+                      SizedBox(
+                        width: width,
+                        child: _AttendanceMetric(
+                          label: metric.$1,
+                          value: unavailable ? '—' : '${metric.$2}',
+                          icon: metric.$3,
+                          color: metric.$4,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Based on the attendance records shown below.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            );
+          },
         ),
       ),
     ],

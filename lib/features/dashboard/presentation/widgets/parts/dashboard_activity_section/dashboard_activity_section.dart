@@ -17,11 +17,27 @@ class DashboardActivitySection extends StatelessWidget {
       Text("Today's shifts", style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: AppSpacing.s),
       SurfaceCard(
-        padding: shifts.isEmpty ? const EdgeInsets.all(16) : EdgeInsets.zero,
+        padding: shifts.isEmpty ? const EdgeInsets.all(20) : EdgeInsets.zero,
         child: shifts.isEmpty
-            ? const Text(
-                'No shifts are scheduled for this workspace day.',
-                style: TextStyle(color: AppColors.textSecondary),
+            ? Column(
+                children: [
+                  const Icon(
+                    Icons.event_available_outlined,
+                    color: AppColors.orange,
+                    size: 28,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'No shifts are scheduled for this workspace day.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => context.push(AppRoutes.managerShifts),
+                    child: const Text('Create a shift'),
+                  ),
+                ],
               )
             : Column(
                 children: [

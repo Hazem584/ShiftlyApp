@@ -81,6 +81,21 @@ class _RemoteImageState extends State<_RemoteImage> {
                   url: url,
                   file: file,
                   heroTag: heroTag,
+                  saveImage: session == null
+                      ? null
+                      : () => ChatImageGallery().save(
+                          message: widget.message,
+                          repository: widget.repository,
+                          session: session,
+                          cache: cache,
+                          hasAccess: () =>
+                              mounted &&
+                              groups.scope == session &&
+                              !context
+                                  .read<ChatConversationCubit>()
+                                  .state
+                                  .accessLost,
+                        ),
                   cache: cache,
                   scope: session == null
                       ? null

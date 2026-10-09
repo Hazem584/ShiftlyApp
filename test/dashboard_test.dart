@@ -199,7 +199,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Hello, Ahmed Mohamed'), findsOneWidget);
     expect(find.textContaining('Africa/Cairo'), findsOneWidget);
+    expect(find.byKey(const Key('employee-quick-shifts')), findsOneWidget);
+    expect(find.byKey(const Key('employee-quick-leave')), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Fixed shifts'),
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('employee-dashboard-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.text('Fixed shifts'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Pending leave'),
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('employee-dashboard-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.text('Pending leave'), findsOneWidget);
     expect(find.text('Total employees'), findsNothing);
   });
@@ -231,6 +253,16 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Recorded'),
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('employee-dashboard-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.text('Recorded'), findsOneWidget);
     expect(find.text('Clocked in'), findsNothing);
   });

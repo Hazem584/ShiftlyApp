@@ -22,8 +22,12 @@ class _CreateChatGroupDialogState extends State<_CreateChatGroupDialog> {
         buildWhen: (before, after) => before.mutating != after.mutating,
         builder: (context, groupState) {
           final submitting = groupState.mutating;
-          return AlertDialog(
-            title: const Text('Create chat group'),
+          return AppFormDialog(
+            title: 'Create chat group',
+            subtitle:
+                'Give your team a space to plan shifts and stay in touch.',
+            icon: Icons.group_add_outlined,
+            busy: submitting,
             content: SizedBox(
               width: 440,
               child: SingleChildScrollView(
@@ -35,7 +39,11 @@ class _CreateChatGroupDialogState extends State<_CreateChatGroupDialog> {
                       controller: _name,
                       maxLength: 80,
                       enabled: !submitting,
-                      decoration: const InputDecoration(labelText: 'Name'),
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'Group name',
+                        hintText: 'e.g. Evening team',
+                      ),
                     ),
                     TextField(
                       key: const Key('create-group-description'),
@@ -43,7 +51,9 @@ class _CreateChatGroupDialogState extends State<_CreateChatGroupDialog> {
                       maxLength: 500,
                       enabled: !submitting,
                       decoration: const InputDecoration(
-                        labelText: 'Description (optional)',
+                        labelText: 'Description',
+                        hintText: 'What is this group for?',
+                        helperText: 'Optional',
                       ),
                     ),
                     const Align(
@@ -60,10 +70,15 @@ class _CreateChatGroupDialogState extends State<_CreateChatGroupDialog> {
                     for (final employee in widget.employees)
                       CheckboxListTile(
                         key: Key('create-group-member-${employee.id}'),
-                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
                         value: _selected.contains(employee.id),
                         title: Text(employee.displayName),
-                        subtitle: Text(employee.displayEmail),
+                        subtitle: Text(
+                          employee.displayEmail,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         onChanged: submitting
                             ? null
                             : (value) => setState(

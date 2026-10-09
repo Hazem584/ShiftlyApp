@@ -336,6 +336,78 @@ class _WorkPatternRaceRepository extends _FakeRepository {
 }
 
 void main() {
+  test('completed extra history without attendance relation permits another authorization', () async {
+    final completed = _extraJson({
+      ..._extraPayload(),
+      'clientAuthorizationId': '11111111-1111-4111-8111-111111111111',
+    }, status: 'CONSUMED')..remove('attendance');
+    completed['operationalDate'] = '2026-10-06T00:00:00.000Z';
+    final client = await _client(
+      (options) => options.method == 'GET'
+          ? _json(_page(completed))
+          : _json(_extraJson(Map<String, Object?>.from(options.data as Map))),
+    );
+    final cubit = ExtraShiftsCubit(client.repository)
+      ..bind(_managerScope, 'membership-id');
+    addTearDown(cubit.close);
+    await cubit.load();
+    expect(cubit.state.failure, isNull);
+    expect(cubit.state.recoveryBlocked, isFalse);
+    expect(cubit.state.page!.data.single.status, 'CONSUMED');
+    expect(cubit.state.page!.data.single.operationalDate, '2026-10-06');
+    expect(
+      await cubit.create({
+        ..._extraPayload(),
+        'operationalDate': '2026-10-07',
+      }, actual: false),
+      isTrue,
+    );
+    expect(cubit.state.failure, isNull);
+    expect(cubit.state.intent, isNull);
+    expect(cubit.state.recoveryBlocked, isFalse);
+    expect(
+      client.adapter.requests.where((r) => r.method == 'POST'),
+      hasLength(1),
+    );
+  });
+
+  test(
+    'actual extra creation still requires linked attendance evidence',
+    () async {
+      final client = await _client(
+        (options) => options.method == 'GET'
+            ? _json({
+                'data': [],
+                'pagination': {
+                  'page': 1,
+                  'limit': 20,
+                  'total': 0,
+                  'totalPages': 0,
+                },
+              })
+            : _json(
+                _extraJson(
+                  Map<String, Object?>.from(options.data as Map),
+                  status: 'CONSUMED',
+                )..remove('attendance'),
+              ),
+      );
+      final cubit = ExtraShiftsCubit(client.repository)
+        ..bind(_managerScope, 'membership-id');
+      addTearDown(cubit.close);
+      await cubit.load();
+      expect(
+        await cubit.create({
+          ..._extraPayload(),
+          'actualClockInAt': '2026-10-06T19:00:00Z',
+          'actualClockOutAt': '2026-10-06T23:00:00Z',
+        }, actual: true),
+        isFalse,
+      );
+      expect(cubit.state.recoveryBlocked, isTrue);
+      expect(cubit.state.intent, isNotNull);
+    },
+  );
   assignedSprintTests();
   correctiveSprintTests();
   test('manager template repository uses exact paths, query, payload, and archive verb', () async {
@@ -1997,7 +2069,7 @@ void assignedSprintTests() {
       };
       final client = await _client((options) {
         if (options.method == 'GET') {
-          return _json(_page(_extraJson(payload)));
+          return _json(_page(_extraJson(payload)..remove('attendance')));
         }
         return _json(
           _extraJson(

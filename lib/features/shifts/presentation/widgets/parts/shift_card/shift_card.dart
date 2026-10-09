@@ -22,12 +22,16 @@ class ShiftCard extends StatelessWidget {
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.field,
+            color: AppColors.orangeSoft,
             borderRadius: BorderRadius.circular(AppRadii.m),
           ),
           child: const Padding(
             padding: EdgeInsets.all(10),
-            child: Icon(Icons.schedule_rounded, size: 22),
+            child: Icon(
+              Icons.schedule_rounded,
+              size: 22,
+              color: AppColors.orange,
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.s),

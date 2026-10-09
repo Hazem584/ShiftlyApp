@@ -1,5 +1,5 @@
-import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/widgets/app_form_dialog.dart';
 
 abstract final class ShiftlyChatDialog {
   static Future<bool> confirm(
@@ -13,8 +13,11 @@ abstract final class ShiftlyChatDialog {
           context: context,
           useRootNavigator: false,
           barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            title: Text(title),
+          builder: (dialogContext) => AppFormDialog(
+            title: title,
+            icon: destructive
+                ? Icons.warning_amber_rounded
+                : Icons.chat_outlined,
             content: Text(message),
             actions: [
               TextButton(
@@ -36,22 +39,11 @@ abstract final class ShiftlyChatDialog {
         false;
   }
 
-  static Future<T?> showBody<T>(
-    BuildContext context, {
-    required Widget body,
-    DialogType type = DialogType.noHeader,
-  }) async =>
-      (await AwesomeDialog(
-            context: context,
-            useRootNavigator: false,
-            keyboardAware: true,
-            dismissOnTouchOutside: false,
-            dismissOnBackKeyPress: false,
-            dialogType: type,
-            animType: AnimType.scale,
-            body: body,
-            dialogBackgroundColor: Theme.of(context).colorScheme.surface,
-            width: 520,
-          ).show())
-          as T?;
+  static Future<T?> showBody<T>(BuildContext context, {required Widget body}) =>
+      showDialog<T>(
+        context: context,
+        useRootNavigator: false,
+        barrierDismissible: false,
+        builder: (_) => body,
+      );
 }

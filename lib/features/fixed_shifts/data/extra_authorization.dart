@@ -31,10 +31,17 @@ class ExtraAuthorization {
     ]) {
       ApiModelParser.optionalDate(fields[key]);
     }
-    ApiModelParser.list(fields['attendance'], 'attendance');
+    // List and revoke responses contain the authorization only. Creation of
+    // actual attendance still requires linked evidence in ExtraShiftsCubit.
+    if (fields.containsKey('attendance')) {
+      ApiModelParser.list(fields['attendance'], 'attendance');
+    }
   }
   final Map<String, Object?> fields;
   final SavedSchedule schedule;
+  List<Object?> get attendance => fields.containsKey('attendance')
+      ? ApiModelParser.list(fields['attendance'], 'attendance')
+      : const [];
   String get id => fields['id'] as String;
   String get status =>
       ApiModelParser.optionalString(fields['status']) ?? 'UNKNOWN';

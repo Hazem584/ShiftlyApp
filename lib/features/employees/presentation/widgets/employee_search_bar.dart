@@ -25,7 +25,7 @@ class EmployeeSearchBar extends StatelessWidget {
             textInputAction: TextInputAction.search,
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.search_rounded, size: 20),
-              hintText: 'Search employees…',
+              hintText: 'Search by name or email',
             ),
           ),
         ),

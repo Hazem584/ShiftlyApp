@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/theme/app_colors.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -16,7 +17,6 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -25,12 +25,12 @@ class EmptyState extends StatelessWidget {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                color: colors.primaryContainer,
+                color: AppColors.orangeSoft,
                 shape: BoxShape.circle,
               ),
               child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Icon(icon, size: 36, color: colors.primary),
+                padding: const EdgeInsets.all(20),
+                child: Icon(icon, size: 36, color: AppColors.orange),
               ),
             ),
             const SizedBox(height: 18),
@@ -42,7 +42,10 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               message,
-              style: TextStyle(color: colors.onSurfaceVariant),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                height: 1.45,
+              ),
               textAlign: TextAlign.center,
             ),
             if (action != null) ...[const SizedBox(height: 20), action!],

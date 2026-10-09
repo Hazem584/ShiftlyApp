@@ -116,8 +116,11 @@ class _MembersSheet extends StatelessWidget {
     await ShiftlyChatDialog.showBody<void>(
       context,
       body: StatefulBuilder(
-        builder: (dialogContext, setState) => AlertDialog(
-          title: const Text('Add members'),
+        builder: (dialogContext, setState) => AppFormDialog(
+          title: 'Add members',
+          subtitle: 'Choose the people you want to include.',
+          icon: Icons.person_add_alt_1_outlined,
+          busy: submitting,
           content: SizedBox(
             width: 420,
             child: Column(

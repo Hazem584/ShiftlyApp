@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/features/shell/presentation/widgets/workspace_navigation_rail.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/attendance/presentation/screens/employee_attendance_screen.dart';
@@ -13,9 +14,14 @@ import 'package:shiftly/features/points/presentation/screens/my_performance_scre
 part 'parts/employee_shell_screen/private_employee_shell_screen_state.dart';
 
 class EmployeeShellScreen extends StatefulWidget {
-  const EmployeeShellScreen({this.initialTab = 0, super.key});
+  const EmployeeShellScreen({
+    this.initialTab = 0,
+    this.initialAttendanceTab = 0,
+    super.key,
+  });
 
   final int initialTab;
+  final int initialAttendanceTab;
 
   @override
   State<EmployeeShellScreen> createState() => _EmployeeShellScreenState();

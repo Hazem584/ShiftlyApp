@@ -1,6 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
+import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
+import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/app.dart';
@@ -85,6 +89,7 @@ Future<_RoutingAuth> _pumpRole(WidgetTester tester, WorkspaceRole role) async {
   await tester.pumpWidget(
     ShiftlyApp.preview(
       sessionCoordinator: coordinator,
+      chatRepository: _RoutingChat(),
       notificationRepository: MockNotificationRepository(),
       dashboardRepository: MockDashboardRepository(
         employeeRepository: MockEmployeeRepository(delay: Duration.zero),
@@ -134,6 +139,38 @@ Future<(_RoutingAuth, _AcceptingInvitations)> _pumpNoWorkspace(
 }
 
 void main() {
+  testWidgets(
+    'manager conversation covers navigation and returns to chat list',
+    (tester) async {
+      await _pumpRole(tester, WorkspaceRole.manager);
+      await tester.tap(find.text('Chat').last);
+      await tester.pumpAndSettle();
+      final context = tester.element(
+        find.byKey(const Key('manager-bottom-navigation')),
+      );
+      final groups = context.read<ChatGroupsCubit>().state.groups;
+      expect(groups, isNotEmpty);
+      GoRouter.of(context).push('/chat/${groups.first.id}');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
+      expect(find.byKey(const Key('manager-navigation-rail')), findsNothing);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('manager-bottom-navigation')),
+        findsOneWidget,
+      );
+      expect(find.text(groups.first.name), findsOneWidget);
+    },
+  );
+  testWidgets('employee leave shortcut opens leave directly', (tester) async {
+    await _pumpRole(tester, WorkspaceRole.employee);
+    await tester.tap(find.byKey(const Key('employee-quick-leave')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('request-leave')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('backend manager role opens the manager shell', (tester) async {
     await _pumpRole(tester, WorkspaceRole.manager);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsOneWidget);
@@ -225,6 +262,25 @@ void main() {
       ToastService.dismissAll();
     },
   );
+}
+
+class _RoutingChat extends MockChatRepository {
+  ChatGroup _group(String workspaceId) => ChatGroup(
+    id: '33333333-3333-4333-8333-333333333333',
+    workspaceId: workspaceId,
+    name: 'Operations team',
+    memberCount: 2,
+    unreadCount: 0,
+    createdAt: DateTime.utc(2026),
+    updatedAt: DateTime.utc(2026),
+  );
+  @override
+  Future<List<ChatGroup>> listGroups(String workspaceId) async => [
+    _group(workspaceId),
+  ];
+  @override
+  Future<ChatGroup> getGroup(String workspaceId, String groupId) async =>
+      _group(workspaceId);
 }
 
 class _AcceptingInvitations implements InvitationRepository {

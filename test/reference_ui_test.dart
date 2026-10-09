@@ -28,7 +28,8 @@ void main() {
     await tester.tap(find.text('Attendance').last);
     await tester.pumpAndSettle();
     expect(find.text('Attendance & Leave'), findsOneWidget);
-    expect(find.text('Attendance Rate'), findsOneWidget);
+    expect(find.text('Attendance records'), findsOneWidget);
+    expect(find.text('94.2%'), findsNothing);
     expect(find.text('Recent Attendance'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('attendance-tab-requests')));

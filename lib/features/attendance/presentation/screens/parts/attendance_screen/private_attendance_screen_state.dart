@@ -40,8 +40,10 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
             children: [
               const ScreenHeader(
+                icon: Icons.fact_check_rounded,
                 title: 'Attendance & Leave',
-                subtitle: 'Track attendance and manage leave requests',
+                subtitle:
+                    'Check who is in, review leave, and open the calendar',
               ),
               const SizedBox(height: AppSpacing.m),
               const AttendanceMetricsSection(),

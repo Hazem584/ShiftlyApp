@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, TargetPlatform, defaultTargetPlatform;
+import 'package:flutter/services.dart';
+import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
+import 'package:shiftly/core/widgets/app_form_dialog.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';

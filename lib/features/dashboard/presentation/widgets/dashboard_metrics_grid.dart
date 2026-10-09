@@ -11,7 +11,14 @@ class DashboardMetricsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final width = (constraints.maxWidth - AppSpacing.s) / 2;
+      final largeText = MediaQuery.textScalerOf(context).scale(14) > 21;
+      final columns = largeText || constraints.maxWidth < 300
+          ? 1
+          : constraints.maxWidth >= 800
+          ? 4
+          : 2;
+      final width =
+          (constraints.maxWidth - AppSpacing.s * (columns - 1)) / columns;
       return Wrap(
         spacing: AppSpacing.s,
         runSpacing: AppSpacing.s,

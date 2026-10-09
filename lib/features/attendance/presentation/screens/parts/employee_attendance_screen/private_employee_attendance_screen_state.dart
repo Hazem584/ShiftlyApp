@@ -1,7 +1,19 @@
 part of '../../employee_attendance_screen.dart';
 
 class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
-  var _tab = 0;
+  late int _tab;
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = widget.initialTab;
+  }
+
+  @override
+  void didUpdateWidget(covariant EmployeeAttendanceScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTab != widget.initialTab) _tab = widget.initialTab;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,22 +38,10 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                   subtitle: 'Your workspace attendance and leave requests',
                 ),
                 const SizedBox(height: AppSpacing.m),
-                SegmentedButton<int>(
-                  segments: const [
-                    ButtonSegment(
-                      value: 0,
-                      icon: Icon(Icons.history_rounded),
-                      label: Text('Attendance'),
-                    ),
-                    ButtonSegment(
-                      value: 1,
-                      icon: Icon(Icons.event_note_outlined),
-                      label: Text('Leave'),
-                    ),
-                  ],
-                  selected: {_tab},
-                  onSelectionChanged: (selected) =>
-                      setState(() => _tab = selected.first),
+                AppTabSelector(
+                  labels: const ['Attendance', 'Leave'],
+                  selectedIndex: _tab,
+                  onSelected: (selected) => setState(() => _tab = selected),
                 ),
               ],
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 
 class PerformanceThumbnail extends StatelessWidget {
@@ -35,12 +36,11 @@ class PerformanceThumbnail extends StatelessWidget {
             child: InkWell(
               onTap: () => context.go('/employee?tab=performance'),
               child: Ink(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primaryContainer,
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.ink, AppColors.inkMuted],
                   ),
                 ),
                 padding: const EdgeInsets.all(18),
@@ -49,10 +49,16 @@ class PerformanceThumbnail extends StatelessWidget {
                         children: [
                           SizedBox.square(
                             dimension: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           ),
                           SizedBox(width: 12),
-                          Text('Loading My Performance…'),
+                          Text(
+                            'Loading My Performance…',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ],
                       )
                     : Column(
@@ -60,17 +66,22 @@ class PerformanceThumbnail extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.auto_graph_rounded),
+                              const Icon(
+                                Icons.auto_graph_rounded,
+                                color: Colors.white,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'My Performance',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(color: Colors.white),
                                 ),
                               ),
-                              const Icon(Icons.arrow_forward_rounded),
+                              const Icon(
+                                Icons.arrow_forward_rounded,
+                                color: Colors.white,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 14),
@@ -116,7 +127,15 @@ Widget _metric(BuildContext context, String value, String label) => Column(
   crossAxisAlignment: CrossAxisAlignment.start,
   mainAxisSize: MainAxisSize.min,
   children: [
-    Text(value, style: Theme.of(context).textTheme.titleLarge),
-    Text(label, style: Theme.of(context).textTheme.bodySmall),
+    Text(
+      value,
+      style: Theme.of(context).textTheme.titleLarge
+          ?.copyWith(color: Colors.white),
+    ),
+    Text(
+      label,
+      style: Theme.of(context).textTheme.bodySmall
+          ?.copyWith(color: Colors.white70),
+    ),
   ],
 );

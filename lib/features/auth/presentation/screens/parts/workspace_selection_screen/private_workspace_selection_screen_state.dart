@@ -115,6 +115,11 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
                   key: const Key('no-workspace-onboarding'),
                   padding: const EdgeInsets.all(AppSpacing.m),
                   children: [
+                    const EaseHint(
+                      icon: Icons.apartment_outlined,
+                      message: 'Create a workspace for your team, or accept an invitation sent by a manager.',
+                    ),
+                    const SizedBox(height: AppSpacing.m),
                     const Text(
                       'Create a workspace for your team, or accept an invitation sent by a manager.',
                       textAlign: TextAlign.center,

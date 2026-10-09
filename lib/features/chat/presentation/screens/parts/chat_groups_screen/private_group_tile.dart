@@ -16,9 +16,11 @@ class _GroupTile extends StatelessWidget {
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(
         horizontal: narrow ? 10 : 16,
-        vertical: 6,
+        vertical: 8,
       ),
       leading: CircleAvatar(
+        backgroundColor: AppColors.orangeSoft,
+        foregroundColor: AppColors.orange,
         child: Text(group.name.characters.first.toUpperCase()),
       ),
       title: Row(
@@ -28,6 +30,7 @@ class _GroupTile extends StatelessWidget {
               group.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
           if (group.isArchived)

@@ -42,18 +42,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Icons.schedule_rounded, size: 52),
-                        const SizedBox(height: AppSpacing.m),
-                        Text(
-                          'Create your Shiftly account',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Use the exact email address your manager invited.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.textSecondary),
+                        const AuthBrandHeader(
+                          title: 'Create your Shiftly account',
+                          subtitle: 'Use the exact email address your manager invited.',
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         TextFormField(

@@ -30,8 +30,11 @@ class _EditChatGroupDialogState extends State<_EditChatGroupDialog> {
         buildWhen: (before, after) => before.mutating != after.mutating,
         builder: (context, groupState) {
           final submitting = groupState.mutating;
-          return AlertDialog(
-            title: const Text('Edit group'),
+          return AppFormDialog(
+            title: 'Edit group',
+            subtitle: 'Update the name and description your team sees.',
+            icon: Icons.edit_outlined,
+            busy: submitting,
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

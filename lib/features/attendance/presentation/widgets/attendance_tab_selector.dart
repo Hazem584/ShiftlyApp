@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/widgets/app_tab_selector.dart';
 
 class AttendanceTabSelector extends StatelessWidget {
   const AttendanceTabSelector({
@@ -11,35 +11,14 @@ class AttendanceTabSelector extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   @override
-  Widget build(BuildContext context) => SegmentedButton<int>(
-    showSelectedIcon: false,
-    segments: const [
-      ButtonSegment(
-        value: 0,
-        label: Text('Attendance', key: Key('attendance-tab-records')),
-      ),
-      ButtonSegment(
-        value: 1,
-        label: Text('Leave Requests', key: Key('attendance-tab-requests')),
-      ),
-      ButtonSegment(
-        value: 2,
-        label: Text('Calendar', key: Key('attendance-tab-calendar')),
-      ),
+  Widget build(BuildContext context) => AppTabSelector(
+    labels: const ['Attendance', 'Leave Requests', 'Calendar'],
+    labelKeys: const [
+      Key('attendance-tab-records'),
+      Key('attendance-tab-requests'),
+      Key('attendance-tab-calendar'),
     ],
-    selected: {selectedTab},
-    onSelectionChanged: (value) => onSelected(value.first),
-    style: ButtonStyle(
-      visualDensity: VisualDensity.compact,
-      backgroundColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected)
-            ? AppColors.surface
-            : AppColors.field,
-      ),
-      foregroundColor: const WidgetStatePropertyAll(AppColors.ink),
-      side: const WidgetStatePropertyAll(
-        BorderSide(color: AppColors.borderColor),
-      ),
-    ),
+    selectedIndex: selectedTab,
+    onSelected: onSelected,
   );
 }

@@ -29,7 +29,7 @@ class ProfileHeader extends StatelessWidget {
         const SizedBox(height: 12),
         DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.successSoft,
+            color: AppColors.tealSoft,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
@@ -37,8 +37,8 @@ class ProfileHeader extends StatelessWidget {
             child: Text(
               profile.workplace,
               style: const TextStyle(
-                color: AppColors.success,
-                fontWeight: FontWeight.w700,
+                color: AppColors.teal,
+                fontWeight: FontWeight.w800,
                 fontSize: 12,
               ),
             ),

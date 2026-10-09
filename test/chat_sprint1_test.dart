@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
@@ -1262,6 +1263,48 @@ void main() {
   });
 
   group('chat group editor widgets', () {
+    testWidgets(
+      'create form has one surface and fits compact screens with the keyboard',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(320, 700));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final cubit = ChatGroupsCubit(_FakeChatRepository())
+          ..bindSession(_scope);
+        addTearDown(cubit.close);
+        await tester.pumpWidget(
+          RepositoryProvider<EmployeeRepository>.value(
+            value: _FakeEmployeeRepository([_employee()]),
+            child: BlocProvider.value(
+              value: cubit,
+              child: MaterialApp(
+                theme: AppTheme.lightTheme(),
+                builder: (context, child) => MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    textScaler: const TextScaler.linear(1.4),
+                    viewInsets: const EdgeInsets.only(bottom: 260),
+                  ),
+                  child: child!,
+                ),
+                home: const ChatGroupsScreen(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('create-chat-group')));
+        await tester.pumpAndSettle();
+        expect(find.byType(Dialog), findsOneWidget);
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(
+          tester.getSize(find.byKey(const Key('create-group-name'))).width,
+          greaterThan(200),
+        );
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.byKey(const Key('create-group-cancel')));
+        await tester.pumpAndSettle();
+        expect(find.text('Create chat group'), findsNothing);
+      },
+    );
     testWidgets('uses exact limits and manager-only create control', (
       tester,
     ) async {

@@ -43,6 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
                     children: [
                       ScreenHeader(
+                        icon: Icons.person_rounded,
                         title: 'Manager Profile',
                         subtitle: 'Your personal and workplace information',
                         action: FilledButton.icon(

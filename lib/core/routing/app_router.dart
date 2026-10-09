@@ -30,169 +30,178 @@ GoRouter createAppRouter({
   SessionCoordinator? sessionCoordinator,
   OnboardingCubit? onboarding,
   Listenable? refreshListenable,
-}) => GoRouter(
-  initialLocation: sessionCoordinator == null ? '/dashboard' : '/session',
-  refreshListenable: refreshListenable,
-  redirect: sessionCoordinator == null
-      ? null
-      : (context, state) => _redirect(sessionCoordinator, state, onboarding),
-  errorBuilder: (context, state) =>
-      RouteNotFoundScreen(routeName: state.uri.path),
-  routes: [
-    GoRoute(
-      path: '/session',
-      builder: (_, _) => const SessionStatusScreen.loading(),
-    ),
-    GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
-    GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-    GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
-    GoRoute(
-      path: '/verify-email',
-      builder: (_, _) => const EmailVerificationScreen(),
-    ),
-    GoRoute(
-      path: '/profile-setup',
-      builder: (_, _) => const ProfileSetupScreen(),
-    ),
-    GoRoute(
-      path: '/workspaces',
-      builder: (_, _) => const WorkspaceSelectionScreen(),
-    ),
-    GoRoute(
-      path: '/offline',
-      builder: (_, _) => const SessionStatusScreen.offline(),
-    ),
-    GoRoute(
-      path: '/session-error',
-      builder: (_, _) => const SessionStatusScreen.failure(),
-    ),
-    GoRoute(
-      path: '/employee',
-      builder: (_, state) => EmployeeShellScreen(
-        key: ValueKey(state.uri.queryParameters['tab']),
-        initialTab: switch (state.uri.queryParameters['tab']) {
-          'shifts' => 1,
-          'attendance' || 'leave' => 2,
-          'chat' => 3,
-          'performance' || 'points' => 4,
-          _ => 0,
-        },
+}) {
+  final rootNavigatorKey = GlobalKey<NavigatorState>();
+  return GoRouter(
+    navigatorKey: rootNavigatorKey,
+    initialLocation: sessionCoordinator == null ? '/dashboard' : '/session',
+    refreshListenable: refreshListenable,
+    redirect: sessionCoordinator == null
+        ? null
+        : (context, state) => _redirect(sessionCoordinator, state, onboarding),
+    errorBuilder: (context, state) =>
+        RouteNotFoundScreen(routeName: state.uri.path),
+    routes: [
+      GoRoute(
+        path: '/session',
+        builder: (_, _) => const SessionStatusScreen.loading(),
       ),
-    ),
-    StatefulShellRoute.indexedStack(
-      builder: (context, state, shell) => ShellScreen(navigationShell: shell),
-      branches: [
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/dashboard',
-              builder: (_, _) => const DashboardScreen(),
-              routes: [
-                GoRoute(
-                  path: 'shifts',
-                  builder: (_, _) => ShiftTemplatesScreen(
-                    workspaceName:
-                        sessionCoordinator
-                            ?.state
-                            .activeMembership
-                            ?.workspace
-                            .name ??
-                        'Current workspace',
-                    timezone:
-                        sessionCoordinator
-                            ?.state
-                            .activeMembership
-                            ?.workspace
-                            .timezone ??
-                        'Etc/UTC',
-                  ),
-                ),
-                GoRoute(
-                  path: 'performance',
-                  builder: (_, _) => const ManagerPerformanceScreen(),
-                  routes: [
-                    GoRoute(
-                      path: 'employees/:membershipId',
-                      builder: (_, state) => EmployeePerformanceScreen(
-                        membershipId: state.pathParameters['membershipId']!,
-                      ),
+      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(
+        path: '/verify-email',
+        builder: (_, _) => const EmailVerificationScreen(),
+      ),
+      GoRoute(
+        path: '/profile-setup',
+        builder: (_, _) => const ProfileSetupScreen(),
+      ),
+      GoRoute(
+        path: '/workspaces',
+        builder: (_, _) => const WorkspaceSelectionScreen(),
+      ),
+      GoRoute(
+        path: '/offline',
+        builder: (_, _) => const SessionStatusScreen.offline(),
+      ),
+      GoRoute(
+        path: '/session-error',
+        builder: (_, _) => const SessionStatusScreen.failure(),
+      ),
+      GoRoute(
+        path: '/employee',
+        builder: (_, state) => EmployeeShellScreen(
+          key: ValueKey(state.uri.queryParameters['tab']),
+          initialAttendanceTab: state.uri.queryParameters['tab'] == 'leave'
+              ? 1
+              : 0,
+          initialTab: switch (state.uri.queryParameters['tab']) {
+            'shifts' => 1,
+            'attendance' || 'leave' => 2,
+            'chat' => 3,
+            'performance' || 'points' => 4,
+            _ => 0,
+          },
+        ),
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => ShellScreen(navigationShell: shell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/dashboard',
+                builder: (_, _) => const DashboardScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'shifts',
+                    builder: (_, _) => ShiftTemplatesScreen(
+                      workspaceName:
+                          sessionCoordinator
+                              ?.state
+                              .activeMembership
+                              ?.workspace
+                              .name ??
+                          'Current workspace',
+                      timezone:
+                          sessionCoordinator
+                              ?.state
+                              .activeMembership
+                              ?.workspace
+                              .timezone ??
+                          'Etc/UTC',
                     ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/employees',
-              builder: (_, _) => const EmployeesScreen(),
-              routes: [
-                GoRoute(
-                  path: 'add',
-                  builder: (_, _) => const AddEmployeeScreen(),
-                ),
-                GoRoute(
-                  path: ':id',
-                  builder: (_, state) => EmployeeDetailsScreen(
-                    employeeId: state.pathParameters['id']!,
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/attendance',
-              builder: (_, state) => AttendanceScreen(
-                key: ValueKey(state.uri.queryParameters['tab']),
-                timezone:
-                    sessionCoordinator
-                        ?.state
-                        .activeMembership
-                        ?.workspace
-                        .timezone ??
-                    'Etc/UTC',
-                initialTab: state.uri.queryParameters['tab'] == 'leaveRequests'
-                    ? 1
-                    : state.uri.queryParameters['tab'] == 'calendar'
-                    ? 2
-                    : 0,
+                  GoRoute(
+                    path: 'performance',
+                    builder: (_, _) => const ManagerPerformanceScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'employees/:membershipId',
+                        builder: (_, state) => EmployeePerformanceScreen(
+                          membershipId: state.pathParameters['membershipId']!,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/chat',
-              builder: (_, _) => const ChatGroupsScreen(),
-              routes: [
-                GoRoute(
-                  path: ':groupId',
-                  builder: (_, state) =>
-                      ChatScreen(groupId: state.pathParameters['groupId']!),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/employees',
+                builder: (_, _) => const EmployeesScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (_, _) => const AddEmployeeScreen(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (_, state) => EmployeeDetailsScreen(
+                      employeeId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/attendance',
+                builder: (_, state) => AttendanceScreen(
+                  key: ValueKey(state.uri.queryParameters['tab']),
+                  timezone:
+                      sessionCoordinator
+                          ?.state
+                          .activeMembership
+                          ?.workspace
+                          .timezone ??
+                      'Etc/UTC',
+                  initialTab:
+                      state.uri.queryParameters['tab'] == 'leaveRequests'
+                      ? 1
+                      : state.uri.queryParameters['tab'] == 'calendar'
+                      ? 2
+                      : 0,
                 ),
-              ],
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/profile',
-              builder: (_, _) =>
-                  ProfileScreen(onLogout: sessionCoordinator?.signOut),
-            ),
-          ],
-        ),
-      ],
-    ),
-  ],
-);
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/chat',
+                builder: (_, _) => const ChatGroupsScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':groupId',
+                    parentNavigatorKey: rootNavigatorKey,
+                    builder: (_, state) =>
+                        ChatScreen(groupId: state.pathParameters['groupId']!),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (_, _) =>
+                    ProfileScreen(onLogout: sessionCoordinator?.signOut),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ],
+  );
+}
 
 String? _redirect(
   SessionCoordinator coordinator,

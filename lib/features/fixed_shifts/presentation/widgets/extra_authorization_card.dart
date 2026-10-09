@@ -45,8 +45,7 @@ class ExtraAuthorizationCard extends StatelessWidget {
             Text(
               'Revoked by membership ${value.fields['revokedByMembershipId']}',
             ),
-          for (final record
-              in (value.fields['attendance'] as List).whereType<Map>())
+          for (final record in value.attendance.whereType<Map>())
             Text(
               'Attendance ${record['id']} · ${record['reviewStatus'] ?? 'Status unavailable'}\nEntered by membership ${record['enteredByMembershipId'] ?? 'Not recorded'}',
             ),

@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Shiftly uses your photo library when you choose a profile photo or chat image.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Shiftly saves chat images to your photos only when you tap Save.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Shiftly uses your microphone only when you record a voice message.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

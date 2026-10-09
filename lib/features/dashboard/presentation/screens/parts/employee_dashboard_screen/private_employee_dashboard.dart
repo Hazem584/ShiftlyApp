@@ -31,21 +31,80 @@ class _EmployeeDashboard extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.m),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.ink, AppColors.inkMuted],
+              begin: AlignmentDirectional.topStart,
+              end: AlignmentDirectional.bottomEnd,
+            ),
+            borderRadius: BorderRadius.circular(AppRadii.xl),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.wb_sunny_outlined,
+                color: AppColors.selected,
+                size: 28,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Ready for your workday?',
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(color: Colors.white),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Your shifts, attendance and time off are a tap away.',
+                style: TextStyle(color: Color(0xFFE4DED6), height: 1.5),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  FilledButton.icon(
+                    key: const Key('employee-quick-shifts'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.orange,
+                    ),
+                    onPressed: () => context.go('/employee?tab=shifts'),
+                    icon: const Icon(Icons.fingerprint_rounded),
+                    label: const Text('My Shifts'),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('employee-quick-leave'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFF8E8E9C)),
+                    ),
+                    onPressed: () => context.go('/employee?tab=leave'),
+                    icon: const Icon(Icons.event_note_outlined),
+                    label: const Text('Request leave'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.m),
         const PerformanceThumbnail(),
         const SizedBox(height: AppSpacing.m),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.schedule),
-            title: const Text('Fixed shifts'),
-            subtitle: const Text(
-              'View available templates and clock in or out',
-            ),
-            onTap: () => context.go('/employee?tab=shifts'),
+        SurfaceCard(
+          onTap: () => context.go('/employee?tab=shifts'),
+          child: const ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.schedule, color: AppColors.orange),
+            title: Text('Fixed shifts'),
+            subtitle: Text('View available templates and clock in or out'),
+            trailing: Icon(Icons.chevron_right_rounded),
           ),
         ),
         if (data.todayShift != null)
           _ShiftCard(
-            title: 'Legacy scheduled shift',
+            title: 'Scheduled shift',
             shift: data.todayShift,
             timezone: data.timezone,
             attendance: data.attendance,
@@ -53,7 +112,7 @@ class _EmployeeDashboard extends StatelessWidget {
         const SizedBox(height: AppSpacing.m),
         if (data.nextShift != null)
           _ShiftCard(
-            title: 'Next legacy scheduled shift',
+            title: 'Next scheduled shift',
             shift: data.nextShift,
             timezone: data.timezone,
           ),

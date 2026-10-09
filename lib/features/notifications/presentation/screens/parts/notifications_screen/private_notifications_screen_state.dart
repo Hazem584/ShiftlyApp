@@ -68,7 +68,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const EmptyState(
                   icon: Icons.notifications_none_rounded,
                   title: 'No notifications',
-                  message: 'Workspace updates will appear here.',
+                  message: 'Workspace updates will appear here. Pull down to refresh.',
                 )
               else
                 for (final notification in state.notifications) ...[

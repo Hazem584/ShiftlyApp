@@ -45,8 +45,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Text(
-                            'Tell us how your name and phone should appear in Shiftly.',
+                          const AuthBrandHeader(
+                            title: 'Complete your profile',
+                            subtitle: 'Tell us how your name and phone should appear in Shiftly.',
                           ),
                           const SizedBox(height: AppSpacing.l),
                           TextFormField(

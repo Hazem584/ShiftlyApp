@@ -12,11 +12,11 @@ class _EmployeeCard extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 24,
-          backgroundColor: AppColors.field,
-          foregroundColor: AppColors.ink,
+          backgroundColor: AppColors.orangeSoft,
+          foregroundColor: AppColors.orange,
           child: Text(
             employee.initials,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontWeight: FontWeight.w800),
           ),
         ),
         const SizedBox(width: 12),
@@ -43,7 +43,7 @@ class _EmployeeCard extends StatelessWidget {
               Row(
                 children: [
                   const Icon(
-                    Icons.schedule_outlined,
+                    Icons.mail_outline_rounded,
                     size: 13,
                     color: AppColors.textSecondary,
                   ),
