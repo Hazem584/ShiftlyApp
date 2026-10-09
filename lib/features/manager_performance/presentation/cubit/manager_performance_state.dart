@@ -1,7 +1,6 @@
 import 'package:shiftly/core/session/feature_scope.dart';
-
-import '../../data/manager_mutation_intent.dart';
-import 'manager_resource_state.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_mutation_intent.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
 
 class ManagerPerformanceState {
   const ManagerPerformanceState({

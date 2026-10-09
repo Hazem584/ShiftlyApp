@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 
 class WorkspaceMembershipChooser extends StatelessWidget {
   const WorkspaceMembershipChooser({

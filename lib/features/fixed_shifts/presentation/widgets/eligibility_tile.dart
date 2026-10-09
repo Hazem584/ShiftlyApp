@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-
-import '../../data/fixed_shift_repository.dart';
-import 'attendance_presentation.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_presentation.dart';
 
 class EligibilityTile extends StatelessWidget {
   const EligibilityTile({

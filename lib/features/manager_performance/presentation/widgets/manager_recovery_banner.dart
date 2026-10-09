@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../cubit/manager_performance_cubit.dart';
-import '../cubit/manager_performance_state.dart';
-import 'manager_confirmation_dialog.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
+import 'package:shiftly/features/manager_performance/presentation/widgets/manager_confirmation_dialog.dart';
 
 class ManagerRecoveryBanner extends StatelessWidget {
   const ManagerRecoveryBanner({

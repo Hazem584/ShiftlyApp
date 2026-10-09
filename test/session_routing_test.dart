@@ -2,24 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
-import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
-import 'package:shiftly/features/invitations/data/invitation_repository.dart';
+import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
+import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
-import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 
 class _RoutingAuth implements AuthenticationService {
   _RoutingAuth() : session = const AuthSession(accessToken: 'token');

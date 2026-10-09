@@ -1,16 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uuid/uuid.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-
-import '../../data/confirmed_mutation_rejection.dart';
-import '../../data/extra_authorization.dart';
-import '../../data/extra_shift_intent.dart';
-import '../../data/extra_shift_repository.dart';
-import 'extra_shifts_state.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_shift_intent.dart';
+import 'package:shiftly/features/fixed_shifts/domain/policies/confirmed_mutation_rejection.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_state.dart';
+import 'package:uuid/uuid.dart';
 
 class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
   ExtraShiftsCubit(this.repository, {this.onChanged})

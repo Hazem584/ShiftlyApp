@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/profile/data/api_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 

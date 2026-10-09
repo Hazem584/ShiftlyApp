@@ -1,74 +1,101 @@
-import 'package:shiftly/features/onboarding/data/onboarding_storage.dart';
-import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
-import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
-
 import 'dart:async';
-
-import 'package:shiftly/features/manager_performance/data/manager_points_repository.dart';
-import 'package:shiftly/features/manager_performance/data/manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/data/memory_manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/data/unavailable_manager_points_repository.dart';
-import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shiftly/core/constants/app_strings.dart';
-import 'package:shiftly/app/session_feature_coordinator.dart';
 import 'package:shiftly/app/app_lifecycle_listener.dart';
+import 'package:shiftly/app/session_feature_coordinator.dart';
+import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/routing/app_router.dart';
+import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
-import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
-import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
-import 'package:shiftly/features/attendance/data/attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
-import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_cubit.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
-import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
-import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
+import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
-import 'package:shiftly/features/chat/data/chat_repository.dart';
 import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
-import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
+import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
-import 'package:shiftly/features/invitations/data/invitation_repository.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/data/preview_fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/invitations/data/mock_invitation_repository.dart';
+import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:shiftly/features/manager_performance/data/memory_manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/data/unavailable_manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
-import 'package:shiftly/features/notifications/data/notification_repository.dart';
+import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
+import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:shiftly/features/points/data/mock_points_repository.dart';
+import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
+import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
+import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/profile/data/mock_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
-import 'package:shiftly/features/profile/data/profile_repository.dart';
+import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
-import 'package:shiftly/features/points/data/mock_points_repository.dart';
-import 'package:shiftly/features/points/data/points_repository.dart';
-import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
-import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/shifts/data/mock_shift_repository.dart';
-import 'package:shiftly/features/shifts/data/shift_repository.dart';
+import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/manager_shifts_cubit.dart';
 import 'package:shiftly/features/workspaces/data/mock_workspace_repository.dart';
-import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
 
-part 'parts/app_providers/private_app_providers_state.dart';
-part 'parts/app_providers/private_session_router_refresh.dart';
+class _SessionRouterRefresh extends ChangeNotifier {
+  _SessionRouterRefresh(
+    SessionCoordinator coordinator,
+    OnboardingCubit onboarding,
+  ) {
+    if (coordinator.state.isAuthenticated) {
+      onboarding.bypassForValidatedSession();
+    }
+    _subscription = coordinator.stream.listen((state) {
+      if (state.isAuthenticated) {
+        onboarding.bypassForValidatedSession();
+      }
+      notifyListeners();
+    });
+    _onboardingSubscription = onboarding.stream.listen(
+      (_) => notifyListeners(),
+    );
+  }
+
+  late final StreamSubscription<Object?> _subscription;
+  late final StreamSubscription<Object?> _onboardingSubscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    _onboardingSubscription.cancel();
+    super.dispose();
+  }
+}
 
 class AppProviders extends StatefulWidget {
   const AppProviders({
@@ -160,4 +187,373 @@ EmployeeSessionScope? _employeeScope(SessionState state) {
     workspaceId: membership.workspace.id,
     role: membership.role,
   );
+}
+
+class _AppProvidersState extends State<AppProviders> {
+  late final EmployeeRepository _employees;
+  late final InvitationRepository _invitations;
+  late final WorkspaceRepository _workspaces;
+  late final GoRouter _router;
+  late final OnboardingCubit _onboardingCubit;
+  late final DashboardCubit _dashboardCubit;
+  late final EmployeesCubit _employeesCubit;
+  late final WorkspacesCubit _workspacesCubit;
+  late final LeaveRequestRepository _leaveRequests;
+  late final ProfileRepository _profile;
+  late final ProfileImagePicker _profileImagePicker;
+  late final LeaveRequestsCubit _leaveRequestsCubit;
+  late final EmployeeLeaveRequestsCubit _employeeLeaveRequestsCubit;
+  late final ProfileCubit _profileCubit;
+  late final ShiftRepository _shifts;
+  late final AttendanceRepository _attendance;
+  late final ManagerShiftsCubit _managerShiftsCubit;
+  late final EmployeeShiftsCubit _employeeShiftsCubit;
+  late final ManagerAttendanceCubit _managerAttendanceCubit;
+  late final AttendanceCalendarCubit _attendanceCalendarCubit;
+  late final EmployeeAttendanceCubit _employeeAttendanceCubit;
+  late final NotificationRepository _notifications;
+  late final NotificationsCubit _notificationsCubit;
+  late final ChatRepository _chat;
+  late final ChatRealtime _chatRealtime;
+  late final ChatGroupsCubit _chatGroupsCubit;
+  late final FixedShiftRepository _fixedShifts;
+  late final ManagerTemplatesCubit _managerTemplatesCubit;
+  late final FlexibleAttendanceCubit _flexibleAttendanceCubit;
+  late final PointsRepository _points;
+  late final PointsCubit _pointsCubit;
+  late final ManagerPerformanceCubit _managerPerformanceCubit;
+  late final SessionCoordinator? _sessionCoordinator;
+  StreamSubscription<Object?>? _sessionSubscription;
+  _SessionRouterRefresh? _sessionRefresh;
+  late final SessionFeatureCoordinator _featureCoordinator;
+
+  @override
+  void initState() {
+    super.initState();
+    _featureCoordinator = SessionFeatureCoordinator(_applySession);
+    _sessionCoordinator =
+        widget.sessionCoordinator ?? _registered<SessionCoordinator>();
+    _employees =
+        widget.employeeRepository ??
+        _registered<EmployeeRepository>() ??
+        MockEmployeeRepository();
+    _invitations =
+        widget.invitationRepository ??
+        _registered<InvitationRepository>() ??
+        MockInvitationRepository();
+    _workspaces =
+        widget.workspaceRepository ??
+        _registered<WorkspaceRepository>() ??
+        MockWorkspaceRepository();
+    final dashboard =
+        widget.dashboardRepository ??
+        _registered<DashboardRepository>() ??
+        (widget.preview
+            ? MockDashboardRepository(
+                employeeRepository: MockEmployeeRepository(),
+              )
+            : throw StateError(
+                'Authenticated apps must inject DashboardRepository.',
+              ));
+    _onboardingCubit = OnboardingCubit(
+      widget.onboardingStorage ??
+          _registered<OnboardingStorage>() ??
+          MemoryOnboardingStorage(),
+    );
+    unawaited(_onboardingCubit.restore());
+    _sessionRefresh = _sessionCoordinator == null
+        ? null
+        : _SessionRouterRefresh(_sessionCoordinator, _onboardingCubit);
+    _router =
+        widget.router ??
+        createAppRouter(
+          sessionCoordinator: _sessionCoordinator,
+          onboarding: _onboardingCubit,
+          refreshListenable: _sessionRefresh,
+        );
+    _leaveRequests =
+        widget.leaveRequestRepository ??
+        _registered<LeaveRequestRepository>() ??
+        MockLeaveRequestRepository();
+    _profile =
+        widget.profileRepository ??
+        _registered<ProfileRepository>() ??
+        MockProfileRepository();
+    _profileImagePicker =
+        widget.profileImagePicker ??
+        _registered<ProfileImagePicker>() ??
+        DeviceProfileImagePicker();
+    _shifts =
+        widget.shiftRepository ??
+        _registered<ShiftRepository>() ??
+        const MockShiftRepository();
+    _attendance =
+        widget.attendanceRepository ??
+        _registered<AttendanceRepository>() ??
+        const MockAttendanceRepository();
+    _fixedShifts =
+        widget.fixedShiftRepository ??
+        _registered<FixedShiftRepository>() ??
+        (widget.preview
+            ? const PreviewFixedShiftRepository()
+            : throw StateError(
+                'Authenticated apps must inject FixedShiftRepository.',
+              ));
+    _points =
+        widget.pointsRepository ??
+        _registered<PointsRepository>() ??
+        (widget.preview
+            ? const MockPointsRepository()
+            : throw StateError(
+                'Authenticated apps must inject PointsRepository.',
+              ));
+    _pointsCubit =
+        _registered<PointsCubit>() ??
+        PointsCubit(_points, intentStorage: MemoryRedemptionIntentStorage());
+    _managerPerformanceCubit = ManagerPerformanceCubit(
+      _registered<ManagerPointsRepository>() ??
+          const UnavailableManagerPointsRepository(),
+      _registered<ManagerIntentStorage>() ?? MemoryManagerIntentStorage(),
+      onChanged: () {
+        _dashboardCubit.invalidate();
+        _attendanceCalendarCubit.invalidate();
+        unawaited(_pointsCubit.load(refresh: true));
+      },
+    );
+    _notifications =
+        widget.notificationRepository ??
+        _registered<NotificationRepository>() ??
+        (widget.preview
+            ? MockNotificationRepository()
+            : throw StateError(
+                'Authenticated apps must inject NotificationRepository.',
+              ));
+    _dashboardCubit =
+        _registered<DashboardCubit>() ?? DashboardCubit(dashboard);
+    _attendanceCalendarCubit = AttendanceCalendarCubit(
+      _registered<AttendanceCalendarRepository>() ??
+          ApiAttendanceCalendarRepository(_shifts, _attendance, _leaveRequests),
+    );
+    _employeesCubit = EmployeesCubit(
+      _employees,
+      invitations: _invitations,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
+    );
+    _workspacesCubit = WorkspacesCubit(
+      _workspaces,
+      _invitations,
+      onMembershipChanged: (workspaceId, expectedUserId) async =>
+          await _sessionCoordinator?.refreshMemberships(
+            preferredWorkspaceId: workspaceId,
+            expectedUserId: expectedUserId,
+          ) ??
+          const MembershipRefreshResult.failed(),
+    );
+    _leaveRequestsCubit = LeaveRequestsCubit(
+      _leaveRequests,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
+    );
+    _employeeLeaveRequestsCubit = EmployeeLeaveRequestsCubit(
+      _leaveRequests,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
+    );
+    _profileCubit = ProfileCubit(
+      _profile,
+      onProfileChanged: _sessionCoordinator?.synchronizeProfile,
+    );
+    _managerShiftsCubit = ManagerShiftsCubit(
+      _shifts,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
+    );
+    _managerAttendanceCubit = ManagerAttendanceCubit(
+      _attendance,
+      onDashboardChanged: _invalidateDashboardAndCalendar,
+    );
+    _employeeAttendanceCubit = EmployeeAttendanceCubit(_attendance);
+    _managerTemplatesCubit =
+        _registered<ManagerTemplatesCubit>() ??
+        ManagerTemplatesCubit(_fixedShifts);
+    _flexibleAttendanceCubit = FlexibleAttendanceCubit(
+      _fixedShifts,
+      onAttendanceChanged: () async {
+        await _employeeAttendanceCubit.load(refresh: true);
+        _invalidateDashboardAndCalendar();
+        await _notificationsCubit.refreshUnreadCount();
+      },
+    );
+    _employeeShiftsCubit = EmployeeShiftsCubit(
+      _shifts,
+      _attendance,
+      onAttendanceChanged: () => _employeeAttendanceCubit.load(refresh: true),
+      onDashboardChanged: _invalidateDashboardAndCalendar,
+    );
+    _notificationsCubit =
+        _registered<NotificationsCubit>() ?? NotificationsCubit(_notifications);
+    _chat =
+        widget.chatRepository ??
+        _registered<ChatRepository>() ??
+        const MockChatRepository();
+    _chatRealtime =
+        widget.chatRealtime ??
+        _registered<ChatRealtime>() ??
+        const NoopChatRealtime();
+    _chatGroupsCubit =
+        _registered<ChatGroupsCubit>() ??
+        ChatGroupsCubit(_chat, gallery: ChatImageGallery());
+    final coordinator = _sessionCoordinator;
+    if (coordinator == null) {
+      _profileCubit.load();
+      _employeesCubit.load();
+      const previewScope = FeatureSessionScope(
+        userId: 'preview-user',
+        workspaceId: 'preview-workspace',
+        membershipId: 'preview-membership',
+        timezone: 'Etc/UTC',
+        role: WorkspaceRole.manager,
+        workspaceName: 'Shift Lab Preview Workspace',
+      );
+      _managerShiftsCubit.bindSession(previewScope);
+      _managerAttendanceCubit.bindSession(previewScope);
+      _leaveRequestsCubit.bindSession(previewScope);
+      _notificationsCubit.bindSession(previewScope);
+      _dashboardCubit.bindSession(previewScope);
+      _chatGroupsCubit.bindSession(previewScope);
+      _managerTemplatesCubit.bindSession(previewScope);
+      _managerPerformanceCubit.bindSession(previewScope);
+    } else {
+      _sessionSubscription = coordinator.stream.listen(
+        _featureCoordinator.bind,
+      );
+      _featureCoordinator.bind(coordinator.state);
+    }
+  }
+
+  @override
+  void dispose() {
+    _onboardingCubit.close();
+    _dashboardCubit.close();
+    _employeesCubit.close();
+    _workspacesCubit.close();
+    _leaveRequestsCubit.close();
+    _employeeLeaveRequestsCubit.close();
+    _profileCubit.close();
+    _managerShiftsCubit.close();
+    _employeeShiftsCubit.close();
+    _managerAttendanceCubit.close();
+    _attendanceCalendarCubit.close();
+    _employeeAttendanceCubit.close();
+    _notificationsCubit.close();
+    _chatGroupsCubit.close();
+    _managerTemplatesCubit.close();
+    _flexibleAttendanceCubit.close();
+    _pointsCubit.close();
+    _managerPerformanceCubit.close();
+    _sessionSubscription?.cancel();
+    _sessionRefresh?.dispose();
+    if (widget.locator == null) unawaited(widget.sessionCoordinator?.close());
+    if (widget.router == null) _router.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final app = MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider.value(value: _employees),
+        RepositoryProvider.value(value: _invitations),
+        RepositoryProvider.value(value: _workspaces),
+        RepositoryProvider.value(value: _leaveRequests),
+        RepositoryProvider.value(value: _profile),
+        RepositoryProvider.value(value: _profileImagePicker),
+        RepositoryProvider.value(value: _shifts),
+        RepositoryProvider.value(value: _attendance),
+        RepositoryProvider.value(value: _notifications),
+        RepositoryProvider<ChatRepository>.value(value: _chat),
+        RepositoryProvider<ChatRealtime>.value(value: _chatRealtime),
+        RepositoryProvider<FixedShiftRepository>.value(value: _fixedShifts),
+        RepositoryProvider<PointsRepository>.value(value: _points),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: _onboardingCubit),
+          BlocProvider.value(value: _dashboardCubit),
+          BlocProvider.value(value: _employeesCubit),
+          BlocProvider.value(value: _workspacesCubit),
+          BlocProvider.value(value: _leaveRequestsCubit),
+          BlocProvider.value(value: _employeeLeaveRequestsCubit),
+          BlocProvider.value(value: _profileCubit),
+          BlocProvider.value(value: _managerShiftsCubit),
+          BlocProvider.value(value: _employeeShiftsCubit),
+          BlocProvider.value(value: _managerAttendanceCubit),
+          BlocProvider.value(value: _attendanceCalendarCubit),
+          BlocProvider.value(value: _employeeAttendanceCubit),
+          BlocProvider.value(value: _notificationsCubit),
+          BlocProvider.value(value: _chatGroupsCubit),
+          BlocProvider.value(value: _managerTemplatesCubit),
+          BlocProvider.value(value: _flexibleAttendanceCubit),
+          BlocProvider.value(value: _pointsCubit),
+          BlocProvider.value(value: _managerPerformanceCubit),
+        ],
+        child: MaterialApp.router(
+          title: AppStrings.appName,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme(),
+          routerConfig: _router,
+        ),
+      ),
+    );
+    final coordinator = _sessionCoordinator;
+    final provided = coordinator == null
+        ? app
+        : BlocProvider<SessionCoordinator>.value(
+            value: coordinator,
+            child: app,
+          );
+    return ShiftlyAppLifecycleListener(
+      onResumed: () {
+        unawaited(_flexibleAttendanceCubit.load(refresh: true));
+        unawaited(_notificationsCubit.refreshUnreadCount());
+        unawaited(_chatGroupsCubit.refreshUnread());
+        _dashboardCubit.invalidate();
+      },
+      child: provided,
+    );
+  }
+
+  void _applySession(SessionState state, int generation) {
+    _profileCubit.bindSession(_profileScope(state));
+    _employeesCubit.bindSession(_employeeScope(state));
+    _workspacesCubit.bindUser(state.currentUser?.id);
+    final featureScope = _featureScope(state, generation);
+    _managerShiftsCubit.bindSession(featureScope);
+    _employeeShiftsCubit.bindSession(featureScope);
+    _managerAttendanceCubit.bindSession(featureScope);
+    _attendanceCalendarCubit.bindSession(featureScope);
+    _employeeAttendanceCubit.bindSession(featureScope);
+    _leaveRequestsCubit.bindSession(featureScope);
+    _employeeLeaveRequestsCubit.bindSession(featureScope);
+    _notificationsCubit.bindSession(featureScope);
+    _dashboardCubit.bindSession(featureScope);
+    _chatGroupsCubit.bindSession(featureScope);
+    _managerTemplatesCubit.bindSession(featureScope);
+    _flexibleAttendanceCubit.bindSession(featureScope);
+    _pointsCubit.bindSession(featureScope);
+    _managerPerformanceCubit.bindSession(featureScope);
+  }
+
+  void _invalidateDashboardAndCalendar() {
+    _dashboardCubit.invalidate();
+    _attendanceCalendarCubit.invalidate();
+    unawaited(_pointsCubit.load(refresh: true));
+    _managerPerformanceCubit.invalidate();
+  }
+
+  T? _registered<T extends Object>() {
+    final locator = widget.locator;
+    if (locator == null) return null;
+    if (!locator.isRegistered<T>()) {
+      throw StateError('Missing production dependency: $T');
+    }
+    return locator<T>();
+  }
 }

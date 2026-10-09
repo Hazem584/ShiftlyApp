@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/app/session_feature_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 
 SessionState _state({
   String userId = 'user-a',

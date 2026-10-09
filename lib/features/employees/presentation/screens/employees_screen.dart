@@ -7,11 +7,9 @@ import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_list.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_metrics_section.dart';
+import 'package:shiftly/features/employees/presentation/widgets/employee_pending_invitations.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_search_bar.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employees_loading.dart';
-import 'package:shiftly/features/invitations/data/invitation_repository.dart';
-
-part 'parts/employees_screen/private_pending_invitations.dart';
 
 class EmployeesScreen extends StatelessWidget {
   const EmployeesScreen({super.key});
@@ -84,7 +82,7 @@ class EmployeesScreen extends StatelessWidget {
   Widget _loadedBody(BuildContext context, EmployeesLoaded state) => Column(
     children: [
       if (state.pendingInvitations.isNotEmpty)
-        _PendingInvitations(invitations: state.pendingInvitations),
+        EmployeePendingInvitations(invitations: state.pendingInvitations),
       if (state.failure != null)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18),

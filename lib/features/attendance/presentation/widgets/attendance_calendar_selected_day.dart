@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/features/attendance/data/attendance_calendar_repository.dart';
-import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_legend.dart';
-
-part 'parts/attendance_calendar_selected_day/private_selected_day_empty.dart';
-part 'parts/attendance_calendar_selected_day/private_employee_day_row.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_employee_day_row.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_selected_day_empty.dart';
 
 class AttendanceCalendarSelectedDay extends StatelessWidget {
   const AttendanceCalendarSelectedDay({
@@ -23,7 +20,7 @@ class AttendanceCalendarSelectedDay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (date == null) {
-      return const _SelectedDayEmpty(
+      return const AttendanceCalendarSelectedDayEmpty(
         message: 'Select a date to see employee details.',
       );
     }
@@ -47,7 +44,10 @@ class AttendanceCalendarSelectedDay extends StatelessWidget {
               const Text('No attendance events for this date.')
             else
               ...entries.map(
-                (entry) => _EmployeeDayRow(entry: entry, timezone: timezone),
+                (entry) => AttendanceCalendarEmployeeDayRow(
+                  entry: entry,
+                  timezone: timezone,
+                ),
               ),
           ],
         ),

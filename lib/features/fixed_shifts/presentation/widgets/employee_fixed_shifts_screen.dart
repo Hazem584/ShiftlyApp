@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/core/widgets/ease_hint.dart';
+import 'package:shiftly/core/widgets/screen_header.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/flexible_attendance_panel.dart';
 import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
-
-import '../cubit/fixed_shifts_cubit.dart';
-import 'flexible_attendance_panel.dart';
 
 class EmployeeFixedShiftsScreen extends StatelessWidget {
   const EmployeeFixedShiftsScreen({super.key});

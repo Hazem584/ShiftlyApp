@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 
 class ApiDashboardRepository implements DashboardRepository {
   ApiDashboardRepository(this._dio);

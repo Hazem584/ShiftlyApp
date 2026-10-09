@@ -1,6 +1,6 @@
 import 'package:shiftly/core/models/manager_profile.dart';
-import 'package:shiftly/features/profile/data/profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
+import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 
 class MockProfileRepository implements ProfileRepository {
   MockProfileRepository({this.delay = Duration.zero});

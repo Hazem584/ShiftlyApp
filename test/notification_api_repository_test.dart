@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/features/notifications/data/api_notification_repository.dart';
-import 'package:shiftly/features/notifications/data/notification_repository.dart';
+import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 
 class _Adapter implements HttpClientAdapter {
   _Adapter(this.handler);

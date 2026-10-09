@@ -1,5 +1,5 @@
-import 'package:shiftly/core/network/api_model_parser.dart';
-import 'package:shiftly/features/notifications/data/notification_repository.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 
 class MockNotificationRepository implements NotificationRepository {
   MockNotificationRepository({this.delay = Duration.zero})

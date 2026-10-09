@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
-import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 
 class _Adapter implements HttpClientAdapter {
   _Adapter(this.handler);

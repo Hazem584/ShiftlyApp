@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 
 class AttendanceRejectionDialog extends StatefulWidget {

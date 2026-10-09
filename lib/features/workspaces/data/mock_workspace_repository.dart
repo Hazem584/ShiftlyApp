@@ -1,4 +1,4 @@
-import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 
 class MockWorkspaceRepository implements WorkspaceRepository {
   final List<WorkspaceRecord> _items = [];

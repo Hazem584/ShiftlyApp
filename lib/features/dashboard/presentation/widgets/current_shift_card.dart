@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
-
-part 'parts/current_shift_card/private_value.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/current_shift_value.dart';
 
 class DashboardDayStatusCard extends StatelessWidget {
   const DashboardDayStatusCard({required this.data, super.key});
@@ -23,21 +22,21 @@ class DashboardDayStatusCard extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: _Value(
+                child: CurrentShiftValue(
                   label: 'Late',
                   value: data.summary.lateToday,
                   color: AppColors.warning,
                 ),
               ),
               Expanded(
-                child: _Value(
+                child: CurrentShiftValue(
                   label: 'Missed',
                   value: data.summary.missedToday,
                   color: AppColors.error,
                 ),
               ),
               Expanded(
-                child: _Value(
+                child: CurrentShiftValue(
                   label: 'On approved leave',
                   value: data.summary.onApprovedLeave,
                   color: AppColors.teal,

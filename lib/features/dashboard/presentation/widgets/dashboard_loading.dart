@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
-
-part 'parts/dashboard_loading/private_skeleton.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
 
 class DashboardLoadingView extends StatelessWidget {
   const DashboardLoadingView({super.key});
@@ -10,23 +8,23 @@ class DashboardLoadingView extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(18),
     children: const [
-      _Skeleton(height: 42, width: 180),
+      DashboardSkeleton(height: 42, width: 180),
       SizedBox(height: 16),
-      _Skeleton(height: 160),
+      DashboardSkeleton(height: 160),
       SizedBox(height: 16),
       Row(
         children: [
-          Expanded(child: _Skeleton(height: 120)),
+          Expanded(child: DashboardSkeleton(height: 120)),
           SizedBox(width: 12),
-          Expanded(child: _Skeleton(height: 120)),
+          Expanded(child: DashboardSkeleton(height: 120)),
         ],
       ),
       SizedBox(height: 12),
       Row(
         children: [
-          Expanded(child: _Skeleton(height: 120)),
+          Expanded(child: DashboardSkeleton(height: 120)),
           SizedBox(width: 12),
-          Expanded(child: _Skeleton(height: 120)),
+          Expanded(child: DashboardSkeleton(height: 120)),
         ],
       ),
       SizedBox(height: 20),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/features/points/data/points_models.dart';
+import 'package:shiftly/features/points/domain/entities/points_models.dart';
 
 class PointsHero extends StatelessWidget {
   const PointsHero({required this.wallet, super.key});

@@ -5,8 +5,7 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
-
-part 'parts/attendance_metrics_section/private_attendance_metric.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_metric.dart';
 
 class AttendanceMetricsSection extends StatelessWidget {
   const AttendanceMetricsSection({super.key});
@@ -97,7 +96,7 @@ class AttendanceMetricsSection extends StatelessWidget {
                     for (final metric in metrics)
                       SizedBox(
                         width: width,
-                        child: _AttendanceMetric(
+                        child: AttendanceMetric(
                           label: metric.$1,
                           value: unavailable ? '—' : '${metric.$2}',
                           icon: metric.$3,

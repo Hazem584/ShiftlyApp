@@ -2,6 +2,30 @@
 
 Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authenticated startup uses production repositories for every feature; preview and test repositories are selected only by explicit composition.
 
+## Code architecture
+
+Features follow the same dependency direction: presentation uses domain contracts;
+data implements them. `app/` and `core/di/` compose the concrete dependencies.
+
+- `domain/entities/`: immutable records, enums, and validated values.
+- `domain/repositories/`: contracts for APIs, storage, device services, and realtime.
+- `domain/services/`, `domain/policies/`, and `domain/usecases/`: business rules and orchestration.
+- `data/`: HTTP, Supabase, persistent storage, and native device implementations.
+- `application/`: transient application state, such as the in-memory redemption store.
+- `presentation/`: Cubits, screens, individual widgets, dialogs, and UI formatting.
+
+Each Dart source is an independent library with explicit imports. Each file owns
+one widget; its private `State` stays in that same file. Supporting widgets and
+dialogs have their own files. Entity exports provide convenient feature APIs;
+sealed entity families share a library to preserve Dart's exhaustiveness checks.
+JSON validation helpers in `core/serialization/` have no network dependencies.
+Chat presentation uses cache and gallery contracts, with implementations injected
+at composition time. Preview repositories remain explicit and are also used by tests.
+
+`test/project_architecture_test.dart` guards against `part` directives, multiple
+widgets in one file, infrastructure imports in presentation, and framework or
+outer-layer imports in domain. Run `flutter analyze` and `flutter test` after changes.
+
 ## Branding, native launch, and onboarding
 
 The approved, unchanged logo is `assets/images/Logo.png` (1254×1254, opaque RGB,

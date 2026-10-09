@@ -1,6 +1,6 @@
-import 'package:shiftly/features/auth/data/models/current_user.dart';
-import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
+import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 
 class OnboardingTestRepository implements AuthenticationRepository {
   OnboardingTestRepository(this.user, {this.failure});

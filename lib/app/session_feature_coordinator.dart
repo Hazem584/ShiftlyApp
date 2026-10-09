@@ -1,5 +1,5 @@
 import 'package:shiftly/core/session/session_state.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 
 class SessionFeatureCoordinator {
   SessionFeatureCoordinator(this._apply);

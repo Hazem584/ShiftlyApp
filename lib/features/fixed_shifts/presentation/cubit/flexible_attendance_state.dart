@@ -1,9 +1,7 @@
-import '../../data/legacy_clock_in_review.dart';
-
 import 'package:equatable/equatable.dart';
 import 'package:shiftly/core/error/failure.dart';
-
-import '../../data/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/legacy_clock_in_review.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 
 class FlexibleAttendanceState extends Equatable {
   const FlexibleAttendanceState({

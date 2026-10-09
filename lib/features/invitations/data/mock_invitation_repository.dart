@@ -1,5 +1,5 @@
-import 'package:shiftly/features/invitations/data/invitation_repository.dart';
-import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
+import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 
 class MockInvitationRepository implements InvitationRepository {
   final List<WorkspaceInvitation> _items = [];

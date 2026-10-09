@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
-import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
 class EmployeeSearchBar extends StatelessWidget {
   const EmployeeSearchBar({

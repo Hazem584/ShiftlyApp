@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 
 import 'points_feature_test.dart' show FakePointsRepository, employeeScope;

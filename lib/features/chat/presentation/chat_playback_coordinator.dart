@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:just_audio/just_audio.dart';
-import 'package:shiftly/features/chat/data/cache/chat_cache_scope.dart';
-import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
-import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 
 /// One conversation player and selection generation, shared by every bubble.
 class ChatPlaybackCoordinator {
@@ -13,7 +13,7 @@ class ChatPlaybackCoordinator {
     cache.storage.listeners.add(_invalidate);
   }
   final AudioPlayer player;
-  final ChatMediaCache cache;
+  final ChatMediaStore cache;
   int _selection = 0;
   ChatCacheScope? _scope;
   Future<void> play(

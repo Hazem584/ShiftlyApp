@@ -1,25 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
-import 'package:shiftly/core/widgets/app_form_dialog.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/features/chat/presentation/widgets/chat_cache_settings_tile.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
-import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/chat/data/chat_member_loader.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
+import 'package:shiftly/features/chat/domain/usecases/load_active_chat_members.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
+import 'package:shiftly/features/chat/presentation/dialogs/create_chat_group_dialog.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_screen.dart';
-import 'package:shiftly/features/employees/data/employee_repository.dart';
-
-part 'parts/chat_groups_screen/private_create_chat_group_dialog.dart';
-part 'parts/chat_groups_screen/private_create_chat_group_dialog_state.dart';
-part 'parts/chat_groups_screen/private_group_tile.dart';
-part 'parts/chat_groups_screen/private_message_state.dart';
+import 'package:shiftly/features/chat/presentation/widgets/chat_cache_settings_tile.dart';
+import 'package:shiftly/features/chat/presentation/widgets/chat_group_tile.dart';
+import 'package:shiftly/features/chat/presentation/widgets/chat_message_state.dart';
+import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
 class ChatGroupsScreen extends StatelessWidget {
   const ChatGroupsScreen({this.embedded = false, super.key});
@@ -64,13 +57,13 @@ class ChatGroupsScreen extends StatelessWidget {
   Widget _body(BuildContext context, ChatGroupsState state) {
     if (state.loading) return const Center(child: CircularProgressIndicator());
     if (state.groups.isEmpty && state.failure != null) {
-      return _MessageState(
+      return ChatMessageState(
         message: state.failure!.message,
         action: () => context.read<ChatGroupsCubit>().load(),
       );
     }
     if (state.groups.isEmpty) {
-      return const _MessageState(message: 'No chat groups yet.');
+      return const ChatMessageState(message: 'No chat groups yet.');
     }
     return Column(
       children: [
@@ -104,7 +97,7 @@ class ChatGroupsScreen extends StatelessWidget {
                   ),
                   itemCount: state.groups.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) => _GroupTile(
+                  itemBuilder: (context, index) => ChatGroupTile(
                     group: state.groups[index],
                     narrow: narrow,
                     onTap: () =>
@@ -145,7 +138,7 @@ class ChatGroupsScreen extends StatelessWidget {
     if (!context.mounted || cubit.scope != scope) return;
     await ShiftlyChatDialog.showBody<void>(
       context,
-      body: _CreateChatGroupDialog(
+      body: CreateChatGroupDialog(
         cubit: cubit,
         scope: scope,
         employees: employees,

@@ -1,6 +1,6 @@
+import 'package:shiftly/core/utils/clock_time.dart';
 import 'package:timezone/data/latest.dart' as timezone_data;
 import 'package:timezone/timezone.dart' as timezone;
-import 'package:shiftly/core/utils/clock_time.dart';
 
 abstract final class WorkspaceTime {
   static bool _initialized = false;

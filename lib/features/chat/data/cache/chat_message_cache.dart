@@ -1,20 +1,23 @@
 import 'package:sembast/sembast.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
-import 'package:shiftly/features/chat/data/cache/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/data/cache/chat_message_codec.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_message_store.dart';
 
-class ChatMessageCache {
+class ChatMessageCache implements ChatMessageStore {
   ChatMessageCache(
     this.storage, {
     this.messageLimit = 500,
     this.conversationLimit = 40,
     this.retention = const Duration(days: 30),
   });
+  @override
   final ChatCacheDatabase storage;
   final int messageLimit;
   final int conversationLimit;
   final Duration retention;
+  @override
   Future<void> confirm(ChatCacheScope scope, ChatMessage message) async {
     final revision = storage.revision;
     await storage.ready;
@@ -64,6 +67,7 @@ class ChatMessageCache {
 
   String _key(ChatCacheScope scope, String? cursor) =>
       'page:${scope.key}:${cursor ?? 'latest'}';
+  @override
   Future<ChatMessagePage?> read(ChatCacheScope scope, {String? cursor}) async {
     final revision = storage.revision;
     await storage.ready;
@@ -91,6 +95,7 @@ class ChatMessageCache {
     );
   }
 
+  @override
   Future<void> write(
     ChatCacheScope scope,
     ChatMessagePage page, {

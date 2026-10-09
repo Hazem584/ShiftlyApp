@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../data/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 
 String attendanceClassificationLabel(AttendanceClassification value) =>
     switch (value) {

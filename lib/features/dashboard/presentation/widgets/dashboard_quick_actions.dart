@@ -5,8 +5,7 @@ import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/section_heading.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-
-part 'parts/dashboard_quick_actions/private_quick_action.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_quick_action.dart';
 
 class DashboardQuickActions extends StatelessWidget {
   const DashboardQuickActions({required this.pendingRequests, super.key});
@@ -47,7 +46,7 @@ class DashboardQuickActions extends StatelessWidget {
       Row(
         children: [
           Expanded(
-            child: _QuickAction(
+            child: DashboardQuickAction(
               icon: Icons.person_add_alt_1_rounded,
               label: 'Add employee',
               caption: 'Invite someone',
@@ -57,7 +56,7 @@ class DashboardQuickActions extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: _QuickAction(
+            child: DashboardQuickAction(
               icon: Icons.schedule_rounded,
               label: 'Shifts',
               caption: 'Plan the day',
@@ -67,7 +66,7 @@ class DashboardQuickActions extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: _QuickAction(
+            child: DashboardQuickAction(
               icon: Icons.approval_outlined,
               label: 'Requests',
               caption: 'Review leave',

@@ -1,5 +1,5 @@
-import 'package:shiftly/core/network/api_model_parser.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 
 /// Empty adapter used only by unauthenticated widget previews and tests.
 class PreviewFixedShiftRepository implements FixedShiftRepository {

@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-
-import '../../data/fixed_shift_repository.dart';
-import '../../data/extra_authorization.dart';
-import '../cubit/extra_shifts_cubit.dart';
-import '../cubit/extra_shifts_state.dart';
-import 'extra_authorization_card.dart';
-import 'extra_shift_form.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_state.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_authorization_card.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shift_form.dart';
 
 class ExtraShiftsView extends StatelessWidget {
   const ExtraShiftsView({

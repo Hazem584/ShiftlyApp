@@ -1,19 +1,16 @@
-import 'package:shiftly/core/session/feature_scope.dart';
-
-import 'legacy_clock_in_repository.dart';
-import 'legacy_clock_in_review.dart';
-
-import 'extra_shift_repository.dart';
-import 'extra_authorization.dart';
-import 'extra_authorization_page.dart';
-
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/core/session/feature_scope.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization_page.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/legacy_clock_in_review.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/legacy_clock_in_repository.dart';
 
 class ApiFixedShiftRepository
     implements

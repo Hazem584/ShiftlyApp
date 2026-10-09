@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-
-import '../../data/manager_points_record.dart';
-import '../cubit/manager_resource_state.dart';
-import 'manager_forms.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_points_record.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
+import 'package:shiftly/features/manager_performance/presentation/widgets/manager_forms.dart';
 
 class ManagerResourceList extends StatelessWidget {
   const ManagerResourceList({

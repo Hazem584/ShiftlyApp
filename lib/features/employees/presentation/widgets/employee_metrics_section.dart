@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
-import 'package:shiftly/core/widgets/surface_card.dart';
-
-part 'parts/employee_metrics_section/private_metric.dart';
+import 'package:shiftly/features/employees/presentation/widgets/employee_metrics_section_metric.dart';
 
 class EmployeeMetricsSection extends StatelessWidget {
   const EmployeeMetricsSection({
@@ -32,21 +30,21 @@ class EmployeeMetricsSection extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 18),
         children: [
-          _Metric(
+          EmployeeMetricsSectionMetric(
             label: 'Total Employees',
             value: total ?? employees.length,
             icon: Icons.groups_outlined,
             color: AppColors.ink,
           ),
           const SizedBox(width: 10),
-          _Metric(
+          EmployeeMetricsSectionMetric(
             label: 'Active',
             value: active,
             icon: Icons.person_rounded,
             color: AppColors.success,
           ),
           const SizedBox(width: 10),
-          _Metric(
+          EmployeeMetricsSectionMetric(
             label: 'Loaded suspended',
             value: suspended,
             icon: Icons.person_off_outlined,

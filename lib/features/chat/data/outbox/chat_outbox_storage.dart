@@ -3,20 +3,24 @@ import 'dart:typed_data';
 
 import 'package:sembast/sembast.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
-import 'package:shiftly/features/chat/data/cache/chat_cache_scope.dart';
-import 'package:shiftly/features/chat/data/outbox/chat_outbox_operation.dart';
-import 'package:shiftly/features/chat/data/outbox/chat_outbox_coordinator.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_outbox_operation.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_outbox_store.dart';
+import 'package:shiftly/features/chat/domain/services/chat_outbox_coordinator.dart';
 import 'package:uuid/uuid.dart';
 
-class ChatOutboxStorage {
+class ChatOutboxStorage implements ChatOutboxStore {
   ChatOutboxStorage(
     this.storage, {
     this.operationLimit = 100,
     ChatOutboxCoordinator? coordinator,
   }) : coordinator = coordinator ?? ChatOutboxCoordinator();
+  @override
   final ChatOutboxCoordinator coordinator;
+  @override
   final ChatCacheDatabase storage;
   final int operationLimit;
+  @override
   Future<String> ownMedia(ChatCacheScope scope, Uint8List bytes) async {
     await storage.ready;
     if (!storage.writable(scope)) throw StateError('Chat access unavailable');
@@ -35,6 +39,7 @@ class ChatOutboxStorage {
     }
   }
 
+  @override
   Future<void> save(ChatCacheScope scope, ChatOutboxOperation operation) async {
     await storage.ready;
     if (!storage.writable(scope)) throw StateError('Chat access unavailable');
@@ -59,6 +64,7 @@ class ChatOutboxStorage {
     });
   }
 
+  @override
   Future<List<ChatOutboxOperation>> restore(ChatCacheScope scope) async {
     await storage.ready;
     if (!storage.authorized(scope)) return [];
@@ -76,6 +82,7 @@ class ChatOutboxStorage {
     return rows.map((row) => ChatOutboxOperation.fromJson(row.value)).toList();
   }
 
+  @override
   File mediaFile(String name) {
     if (!RegExp(r'^[a-f0-9-]+\.bin$').hasMatch(name)) {
       throw const FormatException('Invalid media');
@@ -83,6 +90,7 @@ class ChatOutboxStorage {
     return File('${storage.directory.path}/$name');
   }
 
+  @override
   Future<void> remove(
     ChatCacheScope scope,
     ChatOutboxOperation operation,

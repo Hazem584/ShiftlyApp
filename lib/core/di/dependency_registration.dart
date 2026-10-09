@@ -1,24 +1,8 @@
-import 'package:shiftly/features/onboarding/data/onboarding_storage.dart';
-import 'package:shiftly/features/onboarding/data/preferences_onboarding_storage.dart';
-import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
-import 'package:shiftly/features/fixed_shifts/data/extra_shift_repository.dart';
-import 'package:dio/dio.dart';
-
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
-import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
-import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
-import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
-import 'package:shiftly/features/chat/data/outbox/chat_outbox_storage.dart';
-import 'package:shiftly/features/chat/data/outbox/chat_outbox_coordinator.dart';
-import 'package:shiftly/features/manager_performance/data/api_manager_points_repository.dart';
-import 'package:shiftly/features/manager_performance/data/manager_points_repository.dart';
-import 'package:shiftly/features/manager_performance/data/manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/data/preferences_manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/data/memory_manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/data/unavailable_manager_points_repository.dart';
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/config/app_config.dart';
 import 'package:shiftly/core/di/dependency_disposal.dart';
@@ -26,44 +10,61 @@ import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/network/api_client.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
+import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
-import 'package:shiftly/features/attendance/data/attendance_calendar_repository.dart';
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
-import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/auth/data/authentication_api_repository.dart';
 import 'package:shiftly/features/auth/data/supabase_authentication_service.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:shiftly/features/chat/data/api_chat_repository.dart';
+import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
+import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
+import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
+import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
-import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/data/outbox/chat_outbox_storage.dart';
 import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/services/chat_outbox_coordinator.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/dashboard/data/api_dashboard_repository.dart';
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
-import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employee_details_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/data/api_fixed_shift_repository.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
-import 'package:shiftly/features/invitations/data/invitation_repository.dart';
+import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:shiftly/features/manager_performance/data/api_manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/data/memory_manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/data/preferences_manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/data/unavailable_manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_points_repository.dart';
 import 'package:shiftly/features/notifications/data/api_notification_repository.dart';
-import 'package:shiftly/features/notifications/data/notification_repository.dart';
+import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
-import 'package:shiftly/features/profile/data/api_profile_repository.dart';
-import 'package:shiftly/features/profile/data/profile_image_picker.dart';
-import 'package:shiftly/features/profile/data/profile_repository.dart';
+import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/data/preferences_onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
 import 'package:shiftly/features/points/data/api_points_repository.dart';
 import 'package:shiftly/features/points/data/mock_points_repository.dart';
-import 'package:shiftly/features/points/data/points_repository.dart';
 import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
+import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
+import 'package:shiftly/features/profile/data/api_profile_repository.dart';
+import 'package:shiftly/features/profile/data/profile_image_picker.dart';
+import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
-import 'package:shiftly/features/shifts/data/shift_repository.dart';
-import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
+import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract final class DependencyRegistration {
@@ -200,9 +201,10 @@ abstract final class DependencyRegistration {
       ..registerFactory<ChatGroupsCubit>(
         () => ChatGroupsCubit(
           target(),
-          messageCache: target(),
-          outbox: target(),
-          mediaCache: target(),
+          messageCache: target<ChatMessageCache>(),
+          outbox: target<ChatOutboxStorage>(),
+          mediaCache: target<ChatMediaCache>(),
+          gallery: ChatImageGallery(),
         ),
       )
       ..registerFactory<ManagerTemplatesCubit>(
@@ -292,7 +294,10 @@ abstract final class DependencyRegistration {
         () => NotificationsCubit(locator<NotificationRepository>()),
       )
       ..registerFactory<ChatGroupsCubit>(
-        () => ChatGroupsCubit(locator<ChatRepository>()),
+        () => ChatGroupsCubit(
+          locator<ChatRepository>(),
+          gallery: ChatImageGallery(),
+        ),
       )
       ..registerFactory<ManagerTemplatesCubit>(
         () => ManagerTemplatesCubit(locator<FixedShiftRepository>()),

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/widgets/messages/shiftly_chat_message_list.dart';
 
 ChatMessage _message(int index, {bool mine = false}) => ChatMessage(

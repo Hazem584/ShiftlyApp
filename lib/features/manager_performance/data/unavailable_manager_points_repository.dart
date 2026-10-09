@@ -1,9 +1,8 @@
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-
-import 'manager_points_page.dart';
-import 'manager_points_record.dart';
-import 'manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_points_page.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_points_record.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_points_repository.dart';
 
 /// Preview/test fallback explicitly reports unavailable data and actions.
 class UnavailableManagerPointsRepository implements ManagerPointsRepository {

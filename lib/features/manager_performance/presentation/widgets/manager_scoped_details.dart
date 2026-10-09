@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-
-import '../cubit/manager_performance_cubit.dart';
-import '../cubit/manager_performance_state.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
 
 class ManagerScopedDetails extends StatelessWidget {
   const ManagerScopedDetails({

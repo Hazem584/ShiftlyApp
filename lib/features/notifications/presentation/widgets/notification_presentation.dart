@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
-import 'package:shiftly/features/notifications/data/notification_repository.dart';
+import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 
 ({String label, IconData icon, Color color}) notificationPresentation(
   NotificationType type,

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-
-part 'parts/profile_information_section/private_info_row.dart';
+import 'package:shiftly/features/profile/presentation/widgets/profile_info_row.dart';
 
 class ProfileInformationSection extends StatelessWidget {
   const ProfileInformationSection({super.key, required this.profile});
@@ -24,19 +22,19 @@ class ProfileInformationSection extends StatelessWidget {
         padding: EdgeInsets.zero,
         child: Column(
           children: [
-            _InfoRow(
+            ProfileInfoRow(
               icon: Icons.email_outlined,
               label: 'Email address',
               value: profile.displayEmail,
             ),
             const Divider(height: 1, indent: 58),
-            _InfoRow(
+            ProfileInfoRow(
               icon: Icons.phone_outlined,
               label: 'Phone number',
               value: profile.displayPhone,
             ),
             const Divider(height: 1, indent: 58),
-            _InfoRow(
+            ProfileInfoRow(
               icon: Icons.business_outlined,
               label: 'Workplace',
               value: profile.workplace,

@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
-import 'package:shiftly/features/shifts/data/shift_repository.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
+import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/manager_shifts_cubit.dart';
 

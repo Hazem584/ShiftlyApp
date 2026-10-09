@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/network/api_endpoints.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 
 class AuthenticationApiRepository implements AuthenticationRepository {

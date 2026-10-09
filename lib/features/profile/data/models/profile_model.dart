@@ -1,5 +1,5 @@
 import 'package:shiftly/core/models/manager_profile.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 
 class ProfileModel {
   const ProfileModel({

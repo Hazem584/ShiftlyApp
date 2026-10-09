@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
-
-part 'parts/dashboard_hero_section/private_hero_chip.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_hero_chip.dart';
 
 class DashboardHeroSection extends StatelessWidget {
   const DashboardHeroSection({required this.data, super.key});
@@ -70,15 +69,15 @@ class DashboardHeroSection extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _HeroChip(
+                DashboardHeroChip(
                   icon: Icons.groups_outlined,
                   label: '${data.summary.totalEmployees} employees',
                 ),
-                _HeroChip(
+                DashboardHeroChip(
                   icon: Icons.check_circle_outline,
                   label: '${data.summary.clockedInNow} clocked in',
                 ),
-                _HeroChip(
+                DashboardHeroChip(
                   icon: Icons.calendar_today_outlined,
                   label: data.date,
                 ),

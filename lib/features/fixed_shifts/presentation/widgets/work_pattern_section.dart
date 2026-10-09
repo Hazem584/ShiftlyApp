@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-
-import 'work_pattern_view.dart';
-
-import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/work_pattern_view.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 
 class WorkPatternSection extends StatelessWidget {
   const WorkPatternSection({

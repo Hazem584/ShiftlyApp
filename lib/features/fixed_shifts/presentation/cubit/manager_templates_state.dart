@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:shiftly/core/error/failure.dart';
-
-import '../../data/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 
 class ManagerTemplatesState extends Equatable {
   const ManagerTemplatesState({

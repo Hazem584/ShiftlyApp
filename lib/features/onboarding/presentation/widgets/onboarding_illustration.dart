@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-
-import '../../domain/onboarding_page_content.dart';
+import 'package:shiftly/features/onboarding/presentation/models/onboarding_page_content.dart';
 
 class OnboardingIllustration extends StatelessWidget {
   const OnboardingIllustration({required this.content, super.key});

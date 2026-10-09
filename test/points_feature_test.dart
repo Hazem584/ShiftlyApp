@@ -8,13 +8,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/points/data/api_points_repository.dart';
-import 'package:shiftly/features/points/data/points_models.dart';
-import 'package:shiftly/features/points/data/points_repository.dart';
 import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
+import 'package:shiftly/features/points/domain/entities/points_models.dart';
+import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/points/presentation/screens/my_performance_screen.dart';
 

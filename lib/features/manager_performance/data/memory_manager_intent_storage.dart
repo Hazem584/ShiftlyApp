@@ -1,6 +1,5 @@
 import 'package:shiftly/core/session/feature_scope.dart';
-
-import 'manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
 
 class MemoryManagerIntentStorage implements ManagerIntentStorage {
   final Map<String, String> _values = {};

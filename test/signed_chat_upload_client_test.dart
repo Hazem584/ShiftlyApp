@@ -4,9 +4,10 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
-import 'package:shiftly/features/chat/data/chat_repository.dart';
 import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_upload_cancellation.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 
 final _bytes = Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]);
 

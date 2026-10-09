@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
-import 'package:shiftly/features/notifications/data/notification_repository.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
+import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 
 const _managerA = FeatureSessionScope(

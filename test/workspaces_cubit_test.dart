@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
-import 'package:shiftly/features/invitations/data/invitation_repository.dart';
-import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
+import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
 
 const _workspace = WorkspaceRecord(

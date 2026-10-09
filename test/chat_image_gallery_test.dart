@@ -1,12 +1,11 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
-import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 
 const _channel = MethodChannel('shiftly/chat_gallery');
 const _scope = FeatureSessionScope(

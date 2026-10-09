@@ -7,9 +7,11 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
-import 'package:shiftly/features/shifts/data/shift_repository.dart';
+import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit.dart';
+import 'package:shiftly/features/shifts/presentation/utils/shift_card_formatters.dart';
 import 'package:shiftly/features/shifts/presentation/widgets/shift_card.dart';
+import 'package:shiftly/features/shifts/presentation/widgets/shift_status_badge.dart';
 
 class EmployeeShiftsScreen extends StatelessWidget {
   const EmployeeShiftsScreen({super.key});

@@ -1,4 +1,4 @@
-import 'package:shiftly/features/chat/data/chat_models.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 
 abstract final class ChatMessageCodec {
   static Map<String, Object?> encode(ChatMessage message) => {

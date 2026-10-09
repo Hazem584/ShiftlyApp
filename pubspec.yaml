@@ -6,9 +6,7 @@ version: 1.0.0+1
 environment:
   sdk: ^3.13.0
 dependencies:
-  awesome_dialog: 3.3.0
   chatview: 3.1.0
-  cupertino_icons: ^1.0.8
   crypto: ^3.0.7
   dio: ^5.9.0
   equatable: ^2.1.0
@@ -49,7 +47,3 @@ flutter:
     - family: Cairo
       fonts:
         - asset: assets/fonts/Cairo-Variable.ttf
-flutter_assets:
-  assets_path: assets/
-  output_path: lib/core/utils/
-  filename: app_images.dart

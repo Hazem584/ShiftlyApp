@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shifts_view.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
-
-import '../../data/extra_shift_repository.dart';
-import '../cubit/extra_shifts_cubit.dart';
-import 'extra_shifts_view.dart';
 
 class ExtraShiftsSection extends StatelessWidget {
   const ExtraShiftsSection({

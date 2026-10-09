@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/core/widgets/surface_card.dart';
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
-import 'package:shiftly/features/shifts/data/shift_repository.dart';
-
-part 'parts/attendance_records_list/private_attendance_record_card.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_record_card.dart';
 
 class AttendanceRecordsList extends StatelessWidget {
   const AttendanceRecordsList({
@@ -32,7 +26,7 @@ class AttendanceRecordsList extends StatelessWidget {
       Text(title, style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: AppSpacing.s),
       for (final record in records) ...[
-        _AttendanceRecordCard(
+        AttendanceRecordCard(
           record: record,
           timezone: timezone,
           onTap: onTap == null ? null : () => onTap!(record),

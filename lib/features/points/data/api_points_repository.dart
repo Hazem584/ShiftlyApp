@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/error/api_exception.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
-import 'package:shiftly/features/points/data/points_models.dart';
-import 'package:shiftly/features/points/data/points_repository.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/points/domain/entities/points_models.dart';
+import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
 
 class ApiPointsRepository implements PointsRepository {
   ApiPointsRepository(this._dio);

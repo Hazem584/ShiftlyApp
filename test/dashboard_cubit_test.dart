@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 
 import 'dashboard_fixtures.dart';

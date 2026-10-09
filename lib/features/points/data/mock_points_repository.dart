@@ -1,6 +1,6 @@
-import 'package:shiftly/features/points/data/points_models.dart';
-import 'package:shiftly/features/points/data/points_repository.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/points/domain/entities/points_models.dart';
+import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
 
 class MockPointsRepository implements PointsRepository {
   const MockPointsRepository();

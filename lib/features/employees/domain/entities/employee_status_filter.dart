@@ -1,0 +1,1 @@
+enum EmployeeStatusFilter { active, suspended }

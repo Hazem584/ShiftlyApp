@@ -1,16 +1,15 @@
-import 'eligibility_tile.dart';
-import 'active_attendance_card.dart';
-import 'attendance_presentation.dart';
-import 'legacy_clock_in_review_card.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/active_attendance_card.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_presentation.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/eligibility_tile.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/legacy_clock_in_review_card.dart';
 
 class FlexibleAttendancePanel extends StatelessWidget {
   const FlexibleAttendancePanel({required this.timezone, super.key});

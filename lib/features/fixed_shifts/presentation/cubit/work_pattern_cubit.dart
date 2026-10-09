@@ -1,17 +1,13 @@
 import 'dart:async';
 
-import '../../data/extra_shift_repository.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import 'fixed_shifts_cubit.dart';
-
-import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/error/failure.dart';
+import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-
-import 'fixed_shift_cubit_helpers.dart';
-import '../../data/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shift_cubit_helpers.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 
 class WorkPatternCubit extends Cubit<WorkPatternState> {
   WorkPatternCubit(this._repository, {this.onChanged})

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 
 class FeatureSessionScope extends Equatable {
   const FeatureSessionScope({

@@ -4,9 +4,9 @@ import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/models/shift.dart';
 import 'package:shiftly/core/models/work_location.dart';
 import 'package:shiftly/core/network/api_endpoints.dart';
-import 'package:shiftly/features/employees/data/employee_repository.dart';
-import 'package:shiftly/features/invitations/data/invitation_repository.dart';
-import 'package:shiftly/features/workspaces/data/workspace_repository.dart';
+import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
+import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 
 class ApiWorkforceRepository
     implements EmployeeRepository, InvitationRepository, WorkspaceRepository {

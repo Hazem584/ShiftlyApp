@@ -2,16 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:uuid/uuid.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-
-import '../../data/manager_intent_storage.dart';
-import '../../data/manager_mutation_intent.dart';
-import '../../data/manager_points_repository.dart';
-import 'manager_performance_state.dart';
-import 'manager_resource_state.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_mutation_intent.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_points_repository.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
+import 'package:uuid/uuid.dart';
 
 class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
   ManagerPerformanceCubit(this.repository, this.storage, {this.onChanged})

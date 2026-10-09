@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:shiftly/features/onboarding/data/onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
 
 class OnboardingTestStorage implements OnboardingStorage {
   bool completed = false, failRead = false, failWrite = false;

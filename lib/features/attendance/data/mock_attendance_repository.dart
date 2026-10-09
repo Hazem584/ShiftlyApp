@@ -1,5 +1,5 @@
-import 'package:shiftly/core/network/api_model_parser.dart';
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 
 class MockAttendanceRepository implements AttendanceRepository {
   const MockAttendanceRepository();

@@ -1,7 +1,7 @@
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/models/shift.dart';
 import 'package:shiftly/core/models/work_location.dart';
-import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
 class MockEmployeeRepository implements EmployeeRepository {
   MockEmployeeRepository({

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
-
-import 'brand_logo.dart';
+import 'package:shiftly/core/widgets/brand_logo.dart';
 
 class BrandSessionLoading extends StatelessWidget {
   const BrandSessionLoading({super.key});

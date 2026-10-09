@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/points/data/points_models.dart';
-import 'package:shiftly/features/points/data/redemption_storage/redemption_intent_storage_contract.dart';
+import 'package:shiftly/features/points/domain/entities/points_models.dart';
+import 'package:shiftly/features/points/domain/repositories/redemption_intent_storage.dart';
 
 class SharedPreferencesRedemptionIntentStorage
     implements RedemptionIntentStorage {

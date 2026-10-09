@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/points/data/points_models.dart';
 import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
+import 'package:shiftly/features/points/domain/entities/points_models.dart';
 
 class DelayedRedemptionStorage extends MemoryRedemptionIntentStorage {
   Completer<void>? readGate;

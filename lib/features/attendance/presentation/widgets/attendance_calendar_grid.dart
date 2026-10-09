@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/features/attendance/data/attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_legend.dart';
 
 class AttendanceCalendarGrid extends StatelessWidget {

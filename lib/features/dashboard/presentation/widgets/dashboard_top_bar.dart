@@ -4,9 +4,9 @@ import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
+import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_avatar.dart';
-import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 
 class DashboardTopBar extends StatelessWidget {
   const DashboardTopBar({

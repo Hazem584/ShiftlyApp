@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shiftly/features/manager_performance/data/api_manager_points_repository.dart';
 import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/features/manager_performance/data/api_manager_points_repository.dart';
 
-import 'support/manager_points_adapter.dart';
 import 'points_feature_test.dart'
     show walletJson, dayJson, entryJson, workspaceId;
+import 'support/manager_points_adapter.dart';
 
 Map<String, Object?> policyJson() => {
   'id': 'p',

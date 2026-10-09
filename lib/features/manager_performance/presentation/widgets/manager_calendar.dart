@@ -2,15 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-
-import '../cubit/manager_performance_cubit.dart';
-import 'manager_scoped_details.dart';
-
 import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/features/points/data/points_models.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
+import 'package:shiftly/features/manager_performance/presentation/widgets/manager_scoped_details.dart';
+import 'package:shiftly/features/points/domain/entities/points_models.dart';
 import 'package:shiftly/features/points/presentation/widgets/points_formatters.dart';
-
-import '../cubit/manager_resource_state.dart';
 
 class ManagerCalendar extends StatelessWidget {
   const ManagerCalendar({

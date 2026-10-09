@@ -1,12 +1,3 @@
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
-import 'package:shiftly/core/utils/workspace_timestamp_input.dart';
-import 'package:shiftly/features/fixed_shifts/data/extra_authorization.dart';
-import 'package:shiftly/features/fixed_shifts/data/extra_authorization_page.dart';
-import 'package:shiftly/features/fixed_shifts/data/extra_shift_repository.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/assignment_form.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shift_form.dart';
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -18,14 +9,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/core/utils/workspace_timestamp_input.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/fixed_shifts/data/api_fixed_shift_repository.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization_page.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/screens/shift_templates_screen.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/assignment_form.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shift_form.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/flexible_attendance_panel.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/shift_templates_screen.dart';
 
 class _Adapter implements HttpClientAdapter {
   _Adapter(this.handler);

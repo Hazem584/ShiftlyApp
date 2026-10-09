@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/painting.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/chat/data/cache/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_cache_access.dart';
 
 /// Private app-support storage. Grants are deliberately never persisted.
-class ChatCacheDatabase {
+class ChatCacheDatabase implements ChatCacheAccess {
   ChatCacheDatabase(this.database, this.directory);
   static Future<ChatCacheDatabase> open(Directory directory) async {
     await directory.create(recursive: true);
@@ -37,9 +39,14 @@ class ChatCacheDatabase {
   FeatureSessionScope? _session;
   final Set<String> _grants = {};
   final Set<String> _archived = {};
+  @override
   final Set<void Function()> listeners = {};
+  @override
   int revision = 0;
   final changes = ValueNotifier<int>(0);
+  final _revisionEvents = StreamController<int>.broadcast(sync: true);
+  @override
+  Stream<int> get revisions => _revisionEvents.stream;
   Future<void> ready = Future<void>.value();
   final Map<String, int> pins = {};
   final Set<String> _deferredDeletes = {};
@@ -72,12 +79,15 @@ class ChatCacheDatabase {
     if (await file.exists()) await file.delete();
   }
 
+  @override
   bool authorized(ChatCacheScope scope) =>
       _session?.userId == scope.userId &&
       _session?.workspaceId == scope.workspaceId &&
       _grants.contains(scope.key);
+  @override
   bool writable(ChatCacheScope scope) =>
       authorized(scope) && !_archived.contains(scope.key);
+  @override
   void grant(ChatCacheScope scope, {bool archived = false}) {
     if (_session?.userId != scope.userId ||
         _session?.workspaceId != scope.workspaceId) {
@@ -91,6 +101,7 @@ class ChatCacheDatabase {
     }
   }
 
+  @override
   void bindSession(FeatureSessionScope? session) {
     if (_session == session) return;
     final former = _session?.userId;
@@ -104,6 +115,7 @@ class ChatCacheDatabase {
       listener();
     }
     changes.value = revision;
+    _revisionEvents.add(revision);
     if (former != null && former != session?.userId) {
       ready = ready.then((_) => purgeUser(former));
       unawaitedCleanup(ready);
@@ -116,6 +128,7 @@ class ChatCacheDatabase {
     }
   }
 
+  @override
   Future<void> revoke(ChatCacheScope scope) async {
     _grants.remove(scope.key);
     _archived.remove(scope.key);
@@ -126,6 +139,7 @@ class ChatCacheDatabase {
       listener();
     }
     changes.value = revision;
+    _revisionEvents.add(revision);
     await purge(Filter.equals('scope', scope.key));
   }
 
@@ -162,6 +176,7 @@ class ChatCacheDatabase {
     await ready;
     listeners.clear();
     changes.dispose();
+    await _revisionEvents.close();
     await database.close();
   }
 }

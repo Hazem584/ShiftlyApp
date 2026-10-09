@@ -4,11 +4,10 @@ import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-
-import '../../data/fixed_shift_repository.dart';
-import '../cubit/fixed_shifts_cubit.dart';
-import 'assignment_form.dart';
-import 'weekday_row.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/assignment_form.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/weekday_row.dart';
 
 class WorkPatternView extends StatelessWidget {
   const WorkPatternView({

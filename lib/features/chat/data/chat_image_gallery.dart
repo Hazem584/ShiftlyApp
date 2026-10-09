@@ -3,14 +3,14 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_gallery.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
 
-import 'cache/chat_cache_scope.dart';
-import 'cache/chat_media_cache.dart';
-import 'chat_media_validation.dart';
-import 'chat_models.dart';
-import 'chat_repository.dart';
-
-class ChatImageGallery {
+class ChatImageGallery implements ChatGallery {
   ChatImageGallery({MethodChannel? channel, Dio? downloadClient})
     : _channel = channel ?? const MethodChannel('shiftly/chat_gallery'),
       _download =
@@ -26,12 +26,13 @@ class ChatImageGallery {
   // Signed storage URLs must not receive the API client's authorization headers.
   final Dio _download;
 
+  @override
   Future<void> save({
     required ChatMessage message,
     required ChatRepository repository,
     required FeatureSessionScope session,
     required bool Function() hasAccess,
-    ChatMediaCache? cache,
+    ChatMediaStore? cache,
   }) async {
     final attachment = message.attachment;
     if (message.type != 'IMAGE' ||

@@ -1,8 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../data/onboarding_storage.dart';
-import '../../domain/onboarding_page_content.dart';
-import 'onboarding_state.dart';
+import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_state.dart';
+import 'package:shiftly/features/onboarding/presentation/models/onboarding_page_content.dart';
 
 class OnboardingCubit extends Cubit<OnboardingState> {
   OnboardingCubit(this.storage) : super(const OnboardingState());

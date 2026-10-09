@@ -1,6 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
 
 class PreferencesOnboardingStorage implements OnboardingStorage {
   PreferencesOnboardingStorage(this.preferences);

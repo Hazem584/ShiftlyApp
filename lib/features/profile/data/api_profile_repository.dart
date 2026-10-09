@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/core/network/api_endpoints.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/profile/data/models/profile_model.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
-import 'package:shiftly/features/profile/data/profile_repository.dart';
+import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 
 class ApiProfileRepository implements ProfileRepository {
   ApiProfileRepository(this._dio, this._activeMembership, {this.currentUser});

@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
-import 'package:shiftly/core/widgets/surface_card.dart';
-import 'package:shiftly/features/employees/presentation/widgets/employee_status_badge.dart';
-
-part 'parts/employee_list/private_employee_card.dart';
+import 'package:shiftly/features/employees/presentation/widgets/employee_list_employee_card.dart';
 
 class EmployeeList extends StatelessWidget {
   const EmployeeList({
@@ -33,7 +29,7 @@ class EmployeeList extends StatelessWidget {
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (_, index) {
         if (index < employees.length) {
-          return _EmployeeCard(employee: employees[index]);
+          return EmployeeListEmployeeCard(employee: employees[index]);
         }
         return Center(
           child: loadingMore

@@ -1,5 +1,5 @@
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
-import 'package:shiftly/features/employees/data/employee_repository.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
 class MockDashboardRepository implements DashboardRepository {
   MockDashboardRepository({

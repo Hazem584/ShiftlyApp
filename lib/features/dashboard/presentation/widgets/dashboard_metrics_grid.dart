@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/summary_card.dart';
 
 class DashboardMetricsGrid extends StatelessWidget {

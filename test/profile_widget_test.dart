@@ -2,22 +2,22 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
-import 'package:shiftly/features/profile/data/profile_image_picker.dart';
-import 'package:shiftly/features/profile/data/profile_repository.dart';
-import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
-import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
+import 'package:shiftly/features/profile/data/profile_image_picker.dart';
+import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
+import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
 
 ManagerProfile _profile({String? avatarUrl, String? phone}) => ManagerProfile(
   id: 'profile-id',

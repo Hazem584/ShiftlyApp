@@ -3,19 +3,62 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_shift_tile.dart';
 
-part 'parts/dashboard_activity_section/dashboard_activity_section.dart';
-part 'parts/dashboard_activity_section/dashboard_approvals_card.dart';
+class DashboardActivitySection extends StatelessWidget {
+  const DashboardActivitySection({
+    required this.shifts,
+    required this.timezone,
+    super.key,
+  });
 
-part 'parts/dashboard_activity_section/private_shift_tile.dart';
+  final List<DashboardShiftPreview> shifts;
+  final String timezone;
 
-String _attendanceLabel(DashboardAttendance? attendance) =>
-    switch (attendance?.status) {
-      DashboardAttendanceStatus.clockedIn => 'Clocked in',
-      DashboardAttendanceStatus.completed => 'Completed',
-      DashboardAttendanceStatus.unknown => 'Recorded',
-      null => 'Scheduled',
-    };
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text("Today's shifts", style: Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height: AppSpacing.s),
+      SurfaceCard(
+        padding: shifts.isEmpty ? const EdgeInsets.all(20) : EdgeInsets.zero,
+        child: shifts.isEmpty
+            ? Column(
+                children: [
+                  const Icon(
+                    Icons.event_available_outlined,
+                    color: AppColors.orange,
+                    size: 28,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'No shifts are scheduled for this workspace day.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () => context.push(AppRoutes.managerShifts),
+                    child: const Text('Create a shift'),
+                  ),
+                ],
+              )
+            : Column(
+                children: [
+                  for (var index = 0; index < shifts.length; index++) ...[
+                    DashboardShiftTile(
+                      shift: shifts[index],
+                      timezone: timezone,
+                    ),
+                    if (index < shifts.length - 1)
+                      const Divider(height: 1, indent: 64, endIndent: 14),
+                  ],
+                ],
+              ),
+      ),
+    ],
+  );
+}

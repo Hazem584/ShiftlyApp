@@ -1,7 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-
-import 'manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
 
 class PreferencesManagerIntentStorage implements ManagerIntentStorage {
   PreferencesManagerIntentStorage(this._preferences);

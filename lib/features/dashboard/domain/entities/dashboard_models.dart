@@ -1,0 +1,12 @@
+export 'package:shiftly/features/dashboard/domain/entities/dashboard_attendance.dart';
+export 'package:shiftly/features/dashboard/domain/entities/dashboard_attendance_status.dart';
+export 'package:shiftly/features/dashboard/domain/entities/dashboard_data.dart';
+export 'package:shiftly/features/dashboard/domain/entities/dashboard_leave_preview.dart';
+export 'package:shiftly/features/dashboard/domain/entities/dashboard_models_parsers.dart';
+export 'package:shiftly/features/dashboard/domain/entities/dashboard_person.dart';
+export 'package:shiftly/features/dashboard/domain/entities/dashboard_shift_preview.dart';
+export 'package:shiftly/features/dashboard/domain/entities/employee_dashboard_identity.dart';
+export 'package:shiftly/features/dashboard/domain/entities/employee_dashboard_leave.dart';
+export 'package:shiftly/features/dashboard/domain/entities/employee_dashboard_shift.dart';
+export 'package:shiftly/features/dashboard/domain/entities/employee_dashboard_summary.dart';
+export 'package:shiftly/features/dashboard/domain/entities/manager_dashboard_summary.dart';

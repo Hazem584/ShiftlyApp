@@ -6,9 +6,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
-import 'package:shiftly/features/shifts/data/shift_repository.dart';
+import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 class _Adapter implements HttpClientAdapter {
   _Adapter(this.handler);

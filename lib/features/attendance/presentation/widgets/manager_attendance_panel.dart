@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/models/employee.dart';
+import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
-import 'package:shiftly/features/attendance/data/attendance_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
-import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_records_list.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_rejection_dialog.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
-import 'package:shiftly/features/shifts/data/shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 class ManagerAttendancePanel extends StatelessWidget {
   const ManagerAttendancePanel({required this.timezone, super.key});

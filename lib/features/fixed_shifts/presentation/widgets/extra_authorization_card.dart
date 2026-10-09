@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-
-import '../../data/extra_authorization.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
 
 class ExtraAuthorizationCard extends StatelessWidget {
   const ExtraAuthorizationCard({required this.value, this.onRevoke, super.key});

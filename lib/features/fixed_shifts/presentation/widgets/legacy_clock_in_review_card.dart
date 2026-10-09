@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-
-import '../../data/legacy_clock_in_review.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/legacy_clock_in_review.dart';
 
 class LegacyClockInReviewCard extends StatelessWidget {
   const LegacyClockInReviewCard({

@@ -3,17 +3,17 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/error/api_exception.dart';
-import 'package:shiftly/core/network/api_model_parser.dart';
+import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/auth/data/models/current_user.dart';
-import 'package:shiftly/features/manager_performance/data/manager_mutation_intent.dart';
-import 'package:shiftly/features/manager_performance/data/manager_points_page.dart';
-import 'package:shiftly/features/manager_performance/data/manager_points_record.dart';
+import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/manager_performance/data/preferences_manager_intent_storage.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_mutation_intent.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_points_page.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_points_record.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 
-import 'support/manager_points_fake.dart';
 import 'support/delayed_manager_storage.dart';
+import 'support/manager_points_fake.dart';
 
 const managerScope = FeatureSessionScope(
   userId: 'u',

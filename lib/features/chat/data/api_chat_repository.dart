@@ -2,9 +2,9 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
-import 'package:shiftly/features/chat/data/chat_repository.dart';
 import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 
 class ApiChatRepository extends ChatRepository {
   ApiChatRepository(this._dio, {required ChatStorageUploader storageUploader})

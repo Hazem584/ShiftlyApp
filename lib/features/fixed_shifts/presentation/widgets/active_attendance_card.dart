@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-
-import '../../data/fixed_shift_repository.dart';
-import 'attendance_presentation.dart';
-
 import 'package:shiftly/core/widgets/surface_card.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_presentation.dart';
 
 class ActiveAttendanceCard extends StatelessWidget {
   const ActiveAttendanceCard({

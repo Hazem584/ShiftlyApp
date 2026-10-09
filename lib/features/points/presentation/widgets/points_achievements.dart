@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/features/points/data/points_models.dart';
+import 'package:shiftly/features/points/domain/entities/points_models.dart';
 import 'package:shiftly/features/points/presentation/widgets/points_empty.dart';
 
 class PointsAchievements extends StatelessWidget {

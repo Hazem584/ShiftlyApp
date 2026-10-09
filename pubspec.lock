@@ -73,14 +73,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
-  awesome_dialog:
-    dependency: "direct main"
-    description:
-      name: awesome_dialog
-      sha256: "4c5821a0a637ceee022084e78c1b8237dd4b8bfca4dd24ac2484662a56707338"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.3.0"
   bloc:
     dependency: transitive
     description:
@@ -201,14 +193,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
-  cupertino_icons:
-    dependency: "direct main"
-    description:
-      name: cupertino_icons
-      sha256: "41e005c33bd814be4d3096aff55b1908d419fde52ca656c8c47719ec745873cd"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.9"
   cupertino_ui:
     dependency: transitive
     description:
@@ -501,14 +485,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.27.3"
-  graphs:
-    dependency: transitive
-    description:
-      name: graphs
-      sha256: "741bbf84165310a68ff28fe9e727332eef1407342fca52759cb21ad8177bb8d0"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.3.2"
   gsettings:
     dependency: transitive
     description:
@@ -1013,22 +989,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
-  rive:
-    dependency: transitive
-    description:
-      name: rive
-      sha256: "0319f216b753f5d8f3f624413cd5b5a18f6ed8f0a677f80d97b53ecd3d2080c3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.14.11"
-  rive_native:
-    dependency: transitive
-    description:
-      name: rive_native
-      sha256: f1ae8a9ec4dab6b803fed006745e55c7de6cd568bd30750d4a6770479b9f8294
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.1.11"
   rxdart:
     dependency: transitive
     description:

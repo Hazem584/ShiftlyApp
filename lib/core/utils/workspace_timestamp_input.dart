@@ -1,4 +1,4 @@
-import 'workspace_time.dart';
+import 'package:shiftly/core/utils/workspace_time.dart';
 
 /// An explicit offset selects an instant during a fold. Round-tripping rejects
 /// gaps and offsets belonging to the device rather than the workspace.

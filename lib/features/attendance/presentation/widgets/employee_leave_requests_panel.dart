@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
-import 'package:shiftly/core/widgets/surface_card.dart';
-import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/leave_request_details_dialog.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/employee_leave_card.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_form_dialog.dart';
-
-part 'parts/employee_leave_requests_panel/private_employee_leave_card.dart';
 
 class EmployeeLeaveRequestsPanel extends StatelessWidget {
   const EmployeeLeaveRequestsPanel({required this.timezone, super.key});
@@ -91,7 +83,7 @@ class EmployeeLeaveRequestsPanel extends StatelessWidget {
               )
             else
               for (final request in state.requests) ...[
-                _EmployeeLeaveCard(
+                EmployeeLeaveCard(
                   request: request,
                   timezone: timezone,
                   cancelling: state.cancellingIds.contains(request.id),

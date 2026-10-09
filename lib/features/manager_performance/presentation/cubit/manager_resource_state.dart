@@ -1,4 +1,4 @@
-import '../../data/manager_points_record.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_points_record.dart';
 
 class ManagerResourceState {
   const ManagerResourceState({

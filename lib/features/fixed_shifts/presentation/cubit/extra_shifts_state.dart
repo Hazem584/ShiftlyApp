@@ -1,8 +1,7 @@
 import 'package:shiftly/core/error/failure.dart';
-
-import '../../data/extra_authorization.dart';
-import '../../data/extra_authorization_page.dart';
-import '../../data/extra_shift_intent.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization_page.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_shift_intent.dart';
 
 class ExtraShiftsState {
   const ExtraShiftsState({

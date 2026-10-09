@@ -1,0 +1,12 @@
+export 'package:shiftly/features/fixed_shifts/domain/entities/attendance_classification.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/attendance_source.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/eligible_shift_occurrence.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/flexible_attendance.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/pending_clock_in.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/saved_schedule.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/shift_template.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/shift_template_input.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/shift_template_page.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/template_eligibility.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/work_pattern.dart';
+export 'package:shiftly/features/fixed_shifts/domain/entities/work_pattern_history.dart';

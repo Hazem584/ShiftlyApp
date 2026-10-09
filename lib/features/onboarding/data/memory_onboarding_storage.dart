@@ -1,4 +1,4 @@
-import 'onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
 
 /// Used only by explicit previews and isolated tests.
 class MemoryOnboardingStorage implements OnboardingStorage {

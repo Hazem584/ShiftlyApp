@@ -4,13 +4,14 @@ import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
-import 'package:shiftly/features/attendance/data/leave_request_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
+import 'package:shiftly/features/attendance/presentation/dialogs/leave_request_rejection_dialog.dart';
+import 'package:shiftly/features/attendance/presentation/utils/leave_request_card_formatters.dart';
+import 'package:shiftly/features/attendance/presentation/utils/leave_request_display_formatters.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/leave_detail_row.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_details_dialog.dart';
-
-part 'parts/leave_request_card/private_rejection_dialog.dart';
-part 'parts/leave_request_card/private_rejection_dialog_state.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
 
 class LeaveRequestCard extends StatelessWidget {
   const LeaveRequestCard({
@@ -58,8 +59,9 @@ class LeaveRequestCard extends StatelessWidget {
   Future<String?> _rejectionReason(BuildContext context) async {
     return showDialog<String>(
       context: context,
-      builder: (_) =>
-          _RejectionDialog(employeeName: request.employee.displayName),
+      builder: (_) => LeaveRequestRejectionDialog(
+        employeeName: request.employee.displayName,
+      ),
     );
   }
 
@@ -80,7 +82,7 @@ class LeaveRequestCard extends StatelessWidget {
                 backgroundColor: AppColors.selected,
                 foregroundColor: AppColors.ink,
                 child: Text(
-                  _initials(request.employee.displayName),
+                  leaveRequestCardInitials(request.employee.displayName),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
@@ -187,14 +189,4 @@ class LeaveRequestCard extends StatelessWidget {
           LeaveRequestDetailsDialog(request: record, timezone: timezone),
     );
   }
-}
-
-String _initials(String name) {
-  final parts = name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .take(2);
-  final value = parts.map((part) => part[0]).join().toUpperCase();
-  return value.isEmpty ? '?' : value;
 }

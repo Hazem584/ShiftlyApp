@@ -1,4 +1,4 @@
-import 'manager_form_field.dart';
+import 'package:shiftly/features/manager_performance/presentation/widgets/manager_form_field.dart';
 
 abstract final class ManagerForms {
   static const adjustmentReasons = [

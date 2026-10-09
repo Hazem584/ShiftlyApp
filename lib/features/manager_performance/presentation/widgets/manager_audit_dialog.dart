@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-
-import '../../data/manager_points_record.dart';
-import '../cubit/manager_performance_cubit.dart';
-import 'manager_scoped_details.dart';
+import 'package:shiftly/features/manager_performance/domain/entities/manager_points_record.dart';
+import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
+import 'package:shiftly/features/manager_performance/presentation/widgets/manager_scoped_details.dart';
 
 class ManagerAuditDialog extends StatelessWidget {
   const ManagerAuditDialog({

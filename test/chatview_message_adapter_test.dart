@@ -1,6 +1,6 @@
 import 'package:chatview/chatview.dart' as chatview;
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/adapters/chatview_message_adapter.dart';
 
 void main() {

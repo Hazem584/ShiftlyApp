@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftly/core/widgets/brand_logo.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-
-import '../../domain/onboarding_page_content.dart';
-import '../cubit/onboarding_cubit.dart';
-import '../cubit/onboarding_state.dart';
-import '../widgets/onboarding_illustration.dart';
-import '../widgets/onboarding_page_indicator.dart';
+import 'package:shiftly/core/widgets/brand_logo.dart';
+import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_state.dart';
+import 'package:shiftly/features/onboarding/presentation/models/onboarding_page_content.dart';
+import 'package:shiftly/features/onboarding/presentation/widgets/onboarding_illustration.dart';
+import 'package:shiftly/features/onboarding/presentation/widgets/onboarding_page_indicator.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});

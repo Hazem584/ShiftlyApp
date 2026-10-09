@@ -2,18 +2,19 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:dio/dio.dart';
 import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
 import 'package:sembast/sembast.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
-import 'package:shiftly/features/chat/data/cache/chat_cache_scope.dart';
-import 'package:shiftly/features/chat/data/chat_media_validation.dart';
-import 'package:shiftly/features/chat/data/chat_models.dart';
-import 'package:shiftly/features/chat/data/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
+import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
 import 'package:uuid/uuid.dart';
 
-class ChatMediaCache {
+class ChatMediaCache implements ChatMediaStore {
   ChatMediaCache(
     this.storage, {
     Dio? downloadClient,
@@ -30,6 +31,7 @@ class ChatMediaCache {
            ) {
     storage.listeners.add(_invalidate);
   }
+  @override
   final ChatCacheDatabase storage;
   // Deliberately independent of the shared authenticated API client.
   final Dio _downloadClient;
@@ -43,8 +45,11 @@ class ChatMediaCache {
   int _active = 0;
   String _key(ChatCacheScope scope, ChatMessage message) =>
       'media:${scope.key}:${message.id}:${message.attachment?.id}';
+  @override
   void pin(File file) => storage.pin(file);
+  @override
   void unpin(File file) => storage.unpin(file);
+  @override
   Future<File> resolve(
     ChatCacheScope scope,
     ChatMessage message,
@@ -275,6 +280,7 @@ class ChatMediaCache {
     }
   }
 
+  @override
   Future<int> size() async {
     final rows = await storage.records.find(
       storage.database,
@@ -286,6 +292,7 @@ class ChatMediaCache {
     );
   }
 
+  @override
   Future<void> clear() => evict(clear: true);
   Future<void> evict({bool clear = false}) async {
     final rows = await storage.records.find(

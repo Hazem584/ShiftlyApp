@@ -1,4 +1,4 @@
-import 'package:shiftly/features/dashboard/data/dashboard_repository.dart';
+import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 
 const dashboardWorkspaceId = 'c551356a-e456-4a3e-a49a-9dd0caa7e790';
 const dashboardMembershipId = '040e52de-05b9-46b8-80ca-e7df3ef7444b';
