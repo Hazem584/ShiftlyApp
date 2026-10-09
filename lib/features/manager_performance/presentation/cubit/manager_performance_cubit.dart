@@ -255,8 +255,13 @@ class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
       ...payload,
       for (final entry in payload.entries)
         if (entry.value is String) entry.key: (entry.value! as String).trim(),
-      ?uuidField: const Uuid().v4(),
     };
+    // Dart 3.13.5's AOT frontend crashes on a null-aware map key whose
+    // value invokes a const receiver. Keep UUID creation conditional without
+    // triggering that lowering bug or the collection-if modernization lint.
+    if (uuidField != null) {
+      normalized[uuidField] = const Uuid().v4();
+    }
     final intent = ManagerMutationIntent(
       resource: resource,
       target: target,

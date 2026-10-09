@@ -58,6 +58,24 @@ void main() {
     cubit = ManagerPerformanceCubit(repository, storage);
   });
   tearDown(() => cubit.close());
+  test(
+    'submission without a UUID field omits the key and preserves payload',
+    () async {
+      await ready(cubit);
+      repository.onMutate = (_, payload, _) async =>
+          ManagerPointsRecord({'id': 'canonical', ...payload});
+      await cubit.submit('policy/versions', {
+        'effectiveFrom': '2099-10-10',
+        'explanation': '  Policy evidence  ',
+      });
+      expect(repository.calls.single['payload'], {
+        'effectiveFrom': '2099-10-10',
+        'explanation': 'Policy evidence',
+      });
+      expect(cubit.state.intent, isNull);
+      expect(await storage.read(managerScope), isNull);
+    },
+  );
   test('duplicate taps blocked before persistence and UUID survives timeout/restart', () async {
     await ready(cubit);
     storage.writeGate = Completer<void>();
