@@ -25,8 +25,9 @@ class ExtraShiftsSection extends StatelessWidget {
     if (scope == null ||
         !scope.isManager ||
         scope.workspaceId != workspaceId ||
-        !getIt.isRegistered<ExtraShiftRepository>())
-      { return const SizedBox.shrink(); }
+        !getIt.isRegistered<ExtraShiftRepository>()) {
+      return const SizedBox.shrink();
+    }
     return BlocProvider(
       key: ValueKey((scope, membershipId, canEdit)),
       create: (_) => ExtraShiftsCubit(

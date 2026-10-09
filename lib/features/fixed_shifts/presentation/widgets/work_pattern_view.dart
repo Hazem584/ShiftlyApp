@@ -111,10 +111,12 @@ class WorkPatternView extends StatelessWidget {
                             pattern.id == state.history?.current?.id
                                 ? 'Current assignment'
                                 : pattern.effectiveFrom.compareTo(
-                                      WorkspaceTime.dateKey(
-                                        DateTime.now().toUtc(),
-                                        timezone,
-                                      )) > 0
+                                        WorkspaceTime.dateKey(
+                                          DateTime.now().toUtc(),
+                                          timezone,
+                                        ),
+                                      ) >
+                                      0
                                 ? 'Future assignment'
                                 : 'Historical assignment',
                           ),
@@ -122,10 +124,8 @@ class WorkPatternView extends StatelessWidget {
                         ],
                       ),
                       subtitle: Text(
-                        (pattern.assignmentSnapshot?.summary ??
-                                'Assignment evidence not recorded') +
-                            '\n' +
-                            '${pattern.effectiveFrom} → ${pattern.effectiveTo ?? 'ongoing'}',
+                        '${pattern.assignmentSnapshot?.summary ?? 'Assignment evidence not recorded'}\n'
+                        '${pattern.effectiveFrom} → ${pattern.effectiveTo ?? 'ongoing'}',
                       ),
                     ),
                 ],
@@ -148,10 +148,7 @@ class WorkPatternView extends StatelessWidget {
                       child: const Text('Previous'),
                     ),
                     Text(
-                      'Page ' +
-                          pagination.page.toString() +
-                          ' of ' +
-                          pagination.totalPages.toString(),
+                      'Page ${pagination.page} of ${pagination.totalPages}',
                     ),
                     TextButton(
                       onPressed: state.loading

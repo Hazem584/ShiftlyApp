@@ -21,30 +21,69 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
   String? _employeeId;
   int _generation = 0, _request = 0;
   bool _busy = false;
+  int _mutation = 0;
+  int? _owner;
   bool _valid(FeatureSessionScope scope, int generation) =>
       !isClosed && _scope == scope && _generation == generation;
+  bool _owns(FeatureSessionScope scope, int generation, int owner) =>
+      _valid(scope, generation) && _owner == owner;
+
+  int _beginMutation() {
+    _busy = true;
+    _request++;
+    return _owner = ++_mutation;
+  }
+
+  void _release(FeatureSessionScope scope, int generation, int owner) {
+    if (!_owns(scope, generation, owner)) {
+      return;
+    }
+    _owner = null;
+    _busy = false;
+    emit(
+      ExtraShiftsState(
+        loading: state.loading,
+        page: state.page,
+        intent: state.intent,
+        canonical: state.canonical,
+        recoveryBlocked: state.recoveryBlocked,
+        failure: state.failure,
+      ),
+    );
+  }
+
   void bind(FeatureSessionScope? scope, String employeeId) {
     final valid = scope?.isManager == true ? scope : null;
-    if (_scope == valid && _employeeId == employeeId) { return; }
+    if (_scope == valid && _employeeId == employeeId) {
+      return;
+    }
     _scope = valid;
     _employeeId = employeeId;
     _generation++;
     _request++;
     _busy = false;
+    _owner = null;
     emit(const ExtraShiftsState());
-    if (valid != null) { unawaited(load()); }
+    if (valid != null) {
+      unawaited(load());
+    }
   }
 
   Failure _failure(Object error, String fallback) =>
       error is ApiException ? error.toFailure() : Failure(message: fallback);
-  Future<void> load({int page = 1}) async {
+  Future<void> load({int page = 1}) => _load(page: page);
+
+  Future<void> _load({int page = 1, int? owner}) async {
     final scope = _scope;
     final employee = _employeeId;
-    if (scope == null || employee == null || _busy) { return; }
+    if (scope == null || employee == null || (_busy && owner != _owner)) {
+      return;
+    }
     final generation = _generation, request = ++_request;
     final previous = state;
     emit(
       ExtraShiftsState(
+        busy: _busy,
         loading: true,
         page: previous.page,
         canonical: previous.canonical,
@@ -54,9 +93,12 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
     try {
       final raw = await repository.readExtraIntent(scope);
       final intent = raw == null ? null : ExtraShiftIntent.decode(raw);
-      if (!_valid(scope, generation) || request != _request) { return; }
+      if (!_valid(scope, generation) || request != _request) {
+        return;
+      }
       emit(
         ExtraShiftsState(
+          busy: _busy,
           loading: true,
           page: previous.page,
           intent: intent,
@@ -68,15 +110,19 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
         employee,
         page: page,
       );
-      if (!_valid(scope, generation) || request != _request) { return; }
+      if (!_valid(scope, generation) || request != _request) {
+        return;
+      }
       if (result.data.any(
         (v) =>
             v.fields['workspaceId'] != scope.workspaceId ||
             v.fields['employeeMembershipId'] != employee,
-      ))
-        { throw const FormatException('Cross-scope extra response'); }
+      )) {
+        throw const FormatException('Cross-scope extra response');
+      }
       emit(
         ExtraShiftsState(
+          busy: _busy,
           loading: false,
           page: result,
           intent: intent,
@@ -85,9 +131,10 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
         ),
       );
     } catch (error) {
-      if (_valid(scope, generation) && request == _request)
-        { emit(
+      if (_valid(scope, generation) && request == _request) {
+        emit(
           ExtraShiftsState(
+            busy: _busy,
             loading: false,
             page: previous.page,
             intent: state.intent,
@@ -97,7 +144,8 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
               'Unable to load extras or saved recovery. Retry before changing extras.',
             ),
           ),
-        ); }
+        );
+      }
     }
   }
 
@@ -110,8 +158,9 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
         employee == null ||
         _busy ||
         state.loading ||
-        state.recoveryBlocked)
-      { return false; }
+        state.recoveryBlocked) {
+      return false;
+    }
     final allowed = {
       'shiftTemplateId',
       'operationalDate',
@@ -131,8 +180,9 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
           'EMERGENCY_SUPPORT',
           'HIGH_WORKLOAD_SUPPORT',
           'OTHER',
-        }.contains(payload['reason']))
-      { return false; }
+        }.contains(payload['reason'])) {
+      return false;
+    }
     if (actual) {
       final start = DateTime.tryParse(
             payload['actualClockInAt'] as String? ?? '',
@@ -141,8 +191,9 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
       if (start == null ||
           end == null ||
           !end.isAfter(start) ||
-          end.isAfter(DateTime.now().toUtc()))
-        { return false; }
+          end.isAfter(DateTime.now().toUtc())) {
+        return false;
+      }
     }
     final normalized = Map<String, Object?>.from(payload);
     normalized['explanation'] = (normalized['explanation'] as String)
@@ -161,7 +212,9 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
 
   Future<bool> recover() async {
     final scope = _scope, intent = state.intent;
-    if (scope == null || intent == null || _busy) { return false; }
+    if (scope == null || intent == null || _busy) {
+      return false;
+    }
     return _submit(scope, intent);
   }
 
@@ -169,8 +222,7 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
     FeatureSessionScope scope,
     ExtraShiftIntent intent,
   ) async {
-    _busy = true;
-    _request++;
+    final owner = _beginMutation();
     final generation = _generation;
     emit(
       ExtraShiftsState(
@@ -183,14 +235,18 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
     );
     try {
       await repository.saveExtraIntent(scope, intent.encode());
-      if (!_valid(scope, generation)) { return false; }
+      if (!_owns(scope, generation, owner)) {
+        return false;
+      }
       final canonical = await repository.createExtra(
         scope.workspaceId,
         intent.membershipId,
         intent.payload,
         actual: intent.actual,
       );
-      if (!_valid(scope, generation)) { return false; }
+      if (!_owns(scope, generation, owner)) {
+        return false;
+      }
       if (!const {
             'AUTHORIZED',
             'CONSUMED',
@@ -206,12 +262,14 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
           canonical.operationalDate != intent.payload['operationalDate'] ||
           canonical.fields['reason'] != intent.payload['reason'] ||
           canonical.fields['explanation'] != intent.payload['explanation'] ||
-          (intent.actual && canonical.status != 'CONSUMED'))
-        { throw const FormatException('Invalid extra response'); }
+          (intent.actual && canonical.status != 'CONSUMED')) {
+        throw const FormatException('Invalid extra response');
+      }
       if (intent.actual) {
         final attendance = canonical.fields['attendance'] as List;
-        if (attendance.length != 1 || attendance.first is! Map)
-          { throw const FormatException('Missing canonical attendance'); }
+        if (attendance.length != 1 || attendance.first is! Map) {
+          throw const FormatException('Missing canonical attendance');
+        }
         final linked = attendance.first as Map;
         if (linked['extraAuthorizationId'] != canonical.id ||
             linked['enteredByMembershipId'] != scope.membershipId ||
@@ -224,11 +282,13 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
             DateTime.tryParse(
                   canonical.fields['actualClockOutAt'] as String? ?? '',
                 ) !=
-                DateTime.parse(intent.payload['actualClockOutAt'] as String))
-          { throw const FormatException('Invalid manager attendance audit'); }
+                DateTime.parse(intent.payload['actualClockOutAt'] as String)) {
+          throw const FormatException('Invalid manager attendance audit');
+        }
       }
       emit(
         ExtraShiftsState(
+          busy: true,
           loading: false,
           page: state.page,
           canonical: canonical,
@@ -240,9 +300,12 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
         await repository.clearExtraIntent(scope, intent.encode());
         cleared = true;
       } catch (_) {}
-      if (!_valid(scope, generation)) { return true; }
+      if (!_owns(scope, generation, owner)) {
+        return true;
+      }
       emit(
         ExtraShiftsState(
+          busy: true,
           loading: false,
           page: state.page,
           canonical: canonical,
@@ -250,15 +313,17 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
           recoveryBlocked: !cleared,
         ),
       );
-      _busy = false;
       try {
         await onChanged?.call();
       } catch (_) {}
-      if (_valid(scope, generation))
-        { await load(page: state.page?.pagination.page ?? 1); }
+      if (_owns(scope, generation, owner)) {
+        await _load(page: state.page?.pagination.page ?? 1, owner: owner);
+      }
       return true;
     } catch (error) {
-      if (!_valid(scope, generation)) { return false; }
+      if (!_owns(scope, generation, owner)) {
+        return false;
+      }
       var cleared = false;
       if (confirmedMutationRejection(error)) {
         try {
@@ -266,9 +331,10 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
           cleared = true;
         } catch (_) {}
       }
-      if (_valid(scope, generation))
-        { emit(
+      if (_owns(scope, generation, owner)) {
+        emit(
           ExtraShiftsState(
+            busy: true,
             loading: false,
             page: state.page,
             intent: cleared ? null : intent,
@@ -279,10 +345,11 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
               'Operation may have succeeded. Recover the saved request before creating another extra.',
             ),
           ),
-        ); }
+        );
+      }
       return false;
     } finally {
-      if (_valid(scope, generation)) { _busy = false; }
+      _release(scope, generation, owner);
     }
   }
 
@@ -295,10 +362,10 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
         state.recoveryBlocked ||
         !value.canRevoke ||
         value.fields['employeeMembershipId'] != employee ||
-        value.fields['workspaceId'] != scope.workspaceId)
-      { return false; }
-    _busy = true;
-    _request++;
+        value.fields['workspaceId'] != scope.workspaceId) {
+      return false;
+    }
+    final owner = _beginMutation();
     final generation = _generation;
     emit(
       ExtraShiftsState(
@@ -315,31 +382,36 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
         employee,
         value.id,
       );
-      if (!_valid(scope, generation)) { return false; }
+      if (!_owns(scope, generation, owner)) {
+        return false;
+      }
       if (canonical.id != value.id ||
           canonical.status != 'REVOKED' ||
           canonical.fields['workspaceId'] != scope.workspaceId ||
-          canonical.fields['employeeMembershipId'] != employee)
-        { throw const FormatException('Invalid revocation response'); }
+          canonical.fields['employeeMembershipId'] != employee) {
+        throw const FormatException('Invalid revocation response');
+      }
       emit(
         ExtraShiftsState(
+          busy: true,
           loading: false,
           canonical: canonical,
           page: state.page,
           recoveryBlocked: false,
         ),
       );
-      _busy = false;
       try {
         await onChanged?.call();
       } catch (_) {}
-      if (_valid(scope, generation))
-        { await load(page: state.page?.pagination.page ?? 1); }
+      if (_owns(scope, generation, owner)) {
+        await _load(page: state.page?.pagination.page ?? 1, owner: owner);
+      }
       return true;
     } catch (error) {
-      if (_valid(scope, generation))
-        { emit(
+      if (_owns(scope, generation, owner)) {
+        emit(
           ExtraShiftsState(
+            busy: true,
             loading: false,
             page: state.page,
             canonical: state.canonical,
@@ -348,10 +420,11 @@ class ExtraShiftsCubit extends Cubit<ExtraShiftsState> {
               'Unable to confirm revocation. Refresh its status before retrying.',
             ),
           ),
-        ); }
+        );
+      }
       return false;
     } finally {
-      if (_valid(scope, generation)) { _busy = false; }
+      _release(scope, generation, owner);
     }
   }
 }

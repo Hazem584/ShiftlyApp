@@ -1,3 +1,5 @@
+import '../../data/legacy_clock_in_review.dart';
+
 import 'package:equatable/equatable.dart';
 import 'package:shiftly/core/error/failure.dart';
 
@@ -5,6 +7,7 @@ import '../../data/fixed_shift_repository.dart';
 
 class FlexibleAttendanceState extends Equatable {
   const FlexibleAttendanceState({
+    this.legacyReviews = const [],
     this.recovery,
     this.recoveryBlocked = false,
     this.loading = true,
@@ -16,6 +19,8 @@ class FlexibleAttendanceState extends Equatable {
     this.clockingOut = false,
     this.failure,
   });
+  final List<LegacyClockInReview> legacyReviews;
+  bool get legacyReviewRequired => legacyReviews.any((v) => v.requiresReview);
   final PendingClockIn? recovery;
   final bool recoveryBlocked;
   final bool loading;
@@ -28,6 +33,7 @@ class FlexibleAttendanceState extends Equatable {
   final Failure? failure;
 
   FlexibleAttendanceState copyWith({
+    List<LegacyClockInReview>? legacyReviews,
     PendingClockIn? recovery,
     bool clearRecovery = false,
     bool? recoveryBlocked,
@@ -43,6 +49,7 @@ class FlexibleAttendanceState extends Equatable {
     Failure? failure,
     bool clearFailure = false,
   }) => FlexibleAttendanceState(
+    legacyReviews: legacyReviews ?? this.legacyReviews,
     recovery: clearRecovery ? null : recovery ?? this.recovery,
     recoveryBlocked: recoveryBlocked ?? this.recoveryBlocked,
     loading: loading ?? this.loading,
@@ -59,6 +66,7 @@ class FlexibleAttendanceState extends Equatable {
 
   @override
   List<Object?> get props => [
+    legacyReviews,
     recovery,
     recoveryBlocked,
     loading,

@@ -88,11 +88,7 @@ class _AttendanceRecordCard extends StatelessWidget {
                   ),
                 if (record.source == AttendanceSource.template)
                   Text(
-                    'Operational date: ' +
-                        (record.operationalDate?.split('T').first ??
-                            'Not recorded') +
-                        ' / ' +
-                        savedTimezone,
+                    'Operational date: ${record.operationalDate?.split('T').first ?? 'Not recorded'} / $savedTimezone',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 const SizedBox(height: 3),

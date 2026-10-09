@@ -18,8 +18,9 @@ class ExtraShiftIntent {
   });
   factory ExtraShiftIntent.decode(String raw) {
     final json = ApiModelParser.map(jsonDecode(raw));
-    if (json['actual'] is! bool)
-      { throw const FormatException('Invalid saved operation'); }
+    if (json['actual'] is! bool) {
+      throw const FormatException('Invalid saved operation');
+    }
     final payload = ApiModelParser.map(json['payload']);
     final allowed = {
       'shiftTemplateId',
@@ -30,8 +31,9 @@ class ExtraShiftIntent {
       if (json['actual'] == true) 'actualClockInAt',
       if (json['actual'] == true) 'actualClockOutAt',
     };
-    if (payload.keys.any((key) => !allowed.contains(key)))
-      { throw const FormatException('Unsupported saved request fields'); }
+    if (payload.keys.any((key) => !allowed.contains(key))) {
+      throw const FormatException('Unsupported saved request fields');
+    }
     for (final key in [
       'shiftTemplateId',
       'operationalDate',
@@ -44,8 +46,9 @@ class ExtraShiftIntent {
     if (!RegExp(
       r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
       caseSensitive: false,
-    ).hasMatch(payload['clientAuthorizationId'] as String))
-      { throw const FormatException('Invalid saved request key'); }
+    ).hasMatch(payload['clientAuthorizationId'] as String)) {
+      throw const FormatException('Invalid saved request key');
+    }
     if (json['actual'] == true) {
       ApiModelParser.date(payload, 'actualClockInAt');
       ApiModelParser.date(payload, 'actualClockOutAt');

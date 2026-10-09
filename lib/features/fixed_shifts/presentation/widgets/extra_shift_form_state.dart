@@ -43,21 +43,28 @@ class ExtraShiftFormState extends State<ExtraShiftForm> {
           widget.workspaceId,
           page: page,
         );
-        if (!mounted) { return; }
-        if (value.data.any((v) => v.workspaceId != widget.workspaceId))
-          { throw const FormatException('Invalid template scope'); }
+        if (!mounted) {
+          return;
+        }
+        if (value.data.any((v) => v.workspaceId != widget.workspaceId)) {
+          throw const FormatException('Invalid template scope');
+        }
         result.addAll(value.data.where((v) => v.active));
-        if (page >= value.pagination.totalPages) { break; }
+        if (page >= value.pagination.totalPages) {
+          break;
+        }
         page++;
       }
-      if (mounted)
-        { setState(() {
+      if (mounted) {
+        setState(() {
           templates = result;
           error = null;
-        }); }
+        });
+      }
     } catch (_) {
-      if (mounted)
-        { setState(() => error = 'Unable to load active templates. Retry.'); }
+      if (mounted) {
+        setState(() => error = 'Unable to load active templates. Retry.');
+      }
     }
   }
 
@@ -183,22 +190,27 @@ class ExtraShiftFormState extends State<ExtraShiftForm> {
     ],
   );
   Future<void> _recover() async {
-    if (widget.cubit.isClosed) { return; }
+    if (widget.cubit.isClosed) {
+      return;
+    }
     setState(() {
       busy = true;
       error = null;
     });
     final saved = await widget.cubit.recover();
-    if (!mounted) { return; }
-    if (saved)
-      { Navigator.pop(context, true); }
-    else
-      { setState(() {
+    if (!mounted) {
+      return;
+    }
+    if (saved) {
+      Navigator.pop(context, true);
+    } else {
+      setState(() {
         busy = false;
         error =
             widget.cubit.state.failure?.message ??
             'Recovery is still unresolved.';
-      }); }
+      });
+    }
   }
 
   Future<void> _pickDate() async {
@@ -208,7 +220,9 @@ class ExtraShiftFormState extends State<ExtraShiftForm> {
       firstDate: DateTime(2000),
       lastDate: DateTime(date.year + 5, 12, 31),
     );
-    if (mounted && chosen != null) { setState(() => date = chosen); }
+    if (mounted && chosen != null) {
+      setState(() => date = chosen);
+    }
   }
 
   Future<void> _submit() async {
@@ -269,19 +283,24 @@ class ExtraShiftFormState extends State<ExtraShiftForm> {
         ],
       ),
     );
-    if (!mounted || confirmed != true || widget.cubit.isClosed) { return; }
+    if (!mounted || confirmed != true || widget.cubit.isClosed) {
+      return;
+    }
     setState(() {
       busy = true;
       error = null;
     });
     final success = await widget.cubit.create(payload, actual: widget.actual);
-    if (!mounted) { return; }
-    if (success)
-      { Navigator.pop(context, true); }
-    else
-      { setState(() {
+    if (!mounted) {
+      return;
+    }
+    if (success) {
+      Navigator.pop(context, true);
+    } else {
+      setState(() {
         busy = false;
         error = widget.cubit.state.failure?.message ?? 'Recover the saved operation in Extra Shifts before submitting again.';
-      }); }
+      });
+    }
   }
 }

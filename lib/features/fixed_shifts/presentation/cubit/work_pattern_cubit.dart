@@ -33,8 +33,9 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
   }) async {
     if (_workspaceId == workspaceId &&
         _membershipId == membershipId &&
-        _scope == scope)
-      { return; }
+        _scope == scope) {
+      return;
+    }
     _scope = scope;
     _page = 1;
     _workspaceId = workspaceId;
@@ -47,8 +48,12 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
   }
 
   Future<void> load({bool retain = false, int? page}) {
-    if (state.saving) { return Future<void>.value(); }
-    if (page != null) { _page = page; }
+    if (state.saving) {
+      return Future<void>.value();
+    }
+    if (page != null) {
+      _page = page;
+    }
     final running = _loadInFlight;
     if (running != null) {
       _refreshQueued = true;
@@ -57,7 +62,9 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
     final future = _load(retain: retain);
     _loadInFlight = future;
     return future.whenComplete(() {
-      if (!identical(_loadInFlight, future)) { return; }
+      if (!identical(_loadInFlight, future)) {
+        return;
+      }
       _loadInFlight = null;
       if (_refreshQueued && _workspaceId != null && _membershipId != null) {
         _refreshQueued = false;
@@ -72,8 +79,9 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
     if (workspaceId == null ||
         membershipId == null ||
         _scope?.isManager != true ||
-        _scope?.workspaceId != workspaceId)
-      { return; }
+        _scope?.workspaceId != workspaceId) {
+      return;
+    }
     final generation = _generation;
     final previous = state;
     if (!retain) {
@@ -93,7 +101,9 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
         membershipId,
         page: _page,
       );
-      if (!_current(workspaceId, membershipId, generation)) { return; }
+      if (!_current(workspaceId, membershipId, generation)) {
+        return;
+      }
       if ((value.current != null &&
               (value.current!.workspaceId != workspaceId ||
                   value.current!.employeeMembershipId != membershipId)) ||
@@ -106,7 +116,9 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
       }
       emit(WorkPatternState(loading: false, history: value));
     } catch (error) {
-      if (!_current(workspaceId, membershipId, generation)) { return; }
+      if (!_current(workspaceId, membershipId, generation)) {
+        return;
+      }
       emit(
         WorkPatternState(
           loading: false,
@@ -130,7 +142,9 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
         _scope?.workspaceId != workspaceId) {
       return FixedShiftMutationResult.failure;
     }
-    if (state.saving || state.loading) { return FixedShiftMutationResult.busy; }
+    if (state.saving || state.loading) {
+      return FixedShiftMutationResult.busy;
+    }
     if (weekdays.isEmpty || weekdays.any((value) => value < 0 || value > 6)) {
       emit(
         WorkPatternState(
@@ -151,12 +165,12 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
     try {
       final ExtraShiftRepository? extraRepository =
           _repository is ExtraShiftRepository
-              ? _repository as ExtraShiftRepository
-              : null;
+          ? _repository as ExtraShiftRepository
+          : null;
       if (extraRepository != null &&
           await extraRepository.readExtraIntent(_scope!) != null) {
-        if (_current(workspaceId, membershipId, generation))
-          { emit(
+        if (_current(workspaceId, membershipId, generation)) {
+          emit(
             WorkPatternState(
               loading: false,
               history: state.history,
@@ -164,11 +178,13 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
                 message: 'Recover the saved extra operation before replacing an assignment.',
               ),
             ),
-          ); }
+          );
+        }
         return FixedShiftMutationResult.failure;
       }
-      if (!_current(workspaceId, membershipId, generation))
-        { return FixedShiftMutationResult.stale; }
+      if (!_current(workspaceId, membershipId, generation)) {
+        return FixedShiftMutationResult.stale;
+      }
       final canonical = await _repository.replaceWorkPattern(
         workspaceId,
         membershipId,
@@ -181,8 +197,9 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
       }
       if (canonical.workspaceId != workspaceId ||
           canonical.employeeMembershipId != membershipId ||
-          canonical.shiftTemplateId != shiftTemplateId)
-        { throw const FormatException('Invalid assignment response'); }
+          canonical.shiftTemplateId != shiftTemplateId) {
+        throw const FormatException('Invalid assignment response');
+      }
       final history = state.history;
       final localToday = _scope == null
           ? ''
@@ -191,7 +208,7 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
         WorkPatternState(
           loading: false,
           history: WorkPatternHistory(
-          current: canonical.effectiveFrom.compareTo(localToday) <= 0
+            current: canonical.effectiveFrom.compareTo(localToday) <= 0
                 ? canonical
                 : history?.current,
             history: [
@@ -205,8 +222,9 @@ class WorkPatternCubit extends Cubit<WorkPatternState> {
       try {
         await onChanged?.call();
       } catch (_) {}
-      if (_current(workspaceId, membershipId, generation))
-        { await load(retain: true); }
+      if (_current(workspaceId, membershipId, generation)) {
+        await load(retain: true);
+      }
       return FixedShiftMutationResult.success;
     } catch (error) {
       if (!_current(workspaceId, membershipId, generation)) {

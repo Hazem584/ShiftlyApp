@@ -1,5 +1,8 @@
 import 'package:shiftly/core/session/feature_scope.dart';
 
+import 'legacy_clock_in_repository.dart';
+import 'legacy_clock_in_review.dart';
+
 import 'extra_shift_repository.dart';
 import 'extra_authorization.dart';
 import 'extra_authorization_page.dart';
@@ -13,7 +16,10 @@ import 'package:shiftly/core/network/api_model_parser.dart';
 import 'package:shiftly/features/fixed_shifts/data/fixed_shift_repository.dart';
 
 class ApiFixedShiftRepository
-    implements FixedShiftRepository, ExtraShiftRepository {
+    implements
+        FixedShiftRepository,
+        ExtraShiftRepository,
+        LegacyClockInRepository {
   ApiFixedShiftRepository(this._dio, this._preferences);
 
   static const _legacyPendingKey = 'fixed_shift.pending_clock_in.v1';
@@ -199,7 +205,9 @@ class ApiFixedShiftRepository
           '/attendance/me/current',
           queryParameters: {'workspaceId': workspaceId},
         );
-        if (response.data == null) { return null; }
+        if (response.data == null) {
+          return null;
+        }
         return FlexibleAttendance.fromJson(ApiModelParser.map(response.data));
       });
 
@@ -217,9 +225,8 @@ class ApiFixedShiftRepository
         'workspaceId': workspaceId,
         'shiftTemplateId': shiftTemplateId,
         'clientAttendanceId': clientAttendanceId,
-        if (assignmentId != null) 'assignmentId': assignmentId,
-        if (extraAuthorizationId != null)
-          'extraAuthorizationId': extraAuthorizationId,
+        'assignmentId': ?assignmentId,
+        'extraAuthorizationId': ?extraAuthorizationId,
       },
     ),
   );
@@ -237,18 +244,11 @@ class ApiFixedShiftRepository
     required String membershipId,
     required String templateId,
   }) async {
-    // v1 has no trustworthy scope. Keep it quarantined rather than losing a possibly committed operation.
-    if (_preferences.containsKey(_legacyPendingKey))
-      { throw const FormatException('Legacy clock-in recovery requires review'); }
     final key = _pendingKey(userId, workspaceId, membershipId, templateId);
-    final oldPrefix = '$_pendingPrefix.$userId.$workspaceId.$membershipId.';
-    final oldKeys = _preferences.getKeys().where(
-      (k) => k.startsWith(oldPrefix),
-    );
-    if (oldKeys.isNotEmpty)
-      { throw const FormatException('Legacy clock-in recovery requires review'); }
     final raw = _preferences.getString(key);
-    if (raw == null) { return null; }
+    if (raw == null) {
+      return null;
+    }
     final json = ApiModelParser.map(jsonDecode(raw));
     final pending = PendingClockIn(
       userId: ApiModelParser.string(json, 'userId'),
@@ -266,13 +266,91 @@ class ApiFixedShiftRepository
     if (pending.userId != userId ||
         pending.workspaceId != workspaceId ||
         pending.membershipId != membershipId ||
-        !pending.hasEvidence)
-      { throw const FormatException('Stored attendance needs review'); }
-    if (jsonEncode(json['payload']) != jsonEncode(pending.payload))
-      { throw const FormatException(
+        !pending.hasEvidence) {
+      throw const FormatException('Stored attendance needs review');
+    }
+    if (jsonEncode(json['payload']) != jsonEncode(pending.payload)) {
+      throw const FormatException(
         'Saved payload does not match occurrence evidence',
-      ); }
+      );
+    }
     return pending;
+  }
+
+  @override
+  Future<List<LegacyClockInReview>> inspectLegacyClockIns(
+    FeatureSessionScope scope,
+  ) async {
+    final reviews = <LegacyClockInReview>[];
+    final prefix =
+        '$_pendingPrefix.${scope.userId}.${scope.workspaceId}.${scope.membershipId}.';
+    final keys =
+        _preferences
+            .getKeys()
+            .where((key) => key == _legacyPendingKey || key.startsWith(prefix))
+            .toList()
+          ..sort();
+    for (final key in keys) {
+      String? clientId;
+      try {
+        final json = ApiModelParser.map(
+          jsonDecode(_preferences.getString(key)!),
+        );
+        // v1 and v2 stored these five fields, without occurrence/date evidence.
+        final pending = PendingClockIn(
+          userId: ApiModelParser.string(json, 'userId'),
+          workspaceId: ApiModelParser.string(json, 'workspaceId'),
+          membershipId: ApiModelParser.string(json, 'membershipId'),
+          templateId: ApiModelParser.string(json, 'templateId'),
+          clientAttendanceId: ApiModelParser.string(json, 'clientAttendanceId'),
+        );
+        if (key != _legacyPendingKey &&
+            key !=
+                '$_pendingPrefix.${pending.userId}.${pending.workspaceId}.${pending.membershipId}.${pending.templateId}') {
+          throw const FormatException('Legacy key and owner disagree');
+        }
+        if (pending.userId != scope.userId ||
+            pending.workspaceId != scope.workspaceId ||
+            pending.membershipId != scope.membershipId) {
+          continue;
+        }
+        clientId = pending.clientAttendanceId;
+        if (!RegExp(
+          r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+        ).hasMatch(clientId)) {
+          throw const FormatException('Invalid legacy request ID');
+        }
+        final canonical = await findPendingAttendance(pending);
+        if (canonical != null &&
+            (canonical.workspaceId != scope.workspaceId ||
+                canonical.employeeMembershipId != scope.membershipId ||
+                canonical.shiftTemplateId != pending.templateId ||
+                canonical.clientAttendanceId != clientId)) {
+          throw const FormatException('Legacy canonical owner mismatch');
+        }
+        reviews.add(
+          LegacyClockInReview(
+            storageKey: key,
+            clientAttendanceId: clientId,
+            canonical: canonical,
+            message: canonical == null
+                ? 'Saved legacy clock-in needs review. No matching attendance was found. Refresh to check again, or contact support with request ID $clientId and this workspace. Its original occurrence was not saved, so this app cannot safely retry it. The saved record is retained.'
+                : 'Saved legacy clock-in confirmed as attendance ${canonical.id}. The original record is retained for audit and will never be resubmitted.',
+          ),
+        );
+      } catch (_) {
+        reviews.add(
+          LegacyClockInReview(
+            storageKey: key,
+            clientAttendanceId: clientId,
+            message: clientId == null
+                ? 'Saved legacy clock-in needs review: its owner or request evidence cannot be verified. Contact support to inspect the saved record on this device. It is retained and cannot be replayed or safely dismissed here. Refresh after support resolves it.'
+                : 'Saved legacy clock-in needs review. Confirmation is unavailable; restore access and refresh, or contact support with request ID $clientId. The original record is retained and will not be resubmitted.',
+          ),
+        );
+      }
+    }
+    return reviews;
   }
 
   @override
@@ -293,13 +371,16 @@ class ApiFixedShiftRepository
           for (final item in records) {
             final record = ApiModelParser.map(item);
             if (record['clientAttendanceId'] == value.clientAttendanceId &&
-                record['employeeMembershipId'] == value.membershipId)
-              { return FlexibleAttendance.fromJson(record); }
+                record['employeeMembershipId'] == value.membershipId) {
+              return FlexibleAttendance.fromJson(record);
+            }
           }
           final pagination = ApiPagination.fromJson(
             ApiModelParser.map(json['pagination']),
           );
-          if (page >= pagination.totalPages) { return null; }
+          if (page >= pagination.totalPages) {
+            return null;
+          }
           page++;
         }
       });
@@ -317,10 +398,11 @@ class ApiFixedShiftRepository
       if (json['clientAttendanceId'] != value.clientAttendanceId ||
           jsonEncode(json['payload']) != jsonEncode(value.payload) ||
           json['operationalDate'] != value.operationalDate ||
-          json['occurrenceKind'] != value.occurrenceKind)
-        { throw StateError(
+          json['occurrenceKind'] != value.occurrenceKind) {
+        throw StateError(
           'Recover saved clock-in before creating another intent',
-        ); }
+        );
+      }
     }
     final saved = await _preferences.setString(
       _pendingKey(
@@ -342,7 +424,9 @@ class ApiFixedShiftRepository
         'operationalDate': value.operationalDate,
       }),
     );
-    if (!saved) { throw StateError('Could not persist clock-in'); }
+    if (!saved) {
+      throw StateError('Could not persist clock-in');
+    }
   }
 
   @override
@@ -353,7 +437,36 @@ class ApiFixedShiftRepository
       membershipId: value.membershipId,
       templateId: value.templateId,
     );
-    if (existing?.clientAttendanceId != value.clientAttendanceId) { return; }
+    if (existing == null ||
+        existing.clientAttendanceId != value.clientAttendanceId ||
+        jsonEncode(existing.payload) != jsonEncode(value.payload) ||
+        existing.operationalDate != value.operationalDate ||
+        existing.occurrenceKind != value.occurrenceKind) {
+      return;
+    }
+    // Recheck synchronously after the awaited decode. No other intent may
+    // replace this one between ownership validation and starting removal.
+    final key = _pendingKey(
+      value.userId,
+      value.workspaceId,
+      value.membershipId,
+      value.templateId,
+    );
+    final raw = _preferences.getString(key);
+    if (raw == null) {
+      return;
+    }
+    final latest = ApiModelParser.map(jsonDecode(raw));
+    if (latest['userId'] != value.userId ||
+        latest['workspaceId'] != value.workspaceId ||
+        latest['membershipId'] != value.membershipId ||
+        latest['templateId'] != value.templateId ||
+        latest['clientAttendanceId'] != value.clientAttendanceId ||
+        jsonEncode(latest['payload']) != jsonEncode(value.payload) ||
+        latest['operationalDate'] != value.operationalDate ||
+        latest['occurrenceKind'] != value.occurrenceKind) {
+      return;
+    }
     final removed = await _preferences.remove(
       _pendingKey(
         value.userId,
@@ -370,8 +483,9 @@ class ApiFixedShiftRepository
             value.membershipId,
             value.templateId,
           ),
-        ))
-      { throw StateError('Could not clear saved clock-in'); }
+        )) {
+      throw StateError('Could not clear saved clock-in');
+    }
   }
 
   String _pendingKey(
@@ -409,8 +523,7 @@ class ApiFixedShiftRepository
     required bool actual,
   }) => _request(() async {
     final response = await _dio.post<Object?>(
-      '/workspaces/$workspaceId/employees/$membershipId/extra-shifts' +
-          (actual ? '/attendance' : ''),
+      '/workspaces/$workspaceId/employees/$membershipId/extra-shifts${actual ? '/attendance' : ''}',
       data: payload,
     );
     return ExtraAuthorization(ApiModelParser.map(response.data));
@@ -427,22 +540,19 @@ class ApiFixedShiftRepository
     return ExtraAuthorization(ApiModelParser.map(response.data));
   });
   String _extraKey(FeatureSessionScope scope) =>
-      'extra_shift.intent.v1:' +
-      scope.userId +
-      ':' +
-      scope.workspaceId +
-      ':' +
-      scope.membershipId;
+      'extra_shift.intent.v1:${scope.userId}:${scope.workspaceId}:${scope.membershipId}';
   @override
   Future<String?> readExtraIntent(FeatureSessionScope scope) async =>
       _preferences.getString(_extraKey(scope));
   @override
   Future<void> saveExtraIntent(FeatureSessionScope scope, String intent) async {
     final existing = _preferences.getString(_extraKey(scope));
-    if (existing != null && existing != intent)
-      { throw StateError('Resolve the saved extra operation first'); }
-    if (!await _preferences.setString(_extraKey(scope), intent))
-      { throw StateError('Could not persist extra operation'); }
+    if (existing != null && existing != intent) {
+      throw StateError('Resolve the saved extra operation first');
+    }
+    if (!await _preferences.setString(_extraKey(scope), intent)) {
+      throw StateError('Could not persist extra operation');
+    }
   }
 
   @override
@@ -450,10 +560,14 @@ class ApiFixedShiftRepository
     FeatureSessionScope scope,
     String intent,
   ) async {
-    if (await readExtraIntent(scope) != intent) { return; }
+    // Keep comparison and the start of removal in the same synchronous turn.
+    if (_preferences.getString(_extraKey(scope)) != intent) {
+      return;
+    }
     if (!await _preferences.remove(_extraKey(scope)) &&
-        _preferences.containsKey(_extraKey(scope)))
-      { throw StateError('Could not clear saved operation'); }
+        _preferences.containsKey(_extraKey(scope))) {
+      throw StateError('Could not clear saved operation');
+    }
   }
 
   Future<ShiftTemplate> _template(

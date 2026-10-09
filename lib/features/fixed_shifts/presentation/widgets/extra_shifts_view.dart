@@ -175,7 +175,8 @@ class ExtraShiftsView extends StatelessWidget {
         ],
       ),
     );
-    if (context.mounted && confirmed == true)
-      { await context.read<ExtraShiftsCubit>().revoke(value); }
+    if (context.mounted && confirmed == true) {
+      await context.read<ExtraShiftsCubit>().revoke(value);
+    }
   }
 }

@@ -33,11 +33,16 @@ class AssignmentFormState extends State<AssignmentForm> {
           widget.workspaceId,
           page: page,
         );
-        if (!mounted) { return; }
-        if (value.data.any((v) => v.workspaceId != widget.workspaceId))
-          { throw const FormatException('Invalid template scope'); }
+        if (!mounted) {
+          return;
+        }
+        if (value.data.any((v) => v.workspaceId != widget.workspaceId)) {
+          throw const FormatException('Invalid template scope');
+        }
         result.addAll(value.data.where((v) => v.active));
-        if (page >= value.pagination.totalPages) { break; }
+        if (page >= value.pagination.totalPages) {
+          break;
+        }
         page++;
       }
       setState(() {
@@ -45,8 +50,9 @@ class AssignmentFormState extends State<AssignmentForm> {
         error = null;
       });
     } catch (_) {
-      if (mounted)
-        { setState(() => error = 'Unable to load active templates. Retry.'); }
+      if (mounted) {
+        setState(() => error = 'Unable to load active templates. Retry.');
+      }
     }
   }
 
@@ -142,7 +148,9 @@ class AssignmentFormState extends State<AssignmentForm> {
       firstDate: today,
       lastDate: DateTime(today.year + 5, 12, 31),
     );
-    if (mounted && chosen != null) { setState(() => date = chosen); }
+    if (mounted && chosen != null) {
+      setState(() => date = chosen);
+    }
   }
 
   Future<void> _submit() async {
@@ -171,7 +179,9 @@ class AssignmentFormState extends State<AssignmentForm> {
         ],
       ),
     );
-    if (!mounted || confirmed != true || widget.cubit.isClosed) { return; }
+    if (!mounted || confirmed != true || widget.cubit.isClosed) {
+      return;
+    }
     setState(() {
       busy = true;
       error = null;
@@ -181,15 +191,18 @@ class AssignmentFormState extends State<AssignmentForm> {
       weekdays: days,
       effectiveFrom: key,
     );
-    if (!mounted) { return; }
-    if (result == FixedShiftMutationResult.success)
-      { Navigator.pop(context, true); }
-    else
-      { setState(() {
+    if (!mounted) {
+      return;
+    }
+    if (result == FixedShiftMutationResult.success) {
+      Navigator.pop(context, true);
+    } else {
+      setState(() {
         busy = false;
         error =
             widget.cubit.state.failure?.message ??
             'Unable to save assignment. Your selections are retained.';
-      }); }
+      });
+    }
   }
 }

@@ -1,6 +1,7 @@
 import 'eligibility_tile.dart';
 import 'active_attendance_card.dart';
 import 'attendance_presentation.dart';
+import 'legacy_clock_in_review_card.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -35,18 +36,16 @@ class FlexibleAttendancePanel extends StatelessWidget {
           ),
         );
       }
-      if (state.recovery != null)
-        { return SurfaceCard(
+      if (state.recovery != null) {
+        return SurfaceCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text('Clock-in outcome needs confirmation'),
+              Text('Saved request ID: ${state.recovery!.clientAttendanceId}'),
               Text(
-                'Saved ' +
-                    (state.recovery!.occurrenceKind ?? 'unknown') +
-                    ' occurrence on ' +
-                    (state.recovery!.operationalDate ?? 'unknown date') +
-                    '. A new shift is blocked until recovery finishes.',
+                'Saved ${state.recovery!.occurrenceKind ?? 'unknown'} occurrence on '
+                '${state.recovery!.operationalDate ?? 'unknown date'}. A new shift is blocked until recovery finishes.',
               ),
               if (state.failure != null) Text(state.failure!.message),
               FilledButton(
@@ -59,15 +58,34 @@ class FlexibleAttendancePanel extends StatelessWidget {
               ),
             ],
           ),
-        ); }
+        );
+      }
       final current = state.current;
+      final legacyReview = LegacyClockInReviewCard(
+        reviews: state.legacyReviews,
+        onRefresh:
+            state.refreshing ||
+                state.clockingOut ||
+                state.submittingTemplateId != null
+            ? null
+            : () => context.read<FlexibleAttendanceCubit>().load(refresh: true),
+      );
       if (current != null && current.isOpen && current.isActionable) {
-        return ActiveAttendanceCard(
+        final activeCard = ActiveAttendanceCard(
           attendance: current,
           timezone: timezone,
           busy: state.clockingOut,
           onClockOut: () => _clockOut(context),
         );
+        return state.legacyReviews.isEmpty
+            ? activeCard
+            : Column(
+                children: [
+                  activeCard,
+                  const SizedBox(height: 10),
+                  legacyReview,
+                ],
+              );
       }
       if (current != null && current.isOpen) {
         return SurfaceCard(
@@ -102,11 +120,15 @@ class FlexibleAttendancePanel extends StatelessWidget {
           ),
         );
       }
+      if (state.legacyReviewRequired) {
+        return legacyReview;
+      }
       final entries = state.eligibility?.authorizedOccurrences ?? const [];
       return SurfaceCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (state.legacyReviews.isNotEmpty) legacyReview,
             Row(
               children: [
                 const Icon(Icons.bolt_rounded),
@@ -146,11 +168,8 @@ class FlexibleAttendancePanel extends StatelessWidget {
               ),
             if (current != null && !current.isOpen)
               Text(
-                'Attendance ' +
-                    (current.occurrenceKind ?? 'historical') +
-                    ' on ' +
-                    (current.operationalDate ?? 'unrecorded date') +
-                    ' is used and cannot be reopened.',
+                'Attendance ${current.occurrenceKind ?? 'historical'} on '
+                '${current.operationalDate ?? 'unrecorded date'} is used and cannot be reopened.',
               ),
             if (state.failure != null) ...[
               const SizedBox(height: 6),
@@ -262,7 +281,9 @@ class FlexibleAttendancePanel extends StatelessWidget {
         ],
       ),
     );
-    if (confirmed != true || !context.mounted) { return; }
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
     final result = await context.read<FlexibleAttendanceCubit>().clockIn(entry);
     if (context.mounted && result == FixedShiftMutationResult.success) {
       ToastService.success(context, message: 'Clock-in confirmed.');
@@ -290,7 +311,9 @@ class FlexibleAttendancePanel extends StatelessWidget {
         ],
       ),
     );
-    if (confirmed != true || !context.mounted) { return; }
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
     final result = await context.read<FlexibleAttendanceCubit>().clockOut();
     if (context.mounted && result == FixedShiftMutationResult.success) {
       ToastService.success(context, message: 'Clock-out confirmed.');

@@ -114,7 +114,12 @@ Map<String, Object?> _attendance({String? clockOutAt}) => {
     'color': '#334155',
     'archivedAt': null,
   },
-  'employee': {'id': 'employee-membership-id'},
+  'employee': {
+    'id': 'employee-membership-id',
+    'profileId': 'profile-id',
+    'role': 'EMPLOYEE',
+    'status': 'ACTIVE',
+  },
 };
 
 Map<String, Object?> _page(Object item) => {
@@ -203,13 +208,17 @@ class _FakeRepository implements FixedShiftRepository {
     int page = 1,
     int limit = 100,
   }) async {
-    if (refreshFails) { throw const ApiException(message: 'offline'); }
+    if (refreshFails) {
+      throw const ApiException(message: 'offline');
+    }
     return this.page;
   }
 
   @override
   Future<TemplateEligibility> getEligibility(String workspaceId) async {
-    if (refreshFails) { throw const ApiException(message: 'offline'); }
+    if (refreshFails) {
+      throw const ApiException(message: 'offline');
+    }
     return TemplateEligibility(
       workspaceId: workspaceId,
       timezone: 'Africa/Cairo',
@@ -267,7 +276,9 @@ class _FakeRepository implements FixedShiftRepository {
       pending = value;
   @override
   Future<void> clearPendingClockIn(PendingClockIn value) async {
-    if (pending == value) { pending = null; }
+    if (pending == value) {
+      pending = null;
+    }
   }
 
   @override
@@ -326,6 +337,7 @@ class _WorkPatternRaceRepository extends _FakeRepository {
 
 void main() {
   assignedSprintTests();
+  correctiveSprintTests();
   test('manager template repository uses exact paths, query, payload, and archive verb', () async {
     final client = await _client(
       (options) => _json(
@@ -443,6 +455,7 @@ void main() {
     );
     await client.repository.flexibleClockOut('attendance-id');
     expect(client.adapter.requests[1].data, {
+      'shiftTemplateId': 'template-id',
       'expectedWeekdays': [1, 3],
       'effectiveFrom': '2026-10-06',
     });
@@ -820,6 +833,631 @@ void main() {
   );
 }
 
+TemplateEligibility _eligibility(
+  _ControlledRepository repository, {
+  String status = 'ASSIGNED',
+}) => TemplateEligibility(
+  workspaceId: 'workspace-id',
+  timezone: 'Africa/Cairo',
+  evaluatedAt: DateTime.utc(2026, 10, 6, 19),
+  status: status,
+  recommended: repository.occurrence,
+  eligibleTemplates: [repository.occurrence],
+  authorizedOccurrences: [repository.occurrence],
+);
+
+PendingClockIn _pending() => const PendingClockIn(
+  userId: 'employee-user',
+  workspaceId: 'workspace-id',
+  membershipId: 'employee-membership-id',
+  templateId: 'template-id',
+  clientAttendanceId: '11111111-1111-4111-8111-111111111111',
+  occurrenceKind: 'BASELINE',
+  assignmentId: 'assignment-id',
+  operationalDate: '2026-10-06',
+);
+
+void correctiveSprintTests() {
+  test(
+    'legacy storage type failure preserves evidence as explicit review',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'fixed_shift.pending_clock_in.v1': 17,
+      });
+      final preferences = await SharedPreferences.getInstance();
+      final repository = ApiFixedShiftRepository(Dio(), preferences);
+      final reviews = await repository.inspectLegacyClockIns(_employeeScope);
+      expect(reviews.single.requiresReview, isTrue);
+      expect(reviews.single.message, contains('owner or request evidence'));
+      expect(preferences.get('fixed_shift.pending_clock_in.v1'), 17);
+    },
+  );
+
+  testWidgets(
+    'ambiguous legacy intent shows review and refresh without a replay action',
+    (tester) async {
+      final client = await _client((options) {
+        if (options.path.endsWith('/current')) {
+          return _json(null);
+        }
+        if (options.path.endsWith('/eligibility')) {
+          return _json({
+            'workspaceId': 'workspace-id',
+            'timezone': 'Africa/Cairo',
+            'evaluatedAt': '2026-10-06T19:00:00Z',
+            'eligibleTemplates': [],
+            'authorizedOccurrences': [],
+            'status': 'SHIFT_ASSIGNMENT_REQUIRED',
+          });
+        }
+        return _json({
+          'data': [],
+          'pagination': {'page': 1, 'limit': 100, 'total': 0, 'totalPages': 0},
+        });
+      });
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(
+        'fixed_shift.pending_clock_in.v1',
+        '{ambiguous}',
+      );
+      final cubit = FlexibleAttendanceCubit(client.repository)
+        ..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await tester.runAsync(cubit.load);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BlocProvider.value(
+              value: cubit,
+              child: const FlexibleAttendancePanel(timezone: 'Africa/Cairo'),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('Saved legacy clock-in needs review'), findsOneWidget);
+      expect(find.text('Check attendance again'), findsOneWidget);
+      expect(find.text('Recover saved clock-in'), findsNothing);
+      expect(cubit.state.failure, isNull);
+      expect(cubit.state.legacyReviewRequired, isTrue);
+      expect(client.adapter.requests.every((r) => r.method == 'GET'), isTrue);
+    },
+  );
+
+  test('held revoke callback keeps all manager mutations serialized', () async {
+    final callback = Completer<void>(), started = Completer<void>();
+    final repository = _ExtraRepository();
+    final cubit = ExtraShiftsCubit(
+      repository,
+      onChanged: () {
+        started.complete();
+        return callback.future;
+      },
+    )..bind(_managerScope, 'membership-id');
+    addTearDown(cubit.close);
+    await cubit.load();
+    final value = ExtraAuthorization(
+      _extraJson({
+        ..._extraPayload(),
+        'clientAuthorizationId': '11111111-1111-4111-8111-111111111111',
+      }),
+    );
+    final first = cubit.revoke(value);
+    await started.future;
+    expect(await cubit.revoke(value), isFalse);
+    expect(await cubit.create(_extraPayload(), actual: false), isFalse);
+    expect(await cubit.recover(), isFalse);
+    expect(repository.revocations, 1);
+    callback.complete();
+    expect(await first, isTrue);
+    expect(cubit.state.canonical!.status, 'REVOKED');
+    expect(cubit.state.busy, isFalse);
+  });
+  test(
+    'captured open attendance cannot overwrite a successful clock-out',
+    () async {
+      final repository = _ControlledRepository()
+        ..current = FlexibleAttendance.fromJson(_attendance());
+      final cubit = FlexibleAttendanceCubit(repository)
+        ..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await cubit.load();
+      final held = Completer<TemplateEligibility>();
+      repository.eligibilityReads.add(held);
+      repository.eligibilityStarted = Completer<void>();
+      final old = cubit.load(refresh: true);
+      await repository.eligibilityStarted!.future;
+      expect(await cubit.clockOut(), FixedShiftMutationResult.success);
+      final closed = cubit.state.current;
+      held.complete(_eligibility(repository));
+      await old;
+      expect(cubit.state.current, closed);
+      expect(cubit.state.current!.isOpen, isFalse);
+    },
+  );
+
+  test('captured recovery cannot resurrect an intent after canonical reconciliation', () async {
+    final repository = _ControlledRepository()..pending = _pending();
+    repository.saved = FlexibleAttendance.fromJson(_attendance());
+    final held = Completer<TemplateEligibility>();
+    repository.eligibilityReads.add(held);
+    repository.eligibilityStarted = Completer<void>();
+    final cubit = FlexibleAttendanceCubit(repository)
+      ..bindSession(_employeeScope);
+    addTearDown(cubit.close);
+    final old = cubit.load();
+    await repository.eligibilityStarted!.future;
+    expect(cubit.state.recovery, isNotNull);
+    expect(await cubit.recoverClockIn(), FixedShiftMutationResult.success);
+    held.complete(_eligibility(repository));
+    await old;
+    expect(cubit.state.current, repository.saved);
+    expect(cubit.state.recovery, isNull);
+    expect(repository.pending, isNull);
+    expect(repository.payloads, isEmpty);
+    expect(cubit.state.loading, isFalse);
+  });
+
+  test(
+    'older post-mutation eligibility cannot replace a newer full refresh',
+    () async {
+      final repository = _ControlledRepository()
+        ..current = FlexibleAttendance.fromJson(_attendance());
+      final cubit = FlexibleAttendanceCubit(repository)
+        ..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await cubit.load();
+      final held = Completer<TemplateEligibility>();
+      repository.eligibilityReads.add(held);
+      repository.eligibilityStarted = Completer<void>();
+      expect(await cubit.clockOut(), FixedShiftMutationResult.success);
+      await repository.eligibilityStarted!.future;
+      repository.eligibilityStatus = 'SHIFT_ASSIGNMENT_REQUIRED';
+      await cubit.load(refresh: true);
+      held.complete(_eligibility(repository, status: 'UNKNOWN'));
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.eligibility!.status, 'SHIFT_ASSIGNMENT_REQUIRED');
+      expect(cubit.state.current!.isOpen, isFalse);
+    },
+  );
+
+  test(
+    'duplicate loads share work and repeated refreshes coalesce safely',
+    () async {
+      final repository = _ControlledRepository();
+      final held = Completer<TemplateEligibility>();
+      repository.eligibilityReads.add(held);
+      repository.eligibilityStarted = Completer<void>();
+      final cubit = FlexibleAttendanceCubit(repository)
+        ..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      final first = cubit.load();
+      expect(identical(first, cubit.load()), isTrue);
+      await repository.eligibilityStarted!.future;
+      expect(identical(first, cubit.load(refresh: true)), isTrue);
+      expect(identical(first, cubit.load(refresh: true)), isTrue);
+      repository.eligibilityStatus = 'SHIFT_ASSIGNMENT_REQUIRED';
+      held.complete(_eligibility(repository, status: 'UNKNOWN'));
+      await first;
+      expect(cubit.state.eligibility!.status, 'SHIFT_ASSIGNMENT_REQUIRED');
+    },
+  );
+
+  for (final stage in ['current', 'storage', 'catalog', 'eligibility']) {
+    for (final logout in [true, false]) {
+      test(
+        '$stage response is invalidated by ${logout ? 'logout' : 'workspace switch'}',
+        () async {
+          final repository = _ControlledRepository()
+            ..current = FlexibleAttendance.fromJson(_attendance());
+          final current = Completer<FlexibleAttendance?>();
+          final storage = Completer<PendingClockIn?>();
+          final catalog = Completer<ShiftTemplatePage>();
+          final eligibility = Completer<TemplateEligibility>();
+          if (stage == 'eligibility') {
+            repository.eligibilityReads.add(eligibility);
+            repository.eligibilityStarted = Completer<void>();
+          }
+          if (stage == 'current') {
+            repository.currentRead = current;
+          }
+          if (stage == 'storage') {
+            repository.pendingRead = storage;
+          }
+          if (stage == 'catalog') {
+            repository.catalogRead = catalog;
+            repository.catalogStarted = Completer<void>();
+          }
+          final cubit = FlexibleAttendanceCubit(repository)
+            ..bindSession(_employeeScope);
+          addTearDown(cubit.close);
+          final old = cubit.load();
+          if (stage == 'eligibility') {
+            await repository.eligibilityStarted!.future;
+          } else if (stage == 'catalog') {
+            await repository.catalogStarted!.future;
+          } else if (stage == 'storage') {
+            await cubit.stream.firstWhere((s) => s.current != null);
+          }
+          repository.currentRead = null;
+          repository.pendingRead = null;
+          repository.catalogRead = null;
+          cubit.bindSession(
+            logout
+                ? null
+                : const FeatureSessionScope(
+                    userId: 'other-user',
+                    workspaceId: 'other-workspace',
+                    membershipId: 'other-membership',
+                    timezone: 'UTC',
+                    role: WorkspaceRole.employee,
+                  ),
+          );
+          if (stage == 'current') {
+            current.complete(repository.current);
+          }
+          if (stage == 'storage') {
+            storage.complete(_pending());
+          }
+          if (stage == 'catalog') {
+            catalog.complete(repository.page);
+          }
+          if (stage == 'eligibility') {
+            eligibility.complete(_eligibility(repository));
+          }
+          await old;
+          await cubit.load();
+          expect(cubit.state.current, isNull);
+          expect(cubit.state.recovery, isNull);
+          expect(cubit.state.eligibility, isNull);
+        },
+      );
+    }
+  }
+
+  test(
+    'clock-out canonical success survives callback and eligibility failure',
+    () async {
+      final repository = _ControlledRepository()
+        ..current = FlexibleAttendance.fromJson(_attendance());
+      final cubit = FlexibleAttendanceCubit(
+        repository,
+        onAttendanceChanged: () {
+          repository.refreshFails = true;
+          throw StateError('callback failed');
+        },
+      )..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      await cubit.load();
+      expect(await cubit.clockOut(), FixedShiftMutationResult.success);
+      if (cubit.state.failure == null) {
+        await cubit.stream.firstWhere((s) => s.failure != null);
+      }
+      expect(cubit.state.current!.isOpen, isFalse);
+    },
+  );
+
+  for (final version in [1, 2]) {
+    test(
+      'v$version identifiable legacy owner isolates user workspace and membership',
+      () async {
+        final raw = jsonEncode({
+          'userId': _employeeScope.userId,
+          'workspaceId': _employeeScope.workspaceId,
+          'membershipId': _employeeScope.membershipId,
+          'templateId': 'template-id',
+          'clientAttendanceId': _pending().clientAttendanceId,
+        });
+        final key = version == 1
+            ? 'fixed_shift.pending_clock_in.v1'
+            : 'fixed_shift.pending_clock_in.v2.employee-user.workspace-id.employee-membership-id.template-id';
+        SharedPreferences.setMockInitialValues({key: raw});
+        final preferences = await SharedPreferences.getInstance();
+        final adapter = _Adapter(
+          (_) => _json({
+            'data': [],
+            'pagination': {
+              'page': 1,
+              'limit': 100,
+              'total': 0,
+              'totalPages': 0,
+            },
+          }),
+        );
+        final repository = ApiFixedShiftRepository(
+          Dio()..httpClientAdapter = adapter,
+          preferences,
+        );
+        for (final scope in [
+          const FeatureSessionScope(
+            userId: 'other',
+            workspaceId: 'workspace-id',
+            membershipId: 'employee-membership-id',
+            timezone: 'UTC',
+            role: WorkspaceRole.employee,
+          ),
+          const FeatureSessionScope(
+            userId: 'employee-user',
+            workspaceId: 'other',
+            membershipId: 'employee-membership-id',
+            timezone: 'UTC',
+            role: WorkspaceRole.employee,
+          ),
+          const FeatureSessionScope(
+            userId: 'employee-user',
+            workspaceId: 'workspace-id',
+            membershipId: 'other',
+            timezone: 'UTC',
+            role: WorkspaceRole.employee,
+          ),
+        ]) {
+          expect(await repository.inspectLegacyClockIns(scope), isEmpty);
+        }
+        expect(adapter.requests, isEmpty);
+        final review = await repository.inspectLegacyClockIns(_employeeScope);
+        expect(review.single.requiresReview, isTrue);
+        expect(review.single.clientAttendanceId, _pending().clientAttendanceId);
+        expect(preferences.getString(key), raw);
+        expect(adapter.requests.every((r) => r.method == 'GET'), isTrue);
+      },
+    );
+
+    test(
+      'v$version canonical legacy success reconciles without any POST or deletion',
+      () async {
+        final raw = jsonEncode({
+          'userId': _employeeScope.userId,
+          'workspaceId': 'workspace-id',
+          'membershipId': _employeeScope.membershipId,
+          'templateId': 'template-id',
+          'clientAttendanceId': _pending().clientAttendanceId,
+        });
+        final key = version == 1
+            ? 'fixed_shift.pending_clock_in.v1'
+            : 'fixed_shift.pending_clock_in.v2.employee-user.workspace-id.employee-membership-id.template-id';
+        SharedPreferences.setMockInitialValues({key: raw});
+        final preferences = await SharedPreferences.getInstance();
+        final adapter = _Adapter(
+          (_) => _json(_page(_attendance(clockOutAt: '2026-10-07T03:00:00Z'))),
+        );
+        final repository = ApiFixedShiftRepository(
+          Dio()..httpClientAdapter = adapter,
+          preferences,
+        );
+        final review = (await repository.inspectLegacyClockIns(_employeeScope))
+            .single;
+        expect(review.requiresReview, isFalse);
+        expect(review.canonical!.id, 'attendance-id');
+        expect(review.canonical!.isOpen, isFalse);
+        expect(adapter.requests.single.method, 'GET');
+        expect(preferences.getString(key), raw);
+        expect(
+          await repository.loadPendingClockIn(
+            userId: _employeeScope.userId,
+            workspaceId: 'workspace-id',
+            membershipId: _employeeScope.membershipId,
+            templateId: '',
+          ),
+          isNull,
+        );
+      },
+    );
+  }
+
+  test(
+    'ambiguous legacy review stays explicit while v3 recovery remains exact',
+    () async {
+      final client = await _client((_) => _json(null));
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(
+        'fixed_shift.pending_clock_in.v1',
+        '{unidentifiable}',
+      );
+      await client.repository.savePendingClockIn(_pending());
+      final review = (await client.repository.inspectLegacyClockIns(
+        _employeeScope,
+      )).single;
+      expect(review.requiresReview, isTrue);
+      expect(review.message, contains('Contact support'));
+      final active = await client.repository.loadPendingClockIn(
+        userId: _employeeScope.userId,
+        workspaceId: 'workspace-id',
+        membershipId: _employeeScope.membershipId,
+        templateId: '',
+      );
+      expect(active!.clientAttendanceId, _pending().clientAttendanceId);
+      expect(active.payload, _pending().payload);
+      await client.repository.clearPendingClockIn(active);
+      expect(
+        preferences.getString('fixed_shift.pending_clock_in.v1'),
+        '{unidentifiable}',
+      );
+      expect(client.adapter.requests, isEmpty);
+    },
+  );
+
+  test('failed legacy reconciliation preserves the original evidence and review state', () async {
+    final raw = jsonEncode({
+      'userId': _employeeScope.userId,
+      'workspaceId': 'workspace-id',
+      'membershipId': _employeeScope.membershipId,
+      'templateId': 'template-id',
+      'clientAttendanceId': _pending().clientAttendanceId,
+    });
+    SharedPreferences.setMockInitialValues({
+      'fixed_shift.pending_clock_in.v1': raw,
+    });
+    final preferences = await SharedPreferences.getInstance();
+    final adapter = _Adapter((_) => _json({'message': 'offline'}, status: 503));
+    final repository = ApiFixedShiftRepository(
+      Dio()..httpClientAdapter = adapter,
+      preferences,
+    );
+    final review = (await repository.inspectLegacyClockIns(_employeeScope))
+        .single;
+    expect(review.requiresReview, isTrue);
+    expect(review.message, contains('restore access'));
+    expect(preferences.getString('fixed_shift.pending_clock_in.v1'), raw);
+    expect(adapter.requests.single.method, 'GET');
+  });
+
+  test('held extra callback serializes create recovery and revoke through follow-up reads', () async {
+    final callback = Completer<void>(), started = Completer<void>();
+    final repository = _ExtraRepository();
+    final cubit = ExtraShiftsCubit(
+      repository,
+      onChanged: () {
+        started.complete();
+        return callback.future;
+      },
+    )..bind(_managerScope, 'membership-id');
+    addTearDown(cubit.close);
+    await cubit.load();
+    final first = cubit.create(_extraPayload(), actual: false);
+    await started.future;
+    expect(cubit.state.busy, isTrue);
+    expect(await cubit.create(_extraPayload(), actual: false), isFalse);
+    expect(await cubit.recover(), isFalse);
+    expect(await cubit.revoke(cubit.state.canonical!), isFalse);
+    expect(repository.requests, hasLength(1));
+    expect(repository.revocations, 0);
+    callback.complete();
+    expect(await first, isTrue);
+    expect(cubit.state.busy, isFalse);
+  });
+
+  test('old extra finally cannot unlock a newer generation mutation', () async {
+    final callback = Completer<void>(), started = Completer<void>();
+    var calls = 0;
+    final repository = _ExtraRepository();
+    final cubit = ExtraShiftsCubit(
+      repository,
+      onChanged: () {
+        if (++calls == 1) {
+          started.complete();
+          return callback.future;
+        }
+      },
+    )..bind(_managerScope, 'membership-id');
+    addTearDown(cubit.close);
+    await cubit.load();
+    final old = cubit.create(_extraPayload(), actual: false);
+    await started.future;
+    cubit.bind(null, 'membership-id');
+    cubit.bind(_managerScope, 'membership-id');
+    await cubit.load();
+    repository.completer = Completer<ExtraAuthorization>();
+    repository.submissionStarted = Completer<void>();
+    final newer = cubit.create(_extraPayload(), actual: false);
+    await repository.submissionStarted!.future;
+    callback.complete();
+    expect(await old, isTrue);
+    expect(cubit.state.busy, isTrue);
+    expect(await cubit.create(_extraPayload(), actual: false), isFalse);
+    expect(await cubit.recover(), isFalse);
+    repository.completer!.complete(
+      ExtraAuthorization(_extraJson(repository.requests.last)),
+    );
+    expect(await newer, isTrue);
+    expect(repository.requests, hasLength(2));
+  });
+
+  test(
+    'old extra list response cannot replace newer uncertain intent',
+    () async {
+      final repository = _ExtraRepository();
+      final cubit = ExtraShiftsCubit(repository)
+        ..bind(_managerScope, 'membership-id');
+      addTearDown(cubit.close);
+      await cubit.load();
+      repository.listRead = Completer<ExtraAuthorizationPage>();
+      repository.listStarted = Completer<void>();
+      final held = repository.listRead!;
+      final old = cubit.load();
+      await repository.listStarted!.future;
+      cubit.bind(null, 'membership-id');
+      repository.listRead = null;
+      cubit.bind(_managerScope, 'membership-id');
+      await cubit.load();
+      repository.uncertain = true;
+      expect(await cubit.create(_extraPayload(), actual: false), isFalse);
+      final intent = cubit.state.intent;
+      held.complete(
+        const ExtraAuthorizationPage(
+          [],
+          ApiPagination(page: 1, limit: 20, total: 0, totalPages: 0),
+        ),
+      );
+      await old;
+      expect(cubit.state.intent, intent);
+      expect(cubit.state.recoveryBlocked, isTrue);
+      expect(repository.stored, intent!.encode());
+    },
+  );
+
+  test('extra canonical success survives callback failure and retains recovery target', () async {
+    final repository = _ExtraRepository()..uncertain = true;
+    final cubit = ExtraShiftsCubit(
+      repository,
+      onChanged: () {
+        repository.refreshFails = true;
+        throw StateError('callback failed');
+      },
+    )..bind(_managerScope, 'membership-id');
+    addTearDown(cubit.close);
+    await cubit.load();
+    expect(await cubit.create(_extraPayload(), actual: false), isFalse);
+    cubit.bind(_managerScope, 'different-employee');
+    await cubit.load();
+    expect(cubit.state.intent!.membershipId, 'membership-id');
+    repository.uncertain = false;
+    expect(await cubit.recover(), isTrue);
+    expect(repository.requests.first, repository.requests.last);
+    expect(
+      cubit.state.canonical!.fields['employeeMembershipId'],
+      'membership-id',
+    );
+    expect(cubit.state.failure, isNotNull);
+    expect(cubit.state.busy, isFalse);
+  });
+
+  for (final switchKind in ['employee', 'workspace', 'user']) {
+    test('extra $switchKind switch rejects pending canonical result', () async {
+      final repository = _ExtraRepository()
+        ..completer = Completer<ExtraAuthorization>();
+      final cubit = ExtraShiftsCubit(repository)
+        ..bind(_managerScope, 'membership-id');
+      addTearDown(cubit.close);
+      await cubit.load();
+      repository.submissionStarted = Completer<void>();
+      final first = cubit.create(_extraPayload(), actual: false);
+      await repository.submissionStarted!.future;
+      final scope = switchKind == 'employee'
+          ? _managerScope
+          : FeatureSessionScope(
+              userId: switchKind == 'user'
+                  ? 'other-user'
+                  : _managerScope.userId,
+              workspaceId: switchKind == 'workspace'
+                  ? 'other-workspace'
+                  : _managerScope.workspaceId,
+              membershipId: _managerScope.membershipId,
+              timezone: 'UTC',
+              role: WorkspaceRole.manager,
+            );
+      cubit.bind(
+        scope,
+        switchKind == 'employee' ? 'other-employee' : 'membership-id',
+      );
+      repository.completer!.complete(
+        ExtraAuthorization(_extraJson(repository.requests.first)),
+      );
+      expect(await first, isFalse);
+      expect(cubit.state.canonical, isNull);
+      expect(repository.stored, isNotNull);
+    });
+  }
+}
+
 Map<String, Object?> _savedSchedule() => {
   'id': 'template-id',
   'name': 'Saved night schedule',
@@ -900,13 +1538,55 @@ class _ControlledRepository extends _FakeRepository {
   FlexibleAttendance? current, saved;
   Completer<FlexibleAttendance>? clockInCompleter;
   final payloads = <Map<String, Object?>>[];
+  Completer<FlexibleAttendance?>? currentRead;
+  Completer<PendingClockIn?>? pendingRead;
+  Completer<ShiftTemplatePage>? catalogRead;
+  Completer<void>? catalogStarted;
+  final eligibilityReads = <Completer<TemplateEligibility>>[];
+  Completer<void>? eligibilityStarted;
+  @override
+  Future<ShiftTemplatePage> listMyTemplates(
+    String workspaceId, {
+    int page = 1,
+    int limit = 100,
+  }) {
+    if (catalogStarted?.isCompleted == false) {
+      catalogStarted!.complete();
+    }
+    return catalogRead?.future ??
+        super.listMyTemplates(workspaceId, page: page, limit: limit);
+  }
+
+  @override
+  Future<PendingClockIn?> loadPendingClockIn({
+    required String userId,
+    required String workspaceId,
+    required String membershipId,
+    required String templateId,
+  }) =>
+      pendingRead?.future ??
+      super.loadPendingClockIn(
+        userId: userId,
+        workspaceId: workspaceId,
+        membershipId: membershipId,
+        templateId: templateId,
+      );
+
   @override
   EligibleShiftOccurrence get occurrence =>
       EligibleShiftOccurrence.fromJson(_occurrenceJson(kind: kind, used: used));
   @override
   Future<TemplateEligibility> getEligibility(String workspaceId) async {
-    if (refreshFails)
-      { throw const ApiException(message: 'offline', kind: FailureKind.network); }
+    if (eligibilityReads.isNotEmpty) {
+      final response = eligibilityReads.removeAt(0);
+      if (eligibilityStarted?.isCompleted == false) {
+        eligibilityStarted!.complete();
+      }
+      return response.future;
+    }
+    if (refreshFails) {
+      throw const ApiException(message: 'offline', kind: FailureKind.network);
+    }
     return TemplateEligibility(
       workspaceId: workspaceId,
       timezone: 'Africa/Cairo',
@@ -919,14 +1599,15 @@ class _ControlledRepository extends _FakeRepository {
   }
 
   @override
-  Future<FlexibleAttendance?> getCurrentAttendance(String workspaceId) async =>
-      current;
+  Future<FlexibleAttendance?> getCurrentAttendance(String workspaceId) =>
+      currentRead?.future ?? Future.value(current);
   @override
   Future<FlexibleAttendance?> findPendingAttendance(
     PendingClockIn value,
   ) async {
-    if (lookupFails)
-      { throw const ApiException(message: 'offline', kind: FailureKind.network); }
+    if (lookupFails) {
+      throw const ApiException(message: 'offline', kind: FailureKind.network);
+    }
     return saved;
   }
 
@@ -942,11 +1623,12 @@ class _ControlledRepository extends _FakeRepository {
       'workspaceId': workspaceId,
       'shiftTemplateId': shiftTemplateId,
       'clientAttendanceId': clientAttendanceId,
-      if (assignmentId != null) 'assignmentId': assignmentId,
-      if (extraAuthorizationId != null)
-        'extraAuthorizationId': extraAuthorizationId,
+      'assignmentId': ?assignmentId,
+      'extraAuthorizationId': ?extraAuthorizationId,
     });
-    if (clockInCompleter != null) { return clockInCompleter!.future; }
+    if (clockInCompleter != null) {
+      return clockInCompleter!.future;
+    }
     final canonical = FlexibleAttendance.fromJson({
       ..._attendance(),
       'clientAttendanceId': clientAttendanceId,
@@ -954,8 +1636,9 @@ class _ControlledRepository extends _FakeRepository {
       'assignmentId': assignmentId,
       'extraAuthorizationId': extraAuthorizationId,
     });
-    if (uncertain)
-      { throw const ApiException(message: 'timeout', kind: FailureKind.timeout); }
+    if (uncertain) {
+      throw const ApiException(message: 'timeout', kind: FailureKind.timeout);
+    }
     used = true;
     current = canonical;
     saved = canonical;
@@ -981,14 +1664,19 @@ class _ExtraRepository implements ExtraShiftRepository {
   String? stored;
   bool uncertain = false, refreshFails = false, reject = false;
   Completer<ExtraAuthorization>? completer;
+  Completer<void>? submissionStarted;
+  Completer<ExtraAuthorizationPage>? listRead;
+  Completer<void>? listStarted;
+  int revocations = 0;
   final requests = <Map<String, Object?>>[];
   final canonical = <String, ExtraAuthorization>{};
   @override
   Future<String?> readExtraIntent(FeatureSessionScope scope) async => stored;
   @override
   Future<void> saveExtraIntent(FeatureSessionScope scope, String intent) async {
-    if (stored != null && stored != intent)
-      { throw StateError('Conflicting recovery'); }
+    if (stored != null && stored != intent) {
+      throw StateError('Conflicting recovery');
+    }
     stored = intent;
   }
 
@@ -997,7 +1685,9 @@ class _ExtraRepository implements ExtraShiftRepository {
     FeatureSessionScope scope,
     String intent,
   ) async {
-    if (stored == intent) { stored = null; }
+    if (stored == intent) {
+      stored = null;
+    }
   }
 
   @override
@@ -1007,8 +1697,15 @@ class _ExtraRepository implements ExtraShiftRepository {
     int page = 1,
     int limit = 20,
   }) async {
-    if (refreshFails)
-      { throw const ApiException(message: 'offline', kind: FailureKind.network); }
+    if (listRead != null) {
+      if (listStarted?.isCompleted == false) {
+        listStarted!.complete();
+      }
+      return listRead!.future;
+    }
+    if (refreshFails) {
+      throw const ApiException(message: 'offline', kind: FailureKind.network);
+    }
     return ExtraAuthorizationPage(
       canonical.values.toList(),
       const ApiPagination(page: 1, limit: 20, total: 0, totalPages: 0),
@@ -1023,18 +1720,22 @@ class _ExtraRepository implements ExtraShiftRepository {
     required bool actual,
   }) async {
     requests.add(Map.from(payload));
+    if (submissionStarted?.isCompleted == false) { submissionStarted!.complete(); }
     expect(
       stored,
       isNotNull,
       reason: 'intent must be durable before HTTP submission',
     );
-    if (reject)
-      { throw const ApiException(
+    if (reject) {
+      throw const ApiException(
         message: 'Overlap',
         code: 'EXTRA_SCHEDULE_OVERLAP',
         statusCode: 409,
-      ); }
-    if (completer != null) { return completer!.future; }
+      );
+    }
+    if (completer != null) {
+      return completer!.future;
+    }
     final key = payload['clientAuthorizationId'] as String;
     final saved = canonical.putIfAbsent(
       key,
@@ -1042,8 +1743,9 @@ class _ExtraRepository implements ExtraShiftRepository {
         _extraJson(payload, status: actual ? 'CONSUMED' : 'AUTHORIZED'),
       ),
     );
-    if (uncertain)
-      { throw const ApiException(message: 'timeout', kind: FailureKind.timeout); }
+    if (uncertain) {
+      throw const ApiException(message: 'timeout', kind: FailureKind.timeout);
+    }
     return saved;
   }
 
@@ -1052,12 +1754,15 @@ class _ExtraRepository implements ExtraShiftRepository {
     String workspaceId,
     String membershipId,
     String authorizationId,
-  ) async => ExtraAuthorization(
-    _extraJson({
-      ..._extraPayload(),
-      'clientAuthorizationId': '11111111-1111-4111-8111-111111111111',
-    }, status: 'REVOKED'),
-  );
+  ) async {
+    revocations++;
+    return ExtraAuthorization(
+      _extraJson({
+        ..._extraPayload(),
+        'clientAuthorizationId': '11111111-1111-4111-8111-111111111111',
+      }, status: 'REVOKED'),
+    );
+  }
 }
 
 class _AssignmentRepository extends _FakeRepository {
@@ -1071,8 +1776,9 @@ class _AssignmentRepository extends _FakeRepository {
     int page = 1,
     int limit = 20,
   }) async {
-    if (failRefresh && value != null)
-      { throw const ApiException(message: 'offline', kind: FailureKind.network); }
+    if (failRefresh && value != null) {
+      throw const ApiException(message: 'offline', kind: FailureKind.network);
+    }
     return WorkPatternHistory(
       current: null,
       history: value == null ? [] : [value!],
@@ -1088,12 +1794,13 @@ class _AssignmentRepository extends _FakeRepository {
     required String effectiveFrom,
   }) async {
     mutations++;
-    if (reject)
-      { throw const ApiException(
+    if (reject) {
+      throw const ApiException(
         message: 'Captured occurrence',
         code: 'ASSIGNMENT_OCCURRENCE_CAPTURED',
         statusCode: 409,
-      ); }
+      );
+    }
     value = WorkPattern.fromJson({
       'id': 'new-assignment',
       'workspaceId': workspaceId,
@@ -1285,7 +1992,9 @@ void assignedSprintTests() {
         'clientAuthorizationId': '11111111-1111-4111-8111-111111111111',
       };
       final client = await _client((options) {
-        if (options.method == 'GET') { return _json(_page(_extraJson(payload))); }
+        if (options.method == 'GET') {
+          return _json(_page(_extraJson(payload)));
+        }
         return _json(
           _extraJson(
             options.method == 'DELETE'
@@ -1355,15 +2064,26 @@ void assignedSprintTests() {
     });
     final preferences = await SharedPreferences.getInstance();
     final repository = ApiFixedShiftRepository(Dio(), preferences);
-    await expectLater(
-      repository.loadPendingClockIn(
+    expect(
+      await repository.loadPendingClockIn(
         userId: 'user-a',
         workspaceId: 'workspace-a',
         membershipId: 'membership-a',
         templateId: 'template-a',
       ),
-      throwsFormatException,
+      isNull,
     );
+    final reviews = await repository.inspectLegacyClockIns(
+      const FeatureSessionScope(
+        userId: 'user-a',
+        workspaceId: 'workspace-a',
+        membershipId: 'membership-a',
+        timezone: 'UTC',
+        role: WorkspaceRole.employee,
+      ),
+    );
+    expect(reviews, hasLength(2));
+    expect(reviews.every((v) => v.requiresReview), isTrue);
     expect(
       preferences.getString('fixed_shift.pending_clock_in.v1'),
       '{old-operation}',

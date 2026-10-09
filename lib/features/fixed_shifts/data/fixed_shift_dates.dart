@@ -22,6 +22,8 @@ String fixedShiftOperationalDate(Map<String, Object?> json, String key) {
     return fixedShiftDateOnly({key: value}, key);
   }
   final parsed = DateTime.tryParse(value);
-  if (parsed == null) { throw FormatException('Invalid $key'); }
+  if (parsed == null) {
+    throw FormatException('Invalid $key');
+  }
   return parsed.toUtc().toIso8601String().substring(0, 10);
 }

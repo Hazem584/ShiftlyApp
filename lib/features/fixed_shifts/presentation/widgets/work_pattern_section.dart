@@ -25,8 +25,9 @@ class WorkPatternSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final manager = context.watch<ManagerPerformanceCubit>();
     final scope = manager.state.scope;
-    if (scope == null || !scope.isManager || scope.workspaceId != workspaceId)
-      { return const SizedBox.shrink(); }
+    if (scope == null || !scope.isManager || scope.workspaceId != workspaceId) {
+      return const SizedBox.shrink();
+    }
     return BlocProvider(
       key: ValueKey((scope, membershipId, canEdit)),
       create: (_) =>

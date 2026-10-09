@@ -10,8 +10,9 @@ class SavedSchedule {
     }
     for (final key in ['startMinute', 'endMinute']) {
       final minute = ApiModelParser.integer(fields, key);
-      if (minute < 0 || minute > 1439)
-        { throw const FormatException('Invalid saved schedule'); }
+      if (minute < 0 || minute > 1439) {
+        throw const FormatException('Invalid saved schedule');
+      }
     }
   }
   final Map<String, Object?> fields;
