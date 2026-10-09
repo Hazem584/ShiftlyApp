@@ -29,7 +29,6 @@ def summarize(log):
         "No file or variants found for asset": "An asset referenced by pubspec could not be found.",
         "Failed to build native assets": "Native asset compilation failed.",
         "Failed to run build hooks": "Native build hooks failed.",
-        "OutOfMemoryError": "Java reported OutOfMemoryError.",
         "Out of memory": "A tool reported out of memory.",
         "No space left on device": "A tool reported no space left on device.",
         "Gradle build daemon disappeared unexpectedly": "The Gradle daemon disappeared unexpectedly.",
@@ -41,6 +40,10 @@ def summarize(log):
         "Could not resolve all files": "Gradle dependency resolution failed.",
     }
     output.extend(message for signature, message in signatures.items() if signature in log)
+    # Verbose Gradle startup echoes -XX:+HeapDumpOnOutOfMemoryError. That
+    # option is configuration, not evidence that an OOM actually occurred.
+    if re.search(r"\bOutOfMemoryError\b", log):
+        output.append("Java reported OutOfMemoryError.")
     # Only SDK-owned target/task names can cross the private-log boundary.
     targets = (
         "kernel_snapshot_program", "aot_android_asset_bundle", "android_aot_bundle",

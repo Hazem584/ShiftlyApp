@@ -39,6 +39,18 @@ If a frontend crash has no source location, use the redacted invocation and stac
 to construct a minimal reproduction with placeholder configuration for an upstream
 Dart report; do not infer an offending plugin from a preceding Gradle warning.
 
+CI removes unused preinstalled .NET, Haskell, and CodeQL tools to reclaim disk
+space while retaining Android SDKs/NDKs. Before compilation it requires at least
+8 GiB free and reports disk, inode, and memory availability again on build failure.
+A temporary Gradle user home overrides local limits with a 3 GiB heap, 768 MiB
+metaspace, and two workers; parallel builds, persistent daemons, build caches,
+and heap dumps are disabled for this run. Local Gradle settings are unchanged.
+The temporary Gradle home is removed with private inputs. If space checks fail
+or compilation still exhausts resources, use a runner with more capacity.
+Gradle documents the [user-home property precedence](https://docs.gradle.org/current/userguide/build_environment.html#sec:gradle_configuration_properties)
+used for these CI overrides. An echoed `HeapDumpOnOutOfMemoryError` JVM option
+is not an out-of-memory exception; diagnostics distinguish the two.
+
 Repository **Settings → Secrets and variables → Actions** must contain:
 
 | Type | Name | Value format |

@@ -6,6 +6,21 @@ from summarize_release_failure import summarize
 
 
 class ReleaseFailureSummaryTest(unittest.TestCase):
+    def test_heap_dump_option_is_not_an_oom_error(self):
+        output = summarize(
+            "Starting Gradle with -Xmx8G -XX:+HeapDumpOnOutOfMemoryError\n"
+            "java.io.IOException: No space left on device"
+        )
+        self.assertNotIn("Java reported OutOfMemoryError", output)
+        self.assertIn("A tool reported no space left on device.", output)
+
+    def test_actual_java_oom_is_reported_without_private_details(self):
+        output = summarize(
+            "java.lang.OutOfMemoryError: Java heap space fixture-secret"
+        )
+        self.assertIn("Java reported OutOfMemoryError.", output)
+        self.assertNotIn("fixture-secret", output)
+
     def test_frontend_invocation_does_not_imply_compiler_crash(self):
         output = summarize(
             "frontend_server.snapshot --aot --tfa --target=flutter "

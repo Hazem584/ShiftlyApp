@@ -40,6 +40,17 @@ jobs:
         ref: ${{ github.sha }}
         persist-credentials: false
 
+    - name: Reclaim disk space from unused runner tools
+      run: |
+        set -euo pipefail
+        # Fixed paths on the disposable Ubuntu runner. Keep Android SDK/NDKs,
+        # Java, Node, Flutter, and the repository intact.
+        sudo rm -rf -- /usr/share/dotnet /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+        echo 'Runner resources after removing unused .NET, Haskell, and CodeQL tools:'
+        df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+        df -i "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+        free -m
+
     # Official Linux x64 archive, preserving its Git tags and release metadata.
     # SHA-256 published in:
     # https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json
@@ -177,6 +188,20 @@ jobs:
             fail('Decoded Android keystore is empty.')
         (directory / 'release.jks').write_bytes(keystore)
 
+        # User-home properties override the project's large local JVM limits.
+        # Keep this CI-only profile private and remove its caches at cleanup.
+        gradle_home = directory / 'gradle'
+        gradle_home.mkdir(mode=0o700)
+        (gradle_home / 'gradle.properties').write_text(
+            'org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m '
+            '-XX:ReservedCodeCacheSize=256m -XX:-HeapDumpOnOutOfMemoryError\n'
+            'org.gradle.workers.max=2\n'
+            'org.gradle.parallel=false\n'
+            'org.gradle.daemon=false\n'
+            'org.gradle.caching=false\n',
+            encoding='utf-8',
+        )
+
         # Wall-clock seconds since 2020 advance across serialized runs and reruns,
         # including reruns of an older run_number. Never wrap or reuse a code.
         build_number = int(time.time()) - 1577836800
@@ -190,6 +215,7 @@ jobs:
             output.write(f'CI_BUILD_NUMBER={build_number}\n')
             output.write(f'ANDROID_KEYSTORE_PATH={directory / "release.jks"}\n')
             output.write(f'GOOGLE_APPLICATION_CREDENTIALS={directory / "service-account.json"}\n')
+            output.write(f'GRADLE_USER_HOME={gradle_home}\n')
         PY
 
     - name: Build one signed release APK
@@ -201,6 +227,18 @@ jobs:
       run: |
         set -euo pipefail
         umask 077
+        echo 'Runner resources before release compilation:'
+        df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+        df -i "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
+        free -m
+        python3 - <<'PY'
+        import os, shutil
+        # Reserve space for Gradle downloads, Android intermediates, and APKs.
+        for name in ('RUNNER_TEMP', 'GITHUB_WORKSPACE'):
+            free = shutil.disk_usage(os.environ[name]).free
+            if free < 8 * 1024**3:
+                raise SystemExit(f'Release build needs at least 8 GiB free on {name}; available {free / 1024**3:.1f} GiB. Use a runner with more disk capacity.')
+        PY
         # Verbose output can contain encoded Dart defines and private paths.
         # Keep it private and publish only the allowlisted diagnostic summary.
         build_status=0
@@ -209,6 +247,10 @@ jobs:
           --build-number="$CI_BUILD_NUMBER" \
           > "$CI_PRIVATE_DIR/release-build.log" 2>&1 || build_status=$?
         if [[ "$build_status" -ne 0 ]]; then
+          echo 'Runner resources after release build failure:'
+          df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE" || true
+          df -i "$RUNNER_TEMP" "$GITHUB_WORKSPACE" || true
+          free -m || true
           python3 tool/ci/summarize_release_failure.py "$CI_PRIVATE_DIR/release-build.log" || \
             echo 'Diagnostic summary unavailable; private build output withheld.'
           exit "$build_status"
