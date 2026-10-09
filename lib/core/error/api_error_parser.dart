@@ -6,8 +6,13 @@ abstract final class ApiErrorParser {
   static ApiException parse(Object error) {
     if (error is ApiException) return error;
     if (error is! DioException) {
+      if (error is FormatException) {
+        return const ApiException(
+          message: 'We could not read the latest information. Refresh to load it again.',
+        );
+      }
       return const ApiException(
-        message: 'Something went wrong. Please try again.',
+        message: 'We could not complete this request. Refresh and check its status before trying again.',
       );
     }
     if (error.response == null && error.error is ApiException) {
@@ -269,7 +274,7 @@ abstract final class ApiErrorParser {
         401 => 'Your session has expired. Please sign in again.',
         403 => 'You do not have permission to do that.',
         404 => 'The requested item could not be found.',
-        409 => 'This action conflicts with the current state.',
+        409 => 'This information changed or conflicts with an existing record. Refresh its status before trying again.',
         413 => 'The selected file is too large.',
         415 => 'This file type is not supported.',
         422 => 'Please check the information you entered.',
@@ -278,7 +283,7 @@ abstract final class ApiErrorParser {
         502 ||
         503 ||
         504 => 'The service is temporarily unavailable. Please retry.',
-        _ => 'Something went wrong. Please try again.',
+        _ => 'We could not complete this request. Refresh and check its status before trying again.',
       },
     };
   }

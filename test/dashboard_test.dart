@@ -11,8 +11,10 @@ import 'package:shiftly/features/dashboard/domain/repositories/dashboard_reposit
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 
 import 'dashboard_fixtures.dart';
+import 'support/attendance_test_cubit.dart';
 
 class _DashboardFake implements DashboardRepository {
   _DashboardFake({ManagerDashboardData? manager})
@@ -94,7 +96,7 @@ void main() {
     repository.pending!.completeError(const ApiException(message: 'Offline'));
     repository.pending = null;
     await tester.pumpAndSettle();
-    expect(find.text('Something went wrong'), findsOneWidget);
+    expect(find.text('Dashboard unavailable'), findsOneWidget);
     expect(find.text('Offline'), findsOneWidget);
     await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
@@ -193,7 +195,10 @@ void main() {
     await tester.pumpWidget(
       BlocProvider.value(
         value: cubit,
-        child: const MaterialApp(home: EmployeeDashboardScreen()),
+        child: BlocProvider<FlexibleAttendanceCubit>(
+          create: (_) => AttendanceTestCubit(),
+          child: const MaterialApp(home: EmployeeDashboardScreen()),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -202,7 +207,7 @@ void main() {
     expect(find.byKey(const Key('employee-quick-shifts')), findsOneWidget);
     expect(find.byKey(const Key('employee-quick-leave')), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Fixed shifts'),
+      find.text('Open My Shifts'),
       180,
       scrollable: find
           .descendant(
@@ -211,7 +216,7 @@ void main() {
           )
           .first,
     );
-    expect(find.text('Fixed shifts'), findsOneWidget);
+    expect(find.text('Open My Shifts'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Pending leave'),
       180,
@@ -249,7 +254,10 @@ void main() {
     await tester.pumpWidget(
       BlocProvider.value(
         value: cubit,
-        child: const MaterialApp(home: EmployeeDashboardScreen()),
+        child: BlocProvider<FlexibleAttendanceCubit>(
+          create: (_) => AttendanceTestCubit(),
+          child: const MaterialApp(home: EmployeeDashboardScreen()),
+        ),
       ),
     );
     await tester.pumpAndSettle();

@@ -169,7 +169,7 @@ class ProfileCubit extends Cubit<ProfileState> {
         ProfileLoaded(
           current.profile,
           failure: const Failure(
-            message: 'Something went wrong. Please try again.',
+            message: 'We could not save your profile. Refresh your profile to check its latest details before saving again.',
           ),
         ),
       );

@@ -238,43 +238,36 @@ void main() {
     expect(workspace.grantsAccess, isFalse);
   });
 
-  test(
-    'malformed success and backend request id become safe typed errors',
-    () async {
-      final malformed = _repository((_) => _json({'id': 'only-id'}));
-      await expectLater(
-        malformed.repository.getWorkspace('workspace-id'),
-        throwsA(
-          isA<ApiException>().having(
-            (error) => error.message,
-            'message',
-            'Something went wrong. Please try again.',
-          ),
+  test('malformed success and backend request id become safe typed errors', () async {
+    final malformed = _repository((_) => _json({'id': 'only-id'}));
+    await expectLater(
+      malformed.repository.getWorkspace('workspace-id'),
+      throwsA(
+        isA<ApiException>().having(
+          (error) => error.message,
+          'message',
+          'We could not read the latest information. Refresh to load it again.',
         ),
-      );
-      final backend = _repository(
-        (_) => _json({
-          'statusCode': 409,
-          'code': 'INVITATION_ALREADY_PENDING',
-          'message': 'private backend detail',
-          'requestId': 'request-id',
-        }, status: 409),
-      );
-      await expectLater(
-        backend.repository.createInvitation(
-          workspaceId: 'workspace-id',
-          email: 'a@example.test',
-        ),
-        throwsA(
-          isA<ApiException>()
-              .having(
-                (error) => error.code,
-                'code',
-                'INVITATION_ALREADY_PENDING',
-              )
-              .having((error) => error.requestId, 'requestId', 'request-id'),
-        ),
-      );
-    },
-  );
+      ),
+    );
+    final backend = _repository(
+      (_) => _json({
+        'statusCode': 409,
+        'code': 'INVITATION_ALREADY_PENDING',
+        'message': 'private backend detail',
+        'requestId': 'request-id',
+      }, status: 409),
+    );
+    await expectLater(
+      backend.repository.createInvitation(
+        workspaceId: 'workspace-id',
+        email: 'a@example.test',
+      ),
+      throwsA(
+        isA<ApiException>()
+            .having((error) => error.code, 'code', 'INVITATION_ALREADY_PENDING')
+            .having((error) => error.requestId, 'requestId', 'request-id'),
+      ),
+    );
+  });
 }

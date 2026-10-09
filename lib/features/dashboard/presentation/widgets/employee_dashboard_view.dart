@@ -10,6 +10,8 @@ import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.da
 import 'package:shiftly/features/dashboard/presentation/utils/employee_dashboard_formatters.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_count_card.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_shift_card.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_status_card.dart';
 import 'package:shiftly/features/points/presentation/widgets/performance_thumbnail.dart';
 
 class EmployeeDashboardView extends StatelessWidget {
@@ -23,7 +25,12 @@ class EmployeeDashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => RefreshIndicator(
-    onRefresh: () => context.read<DashboardCubit>().load(refresh: true),
+    onRefresh: () async {
+      await Future.wait([
+        context.read<DashboardCubit>().load(refresh: true),
+        context.read<FlexibleAttendanceCubit>().load(refresh: true),
+      ]);
+    },
     child: ListView(
       key: const Key('employee-dashboard-content'),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -108,14 +115,11 @@ class EmployeeDashboardView extends StatelessWidget {
         const SizedBox(height: AppSpacing.m),
         const PerformanceThumbnail(),
         const SizedBox(height: AppSpacing.m),
-        SurfaceCard(
-          onTap: () => context.go('/employee?tab=shifts'),
-          child: const ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.schedule, color: AppColors.orange),
-            title: Text('Fixed shifts'),
-            subtitle: Text('View available templates and clock in or out'),
-            trailing: Icon(Icons.chevron_right_rounded),
+        BlocBuilder<FlexibleAttendanceCubit, FlexibleAttendanceState>(
+          builder: (context, state) => AttendanceStatusCard(
+            state: state,
+            timezone: data.timezone,
+            onOpenShifts: () => context.go('/employee?tab=shifts'),
           ),
         ),
         if (data.todayShift != null)

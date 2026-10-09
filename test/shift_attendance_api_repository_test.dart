@@ -313,40 +313,33 @@ void main() {
     },
   );
 
-  test(
-    'malformed shift success and attendance backend errors are safe',
-    () async {
-      final malformed = _client((_) => _json({'id': 'shift-id'}));
-      await expectLater(
-        ApiShiftRepository(malformed.dio).getMyShift('shift-id'),
-        throwsA(
-          isA<ApiException>().having(
-            (error) => error.message,
-            'message',
-            'Something went wrong. Please try again.',
-          ),
+  test('malformed shift success and attendance backend errors are safe', () async {
+    final malformed = _client((_) => _json({'id': 'shift-id'}));
+    await expectLater(
+      ApiShiftRepository(malformed.dio).getMyShift('shift-id'),
+      throwsA(
+        isA<ApiException>().having(
+          (error) => error.message,
+          'message',
+          'We could not read the latest information. Refresh to load it again.',
         ),
-      );
-      final backend = _client(
-        (_) => _json({
-          'statusCode': 409,
-          'code': 'ATTENDANCE_ALREADY_EXISTS',
-          'message': 'private backend detail',
-          'requestId': 'request-id',
-        }, status: 409),
-      );
-      await expectLater(
-        ApiAttendanceRepository(backend.dio).clockIn('shift-id'),
-        throwsA(
-          isA<ApiException>()
-              .having(
-                (error) => error.code,
-                'code',
-                'ATTENDANCE_ALREADY_EXISTS',
-              )
-              .having((error) => error.requestId, 'requestId', 'request-id'),
-        ),
-      );
-    },
-  );
+      ),
+    );
+    final backend = _client(
+      (_) => _json({
+        'statusCode': 409,
+        'code': 'ATTENDANCE_ALREADY_EXISTS',
+        'message': 'private backend detail',
+        'requestId': 'request-id',
+      }, status: 409),
+    );
+    await expectLater(
+      ApiAttendanceRepository(backend.dio).clockIn('shift-id'),
+      throwsA(
+        isA<ApiException>()
+            .having((error) => error.code, 'code', 'ATTENDANCE_ALREADY_EXISTS')
+            .having((error) => error.requestId, 'requestId', 'request-id'),
+      ),
+    );
+  });
 }

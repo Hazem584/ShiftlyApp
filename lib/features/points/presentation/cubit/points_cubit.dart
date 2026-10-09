@@ -620,7 +620,9 @@ class PointsCubit extends Cubit<PointsState> {
 
   Failure _failure(Object error) => error is ApiException
       ? error.toFailure()
-      : const Failure(message: 'Something went wrong. Please try again.');
+      : const Failure(
+          message: 'We could not confirm your latest points information. Refresh your balance and history before trying again.',
+        );
   bool _current(FeatureSessionScope scope, int generation) =>
       !isClosed && _scope == scope && _generation == generation;
   bool _sameMonth(DateTime? left, DateTime right) =>

@@ -81,6 +81,9 @@ class ActiveAttendanceCard extends StatelessWidget {
           '${attendanceClassificationLabel(attendance.classification ?? AttendanceClassification.unknown)}${attendance.minutesLate > 0 ? ' • ${attendance.minutesLate} min late' : ''}',
         ),
         const SizedBox(height: 6),
+        const Text(
+          'Use Clock out when you finish. Your workspace confirms the final worked duration.',
+        ),
         StreamBuilder<int>(
           stream: Stream<int>.periodic(
             const Duration(minutes: 1),

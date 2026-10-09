@@ -25,6 +25,39 @@ DioException _error({
 }
 
 void main() {
+  test(
+    'unknown conflicts retain support metadata with a safe recovery action',
+    () {
+      final result = ApiErrorParser.parse(
+        _error(
+          status: 409,
+          data: {
+            'code': 'NEW_CONFLICT',
+            'message': 'private database detail',
+            'requestId': 'support-42',
+          },
+        ),
+      );
+      expect(result.code, 'NEW_CONFLICT');
+      expect(result.requestId, 'support-42');
+      expect(result.message, contains('Refresh'));
+      expect(result.message, isNot(contains('private database')));
+    },
+  );
+
+  test(
+    'invalid response and unexpected exceptions never expose internal details',
+    () {
+      for (final error in [
+        const FormatException('secret response'),
+        StateError('secret state'),
+      ]) {
+        final result = ApiErrorParser.parse(error);
+        expect(result.message.toLowerCase(), contains('refresh'));
+        expect(result.message, isNot(contains('secret')));
+      }
+    },
+  );
   test('parses string backend error and preserves requestId', () {
     final result = ApiErrorParser.parse(
       _error(

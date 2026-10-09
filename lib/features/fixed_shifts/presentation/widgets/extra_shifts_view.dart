@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
+import 'package:shiftly/core/widgets/failure_notice.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -51,9 +52,12 @@ class ExtraShiftsView extends StatelessWidget {
             ),
             if (state.loading) const LinearProgressIndicator(),
             if (state.failure != null)
-              Text(
-                '${state.failure!.message}${state.failure!.requestId == null ? '' : '\nSupport reference: ${state.failure!.requestId}'}',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              FailureNotice(
+                failure: state.failure!,
+                refreshing: state.loading,
+                onRefresh: state.busy
+                    ? null
+                    : () => cubit.load(page: pagination?.page ?? 1),
               ),
             if (state.intent != null) ...[
               Text(

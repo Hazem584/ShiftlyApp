@@ -29,7 +29,7 @@ class DashboardScreen extends StatelessWidget {
           DashboardLoaded() => const SizedBox.shrink(),
           DashboardError(:final failure) => EmptyState(
             icon: Icons.cloud_off_outlined,
-            title: 'Something went wrong',
+            title: 'Dashboard unavailable',
             message: failure.message,
             action: FilledButton.icon(
               onPressed: context.read<DashboardCubit>().load,
