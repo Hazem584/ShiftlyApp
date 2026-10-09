@@ -4,6 +4,7 @@ class ShiftlyApp extends AppProviders {
   /// Authenticated startup supplies the fully configured production locator.
   const ShiftlyApp({
     super.key,
+    super.onboardingStorage,
     super.locator,
     super.employeeRepository,
     super.invitationRepository,
@@ -26,6 +27,7 @@ class ShiftlyApp extends AppProviders {
   /// Explicit preview/test composition with constructor-provided replacements.
   const ShiftlyApp.preview({
     super.key,
+    super.onboardingStorage,
     super.preview = true,
     super.employeeRepository,
     super.invitationRepository,

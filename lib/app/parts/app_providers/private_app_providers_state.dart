@@ -5,6 +5,7 @@ class _AppProvidersState extends State<AppProviders> {
   late final InvitationRepository _invitations;
   late final WorkspaceRepository _workspaces;
   late final GoRouter _router;
+  late final OnboardingCubit _onboardingCubit;
   late final DashboardCubit _dashboardCubit;
   late final EmployeesCubit _employeesCubit;
   late final WorkspacesCubit _workspacesCubit;
@@ -65,13 +66,20 @@ class _AppProvidersState extends State<AppProviders> {
             : throw StateError(
                 'Authenticated apps must inject DashboardRepository.',
               ));
+    _onboardingCubit = OnboardingCubit(
+      widget.onboardingStorage ??
+          _registered<OnboardingStorage>() ??
+          MemoryOnboardingStorage(),
+    );
+    unawaited(_onboardingCubit.restore());
     _sessionRefresh = _sessionCoordinator == null
         ? null
-        : _SessionRouterRefresh(_sessionCoordinator);
+        : _SessionRouterRefresh(_sessionCoordinator, _onboardingCubit);
     _router =
         widget.router ??
         createAppRouter(
           sessionCoordinator: _sessionCoordinator,
+          onboarding: _onboardingCubit,
           refreshListenable: _sessionRefresh,
         );
     _leaveRequests =
@@ -231,6 +239,7 @@ class _AppProvidersState extends State<AppProviders> {
 
   @override
   void dispose() {
+    _onboardingCubit.close();
     _dashboardCubit.close();
     _employeesCubit.close();
     _workspacesCubit.close();
@@ -275,6 +284,7 @@ class _AppProvidersState extends State<AppProviders> {
       ],
       child: MultiBlocProvider(
         providers: [
+          BlocProvider.value(value: _onboardingCubit),
           BlocProvider.value(value: _dashboardCubit),
           BlocProvider.value(value: _employeesCubit),
           BlocProvider.value(value: _workspacesCubit),

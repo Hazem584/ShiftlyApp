@@ -1,3 +1,7 @@
+import 'package:shiftly/features/onboarding/data/onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+
 import 'dart:async';
 
 import 'package:shiftly/features/manager_performance/data/manager_points_repository.dart';
@@ -70,6 +74,7 @@ class AppProviders extends StatefulWidget {
   const AppProviders({
     super.key,
     this.locator,
+    this.onboardingStorage,
     this.preview = false,
     this.employeeRepository,
     this.invitationRepository,
@@ -92,6 +97,7 @@ class AppProviders extends StatefulWidget {
   /// Supplying a locator selects authenticated production composition.
   /// Omitting it preserves the explicit preview/test composition API.
   final GetIt? locator;
+  final OnboardingStorage? onboardingStorage;
   final bool preview;
 
   final EmployeeRepository? employeeRepository;

@@ -2,6 +2,75 @@
 
 Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authenticated startup uses production repositories for every feature; preview and test repositories are selected only by explicit composition.
 
+## Branding, native launch, and onboarding
+
+The approved, unchanged logo is `assets/images/Logo.png` (1254×1254, opaque RGB,
+with its own gradient background). Flutter bundles that exact asset. Launcher and
+native launch resources are checked in; CI does not need a generator package.
+No new dependencies are required. On Windows, regenerate the PNGs and Android
+resources with PowerShell and the built-in System.Drawing library:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tool\generate-branding.ps1
+```
+
+`tool/branding.json` holds the source path, backgrounds, and padding. The script
+scales with containment, without cropping, recoloring, or replacing the logo. It
+generates five Android launcher densities, adaptive foregrounds, legacy splash
+images, Android 12 splash images, all fifteen existing iOS icon slots, three iOS
+launch image scales, and light/dark launch colors. Keep the checked-in iOS
+`LaunchScreen.storyboard`: it centers the LaunchImage at 120 points with aspect-fit
+and uses the LaunchBackground color asset. If changing splash artwork size, update
+the storyboard's two size constraints and Flutter's `BrandSessionLoading` together.
+
+Android's 108dp adaptive canvas contains a centered 46dp square of the complete
+flattened logo, preserving its corners inside the 66dp safe circle. Android 12+
+uses a 288dp transparent canvas containing 120dp artwork inside the required
+192dp circle. The opaque iOS launcher assets contain no alpha channel. No fabricated
+monochrome/themed icon or tinted iOS icon is supplied: the source has no separate
+transparent mark. Android launcher masks and OS launch transitions remain platform
+controlled. See [Android splash constraints](https://developer.android.com/develop/ui/views/launch/splash-screen)
+and [Apple launch storyboards](https://developer.apple.com/documentation/xcode/specifying-your-apps-launch-screen).
+Windows resource/XML checks do not verify iOS appearance or native runtime behavior;
+inspect these on an iPhone/iPad simulator or device using Xcode.
+
+The existing `/session` loading route now shows the logo with a session-restoration
+status. There is no timed splash, extra authentication coordinator, or login before
+session resolution. First-time signed-out users wait for the versioned preference
+then see three onboarding pages; returning signed-out users who completed them go
+to login. Skip and Get Started persist `shiftly.onboarding.completed.v1` using the
+registered SharedPreferences instance before the existing router redirects. A failed
+read/write remains recoverable, with retry text; repeated completion taps cannot
+start another write. Next advances pages with a short transition, disabled when the
+system requests reduced motion. Content scrolls at compact widths and larger text.
+The new onboarding and session-loading surfaces follow device light/dark appearance;
+existing feature-screen theming remains unchanged.
+
+Validated employee/manager sessions bypass onboarding, even if the welcome preference
+cannot be read. The current process remembers that validated bypass through logout;
+it does not rewrite a never-completed preference. A later signed-out cold start with
+no saved completion still shows onboarding. Logout never clears a saved completion
+flag. Profile setup, workspace selection, role authorization, offline recovery, and
+session expiry remain governed by SessionCoordinator and GoRouter. A session change
+while onboarding is visible refreshes that same router, without manual navigation.
+
+Manual regression steps:
+
+1. Clean install signed out: inspect the launcher icon and native launch in both
+   appearances. Confirm session loading resolves into page one without a login flash.
+2. Advance Next twice, check page indicators, then Get Started. Restart signed out:
+   login must open directly. Repeat from clean app data with Skip.
+3. Start with a valid employee session, then a manager session; verify each authorized
+   shell. Verify profile setup, missing/multiple-workspace selection, expired sessions,
+   and offline recovery. Log out and restart after saved completion; login must remain
+   the destination.
+4. Exercise a read/write failure and retry: onboarding must stay recoverable and
+   completion must not be claimed before persistence succeeds. Rapidly tap completion.
+5. Inspect all pages at 320px width, 2× text scale, dark mode, landscape, and reduced
+   motion. Scroll to each action, inspect focus/reader labels, and verify touch targets.
+6. On Android 12+ and iOS, verify launch-to-Flutter continuity and OS icon masks on a
+   device. Launcher/launch caches may require a reinstall to display regenerated assets.
+
 ## Android tester distribution
 
 [Firebase App Distribution](.github/workflows/firebase-app-distribution.yml) builds a

@@ -1,3 +1,6 @@
+import 'package:shiftly/features/onboarding/data/onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/data/preferences_onboarding_storage.dart';
+import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
 import 'package:shiftly/features/fixed_shifts/data/extra_shift_repository.dart';
 import 'package:dio/dio.dart';
 
@@ -96,6 +99,9 @@ abstract final class DependencyRegistration {
       ..registerSingleton<AppConfig>(config)
       ..registerSingleton<SupabaseClient>(Supabase.instance.client)
       ..registerSingleton<SharedPreferences>(preferences)
+      ..registerLazySingleton<OnboardingStorage>(
+        () => PreferencesOnboardingStorage(target()),
+      )
       ..registerLazySingleton<ActiveWorkspaceStorage>(
         () => SharedPreferencesActiveWorkspaceStorage(target()),
       )
@@ -223,6 +229,7 @@ abstract final class DependencyRegistration {
     required ChatRepository chatRepository,
     required ChatRealtime chatRealtime,
     required FixedShiftRepository fixedShiftRepository,
+    OnboardingStorage? onboardingStorage,
     PointsRepository? pointsRepository,
     ManagerPointsRepository? managerPointsRepository,
     ProfileImagePicker? profileImagePicker,
@@ -233,6 +240,9 @@ abstract final class DependencyRegistration {
       );
     }
     locator
+      ..registerSingleton<OnboardingStorage>(
+        onboardingStorage ?? MemoryOnboardingStorage(),
+      )
       ..registerSingleton<SessionCoordinator>(
         sessionCoordinator,
         dispose: (coordinator) => coordinator.close(),

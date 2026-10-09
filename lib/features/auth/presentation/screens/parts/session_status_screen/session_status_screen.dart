@@ -15,7 +15,7 @@ class SessionStatusScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (view == SessionStatusView.loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const BrandSessionLoading();
     }
     final state = context.watch<SessionCoordinator>().state;
     final (icon, title, message) = switch (view) {

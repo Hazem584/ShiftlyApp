@@ -1,8 +1,11 @@
+import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
+import 'package:shiftly/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/routing/route_not_found_screen.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
+import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/login_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/register_screen.dart';
@@ -25,13 +28,14 @@ import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
 
 GoRouter createAppRouter({
   SessionCoordinator? sessionCoordinator,
+  OnboardingCubit? onboarding,
   Listenable? refreshListenable,
 }) => GoRouter(
   initialLocation: sessionCoordinator == null ? '/dashboard' : '/session',
   refreshListenable: refreshListenable,
   redirect: sessionCoordinator == null
       ? null
-      : (context, state) => _redirect(sessionCoordinator, state),
+      : (context, state) => _redirect(sessionCoordinator, state, onboarding),
   errorBuilder: (context, state) =>
       RouteNotFoundScreen(routeName: state.uri.path),
   routes: [
@@ -39,6 +43,7 @@ GoRouter createAppRouter({
       path: '/session',
       builder: (_, _) => const SessionStatusScreen.loading(),
     ),
+    GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
     GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
     GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
     GoRoute(
@@ -189,13 +194,23 @@ GoRouter createAppRouter({
   ],
 );
 
-String? _redirect(SessionCoordinator coordinator, GoRouterState route) {
+String? _redirect(
+  SessionCoordinator coordinator,
+  GoRouterState route,
+  OnboardingCubit? onboarding,
+) {
   final status = coordinator.state.status;
   final location = route.matchedLocation;
   return switch (status) {
     SessionStatus.initializing || SessionStatus.loadingCurrentUser =>
       location == '/session' ? null : '/session',
-    SessionStatus.unauthenticated || SessionStatus.sessionExpired =>
+    SessionStatus.unauthenticated => _signedOutRedirect(
+      location,
+      coordinator.state.failure?.kind == FailureKind.authentication
+          ? null
+          : onboarding,
+    ),
+    SessionStatus.sessionExpired =>
       location == '/login' || location == '/register' ? null : '/login',
     SessionStatus.authenticating => location == '/login' ? null : '/login',
     SessionStatus.registering => location == '/register' ? null : '/register',
@@ -222,6 +237,7 @@ String? _redirect(SessionCoordinator coordinator, GoRouterState route) {
 String? _managerRedirect(String location) {
   const public = {
     '/session',
+    '/onboarding',
     '/login',
     '/register',
     '/verify-email',
@@ -232,4 +248,14 @@ String? _managerRedirect(String location) {
     '/employee',
   };
   return public.contains(location) ? '/dashboard' : null;
+}
+
+String? _signedOutRedirect(String location, OnboardingCubit? onboarding) {
+  if (onboarding != null &&
+      !onboarding.bypassed &&
+      !onboarding.state.completed) {
+    final target = onboarding.state.loading ? '/session' : '/onboarding';
+    return location == target ? null : target;
+  }
+  return location == '/login' || location == '/register' ? null : '/login';
 }

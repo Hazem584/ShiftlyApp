@@ -147,9 +147,7 @@ class WorkPatternView extends StatelessWidget {
                           : null,
                       child: const Text('Previous'),
                     ),
-                    Text(
-                      'Page ${pagination.page} of ${pagination.totalPages}',
-                    ),
+                    Text('Page ${pagination.page} of ${pagination.totalPages}'),
                     TextButton(
                       onPressed: state.loading
                           ? null

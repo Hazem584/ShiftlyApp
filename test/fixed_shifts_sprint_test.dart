@@ -900,10 +900,12 @@ void correctiveSprintTests() {
         'fixed_shift.pending_clock_in.v1',
         '{ambiguous}',
       );
-      final cubit = FlexibleAttendanceCubit(client.repository)
-        ..bindSession(_employeeScope);
+      final cubit = FlexibleAttendanceCubit(client.repository);
       addTearDown(cubit.close);
-      await tester.runAsync(cubit.load);
+      await tester.runAsync(() async {
+        cubit.bindSession(_employeeScope);
+        await cubit.load();
+      });
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -1720,7 +1722,9 @@ class _ExtraRepository implements ExtraShiftRepository {
     required bool actual,
   }) async {
     requests.add(Map.from(payload));
-    if (submissionStarted?.isCompleted == false) { submissionStarted!.complete(); }
+    if (submissionStarted?.isCompleted == false) {
+      submissionStarted!.complete();
+    }
     expect(
       stored,
       isNotNull,

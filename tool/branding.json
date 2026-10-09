@@ -1,0 +1,10 @@
+{
+  "logo": "assets/images/Logo.png",
+  "lightBackground": "#FAFAFB",
+  "darkBackground": "#080414",
+  "iconBackground": "#080414",
+  "adaptiveCanvasDp": 108,
+  "adaptiveArtworkDp": 46,
+  "splashCanvasDp": 288,
+  "splashArtworkDp": 120
+}
