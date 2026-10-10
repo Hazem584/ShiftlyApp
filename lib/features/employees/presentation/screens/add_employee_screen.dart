@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_form_actions.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_form_header.dart';
@@ -100,9 +100,9 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(context.tr('Invite Employee')),
-      bottom: const PreferredSize(
+      bottom: PreferredSize(
         preferredSize: Size.fromHeight(1),
-        child: Divider(height: 1, color: AppColors.borderColor),
+        child: Divider(height: 1, color: AppPalette.of(context).borderColor),
       ),
     ),
     body: SafeArea(

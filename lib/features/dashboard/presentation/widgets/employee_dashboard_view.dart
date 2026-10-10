@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -48,21 +48,24 @@ class EmployeeDashboardView extends StatelessWidget {
             'value1': (data.date).toString(),
             'value2': (data.timezone).toString(),
           }),
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppPalette.of(context).textSecondary),
         ),
         if (state.failure != null) ...[
           const SizedBox(height: AppSpacing.s),
           Text(
             state.failure!.message,
-            style: const TextStyle(color: AppColors.error, fontSize: 12),
+            style: TextStyle(color: AppPalette.of(context).error, fontSize: 12),
           ),
         ],
         const SizedBox(height: AppSpacing.m),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.ink, AppColors.inkMuted],
+            gradient: LinearGradient(
+              colors: [
+                AppPalette.of(context).brandBackground,
+                AppPalette.of(context).brandGradientEnd,
+              ],
               begin: AlignmentDirectional.topStart,
               end: AlignmentDirectional.bottomEnd,
             ),
@@ -71,9 +74,9 @@ class EmployeeDashboardView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.wb_sunny_outlined,
-                color: AppColors.selected,
+                color: AppPalette.of(context).selected,
                 size: 28,
               ),
               const SizedBox(height: 12),
@@ -97,7 +100,7 @@ class EmployeeDashboardView extends StatelessWidget {
                   FilledButton.icon(
                     key: const Key('employee-quick-shifts'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.orange,
+                      backgroundColor: AppPalette.of(context).orange,
                     ),
                     onPressed: () => context.go('/employee?tab=shifts'),
                     icon: const Icon(Icons.fingerprint_rounded),
@@ -173,7 +176,7 @@ class EmployeeDashboardView extends StatelessWidget {
           child: data.recentLeaveRequests.isEmpty
               ? Text(
                   context.tr('No leave requests yet.'),
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: AppPalette.of(context).textSecondary),
                 )
               : Column(
                   children: [

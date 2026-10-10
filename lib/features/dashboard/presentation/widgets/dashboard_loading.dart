@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
 
 class DashboardLoadingView extends StatelessWidget {
@@ -32,7 +32,7 @@ class DashboardLoadingView extends StatelessWidget {
       Center(
         child: Text(
           context.tr('Preparing your dashboard…'),
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppPalette.of(context).textSecondary),
         ),
       ),
     ],

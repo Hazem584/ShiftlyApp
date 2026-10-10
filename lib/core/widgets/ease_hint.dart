@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 class EaseHint extends StatelessWidget {
@@ -16,23 +16,23 @@ class EaseHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
-      color: AppColors.orangeSoft,
+      color: AppPalette.of(context).orangeSoft,
       borderRadius: BorderRadius.circular(AppRadii.m),
     ),
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.orange, size: 20),
+          Icon(icon, color: AppPalette.of(context).orange, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               context.tr(message),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 height: 1.35,
                 fontWeight: FontWeight.w600,
-                color: AppColors.ink,
+                color: AppPalette.of(context).ink,
               ),
             ),
           ),

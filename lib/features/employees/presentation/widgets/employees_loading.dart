@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 class EmployeesLoadingView extends StatelessWidget {
@@ -12,7 +12,7 @@ class EmployeesLoadingView extends StatelessWidget {
     itemBuilder: (_, _) => Container(
       height: 92,
       decoration: BoxDecoration(
-        color: AppColors.field,
+        color: AppPalette.of(context).field,
         borderRadius: BorderRadius.circular(AppRadii.l),
       ),
     ),

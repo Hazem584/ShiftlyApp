@@ -56,6 +56,7 @@ class ApiClient {
     required AuthenticationService authentication,
     required ActiveWorkspaceStorage workspaceStorage,
     Dio? dio,
+    Interceptor? savedReads,
   }) : dio =
            dio ??
            Dio(
@@ -77,6 +78,7 @@ class ApiClient {
         workspaceStorage,
         config.apiBaseUrl,
       ),
+      ?savedReads,
       _SafeNetworkInterceptor(),
       InterceptorsWrapper(
         onError: (error, handler) => handler.reject(

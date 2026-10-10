@@ -5,7 +5,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/auth_brand_header.dart';
 import 'package:shiftly/core/widgets/auth_page_layout.dart';
@@ -70,7 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               state.failure!.message,
                               key: const Key('login-session-message'),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: AppColors.error),
+                              style: TextStyle(
+                                color: AppPalette.of(context).error,
+                              ),
                             ),
                           ],
                           const SizedBox(height: AppSpacing.xl),

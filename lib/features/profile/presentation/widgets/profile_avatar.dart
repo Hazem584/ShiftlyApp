@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class ProfileAvatar extends StatefulWidget {
   const ProfileAvatar({super.key, required this.profile, this.radius = 22});
@@ -35,7 +35,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
     return CircleAvatar(
       key: const Key('profile-avatar'),
       radius: widget.radius,
-      backgroundColor: AppColors.ink,
+      backgroundColor: AppPalette.of(context).brandBackground,
       foregroundColor: Colors.white,
       backgroundImage: image,
       onBackgroundImageError: image == null

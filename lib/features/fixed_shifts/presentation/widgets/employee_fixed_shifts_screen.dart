@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/offline/read_sync_banner.dart';
+import 'package:shiftly/core/offline/read_sync_state.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/ease_hint.dart';
@@ -28,6 +30,11 @@ class EmployeeFixedShiftsScreen extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
+          ReadSyncBanner(
+            category: ReadCategory.schedule,
+            onRefresh: () =>
+                context.read<FlexibleAttendanceCubit>().load(refresh: true),
+          ),
           ScreenHeader(
             icon: Icons.calendar_month_rounded,
             title: context.tr('Fixed shifts'),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 enum ToastType { success, error, warning, info }
 
@@ -44,8 +45,8 @@ class AppToastWidget extends StatelessWidget {
               Flexible(
                 child: Text(
                   message,
-                  style: const TextStyle(
-                    color: AppColors.ink,
+                  style: TextStyle(
+                    color: AppPalette.of(context).ink,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     height: 1.35,

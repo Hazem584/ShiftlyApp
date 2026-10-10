@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/models/employee.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_status_badge.dart';
@@ -17,9 +17,13 @@ class EmployeeDetailsHeader extends StatelessWidget {
       children: [
         Container(
           height: 88,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.ink, AppColors.orange, AppColors.teal],
+              colors: [
+                AppPalette.of(context).ink,
+                AppPalette.of(context).orange,
+                AppPalette.of(context).teal,
+              ],
             ),
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(AppRadii.l),
@@ -32,11 +36,11 @@ class EmployeeDetailsHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 42,
-                backgroundColor: AppColors.surface,
+                backgroundColor: AppPalette.of(context).surface,
                 child: CircleAvatar(
                   radius: 37,
-                  backgroundColor: AppColors.field,
-                  foregroundColor: AppColors.ink,
+                  backgroundColor: AppPalette.of(context).field,
+                  foregroundColor: AppPalette.of(context).ink,
                   child: Text(
                     employee.initials,
                     style: Theme.of(context).textTheme.headlineSmall,
@@ -56,7 +60,7 @@ class EmployeeDetailsHeader extends StatelessWidget {
               ),
               Text(
                 employee.displayJobTitle,
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppPalette.of(context).textSecondary),
               ),
               const SizedBox(height: 10),
               EmployeeStatusBadge(status: employee.employmentStatus),

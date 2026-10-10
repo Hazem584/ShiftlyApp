@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
 class EmployeeMetricsSectionMetric extends StatelessWidget {
@@ -31,8 +31,8 @@ class EmployeeMetricsSectionMetric extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: AppPalette.of(context).textSecondary,
                     fontSize: 11,
                   ),
                 ),

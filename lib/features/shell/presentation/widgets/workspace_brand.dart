@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 
 class WorkspaceBrand extends StatelessWidget {
@@ -43,6 +43,10 @@ class WorkspaceBrand extends StatelessWidget {
               ],
             ),
           )
-        : const Icon(Icons.layers_rounded, color: AppColors.orange, size: 32),
+        : Icon(
+            Icons.layers_rounded,
+            color: AppPalette.of(context).orange,
+            size: 32,
+          ),
   );
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/onboarding/presentation/models/onboarding_page_content.dart';
 
@@ -19,7 +19,7 @@ class OnboardingIllustration extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.orangeSoft.withValues(alpha: .9),
+            AppPalette.of(context).orangeSoft.withValues(alpha: .9),
             colors.surfaceContainerLow,
           ],
         ),
@@ -28,13 +28,13 @@ class OnboardingIllustration extends StatelessWidget {
         children: [
           ExcludeSemantics(
             child: DecoratedBox(
-              decoration: const BoxDecoration(
-                color: AppColors.ink,
+              decoration: BoxDecoration(
+                color: colors.primary,
                 shape: BoxShape.circle,
               ),
               child: Padding(
                 padding: const EdgeInsets.all(18),
-                child: Icon(content.icon, size: 48, color: Colors.white),
+                child: Icon(content.icon, size: 48, color: colors.onPrimary),
               ),
             ),
           ),
@@ -47,12 +47,15 @@ class OnboardingIllustration extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colors.surface,
                   borderRadius: BorderRadius.circular(AppRadii.m),
-                  border: Border.all(color: AppColors.borderColor),
+                  border: Border.all(color: AppPalette.of(context).borderColor),
                 ),
                 child: Row(
                   children: [
                     ExcludeSemantics(
-                      child: Icon(feature.$1, color: AppColors.orange),
+                      child: Icon(
+                        feature.$1,
+                        color: AppPalette.of(context).orange,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

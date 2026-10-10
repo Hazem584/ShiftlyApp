@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
@@ -80,8 +80,8 @@ class LeaveRequestCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: AppColors.selected,
-                foregroundColor: AppColors.ink,
+                backgroundColor: AppPalette.of(context).selected,
+                foregroundColor: AppPalette.of(context).ink,
                 child: Text(
                   leaveRequestCardInitials(request.employee.displayName),
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -98,8 +98,8 @@ class LeaveRequestCard extends StatelessWidget {
                     ),
                     Text(
                       context.tr(leaveTypeLabel(request.type)),
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: AppPalette.of(context).textSecondary,
                         fontSize: 12,
                       ),
                     ),

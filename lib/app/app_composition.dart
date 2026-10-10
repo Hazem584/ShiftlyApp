@@ -6,10 +6,15 @@ import 'package:shiftly/app/session_feature_coordinator.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
 import 'package:shiftly/core/localization/language_preference_store.dart';
 import 'package:shiftly/core/localization/memory_language_store.dart';
+import 'package:shiftly/core/offline/read_sync_cubit.dart';
+import 'package:shiftly/core/offline/saved_read_store.dart';
 import 'package:shiftly/core/routing/app_router.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
+import 'package:shiftly/core/theme/memory_theme_store.dart';
+import 'package:shiftly/core/theme/theme_cubit.dart';
+import 'package:shiftly/core/theme/theme_preference_store.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
@@ -78,6 +83,8 @@ import 'session_scope_factories.dart';
 
 class AppComposition {
   late final LanguageCubit languageCubit;
+  late final ThemeCubit themeCubit;
+  late final ReadSyncCubit readSyncCubit;
   late final EmployeeRepository employees;
   late final InvitationRepository invitations;
   late final WorkspaceRepository workspaces;
@@ -129,6 +136,11 @@ class AppComposition {
           registered<LanguagePreferenceStore>() ??
           MemoryLanguageStore(),
     );
+    themeCubit = ThemeCubit(
+      registered<ThemePreferenceStore>() ?? MemoryThemeStore(),
+    );
+    readSyncCubit =
+        registered<ReadSyncCubit>() ?? ReadSyncCubit(SavedReadStore());
     featureCoordinator = SessionFeatureCoordinator(applySession);
     sessionCoordinator =
         dependencies.sessionCoordinator ?? registered<SessionCoordinator>();
@@ -352,6 +364,8 @@ class AppComposition {
     unawaited(pushNotifications?.close());
     onboardingCubit.close();
     languageCubit.close();
+    themeCubit.close();
+    readSyncCubit.close();
     dashboardCubit.close();
     employeesCubit.close();
     workspacesCubit.close();
@@ -379,6 +393,7 @@ class AppComposition {
   }
 
   void applySession(SessionState state, int generation) {
+    readSyncCubit.bind(state);
     profileCubit.bindSession(profileScopeForSession(state));
     employeesCubit.bindSession(employeeScopeForSession(state));
     workspacesCubit.bindUser(state.currentUser?.id);

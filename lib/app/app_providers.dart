@@ -11,8 +11,11 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
 import 'package:shiftly/core/localization/language_preference_store.dart';
 import 'package:shiftly/core/localization/language_settings.dart';
+import 'package:shiftly/core/offline/read_sync_cubit.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/theme/theme_cubit.dart';
+import 'package:shiftly/core/theme/theme_settings.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
@@ -168,6 +171,8 @@ class _AppProvidersState extends State<AppProviders> {
           if (_composition.pushNotifications != null)
             BlocProvider.value(value: _composition.pushNotifications!),
           BlocProvider.value(value: _composition.languageCubit),
+          BlocProvider.value(value: _composition.themeCubit),
+          BlocProvider<ReadSyncCubit>.value(value: _composition.readSyncCubit),
           BlocProvider.value(value: _composition.onboardingCubit),
           BlocProvider.value(value: _composition.dashboardCubit),
           BlocProvider.value(value: _composition.employeesCubit),
@@ -191,23 +196,29 @@ class _AppProvidersState extends State<AppProviders> {
         child: BlocBuilder<LanguageCubit, LanguageSettings>(
           buildWhen: (previous, current) =>
               previous.language != current.language,
-          builder: (context, language) => MaterialApp.router(
-            locale: language.languageCode == null
-                ? null
-                : Locale(language.languageCode!),
-            supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            title: AppStrings.appName,
-            scaffoldMessengerKey: _messengerKey,
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme(),
-            routerConfig: _composition.router,
-          ),
+          builder: (context, language) =>
+              BlocBuilder<ThemeCubit, ThemeSettings>(
+                buildWhen: (previous, current) => previous.mode != current.mode,
+                builder: (context, appearance) => MaterialApp.router(
+                  locale: language.languageCode == null
+                      ? null
+                      : Locale(language.languageCode!),
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  localizationsDelegates: const [
+                    AppLocalizations.delegate,
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                  ],
+                  title: AppStrings.appName,
+                  scaffoldMessengerKey: _messengerKey,
+                  debugShowCheckedModeBanner: false,
+                  theme: AppTheme.lightTheme(),
+                  darkTheme: AppTheme.darkTheme(),
+                  themeMode: appearance.mode,
+                  routerConfig: _composition.router,
+                ),
+              ),
         ),
       ),
     );

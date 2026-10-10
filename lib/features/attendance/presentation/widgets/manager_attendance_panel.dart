@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/services/toast_service.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
@@ -116,7 +116,7 @@ class ManagerAttendancePanel extends StatelessWidget {
             const SizedBox(height: AppSpacing.s),
             Text(
               state.failure!.message,
-              style: const TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppPalette.of(context).error),
             ),
           ],
           if (state.pending.isNotEmpty) ...[

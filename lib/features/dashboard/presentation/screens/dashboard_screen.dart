@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/ease_hint.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
@@ -50,7 +50,7 @@ class DashboardScreen extends StatelessWidget {
     DashboardLoaded state,
   ) => RefreshIndicator(
     onRefresh: () => context.read<DashboardCubit>().load(refresh: true),
-    color: AppColors.ink,
+    color: AppPalette.of(context).ink,
     child: ListView(
       key: const Key('dashboard-content'),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -66,7 +66,7 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.s),
           Text(
             state.failure!.message,
-            style: const TextStyle(color: AppColors.error, fontSize: 12),
+            style: TextStyle(color: AppPalette.of(context).error, fontSize: 12),
           ),
         ],
         const SizedBox(height: AppSpacing.m),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class ChatMessageState extends StatelessWidget {
   const ChatMessageState({super.key, required this.message, this.action});
@@ -13,16 +13,16 @@ class ChatMessageState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const DecoratedBox(
+          DecoratedBox(
             decoration: BoxDecoration(
-              color: AppColors.orangeSoft,
+              color: AppPalette.of(context).orangeSoft,
               shape: BoxShape.circle,
             ),
             child: Padding(
               padding: EdgeInsets.all(18),
               child: Icon(
                 Icons.forum_outlined,
-                color: AppColors.orange,
+                color: AppPalette.of(context).orange,
                 size: 32,
               ),
             ),
@@ -39,7 +39,7 @@ class ChatMessageState extends StatelessWidget {
               'Workspace groups appear here once a manager creates one.',
             ),
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: AppPalette.of(context).textSecondary),
           ),
           if (action != null)
             TextButton(onPressed: action, child: Text(context.tr('Retry'))),

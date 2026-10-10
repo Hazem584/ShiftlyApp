@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class WorkspaceContentFrame extends StatelessWidget {
   const WorkspaceContentFrame({
@@ -20,9 +20,11 @@ class WorkspaceContentFrame extends StatelessWidget {
           child: framed
               ? DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.canvas,
+                    color: AppPalette.of(context).canvas,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppColors.borderColor),
+                    border: Border.all(
+                      color: AppPalette.of(context).borderColor,
+                    ),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),

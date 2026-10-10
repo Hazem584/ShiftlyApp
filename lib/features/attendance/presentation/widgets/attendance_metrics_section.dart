@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
@@ -21,7 +21,10 @@ class AttendanceMetricsSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                const Icon(Icons.approval_outlined, color: AppColors.orange),
+                Icon(
+                  Icons.approval_outlined,
+                  color: AppPalette.of(context).orange,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -31,7 +34,7 @@ class AttendanceMetricsSection extends StatelessWidget {
                 ),
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: AppColors.warningSoft,
+                    color: AppPalette.of(context).warningSoft,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Padding(
@@ -74,19 +77,19 @@ class AttendanceMetricsSection extends StatelessWidget {
                 'Attendance records',
                 state.records.length,
                 Icons.fact_check_outlined,
-                AppColors.ink,
+                AppPalette.of(context).ink,
               ),
               (
                 'Open attendance',
                 state.records.where((record) => record.isOpen).length,
                 Icons.login_rounded,
-                AppColors.teal,
+                AppPalette.of(context).teal,
               ),
               (
                 'Needs review',
                 state.records.where((record) => record.canReview).length,
                 Icons.approval_outlined,
-                AppColors.orange,
+                AppPalette.of(context).orange,
               ),
             ];
             return Column(

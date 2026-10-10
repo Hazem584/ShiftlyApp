@@ -2,6 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 
 void main() {
+  test('Arabic dates and times use the workspace zone', () {
+    final formatted = WorkspaceTime.dateTime(
+      DateTime.utc(2026, 10, 10, 23),
+      'Africa/Cairo',
+      locale: 'ar',
+    );
+    expect(formatted, contains('أكتوبر'));
+    expect(formatted, contains('11 أكتوبر'));
+    expect(formatted, contains('ص'));
+  });
   test('workspace wall time round-trips through UTC using IANA timezone', () {
     final utc = WorkspaceTime.wallTimeToUtc(
       date: DateTime(2026, 9, 26),

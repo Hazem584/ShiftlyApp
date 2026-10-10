@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_selector.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/theme/theme_selector.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 
 class AuthBrandHeader extends StatelessWidget {
@@ -26,6 +27,7 @@ class AuthBrandHeader extends StatelessWidget {
           children: [
             BrandLogo(size: 88),
             PositionedDirectional(end: 0, top: 0, child: LanguageSelector()),
+            PositionedDirectional(start: 0, top: 0, child: ThemeSelector()),
           ],
         ),
       ),
@@ -39,8 +41,8 @@ class AuthBrandHeader extends StatelessWidget {
       Text(
         context.tr(subtitle),
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.textSecondary,
+        style: TextStyle(
+          color: AppPalette.of(context).textSecondary,
           height: 1.45,
           fontSize: 14,
         ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 class EmployeeFormHeader extends StatelessWidget {
@@ -16,12 +16,12 @@ class EmployeeFormHeader extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.selected,
+            color: AppPalette.of(context).selected,
             borderRadius: BorderRadius.circular(15),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.person_add_alt_1_rounded,
-            color: AppColors.ink,
+            color: AppPalette.of(context).ink,
           ),
         ),
         const SizedBox(width: 12),
@@ -39,8 +39,8 @@ class EmployeeFormHeader extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 context.tr('Send a secure workspace invitation by email.'),
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: AppPalette.of(context).textSecondary,
                   fontSize: 12,
                 ),
               ),

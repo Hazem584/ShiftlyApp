@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/offline/read_sync_banner.dart';
+import 'package:shiftly/core/offline/read_sync_state.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
@@ -66,6 +68,18 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             key: const Key('attendance-content'),
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
             children: [
+              ReadSyncBanner(
+                category: ReadCategory.attendance,
+                onRefresh: () => switch (_selectedTab) {
+                  0 => context.read<ManagerAttendanceCubit>().load(
+                    refresh: true,
+                  ),
+                  1 => context.read<LeaveRequestsCubit>().load(refresh: true),
+                  _ => context.read<AttendanceCalendarCubit>().load(
+                    refresh: true,
+                  ),
+                },
+              ),
               ScreenHeader(
                 icon: Icons.fact_check_rounded,
                 title: context.tr('Attendance & Leave'),

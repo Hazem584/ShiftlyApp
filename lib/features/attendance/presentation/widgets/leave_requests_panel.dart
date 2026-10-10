@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
@@ -42,7 +42,7 @@ class LeaveRequestsPanel extends StatelessWidget {
               if (state.failure != null) ...[
                 Text(
                   state.failure!.message,
-                  style: const TextStyle(color: AppColors.error),
+                  style: TextStyle(color: AppPalette.of(context).error),
                 ),
                 const SizedBox(height: AppSpacing.s),
               ],
@@ -65,8 +65,8 @@ class LeaveRequestsPanel extends StatelessWidget {
                       context.tr('{value1} loaded', {
                         'value1': (state.requests.length).toString(),
                       }),
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: AppPalette.of(context).textSecondary,
                         fontSize: 12,
                       ),
                     ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
 class EmployeeSearchBar extends StatelessWidget {
@@ -54,7 +54,7 @@ class EmployeeSearchBar extends StatelessWidget {
             child: Icon(
               Icons.tune_rounded,
               size: 20,
-              color: status == null ? null : AppColors.orange,
+              color: status == null ? null : AppPalette.of(context).orange,
             ),
           ),
         ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class NavigationDestinationItem extends StatelessWidget {
   const NavigationDestinationItem({
@@ -35,7 +35,9 @@ class NavigationDestinationItem extends StatelessWidget {
           curve: Curves.easeOutCubic,
           margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? AppColors.selected : Colors.transparent,
+            color: selected
+                ? AppPalette.of(context).selected
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(18),
           ),
           child: Column(
@@ -56,7 +58,9 @@ class NavigationDestinationItem extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: 22,
-                    color: selected ? AppColors.orange : AppColors.lighterGray,
+                    color: selected
+                        ? AppPalette.of(context).orange
+                        : AppPalette.of(context).lighterGray,
                   ),
                 ),
               ),
@@ -66,7 +70,9 @@ class NavigationDestinationItem extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: selected ? AppColors.ink : AppColors.textSecondary,
+                  color: selected
+                      ? AppPalette.of(context).ink
+                      : AppPalette.of(context).textSecondary,
                   fontSize: 11,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),

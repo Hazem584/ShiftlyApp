@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_list_employee_card.dart';
 
 class EmployeeList extends StatelessWidget {
@@ -21,7 +21,7 @@ class EmployeeList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => RefreshIndicator(
-    color: AppColors.ink,
+    color: AppPalette.of(context).ink,
     onRefresh: onRefresh,
     child: LayoutBuilder(
       builder: (context, constraints) {

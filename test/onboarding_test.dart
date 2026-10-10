@@ -9,6 +9,7 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
+import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 import 'package:shiftly/core/widgets/brand_session_loading.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
@@ -431,11 +432,15 @@ void main() {
         await cubit.restore();
         await tester.pumpWidget(
           MaterialApp(
+            theme: AppTheme.lightTheme(),
+            darkTheme: AppTheme.darkTheme(),
+            themeMode: dark ? ThemeMode.dark : ThemeMode.light,
             home: MediaQuery(
               data: MediaQueryData(
                 size: const Size(320, 640),
                 textScaler: const TextScaler.linear(2),
-                platformBrightness: dark ? Brightness.dark : Brightness.light,
+                // The selected appearance takes precedence over the device.
+                platformBrightness: dark ? Brightness.light : Brightness.dark,
                 disableAnimations: true,
               ),
               child: BlocProvider.value(

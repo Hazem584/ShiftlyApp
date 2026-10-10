@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 class ScreenHeader extends StatelessWidget {
@@ -29,12 +29,16 @@ class ScreenHeader extends StatelessWidget {
           if (icon != null) ...[
             DecoratedBox(
               decoration: BoxDecoration(
-                color: AppColors.orangeSoft,
+                color: AppPalette.of(context).orangeSoft,
                 borderRadius: BorderRadius.circular(AppRadii.m),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(10),
-                child: Icon(icon, color: AppColors.orange, size: 22),
+                child: Icon(
+                  icon,
+                  color: AppPalette.of(context).orange,
+                  size: 22,
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.s),
@@ -50,8 +54,8 @@ class ScreenHeader extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
                   context.tr(subtitle),
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: AppPalette.of(context).textSecondary,
                     height: 1.35,
                   ),
                 ),

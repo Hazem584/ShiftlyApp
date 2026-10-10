@@ -259,8 +259,7 @@ abstract final class ApiErrorParser {
       'POINTS_POLICY_CONFLICT' =>
         'A policy already covers that date. Refresh the version history.',
       'POINT_DISPUTE_ALREADY_REVIEWED' => 'Another review already resolved this dispute. Refresh its canonical status.',
-      'EXTRA_EFFORT_ALREADY_REVERSED' || 'POINT_ADJUSTMENT_ALREADY_REVERSED' =>
-        'This record has already been reversed. Refresh its audit history.',
+      'EXTRA_EFFORT_ALREADY_REVERSED' || 'POINT_ADJUSTMENT_ALREADY_REVERSED' => 'This record has already been reversed. Refresh to see its current status.',
       'POINT_ADJUSTMENT_CONFLICT' ||
       'EXTRA_EFFORT_CONFLICT' ||
       'POINTS_REVERSAL_CONFLICT' => 'The saved operation conflicts with an existing UUID. Its outcome needs review before another change.',

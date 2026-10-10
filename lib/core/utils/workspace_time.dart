@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:shiftly/core/utils/clock_time.dart';
 import 'package:timezone/data/latest.dart' as timezone_data;
 import 'package:timezone/timezone.dart' as timezone;
@@ -73,7 +74,11 @@ abstract final class WorkspaceTime {
     final value = inWorkspace(utc, ianaName);
     final month = _two(value.month);
     final day = _two(value.day);
-    return '${value.year}-$month-$day ${ClockTime.wallTime(value, locale: locale)} ${value.timeZoneName}';
+    final time = ClockTime.wallTime(value, locale: locale);
+    final date = locale?.split('_').first == 'ar'
+        ? DateFormat.yMMMd('ar').format(value)
+        : '${value.year}-$month-$day';
+    return '$date $time ${value.timeZoneName}';
   }
 
   static String time(DateTime? utc, String ianaName, {String? locale}) {

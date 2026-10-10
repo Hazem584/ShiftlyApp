@@ -7,8 +7,13 @@ import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/language_preference_store.dart';
 import 'package:shiftly/core/localization/preferences_language_store.dart';
 import 'package:shiftly/core/network/api_client.dart';
+import 'package:shiftly/core/offline/read_sync_cubit.dart';
+import 'package:shiftly/core/offline/saved_read_interceptor.dart';
+import 'package:shiftly/core/offline/saved_read_store.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
+import 'package:shiftly/core/theme/preferences_theme_store.dart';
+import 'package:shiftly/core/theme/theme_preference_store.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
@@ -105,6 +110,14 @@ abstract final class DependencyRegistration {
       ..registerSingleton<AppConfig>(config)
       ..registerSingleton<SupabaseClient>(Supabase.instance.client)
       ..registerSingleton<SharedPreferences>(preferences)
+      ..registerSingleton<SavedReadStore>(SavedReadStore(preferences))
+      ..registerLazySingleton<ReadSyncCubit>(
+        () => ReadSyncCubit(target()),
+        dispose: (cubit) => cubit.close(),
+      )
+      ..registerSingleton<ThemePreferenceStore>(
+        PreferencesThemeStore(preferences),
+      )
       ..registerSingleton<LanguagePreferenceStore>(
         PreferencesLanguageStore(preferences),
       )
@@ -122,6 +135,11 @@ abstract final class DependencyRegistration {
           config: target(),
           authentication: target(),
           workspaceStorage: target(),
+          savedReads: SavedReadInterceptor(
+            target<ReadSyncCubit>(),
+            hasSession: () =>
+                target<AuthenticationService>().currentSession != null,
+          ),
         ),
         dispose: (client) => client.dio.close(force: true),
       )

@@ -35,7 +35,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
                 (day) => Expanded(
                   child: Center(
                     child: Text(
-                      day,
+                      context.tr(day),
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                   ),
@@ -109,7 +109,9 @@ class AttendanceCalendarGrid extends StatelessWidget {
                         child: Text(
                           context.tr('{value1}', {'value1': (day).toString()}),
                           style: TextStyle(
-                            color: selected ? Colors.white : null,
+                            color: selected
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : null,
                             fontWeight: today || selected
                                 ? FontWeight.w700
                                 : null,

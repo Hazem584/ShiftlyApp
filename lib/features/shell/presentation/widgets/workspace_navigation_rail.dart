@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/shell/presentation/widgets/workspace_brand.dart';
 
@@ -33,8 +33,8 @@ class WorkspaceNavigationRail extends StatelessWidget {
         selectedIndex: selectedIndex,
         scrollable: true,
         onDestinationSelected: onSelected,
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.selected,
+        backgroundColor: AppPalette.of(context).surface,
+        indicatorColor: AppPalette.of(context).selected,
         extended: extended,
         minExtendedWidth: 240,
         labelType: extended

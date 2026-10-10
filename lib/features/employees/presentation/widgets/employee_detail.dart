@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class EmployeeDetail extends StatelessWidget {
   const EmployeeDetail({
@@ -20,21 +20,24 @@ class EmployeeDetail extends StatelessWidget {
       width: 34,
       height: 34,
       decoration: BoxDecoration(
-        color: AppColors.field,
+        color: AppPalette.of(context).field,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(icon, size: 18),
     ),
     title: Text(
       title,
-      style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+      style: TextStyle(
+        color: AppPalette.of(context).textSecondary,
+        fontSize: 11,
+      ),
     ),
     subtitle: Text(
       value,
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
-        color: AppColors.ink,
+      style: TextStyle(
+        color: AppPalette.of(context).ink,
         fontWeight: FontWeight.w600,
         fontSize: 13,
       ),

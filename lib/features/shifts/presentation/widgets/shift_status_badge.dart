@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 class ShiftStatusBadge extends StatelessWidget {
@@ -9,21 +9,25 @@ class ShiftStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color, background) = switch (status) {
-      ShiftStatus.scheduled => ('Scheduled', AppColors.ink, AppColors.selected),
+      ShiftStatus.scheduled => (
+        'Scheduled',
+        AppPalette.of(context).ink,
+        AppPalette.of(context).selected,
+      ),
       ShiftStatus.completed => (
         'Completed',
-        AppColors.success,
-        AppColors.successSoft,
+        AppPalette.of(context).success,
+        AppPalette.of(context).successSoft,
       ),
       ShiftStatus.cancelled => (
         'Cancelled',
-        AppColors.error,
-        const Color(0xFFFFE4E1),
+        AppPalette.of(context).error,
+        AppPalette.of(context).errorSoft,
       ),
       ShiftStatus.unknown => (
         'Unavailable',
-        AppColors.textSecondary,
-        AppColors.field,
+        AppPalette.of(context).textSecondary,
+        AppPalette.of(context).field,
       ),
     };
     return DecoratedBox(

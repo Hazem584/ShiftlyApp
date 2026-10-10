@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 class SurfaceCard extends StatelessWidget {
@@ -16,9 +16,9 @@ class SurfaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AppPalette.of(context).surface,
       borderRadius: BorderRadius.circular(AppRadii.l),
-      border: Border.all(color: AppColors.borderColor),
+      border: Border.all(color: AppPalette.of(context).borderColor),
       boxShadow: AppShadows.soft,
     ),
     child: Material(

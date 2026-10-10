@@ -123,6 +123,14 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
       ),
     );
     try {
+      final templatePage = await _repository.listMyTemplates(scope.workspaceId);
+      if (!_current(scope, generation, revision)) return;
+      if (templatePage.data.any(
+        (item) => item.workspaceId != scope.workspaceId,
+      )) {
+        throw const FormatException('Cross-scope schedule');
+      }
+      emit(state.copyWith(templates: templatePage.data));
       final restored = await _repository.getCurrentAttendance(
         scope.workspaceId,
       );
@@ -174,7 +182,7 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
       final values = await Future.wait<Object?>([
         Future.value(restored),
         _repository.getEligibility(scope.workspaceId),
-        _repository.listMyTemplates(scope.workspaceId),
+        Future.value(templatePage),
       ]);
       if (!_current(scope, generation, revision)) {
         return;

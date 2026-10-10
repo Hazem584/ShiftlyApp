@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/summary_card.dart';
@@ -30,7 +30,7 @@ class DashboardMetricsGrid extends StatelessWidget {
               label: context.tr('Total employees'),
               value: data.summary.totalEmployees,
               icon: Icons.groups_outlined,
-              color: AppColors.ink,
+              color: AppPalette.of(context).ink,
               caption: 'Active employees',
             ),
           ),
@@ -40,7 +40,7 @@ class DashboardMetricsGrid extends StatelessWidget {
               label: context.tr('Scheduled today'),
               value: data.summary.scheduledToday,
               icon: Icons.person_rounded,
-              color: AppColors.success,
+              color: AppPalette.of(context).success,
               caption: 'Non-cancelled shifts',
             ),
           ),
@@ -50,7 +50,7 @@ class DashboardMetricsGrid extends StatelessWidget {
               label: context.tr('Clocked in now'),
               value: data.summary.clockedInNow,
               icon: Icons.login_rounded,
-              color: AppColors.success,
+              color: AppPalette.of(context).success,
               caption: 'Open attendance',
             ),
           ),
@@ -60,7 +60,7 @@ class DashboardMetricsGrid extends StatelessWidget {
               label: context.tr('Completed today'),
               value: data.summary.completedToday,
               icon: Icons.task_alt_rounded,
-              color: AppColors.teal,
+              color: AppPalette.of(context).teal,
               caption: 'Clocked out',
             ),
           ),

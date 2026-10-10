@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -32,9 +32,9 @@ class DashboardActivitySection extends StatelessWidget {
         child: shifts.isEmpty
             ? Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.event_available_outlined,
-                    color: AppColors.orange,
+                    color: AppPalette.of(context).orange,
                     size: 28,
                   ),
                   const SizedBox(height: 8),
@@ -43,7 +43,9 @@ class DashboardActivitySection extends StatelessWidget {
                       'No shifts are scheduled for this workspace day.',
                     ),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: AppPalette.of(context).textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextButton(

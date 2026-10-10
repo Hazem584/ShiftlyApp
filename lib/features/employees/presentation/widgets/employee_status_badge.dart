@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/models/employee.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class EmployeeStatusBadge extends StatelessWidget {
   const EmployeeStatusBadge({required this.status, super.key});
@@ -9,10 +9,13 @@ class EmployeeStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      EmploymentStatus.active => ('Active', AppColors.success),
-      EmploymentStatus.suspended => ('Suspended', AppColors.error),
-      EmploymentStatus.onLeave => ('On leave', AppColors.warning),
-      EmploymentStatus.unknown => ('Unknown', AppColors.textSecondary),
+      EmploymentStatus.active => ('Active', AppPalette.of(context).success),
+      EmploymentStatus.suspended => ('Suspended', AppPalette.of(context).error),
+      EmploymentStatus.onLeave => ('On leave', AppPalette.of(context).warning),
+      EmploymentStatus.unknown => (
+        'Unknown',
+        AppPalette.of(context).textSecondary,
+      ),
     };
     return DecoratedBox(
       decoration: BoxDecoration(

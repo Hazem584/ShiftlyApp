@@ -786,4 +786,8 @@ The only remaining fixed-shift mock is `PreviewFixedShiftRepository`, an empty a
 
 ## Web and Vercel
 
+Appearance can be set to light, dark, or the device theme from Profile or the appearance button. The choice is saved on this device and works on mobile and web.
+
+Schedule and attendance lists keep bounded snapshots for up to seven days. After a connection failure, previously loaded data can be shown with its last update time and a refresh action. Snapshots are separated by account, workspace, membership, and role; signing out removes that account’s snapshots. Authorization errors never fall back to saved data. Clock-in eligibility, current attendance, and recovery lookups require a fresh server response. Attendance is not added to an offline sending queue; an uncertain submitted clock-in retains its existing recovery identifier to prevent duplicates.
+
 For local browser setup, backend CORS, Supabase email redirects, and automatic Vercel builds, follow [the web setup guide](docs/web-vercel-setup.md). The frontend uses a separate Vercel project; `vercel.json` and `scripts/build-vercel.sh` configure the release build and SPA routing.

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -25,13 +25,17 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             DecoratedBox(
-              decoration: const BoxDecoration(
-                color: AppColors.orangeSoft,
+              decoration: BoxDecoration(
+                color: AppPalette.of(context).orangeSoft,
                 shape: BoxShape.circle,
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Icon(icon, size: 36, color: AppColors.orange),
+                child: Icon(
+                  icon,
+                  size: 36,
+                  color: AppPalette.of(context).orange,
+                ),
               ),
             ),
             const SizedBox(height: 18),
@@ -43,8 +47,8 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               context.tr(message),
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: AppPalette.of(context).textSecondary,
                 height: 1.45,
               ),
               textAlign: TextAlign.center,

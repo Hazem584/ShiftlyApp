@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 class DashboardSkeleton extends StatelessWidget {
@@ -13,7 +13,7 @@ class DashboardSkeleton extends StatelessWidget {
       width: width ?? double.infinity,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.field,
+        color: AppPalette.of(context).field,
         borderRadius: BorderRadius.circular(AppRadii.l),
       ),
     ),

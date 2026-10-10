@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_metrics_section_metric.dart';
 
 class EmployeeMetricsSection extends StatelessWidget {
@@ -35,21 +35,21 @@ class EmployeeMetricsSection extends StatelessWidget {
             label: context.tr('Total Employees'),
             value: total ?? employees.length,
             icon: Icons.groups_outlined,
-            color: AppColors.ink,
+            color: AppPalette.of(context).ink,
           ),
           const SizedBox(width: 10),
           EmployeeMetricsSectionMetric(
             label: context.tr('Active'),
             value: active,
             icon: Icons.person_rounded,
-            color: AppColors.success,
+            color: AppPalette.of(context).success,
           ),
           const SizedBox(width: 10),
           EmployeeMetricsSectionMetric(
             label: context.tr('Loaded suspended'),
             value: suspended,
             icon: Icons.person_off_outlined,
-            color: AppColors.warning,
+            color: AppPalette.of(context).warning,
           ),
         ],
       ),

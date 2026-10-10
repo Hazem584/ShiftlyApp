@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/section_heading.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -19,7 +19,9 @@ class DashboardQuickActions extends StatelessWidget {
         title: context.tr('Quick actions'),
         trailing: DecoratedBox(
           decoration: BoxDecoration(
-            color: pendingRequests > 0 ? AppColors.orangeSoft : AppColors.field,
+            color: pendingRequests > 0
+                ? AppPalette.of(context).orangeSoft
+                : AppPalette.of(context).field,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
@@ -39,7 +41,10 @@ class DashboardQuickActions extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.insights_outlined, color: AppColors.orange),
+          leading: Icon(
+            Icons.insights_outlined,
+            color: AppPalette.of(context).orange,
+          ),
           title: Text(context.tr('Performance')),
           subtitle: Text(
             context.tr('Employee points, policies, disputes and warnings'),
@@ -55,7 +60,7 @@ class DashboardQuickActions extends StatelessWidget {
               icon: Icons.person_add_alt_1_rounded,
               label: context.tr('Add employee'),
               caption: 'Invite someone',
-              color: AppColors.ink,
+              color: AppPalette.of(context).ink,
               onTap: () => context.push('/employees/add'),
             ),
           ),
@@ -65,7 +70,7 @@ class DashboardQuickActions extends StatelessWidget {
               icon: Icons.schedule_rounded,
               label: context.tr('Shifts'),
               caption: 'Plan the day',
-              color: AppColors.teal,
+              color: AppPalette.of(context).teal,
               onTap: () => context.push(AppRoutes.managerShifts),
             ),
           ),
@@ -75,7 +80,7 @@ class DashboardQuickActions extends StatelessWidget {
               icon: Icons.approval_outlined,
               label: context.tr('Requests'),
               caption: 'Review leave',
-              color: AppColors.orange,
+              color: AppPalette.of(context).orange,
               onTap: () => context.go(AppRoutes.attendanceLeaveRequests),
             ),
           ),

@@ -186,7 +186,7 @@ class ExtraShiftsView extends StatelessWidget {
         title: Text(context.tr('Revoke extra authorization?')),
         content: Text(
           context.tr(
-            '{value1} · {value2}\nThis identity remains in audit history. The backend checks whether it has already been consumed.',
+            '{value1} · {value2}\nThis removes permission to start this extra shift. Attendance already recorded will be kept.',
             {
               'value1': (value.schedule.name).toString(),
               'value2': (value.operationalDate).toString(),

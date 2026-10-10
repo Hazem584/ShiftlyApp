@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 
 class LeaveStatusBadge extends StatelessWidget {
@@ -12,28 +12,28 @@ class LeaveStatusBadge extends StatelessWidget {
     final (label, color, background) = switch (status) {
       LeaveRequestStatus.pending => (
         'Pending',
-        AppColors.warning,
-        AppColors.warningSoft,
+        AppPalette.of(context).warning,
+        AppPalette.of(context).warningSoft,
       ),
       LeaveRequestStatus.approved => (
         'Approved',
-        AppColors.success,
-        AppColors.successSoft,
+        AppPalette.of(context).success,
+        AppPalette.of(context).successSoft,
       ),
       LeaveRequestStatus.rejected => (
         'Rejected',
-        AppColors.error,
-        const Color(0xFFFFE5E3),
+        AppPalette.of(context).error,
+        AppPalette.of(context).errorSoft,
       ),
       LeaveRequestStatus.cancelled => (
         'Cancelled',
-        AppColors.textSecondary,
-        const Color(0xFFF1F3F5),
+        AppPalette.of(context).textSecondary,
+        AppPalette.of(context).field,
       ),
       LeaveRequestStatus.unknown => (
         'Unknown',
-        AppColors.textSecondary,
-        const Color(0xFFF1F3F5),
+        AppPalette.of(context).textSecondary,
+        AppPalette.of(context).field,
       ),
     };
     return DecoratedBox(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
@@ -40,8 +40,8 @@ class DashboardTopBar extends StatelessWidget {
               timezone,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: AppPalette.of(context).textSecondary,
                 fontSize: 12,
               ),
             ),
@@ -53,9 +53,9 @@ class DashboardTopBar extends StatelessWidget {
       BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) => state is ProfileLoaded
             ? ProfileAvatar(profile: state.profile, radius: 20)
-            : const CircleAvatar(
+            : CircleAvatar(
                 radius: 20,
-                backgroundColor: AppColors.ink,
+                backgroundColor: AppPalette.of(context).brandBackground,
                 foregroundColor: Colors.white,
                 child: Text('M'),
               ),

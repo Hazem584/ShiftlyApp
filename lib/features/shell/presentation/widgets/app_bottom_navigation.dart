@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/shell/presentation/widgets/navigation_destination_item.dart';
@@ -31,9 +31,11 @@ class AppBottomNavigation extends StatelessWidget {
         buildWhen: (before, after) => before.unreadCount != after.unreadCount,
         builder: (context, chat) => DecoratedBox(
           key: const Key('manager-bottom-navigation'),
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(top: BorderSide(color: AppColors.borderColor)),
+          decoration: BoxDecoration(
+            color: AppPalette.of(context).surface,
+            border: Border(
+              top: BorderSide(color: AppPalette.of(context).borderColor),
+            ),
             boxShadow: AppShadows.soft,
           ),
           child: SafeArea(

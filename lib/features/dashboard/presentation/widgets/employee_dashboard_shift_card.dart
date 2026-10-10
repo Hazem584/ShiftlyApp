@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -29,11 +29,14 @@ class EmployeeDashboardShiftCard extends StatelessWidget {
         child: shift == null
             ? Text(
                 context.tr('No shift scheduled.'),
-                style: const TextStyle(color: AppColors.textSecondary),
+                style: TextStyle(color: AppPalette.of(context).textSecondary),
               )
             : Row(
                 children: [
-                  const Icon(Icons.schedule_rounded, color: AppColors.orange),
+                  Icon(
+                    Icons.schedule_rounded,
+                    color: AppPalette.of(context).orange,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

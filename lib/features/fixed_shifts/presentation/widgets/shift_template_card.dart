@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/clock_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -150,7 +150,9 @@ class ShiftTemplateCard extends StatelessWidget {
                 ] else
                   Text(
                     context.tr('Read-only history'),
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(
+                      color: AppPalette.of(context).textSecondary,
+                    ),
                   ),
               ],
             ),
@@ -162,18 +164,20 @@ class ShiftTemplateCard extends StatelessWidget {
 
   Widget _policy(IconData icon, String text) => _badge(icon, text);
 
-  Widget _badge(IconData icon, String text) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-    decoration: BoxDecoration(
-      color: AppColors.field,
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: AppColors.borderColor),
-    ),
-    child: Wrap(
-      spacing: 5,
-      runSpacing: 2,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [Icon(icon, size: 15), Text(text)],
+  Widget _badge(IconData icon, String text) => Builder(
+    builder: (context) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppPalette.of(context).field,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppPalette.of(context).borderColor),
+      ),
+      child: Wrap(
+        spacing: 5,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [Icon(icon, size: 15), Text(text)],
+      ),
     ),
   );
 }

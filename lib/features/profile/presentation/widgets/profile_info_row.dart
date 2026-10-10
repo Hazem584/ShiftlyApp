@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class ProfileInfoRow extends StatelessWidget {
   const ProfileInfoRow({
@@ -23,7 +23,7 @@ class ProfileInfoRow extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: AppColors.field,
+            color: AppPalette.of(context).field,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, size: 18),
@@ -35,8 +35,8 @@ class ProfileInfoRow extends StatelessWidget {
             children: [
               Text(
                 context.tr(label),
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: AppPalette.of(context).textSecondary,
                   fontSize: 11,
                 ),
               ),

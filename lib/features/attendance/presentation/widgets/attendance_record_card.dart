@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
@@ -30,23 +30,23 @@ class AttendanceRecordCard extends StatelessWidget {
     final (label, color, background) = switch (record.reviewStatus) {
       AttendanceReviewStatus.pending => (
         'Pending review',
-        AppColors.warning,
-        AppColors.warningSoft,
+        AppPalette.of(context).warning,
+        AppPalette.of(context).warningSoft,
       ),
       AttendanceReviewStatus.approved => (
         'Approved',
-        AppColors.success,
-        AppColors.successSoft,
+        AppPalette.of(context).success,
+        AppPalette.of(context).successSoft,
       ),
       AttendanceReviewStatus.rejected => (
         'Rejected',
-        AppColors.error,
-        const Color(0xFFFFE4E1),
+        AppPalette.of(context).error,
+        AppPalette.of(context).errorSoft,
       ),
       AttendanceReviewStatus.unknown => (
         'Unavailable',
-        AppColors.textSecondary,
-        AppColors.field,
+        AppPalette.of(context).textSecondary,
+        AppPalette.of(context).field,
       ),
     };
     return SurfaceCard(
@@ -64,8 +64,8 @@ class AttendanceRecordCard extends StatelessWidget {
                 ),
                 Text(
                   context.tr(_month(date.month)),
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: AppPalette.of(context).textSecondary,
                     fontSize: 10,
                   ),
                 ),
@@ -121,8 +121,8 @@ class AttendanceRecordCard extends StatelessWidget {
                       locale: Localizations.localeOf(context).toString(),
                     )).toString(),
                   }),
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: AppPalette.of(context).textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -138,8 +138,8 @@ class AttendanceRecordCard extends StatelessWidget {
                       : context.tr('{value1} minutes worked', {
                           'value1': (record.workedMinutes).toString(),
                         }),
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: AppPalette.of(context).textSecondary,
                     fontSize: 11,
                   ),
                 ),

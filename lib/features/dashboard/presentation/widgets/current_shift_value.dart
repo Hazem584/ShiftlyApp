@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 
 class CurrentShiftValue extends StatelessWidget {
   const CurrentShiftValue({
@@ -32,7 +32,10 @@ class CurrentShiftValue extends StatelessWidget {
           context.tr(label),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+          style: TextStyle(
+            color: AppPalette.of(context).textSecondary,
+            fontSize: 11,
+          ),
         ),
       ],
     ),

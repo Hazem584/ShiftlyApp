@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 class EmployeeDetailsLoading extends StatelessWidget {
@@ -13,7 +13,7 @@ class EmployeeDetailsLoading extends StatelessWidget {
         Container(
           height: 245,
           decoration: BoxDecoration(
-            color: AppColors.field,
+            color: AppPalette.of(context).field,
             borderRadius: BorderRadius.circular(AppRadii.l),
           ),
         ),
@@ -21,7 +21,7 @@ class EmployeeDetailsLoading extends StatelessWidget {
         Container(
           height: 150,
           decoration: BoxDecoration(
-            color: AppColors.field,
+            color: AppPalette.of(context).field,
             borderRadius: BorderRadius.circular(AppRadii.l),
           ),
         ),

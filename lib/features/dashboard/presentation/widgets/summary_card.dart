@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
@@ -32,8 +32,8 @@ class SummaryCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   context.tr(label),
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: AppPalette.of(context).textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -63,8 +63,8 @@ class SummaryCard extends StatelessWidget {
           if (caption != null)
             Text(
               context.tr(caption!),
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: AppPalette.of(context).textSecondary,
                 fontSize: 11,
               ),
             ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
@@ -28,10 +28,12 @@ class NotificationCard extends StatelessWidget {
     final presentation = notificationPresentation(notification.type);
     return Material(
       key: Key('notification-${notification.id}'),
-      color: notification.isUnread ? AppColors.selected : AppColors.surface,
+      color: notification.isUnread
+          ? AppPalette.of(context).selected
+          : AppPalette.of(context).surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.l),
-        side: const BorderSide(color: AppColors.borderColor),
+        side: BorderSide(color: AppPalette.of(context).borderColor),
       ),
       child: InkWell(
         onTap: mutating ? null : onOpen,
@@ -64,10 +66,10 @@ class NotificationCard extends StatelessWidget {
                           ),
                         ),
                         if (notification.isUnread)
-                          const DecoratedBox(
+                          DecoratedBox(
                             key: Key('unread-indicator'),
                             decoration: BoxDecoration(
-                              color: AppColors.orange,
+                              color: AppPalette.of(context).orange,
                               shape: BoxShape.circle,
                             ),
                             child: SizedBox.square(dimension: 8),
@@ -81,7 +83,9 @@ class NotificationCard extends StatelessWidget {
                         notification.type,
                         notification.message,
                       ),
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(
+                        color: AppPalette.of(context).textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -93,8 +97,8 @@ class NotificationCard extends StatelessWidget {
                           locale: Localizations.localeOf(context).toString(),
                         )).toString(),
                       }),
-                      style: const TextStyle(
-                        color: AppColors.lighterGray,
+                      style: TextStyle(
+                        color: AppPalette.of(context).lighterGray,
                         fontSize: 11,
                       ),
                     ),

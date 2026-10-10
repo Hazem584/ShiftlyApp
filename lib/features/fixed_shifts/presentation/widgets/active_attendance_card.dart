@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -42,8 +42,8 @@ class ActiveAttendanceCard extends StatelessWidget {
                 children: [
                   Text(
                     context.tr('Active attendance'),
-                    style: const TextStyle(
-                      color: AppColors.success,
+                    style: TextStyle(
+                      color: AppPalette.of(context).success,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -56,7 +56,10 @@ class ActiveAttendanceCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.radio_button_checked, color: AppColors.success),
+            Icon(
+              Icons.radio_button_checked,
+              color: AppPalette.of(context).success,
+            ),
           ],
         ),
         Text(

@@ -10,7 +10,7 @@ class UnavailableManagerPointsRepository implements ManagerPointsRepository {
   @override
   void bindSession(FeatureSessionScope? scope) {}
   static const _error = ApiException(
-    message: 'Manager Performance requires a connected backend.',
+    message: 'Connect to load your team’s performance.',
   );
   @override
   Future<Map<String, Object?>> get(

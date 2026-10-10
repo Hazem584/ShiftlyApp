@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_selector.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
+import 'package:shiftly/core/theme/theme_selector.dart';
 import 'package:shiftly/core/widgets/workspace_content_frame.dart';
 import 'package:shiftly/features/attendance/presentation/screens/employee_attendance_screen.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
@@ -55,6 +56,7 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
         title: Text(context.tr('Employee workspace')),
         actions: [
           const LanguageSelector(),
+          const ThemeSelector(),
           const NotificationBell(),
           IconButton(
             key: const Key('employee-switch-workspace'),

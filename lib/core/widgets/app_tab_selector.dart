@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 /// Tabs with wrapping labels and accessible touch targets.
@@ -21,7 +21,7 @@ class AppTabSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
-      color: AppColors.field,
+      color: AppPalette.of(context).field,
       borderRadius: BorderRadius.circular(AppRadii.m),
     ),
     child: Padding(
@@ -42,10 +42,10 @@ class AppTabSelector extends StatelessWidget {
                       vertical: 12,
                     ),
                     foregroundColor: selectedIndex == index
-                        ? AppColors.ink
-                        : AppColors.textSecondary,
+                        ? AppPalette.of(context).ink
+                        : AppPalette.of(context).textSecondary,
                     backgroundColor: selectedIndex == index
-                        ? AppColors.surface
+                        ? AppPalette.of(context).surface
                         : Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadii.s),

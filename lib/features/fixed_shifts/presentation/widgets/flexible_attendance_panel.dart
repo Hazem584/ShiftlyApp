@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/failure_notice.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -13,6 +13,7 @@ import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_pr
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_status_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/eligibility_tile.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/legacy_clock_in_review_card.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/saved_schedule_list.dart';
 
 class FlexibleAttendancePanel extends StatelessWidget {
   const FlexibleAttendancePanel({required this.timezone, super.key});
@@ -47,6 +48,12 @@ class FlexibleAttendancePanel extends StatelessWidget {
       );
 
   Widget _content(BuildContext context, FlexibleAttendanceState state) {
+    if (state.recovery == null &&
+        state.templates.isNotEmpty &&
+        state.eligibility == null &&
+        (state.loading || state.failure != null)) {
+      return SavedScheduleList(templates: state.templates);
+    }
     if (state.loading) {
       return const SurfaceCard(
         child: SizedBox(
@@ -62,19 +69,8 @@ class FlexibleAttendancePanel extends StatelessWidget {
           children: [
             Text(context.tr('Clock-in outcome needs confirmation')),
             Text(
-              context.tr('Saved request ID: {value1}', {
-                'value1': (state.recovery!.clientAttendanceId).toString(),
-              }),
-            ),
-            Text(
               context.tr(
-                'Saved {value1} occurrence on {value2}. A new shift is blocked until recovery finishes.',
-                {
-                  'value1': (state.recovery!.occurrenceKind ?? 'unknown')
-                      .toString(),
-                  'value2': (state.recovery!.operationalDate ?? 'unknown date')
-                      .toString(),
-                },
+                'We could not confirm your clock-in. Connect and check its status before starting another shift.',
               ),
             ),
             FilledButton(
@@ -215,9 +211,9 @@ class FlexibleAttendancePanel extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
+                Icon(
                   Icons.event_busy_outlined,
-                  color: AppColors.textSecondary,
+                  color: AppPalette.of(context).textSecondary,
                 ),
                 const SizedBox(width: 10),
                 Expanded(

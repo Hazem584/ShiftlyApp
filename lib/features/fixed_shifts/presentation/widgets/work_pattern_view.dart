@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -59,7 +59,7 @@ class WorkPatternView extends StatelessWidget {
             if (state.failure != null) ...[
               Text(
                 context.tr(state.failure!.message),
-                style: const TextStyle(color: AppColors.error),
+                style: TextStyle(color: AppPalette.of(context).error),
               ),
               if (state.failure!.requestId != null)
                 Text(
@@ -227,7 +227,7 @@ class WorkPatternView extends StatelessWidget {
                   context.tr(
                     'The workspace timezone is invalid. Pattern changes are disabled.',
                   ),
-                  style: const TextStyle(color: AppColors.error),
+                  style: TextStyle(color: AppPalette.of(context).error),
                 ),
               ),
           ],

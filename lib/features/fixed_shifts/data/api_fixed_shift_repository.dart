@@ -261,6 +261,7 @@ class ApiFixedShiftRepository
         while (true) {
           final response = await _dio.get<Object?>(
             '/attendance/me',
+            options: Options(extra: {'requireFresh': true}),
             queryParameters: {
               'workspaceId': value.workspaceId,
               'page': page,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_avatar.dart';
 
@@ -24,20 +24,20 @@ class ProfileHeader extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           profile.role,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppPalette.of(context).textSecondary),
         ),
         const SizedBox(height: 12),
         DecoratedBox(
           decoration: BoxDecoration(
-            color: AppColors.tealSoft,
+            color: AppPalette.of(context).tealSoft,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Text(
               profile.workplace,
-              style: const TextStyle(
-                color: AppColors.teal,
+              style: TextStyle(
+                color: AppPalette.of(context).teal,
                 fontWeight: FontWeight.w800,
                 fontSize: 12,
               ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
@@ -26,8 +26,8 @@ class ChatGroupTile extends StatelessWidget {
         vertical: 8,
       ),
       leading: CircleAvatar(
-        backgroundColor: AppColors.orangeSoft,
-        foregroundColor: AppColors.orange,
+        backgroundColor: AppPalette.of(context).orangeSoft,
+        foregroundColor: AppPalette.of(context).orange,
         child: Text(group.name.characters.first.toUpperCase()),
       ),
       title: Row(

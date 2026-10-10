@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
@@ -25,14 +25,14 @@ class DashboardApprovalsCard extends StatelessWidget {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                color: AppColors.warningSoft,
+                color: AppPalette.of(context).warningSoft,
                 borderRadius: BorderRadius.circular(AppRadii.s),
               ),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(10),
                 child: Icon(
                   Icons.pending_actions_outlined,
-                  color: AppColors.warning,
+                  color: AppPalette.of(context).warning,
                 ),
               ),
             ),
@@ -49,8 +49,8 @@ class DashboardApprovalsCard extends StatelessWidget {
                   ),
                   Text(
                     context.tr('Tap to review and reply'),
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: AppPalette.of(context).textSecondary,
                       fontSize: 12,
                     ),
                   ),

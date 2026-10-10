@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_hero_chip.dart';
@@ -13,10 +13,14 @@ class DashboardHeroSection extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(22),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(
+      gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [AppColors.ink, AppColors.inkMuted, AppColors.orange],
+        colors: [
+          AppPalette.of(context).brandBackground,
+          AppPalette.of(context).brandGradientEnd,
+          AppPalette.of(context).orange,
+        ],
         stops: [0, .62, 1],
       ),
       borderRadius: BorderRadius.circular(AppRadii.xl),
@@ -43,7 +47,7 @@ class DashboardHeroSection extends StatelessWidget {
             width: 90,
             height: 90,
             decoration: BoxDecoration(
-              color: AppColors.teal.withValues(alpha: .18),
+              color: AppPalette.of(context).teal.withValues(alpha: .18),
               shape: BoxShape.circle,
             ),
           ),

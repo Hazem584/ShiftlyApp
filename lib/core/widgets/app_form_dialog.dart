@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
 /// One dialog surface with a scrolling form and always-visible actions.
@@ -30,7 +30,7 @@ class AppFormDialog extends StatelessWidget {
     return PopScope(
       canPop: !busy,
       child: Dialog(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppPalette.of(context).surface,
         surfaceTintColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         clipBehavior: Clip.antiAlias,
@@ -64,10 +64,14 @@ class AppFormDialog extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.orangeSoft,
+                            color: AppPalette.of(context).orangeSoft,
                             borderRadius: BorderRadius.circular(AppRadii.m),
                           ),
-                          child: Icon(icon, color: AppColors.orange, size: 26),
+                          child: Icon(
+                            icon,
+                            color: AppPalette.of(context).orange,
+                            size: 26,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -80,7 +84,9 @@ class AppFormDialog extends StatelessWidget {
                         Text(
                           context.tr(subtitle!),
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.textSecondary),
+                              ?.copyWith(
+                                color: AppPalette.of(context).textSecondary,
+                              ),
                         ),
                       ],
                       const SizedBox(height: 20),

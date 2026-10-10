@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
 class DashboardQuickAction extends StatelessWidget {
@@ -42,7 +42,10 @@ class DashboardQuickAction extends StatelessWidget {
         Text(
           context.tr(caption),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+          style: TextStyle(
+            fontSize: 10,
+            color: AppPalette.of(context).textSecondary,
+          ),
         ),
       ],
     ),

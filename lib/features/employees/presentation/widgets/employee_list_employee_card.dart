@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/models/employee.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_status_badge.dart';
 
@@ -17,8 +17,8 @@ class EmployeeListEmployeeCard extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 24,
-          backgroundColor: AppColors.orangeSoft,
-          foregroundColor: AppColors.orange,
+          backgroundColor: AppPalette.of(context).orangeSoft,
+          foregroundColor: AppPalette.of(context).orange,
           child: Text(
             employee.initials,
             style: const TextStyle(fontWeight: FontWeight.w800),
@@ -39,18 +39,18 @@ class EmployeeListEmployeeCard extends StatelessWidget {
                 employee.displayJobTitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: AppPalette.of(context).textSecondary,
                   fontSize: 12,
                 ),
               ),
               const SizedBox(height: 5),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.mail_outline_rounded,
                     size: 13,
-                    color: AppColors.textSecondary,
+                    color: AppPalette.of(context).textSecondary,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -58,9 +58,9 @@ class EmployeeListEmployeeCard extends StatelessWidget {
                       employee.displayEmail,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        color: AppPalette.of(context).textSecondary,
                       ),
                     ),
                   ),
@@ -75,10 +75,10 @@ class EmployeeListEmployeeCard extends StatelessWidget {
           children: [
             EmployeeStatusBadge(status: employee.employmentStatus),
             const SizedBox(height: 10),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
-              color: AppColors.textSecondary,
+              color: AppPalette.of(context).textSecondary,
             ),
           ],
         ),

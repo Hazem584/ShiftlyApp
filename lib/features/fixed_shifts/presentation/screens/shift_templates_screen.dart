@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/offline/read_sync_banner.dart';
+import 'package:shiftly/core/offline/read_sync_state.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -45,6 +47,14 @@ class ShiftTemplatesScreen extends StatelessWidget {
         ),
         builder: (context, state) => Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: ReadSyncBanner(
+                category: ReadCategory.schedule,
+                onRefresh: () =>
+                    context.read<ManagerTemplatesCubit>().load(refresh: true),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
               child: SurfaceCard(

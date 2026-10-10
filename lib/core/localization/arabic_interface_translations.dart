@@ -1,6 +1,36 @@
 /// Interface messages only. Employee names, chat content and free-text reasons
 /// are supplied as parameters and are never translated.
 const arabicInterfaceTranslations = <String, String>{
+  'Appearance': 'المظهر',
+  'Your saved schedule': 'آخر جدول محفوظ',
+  'Clock-in outcome needs confirmation': 'تسجيل حضورك يحتاج تأكيدًا',
+  'Recover saved clock-in': 'تحقّق من تسجيل الحضور',
+  'Light, dark or your device theme': 'فاتح أو داكن أو حسب إعدادات جهازك',
+  '{value1} · {value2}\nThis removes permission to start this extra shift. Attendance already recorded will be kept.': '{value1} · {value2}\nسيتم إلغاء السماح ببدء هذا الشيفت الإضافي. سجلات الحضور السابقة ستظل محفوظة.',
+  'Use device theme': 'حسب إعدادات الجهاز',
+  'Light': 'فاتح',
+  'Dark': 'داكن',
+  'Could not save appearance. Please try again.':
+      'تعذّر حفظ المظهر. حاول مرة أخرى.',
+  'Updating…': 'جارٍ التحديث…',
+  'Showing saved data': 'نعرض آخر بيانات محفوظة',
+  'Could not update': 'تعذّر التحديث',
+  'Up to date': 'البيانات محدّثة',
+  'Last updated: {time}': 'آخر تحديث: {time}',
+  'Connect and refresh for the latest changes. Attendance requires an internet connection.': 'اتصل بالإنترنت وحدّث لعرض أحدث التغييرات. تسجيل الحضور يتطلب اتصالًا بالإنترنت.',
+  'Connect and refresh before recording attendance.':
+      'اتصل بالإنترنت وحدّث البيانات قبل تسجيل الحضور.',
+  'We could not confirm your clock-in. Connect and check its status before starting another shift.': 'تعذّر التأكد من تسجيل حضورك. اتصل بالإنترنت وتحقّق من حالته قبل بدء شيفت جديد.',
+  'Connect to load your team’s performance.': 'اتصل بالإنترنت لعرض أداء فريقك.',
+  'This record has already been reversed. Refresh to see its current status.':
+      'تم التراجع عن هذا السجل بالفعل. حدّث لعرض حالته الحالية.',
+  'Su': 'أحد',
+  'Mo': 'إثنين',
+  'Tu': 'ثلاثاء',
+  'We': 'أربعاء',
+  'Th': 'خميس',
+  'Fr': 'جمعة',
+  'Sa': 'سبت',
   'Workspaces and invitations': 'مساحات العمل والدعوات',
   'Loading conversation…': 'جارٍ تحميل المحادثة…',
   'Read by everyone': 'قرأها جميع المستلمين',

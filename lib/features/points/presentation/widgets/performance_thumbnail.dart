@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 
 class PerformanceThumbnail extends StatelessWidget {
@@ -42,11 +42,14 @@ class PerformanceThumbnail extends StatelessWidget {
             child: InkWell(
               onTap: () => context.go('/employee?tab=performance'),
               child: Ink(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.ink, AppColors.inkMuted],
+                    colors: [
+                      AppPalette.of(context).brandBackground,
+                      AppPalette.of(context).brandGradientEnd,
+                    ],
                   ),
                 ),
                 padding: const EdgeInsets.all(18),

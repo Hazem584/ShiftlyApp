@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 
 class AuthPageLayout extends StatelessWidget {
@@ -14,7 +15,7 @@ class AuthPageLayout extends StatelessWidget {
         return child;
       }
       return Material(
-        color: AppColors.canvas,
+        color: AppPalette.of(context).canvas,
         child: Row(
           children: [
             Expanded(
