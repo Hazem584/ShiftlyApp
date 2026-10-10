@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 
 class EmptyState extends StatelessWidget {
@@ -35,13 +36,13 @@ class EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              title,
+              context.tr(title),
               style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              message,
+              context.tr(message),
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 height: 1.45,

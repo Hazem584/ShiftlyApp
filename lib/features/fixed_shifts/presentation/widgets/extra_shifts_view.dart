@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/failure_notice.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
@@ -34,12 +35,12 @@ class ExtraShiftsView extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Extra Shifts',
+                    context.tr('Extra Shifts'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Refresh extra history',
+                  tooltip: context.tr('Refresh extra history'),
                   onPressed: state.busy
                       ? null
                       : () => cubit.load(page: pagination?.page ?? 1),
@@ -65,7 +66,7 @@ class ExtraShiftsView extends StatelessWidget {
               ),
               FilledButton.tonal(
                 onPressed: state.busy ? null : cubit.recover,
-                child: const Text('Recover saved extra operation'),
+                child: Text(context.tr('Recover saved extra operation')),
               ),
             ],
             if (state.canonical != null)
@@ -74,9 +75,9 @@ class ExtraShiftsView extends StatelessWidget {
                 children: [ExtraAuthorizationCard(value: state.canonical!)],
               ),
             if (state.page?.data.isEmpty == true)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('No extra authorizations recorded.'),
+                child: Text(context.tr('No extra authorizations recorded.')),
               ),
             for (final value in state.page?.data ?? <ExtraAuthorization>[])
               ExtraAuthorizationCard(
@@ -110,7 +111,7 @@ class ExtraShiftsView extends StatelessWidget {
                             pagination.page >= pagination.totalPages
                         ? null
                         : () => cubit.load(page: pagination.page + 1),
-                    child: const Text('Next'),
+                    child: Text(context.tr('Next')),
                   ),
                 ],
               ),
@@ -127,7 +128,7 @@ class ExtraShiftsView extends StatelessWidget {
                       ? () => _create(context, false)
                       : null,
                   icon: const Icon(Icons.more_time),
-                  label: const Text('Authorize extra'),
+                  label: Text(context.tr('Authorize extra')),
                 ),
                 OutlinedButton.icon(
                   onPressed:
@@ -138,7 +139,7 @@ class ExtraShiftsView extends StatelessWidget {
                       ? () => _create(context, true)
                       : null,
                   icon: const Icon(Icons.edit_calendar),
-                  label: const Text('Record actual attendance'),
+                  label: Text(context.tr('Record actual attendance')),
                 ),
               ],
             ),
@@ -169,7 +170,7 @@ class ExtraShiftsView extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(c, true),

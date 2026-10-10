@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
@@ -24,7 +25,7 @@ class EmployeeDashboardScreen extends StatelessWidget {
             action: FilledButton.icon(
               onPressed: context.read<DashboardCubit>().load,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try again'),
+              label: Text(context.tr('Try again')),
             ),
           ),
         },

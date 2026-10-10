@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 
@@ -38,7 +39,7 @@ class WorkspaceNavigationRail extends StatelessWidget {
           NavigationRailDestination(
             icon: const Icon(Icons.home_outlined),
             selectedIcon: const Icon(Icons.home_rounded),
-            label: Text(employee ? 'Overview' : 'Dashboard'),
+            label: Text(context.tr(employee ? 'Overview' : 'Dashboard')),
           ),
           NavigationRailDestination(
             icon: Icon(
@@ -47,12 +48,12 @@ class WorkspaceNavigationRail extends StatelessWidget {
             selectedIcon: Icon(
               employee ? Icons.calendar_month_rounded : Icons.groups_rounded,
             ),
-            label: Text(employee ? 'My Shifts' : 'Employees'),
+            label: Text(context.tr(employee ? 'My Shifts' : 'Employees')),
           ),
-          const NavigationRailDestination(
+          NavigationRailDestination(
             icon: Icon(Icons.fact_check_outlined),
             selectedIcon: Icon(Icons.fact_check_rounded),
-            label: Text('Attendance'),
+            label: Text(context.tr('Attendance')),
           ),
           NavigationRailDestination(
             icon: Badge(
@@ -69,7 +70,7 @@ class WorkspaceNavigationRail extends StatelessWidget {
               ),
               child: const Icon(Icons.chat_bubble_rounded),
             ),
-            label: const Text('Chat'),
+            label: Text(context.tr('Chat')),
           ),
           NavigationRailDestination(
             icon: Icon(
@@ -80,7 +81,7 @@ class WorkspaceNavigationRail extends StatelessWidget {
             selectedIcon: Icon(
               employee ? Icons.auto_graph_rounded : Icons.person_rounded,
             ),
-            label: Text(employee ? 'Performance' : 'Profile'),
+            label: Text(context.tr(employee ? 'Performance' : 'Profile')),
           ),
         ],
       ),

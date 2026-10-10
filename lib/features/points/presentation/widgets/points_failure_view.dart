@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 
 class PointsFailureView extends StatelessWidget {
@@ -20,7 +21,7 @@ class PointsFailureView extends StatelessWidget {
           FilledButton.icon(
             onPressed: context.read<PointsCubit>().load,
             icon: const Icon(Icons.refresh),
-            label: const Text('Try again'),
+            label: Text(context.tr('Try again')),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/clock_time.dart';
 import 'package:shiftly/core/utils/clock_time_picker.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -101,8 +102,8 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                   controller: _description,
                   maxLength: 1000,
                   maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
+                  decoration: InputDecoration(
+                    labelText: context.tr('Description (optional)'),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -239,7 +240,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
       actions: [
         TextButton(
           onPressed: state.saving ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(context.tr('Cancel')),
         ),
         FilledButton(
           key: const Key('save-shift-template'),

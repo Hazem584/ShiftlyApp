@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_presentation.dart';
@@ -62,21 +63,23 @@ class EligibilityTile extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               Text(
-                entry.occurrenceKind == 'EXTRA'
-                    ? 'Authorized EXTRA'
-                    : entry.occurrenceKind == 'BASELINE'
-                    ? 'Assigned BASELINE'
-                    : 'Unknown occurrence; read-only',
+                context.tr(
+                  entry.occurrenceKind == 'EXTRA'
+                      ? 'Authorized EXTRA'
+                      : entry.occurrenceKind == 'BASELINE'
+                      ? 'Assigned BASELINE'
+                      : 'Unknown occurrence; read-only',
+                ),
               ),
               if (entry.recommended)
-                const Chip(
-                  label: Text('Recommended'),
+                Chip(
+                  label: Text(context.tr('Recommended')),
                   visualDensity: VisualDensity.compact,
                 ),
             ],
           ),
           subtitle: Text(
-            '${WorkspaceTime.time(entry.scheduledStartAt, savedTimezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.time(entry.scheduledEndAt, savedTimezone, locale: Localizations.localeOf(context).toString())}\n${entry.operationalDate} • $status${entry.lateMinutes > 0 ? ' • ${entry.lateMinutes} min late' : ''}',
+            '${WorkspaceTime.time(entry.scheduledStartAt, savedTimezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.time(entry.scheduledEndAt, savedTimezone, locale: Localizations.localeOf(context).toString())}\n${entry.operationalDate} • ${context.tr(status)}${entry.lateMinutes > 0 ? ' • ${context.tr('{minutes} min late', {'minutes': '${entry.lateMinutes}'})}' : ''}',
           ),
           trailing: busy
               ? const SizedBox.square(

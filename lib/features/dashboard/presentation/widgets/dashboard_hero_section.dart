@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -51,13 +52,13 @@ class DashboardHeroSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Good morning, Manager!',
+              context.tr('Good morning, Manager!'),
               style: Theme.of(context).textTheme.titleLarge
                   ?.copyWith(color: Colors.white, fontSize: 22),
             ),
             const SizedBox(height: 6),
             Text(
-              "Here's what's happening with your team today.",
+              context.tr("Here's what's happening with your team today."),
               style: TextStyle(
                 color: Colors.white.withValues(alpha: .88),
                 fontSize: 13,

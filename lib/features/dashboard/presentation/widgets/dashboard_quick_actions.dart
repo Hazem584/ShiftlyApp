@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -34,11 +35,13 @@ class DashboardQuickActions extends StatelessWidget {
       SurfaceCard(
         onTap: () => context.push(AppRoutes.managerPerformance),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: const ListTile(
+        child: ListTile(
           contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.insights_outlined, color: AppColors.orange),
-          title: Text('Performance'),
-          subtitle: Text('Employee points, policies, disputes and warnings'),
+          title: Text(context.tr('Performance')),
+          subtitle: Text(
+            context.tr('Employee points, policies, disputes and warnings'),
+          ),
           trailing: Icon(Icons.chevron_right_rounded),
         ),
       ),
@@ -48,7 +51,7 @@ class DashboardQuickActions extends StatelessWidget {
           Expanded(
             child: DashboardQuickAction(
               icon: Icons.person_add_alt_1_rounded,
-              label: 'Add employee',
+              label: context.tr('Add employee'),
               caption: 'Invite someone',
               color: AppColors.ink,
               onTap: () => context.push('/employees/add'),
@@ -58,7 +61,7 @@ class DashboardQuickActions extends StatelessWidget {
           Expanded(
             child: DashboardQuickAction(
               icon: Icons.schedule_rounded,
-              label: 'Shifts',
+              label: context.tr('Shifts'),
               caption: 'Plan the day',
               color: AppColors.teal,
               onTap: () => context.push(AppRoutes.managerShifts),
@@ -68,7 +71,7 @@ class DashboardQuickActions extends StatelessWidget {
           Expanded(
             child: DashboardQuickAction(
               icon: Icons.approval_outlined,
-              label: 'Requests',
+              label: context.tr('Requests'),
               caption: 'Review leave',
               color: AppColors.orange,
               onTap: () => context.go(AppRoutes.attendanceLeaveRequests),

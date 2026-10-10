@@ -10,18 +10,24 @@ class AttendanceStatusSummary {
     required this.message,
     this.tone = AttendanceStatusTone.neutral,
     this.occurrence,
+    this.arguments = const {},
   });
 
   final String title;
   final String message;
   final AttendanceStatusTone tone;
   final EligibleShiftOccurrence? occurrence;
+  final Map<String, String> arguments;
 
-  factory AttendanceStatusSummary.fromState(FlexibleAttendanceState state) {
+  factory AttendanceStatusSummary.fromState(
+    FlexibleAttendanceState state, {
+    String actionLocation = 'below',
+  }) {
     if (state.recovery != null) {
-      return const AttendanceStatusSummary(
+      return AttendanceStatusSummary(
         title: 'Your clock-in needs confirmation',
-        message: 'Your last request is saved. Confirm its outcome below before starting another shift.',
+        message: 'Your last request is saved. Confirm its outcome {location} before starting another shift.',
+        arguments: {'location': actionLocation},
         tone: AttendanceStatusTone.attention,
       );
     }
@@ -42,13 +48,14 @@ class AttendanceStatusSummary {
         message: current.isActionable
             ? state.failure != null
                   ? 'Your last confirmed status is clocked in. Refresh to confirm the latest status before finishing.'
-                  : 'When you finish working, use Clock out below.'
+                  : 'When you finish working, use Clock out {location}.'
             : current.source == AttendanceSource.legacyShift
             ? 'Open Earlier shifts & clock-out to finish this attendance.'
             : 'Refresh your attendance before taking another action.',
         tone: current.isActionable
             ? AttendanceStatusTone.active
             : AttendanceStatusTone.attention,
+        arguments: {'location': actionLocation},
       );
     }
     if (state.loading || state.refreshing) {
@@ -62,9 +69,10 @@ class AttendanceStatusSummary {
         state.recoveryBlocked ||
         state.eligibility?.openAttendanceId != null ||
         state.legacyReviewRequired) {
-      return const AttendanceStatusSummary(
+      return AttendanceStatusSummary(
         title: 'Your attendance needs a status check',
-        message: 'Refresh or review the saved attendance below before clocking in again.',
+        message: 'Refresh or review the saved attendance {location} before clocking in again.',
+        arguments: {'location': actionLocation},
         tone: AttendanceStatusTone.attention,
       );
     }
@@ -79,8 +87,11 @@ class AttendanceStatusSummary {
     if (available.isNotEmpty) {
       return AttendanceStatusSummary(
         title: 'Ready to clock in',
-        message:
-            'Choose ${available.first.template.name} below to start your attendance.',
+        message: 'Choose {name} {location} to start your attendance.',
+        arguments: {
+          'name': available.first.template.name,
+          'location': actionLocation,
+        },
         tone: AttendanceStatusTone.ready,
         occurrence: available.first,
       );
@@ -105,8 +116,8 @@ class AttendanceStatusSummary {
     if (upcoming.isNotEmpty) {
       return AttendanceStatusSummary(
         title: 'Your next check-in window',
-        message:
-            'Your workspace lists ${upcoming.first.template.name} as upcoming. Refresh when its check-in window opens.',
+        message: 'Your workspace lists {name} as upcoming. Refresh when its check-in window opens.',
+        arguments: {'name': upcoming.first.template.name},
         occurrence: upcoming.first,
       );
     }
@@ -122,9 +133,10 @@ class AttendanceStatusSummary {
         message: 'No new check-in is available right now. Refresh to check your next authorized shift.',
       );
     }
-    return const AttendanceStatusSummary(
+    return AttendanceStatusSummary(
       title: 'No check-in available right now',
-      message: 'Check your assigned schedule below. If a shift is missing, ask your manager to review your assignment.',
+      message: 'Check your assigned schedule {location}. If a shift is missing, ask your manager to review your assignment.',
+      arguments: {'location': actionLocation},
     );
   }
 }

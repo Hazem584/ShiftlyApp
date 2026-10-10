@@ -697,6 +697,28 @@ The exact validated `Uint8List` and content type are sent with `upsert: false`.
    discard-recording, and location-confirm dialogs, including failure and retry.
 # Fixed shifts and flexible attendance
 
+## Language settings
+
+The app supports English and Arabic, including Material pickers and RTL layout.
+Choose a language from onboarding/sign-in, the manager profile, or the employee
+app bar. Device language is the default; unsupported device languages use English.
+The preference is stored on the device and restored before the first app frame.
+Changing language keeps the current route and authenticated feature state.
+
+`lib/core/localization` contains the controller, preference-store interface,
+storage implementations, localization delegate, and Arabic message catalog.
+Translate product labels with `context.tr(source, arguments)`; use named
+placeholders for employee names, shift names, dates, and other variable values.
+Pass user content as arguments or display it directly. English is the fallback
+for messages without an Arabic entry. The current catalog covers onboarding,
+authentication, navigation, dashboard labels, profile controls, attendance status,
+common actions, and common failures; remaining detailed feature messages can be
+added to the same catalog. No generated `part` files are used.
+
+Validation includes saved preferences, failed/concurrent saves, device-locale
+changes, route preservation, Arabic login, compact RTL layouts, and matching
+translation placeholders.
+
 The fixed-shift feature is additive to the legacy scheduled-shift flow. Production wiring creates one `ApiFixedShiftRepository` from the existing authenticated Dio client and the existing `SharedPreferences` instance. `ManagerTemplatesCubit` and `FlexibleAttendanceCubit` are application-scoped, role-gated, and rebound whenever the authenticated feature scope changes. Employee work-pattern state is local to Employee Details. Legacy `ShiftRepository`, `AttendanceRepository`, screens, Cubits, and routes remain available.
 
 ## Endpoint mapping

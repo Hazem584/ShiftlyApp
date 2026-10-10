@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/flexible_attendance_state.dart';
@@ -18,7 +19,12 @@ class AttendanceStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summary = AttendanceStatusSummary.fromState(state);
+    final summary = AttendanceStatusSummary.fromState(
+      state,
+      actionLocation: context.tr(
+        onOpenShifts == null ? 'below' : 'in My Shifts',
+      ),
+    );
     final colors = Theme.of(context).colorScheme;
     final color = switch (summary.tone) {
       AttendanceStatusTone.active ||
@@ -48,7 +54,7 @@ class AttendanceStatusCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    summary.title,
+                    context.tr(summary.title),
                     style: Theme.of(context).textTheme.titleMedium
                         ?.copyWith(color: color),
                   ),
@@ -56,25 +62,37 @@ class AttendanceStatusCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              onOpenShifts == null
-                  ? summary.message
-                  : summary.message.replaceAll('below', 'in My Shifts'),
-            ),
+            Text(context.tr(summary.message, summary.arguments)),
             if (entry != null) ...[
               const SizedBox(height: 10),
               Text(
                 '${WorkspaceTime.time(entry.scheduledStartAt, savedTimezone, locale: locale)} – ${WorkspaceTime.time(entry.scheduledEndAt, savedTimezone, locale: locale)}',
               ),
-              Text('Shift date: ${entry.operationalDate}'),
               Text(
-                'Check-in opens: ${WorkspaceTime.dateTime(entry.checkInWindowStart, savedTimezone, locale: locale)}',
+                context.tr('Shift date: {date}', {
+                  'date': entry.operationalDate,
+                }),
+              ),
+              Text(
+                context.tr('Check-in opens: {time}', {
+                  'time': WorkspaceTime.dateTime(
+                    entry.checkInWindowStart,
+                    savedTimezone,
+                    locale: locale,
+                  ),
+                }),
               ),
             ],
             if (state.eligibility != null) ...[
               const SizedBox(height: 8),
               Text(
-                'Last checked: ${WorkspaceTime.dateTime(state.eligibility!.evaluatedAt, state.eligibility!.timezone, locale: locale)}',
+                context.tr('Last checked: {time}', {
+                  'time': WorkspaceTime.dateTime(
+                    state.eligibility!.evaluatedAt,
+                    state.eligibility!.timezone,
+                    locale: locale,
+                  ),
+                }),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -83,7 +101,7 @@ class AttendanceStatusCard extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onOpenShifts,
                 icon: const Icon(Icons.arrow_forward_rounded),
-                label: const Text('Open My Shifts'),
+                label: Text(context.tr('Open My Shifts')),
               ),
             ],
           ],

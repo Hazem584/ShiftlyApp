@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
@@ -22,12 +23,12 @@ class EmployeeDashboardShiftCard extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: Theme.of(context).textTheme.titleLarge),
+      Text(context.tr(title), style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: AppSpacing.s),
       SurfaceCard(
         child: shift == null
-            ? const Text(
-                'No shift scheduled.',
+            ? Text(
+                context.tr('No shift scheduled.'),
                 style: TextStyle(color: AppColors.textSecondary),
               )
             : Row(
@@ -42,11 +43,14 @@ class EmployeeDashboardShiftCard extends StatelessWidget {
                     ),
                   ),
                   if (attendance != null)
-                    Text(switch (attendance!.status) {
-                      DashboardAttendanceStatus.clockedIn => 'Clocked in',
-                      DashboardAttendanceStatus.completed => 'Completed',
-                      DashboardAttendanceStatus.unknown => 'Recorded',
-                    }, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    Text(
+                      context.tr(switch (attendance!.status) {
+                        DashboardAttendanceStatus.clockedIn => 'Clocked in',
+                        DashboardAttendanceStatus.completed => 'Completed',
+                        DashboardAttendanceStatus.unknown => 'Recorded',
+                      }),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
                 ],
               ),
       ),

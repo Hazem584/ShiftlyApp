@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/utils/leave_request_display_formatters.dart';
@@ -72,7 +73,7 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Close'),
+        child: Text(context.tr('Close')),
       ),
     ],
   );

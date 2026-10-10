@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class LeaveRequestRejectionDialog extends StatefulWidget {
   const LeaveRequestRejectionDialog({super.key, required this.employeeName});
@@ -46,7 +47,7 @@ class _RejectionDialogState extends State<LeaveRequestRejectionDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         key: const Key('confirm-reject'),

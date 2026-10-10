@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/services/toast_service.dart';
@@ -40,7 +41,7 @@ class EmployeeDetailsView extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: Text(context.tr('Cancel')),
             ),
             FilledButton(
               key: const Key('confirm-deactivate-employee'),
@@ -76,7 +77,7 @@ class EmployeeDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Employee details')),
+    appBar: AppBar(title: Text(context.tr('Employee details'))),
     body: BlocBuilder<EmployeeDetailsCubit, EmployeeDetailsState>(
       builder: (context, state) => switch (state) {
         EmployeeDetailsLoadingState() => const EmployeeDetailsLoading(),
@@ -89,7 +90,7 @@ class EmployeeDetailsView extends StatelessWidget {
               workspaceId: workspaceId,
               membershipId: membershipId,
             ),
-            child: const Text('Retry'),
+            child: Text(context.tr('Retry')),
           ),
         ),
         EmployeeDetailsLoadedState(:final employee) => ListView(

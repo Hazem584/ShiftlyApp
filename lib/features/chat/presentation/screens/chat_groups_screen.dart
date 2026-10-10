@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/features/chat/domain/usecases/load_active_chat_members.dart';
@@ -28,10 +29,10 @@ class ChatGroupsScreen extends StatelessWidget {
           if (embedded) return content;
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Chat'),
+              title: Text(context.tr('Chat')),
               actions: [
                 IconButton(
-                  tooltip: 'Refresh chat',
+                  tooltip: context.tr('Refresh chat'),
                   onPressed: state.refreshing
                       ? null
                       : () => cubit.load(refresh: true),
@@ -46,7 +47,7 @@ class ChatGroupsScreen extends StatelessWidget {
                         ? null
                         : () => _showCreate(context),
                     icon: const Icon(Icons.add_comment_outlined),
-                    label: const Text('New group'),
+                    label: Text(context.tr('New group')),
                   )
                 : null,
             body: content,
@@ -76,7 +77,7 @@ class ChatGroupsScreen extends StatelessWidget {
               TextButton(
                 onPressed: () =>
                     context.read<ChatGroupsCubit>().load(refresh: true),
-                child: const Text('Retry'),
+                child: Text(context.tr('Retry')),
               ),
             ],
           ),

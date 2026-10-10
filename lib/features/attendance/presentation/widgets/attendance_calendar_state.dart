@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
@@ -29,7 +30,7 @@ class AttendanceCalendarStateView extends StatelessWidget {
               action: FilledButton(
                 key: const Key('calendar-retry'),
                 onPressed: context.read<AttendanceCalendarCubit>().load,
-                child: const Text('Try again'),
+                child: Text(context.tr('Try again')),
               ),
             );
           }

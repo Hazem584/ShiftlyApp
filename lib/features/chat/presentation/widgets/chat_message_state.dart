@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 
 class ChatMessageState extends StatelessWidget {
@@ -28,18 +29,20 @@ class ChatMessageState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            message,
+            context.tr(message),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Workspace groups appear here once a manager creates one.',
+          Text(
+            context.tr(
+              'Workspace groups appear here once a manager creates one.',
+            ),
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textSecondary),
           ),
           if (action != null)
-            TextButton(onPressed: action, child: const Text('Retry')),
+            TextButton(onPressed: action, child: Text(context.tr('Retry'))),
         ],
       ),
     ),

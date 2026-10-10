@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/localization/language_selector.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
@@ -16,16 +18,26 @@ class AuthBrandHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      const BrandLogo(size: 88),
+      const SizedBox(
+        height: 88,
+        width: double.infinity,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            BrandLogo(size: 88),
+            PositionedDirectional(end: 0, top: 0, child: LanguageSelector()),
+          ],
+        ),
+      ),
       const SizedBox(height: AppSpacing.m),
       Text(
-        title,
+        context.tr(title),
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.headlineMedium,
       ),
       const SizedBox(height: 8),
       Text(
-        subtitle,
+        context.tr(subtitle),
         textAlign: TextAlign.center,
         style: const TextStyle(
           color: AppColors.textSecondary,

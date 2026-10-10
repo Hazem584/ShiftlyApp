@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -13,7 +14,10 @@ class DashboardDayStatusCard extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text('Today at a glance', style: Theme.of(context).textTheme.titleLarge),
+      Text(
+        context.tr('Today at a glance'),
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
       const SizedBox(height: AppSpacing.s),
       SizedBox(
         key: const Key('today-at-a-glance-card'),
@@ -23,21 +27,21 @@ class DashboardDayStatusCard extends StatelessWidget {
             children: [
               Expanded(
                 child: CurrentShiftValue(
-                  label: 'Late',
+                  label: context.tr('Late'),
                   value: data.summary.lateToday,
                   color: AppColors.warning,
                 ),
               ),
               Expanded(
                 child: CurrentShiftValue(
-                  label: 'Missed',
+                  label: context.tr('Missed'),
                   value: data.summary.missedToday,
                   color: AppColors.error,
                 ),
               ),
               Expanded(
                 child: CurrentShiftValue(
-                  label: 'On approved leave',
+                  label: context.tr('On approved leave'),
                   value: data.summary.onApprovedLeave,
                   color: AppColors.teal,
                 ),

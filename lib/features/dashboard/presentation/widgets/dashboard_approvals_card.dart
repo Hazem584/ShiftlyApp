@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -13,7 +14,10 @@ class DashboardApprovalsCard extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text('Pending leave', style: Theme.of(context).textTheme.titleLarge),
+      Text(
+        context.tr('Pending leave'),
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
       const SizedBox(height: AppSpacing.s),
       SurfaceCard(
         onTap: () => context.go(AppRoutes.attendanceLeaveRequests),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/failure.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 /// Keeps a failure and its recovery action visible beside the affected content.
 class FailureNotice extends StatelessWidget {
@@ -41,19 +42,21 @@ class FailureNotice extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title,
+              context.tr(title),
               style: Theme.of(context).textTheme.titleSmall
                   ?.copyWith(color: colors.onErrorContainer),
             ),
             const SizedBox(height: 6),
             Text(
-              failure.message,
+              context.tr(failure.message),
               style: TextStyle(color: colors.onErrorContainer),
             ),
             if (failure.requestId != null) ...[
               const SizedBox(height: 8),
               SelectableText(
-                'Support reference: ${failure.requestId}',
+                context.tr('Support reference: {id}', {
+                  'id': failure.requestId!,
+                }),
                 style: Theme.of(context).textTheme.bodySmall
                     ?.copyWith(color: colors.onErrorContainer),
               ),
@@ -64,7 +67,9 @@ class FailureNotice extends StatelessWidget {
                 onPressed: refreshing ? null : onRefresh,
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
-                  refreshing ? 'Refreshing status…' : 'Refresh status',
+                  context.tr(
+                    refreshing ? 'Refreshing status…' : 'Refresh status',
+                  ),
                 ),
               ),
             ],

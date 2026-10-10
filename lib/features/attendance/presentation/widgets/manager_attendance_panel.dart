@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
@@ -55,7 +56,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                   ? null
                   : FilledButton(
                       onPressed: context.read<ManagerAttendanceCubit>().load,
-                      child: const Text('Retry'),
+                      child: Text(context.tr('Retry')),
                     ),
             ),
           ],
@@ -83,19 +84,19 @@ class ManagerAttendancePanel extends StatelessWidget {
               labelText: 'Review status',
               prefixIcon: Icon(Icons.filter_list_rounded),
             ),
-            items: const [
+            items: [
               DropdownMenuItem(value: null, child: Text('All records')),
               DropdownMenuItem(
                 value: AttendanceReviewStatus.pending,
-                child: Text('Pending'),
+                child: Text(context.tr('Pending')),
               ),
               DropdownMenuItem(
                 value: AttendanceReviewStatus.approved,
-                child: Text('Approved'),
+                child: Text(context.tr('Approved')),
               ),
               DropdownMenuItem(
                 value: AttendanceReviewStatus.rejected,
-                child: Text('Rejected'),
+                child: Text(context.tr('Rejected')),
               ),
             ],
             onChanged: (status) => context.read<ManagerAttendanceCubit>().load(
@@ -192,7 +193,7 @@ class ManagerAttendancePanel extends StatelessWidget {
             children: [
               DropdownButtonFormField<String?>(
                 initialValue: employeeId,
-                decoration: const InputDecoration(labelText: 'Employee'),
+                decoration: InputDecoration(labelText: context.tr('Employee')),
                 items: [
                   const DropdownMenuItem(
                     value: null,
@@ -239,7 +240,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                 dialogContext,
                 AttendanceQuery(reviewStatus: state.query.reviewStatus),
               ),
-              child: const Text('Clear'),
+              child: Text(context.tr('Clear')),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
@@ -71,13 +72,13 @@ class AppFormDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        title,
+                        context.tr(title),
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       if (subtitle != null) ...[
                         const SizedBox(height: 6),
                         Text(
-                          subtitle!,
+                          context.tr(subtitle!),
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(color: AppColors.textSecondary),
                         ),

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/presentation/chat_playback_coordinator.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
@@ -153,12 +154,12 @@ class PendingMediaBubble extends StatelessWidget {
                   pending.status == ChatUploadState.uncertain)
                 TextButton(
                   onPressed: () => onRetry(pending.clientMessageId),
-                  child: const Text('Retry'),
+                  child: Text(context.tr('Retry')),
                 ),
               if (pending.canCancel)
                 TextButton(
                   onPressed: () => onCancel(pending.clientMessageId),
-                  child: const Text('Cancel'),
+                  child: Text(context.tr('Cancel')),
                 ),
             ],
           ),

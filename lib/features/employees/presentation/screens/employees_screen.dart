@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
@@ -73,7 +74,7 @@ class EmployeesScreen extends StatelessWidget {
           message: message,
           action: FilledButton(
             onPressed: () => context.read<EmployeesCubit>().load(),
-            child: const Text('Retry'),
+            child: Text(context.tr('Retry')),
           ),
         ),
         EmployeesLoaded() => _loadedBody(context, state),

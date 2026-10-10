@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/localization/language_selector.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
@@ -62,8 +64,9 @@ class OnboardingScreen extends StatelessWidget {
                                 style: TextButton.styleFrom(
                                   minimumSize: const Size(48, 48),
                                 ),
-                                child: const Text('Skip'),
+                                child: Text(context.tr('Skip')),
                               ),
+                              const LanguageSelector(),
                             ],
                           ),
                           const SizedBox(height: 28),
@@ -78,14 +81,14 @@ class OnboardingScreen extends StatelessWidget {
                                 OnboardingIllustration(content: page),
                                 const SizedBox(height: 28),
                                 Text(
-                                  page.title,
+                                  context.tr(page.title),
                                   style: Theme.of(context)
                                       .textTheme
                                       .headlineMedium,
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  page.description,
+                                  context.tr(page.description),
                                   style: Theme.of(context).textTheme.bodyLarge,
                                 ),
                               ],
@@ -109,7 +112,7 @@ class OnboardingScreen extends StatelessWidget {
                               onPressed: state.saving || state.loading
                                   ? null
                                   : cubit.restore,
-                              child: const Text('Retry preference check'),
+                              child: Text(context.tr('Retry preference check')),
                             ),
                             const SizedBox(height: 12),
                           ],
@@ -123,11 +126,13 @@ class OnboardingScreen extends StatelessWidget {
                               minimumSize: const Size(48, 56),
                             ),
                             child: Text(
-                              state.saving
-                                  ? 'Saving…'
-                                  : last
-                                  ? 'Get Started'
-                                  : 'Next',
+                              context.tr(
+                                state.saving
+                                    ? 'Saving…'
+                                    : last
+                                    ? 'Get Started'
+                                    : 'Next',
+                              ),
                             ),
                           ),
                         ],

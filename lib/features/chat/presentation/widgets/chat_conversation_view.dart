@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
@@ -202,7 +203,7 @@ class _ChatViewState extends State<ChatConversationView>
                       actions: [
                         TextButton(
                           onPressed: context.read<ChatGroupDetailsCubit>().load,
-                          child: const Text('Retry'),
+                          child: Text(context.tr('Retry')),
                         ),
                       ],
                     ),
@@ -350,7 +351,7 @@ class _ChatViewState extends State<ChatConversationView>
                       onPressed: _mediaBusy || effectiveDisabled
                           ? null
                           : _retryPreparedMedia,
-                      child: const Text('Retry'),
+                      child: Text(context.tr('Retry')),
                     ),
                   ],
                 ),
@@ -362,7 +363,7 @@ class _ChatViewState extends State<ChatConversationView>
                       onPressed: state.sending
                           ? null
                           : context.read<ChatConversationCubit>().retrySend,
-                      child: const Text('Retry'),
+                      child: Text(context.tr('Retry')),
                     ),
                   ],
                 ),

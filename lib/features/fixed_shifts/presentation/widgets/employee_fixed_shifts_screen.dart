@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/ease_hint.dart';
@@ -30,7 +31,10 @@ class EmployeeFixedShiftsScreen extends StatelessWidget {
           ScreenHeader(
             icon: Icons.calendar_month_rounded,
             title: 'Fixed shifts',
-            subtitle: 'Your workday, in one place · Times in $timezone',
+            subtitle: context.tr(
+              'Your workday, in one place · Times in {timezone}',
+              {'timezone': timezone},
+            ),
           ),
           const SizedBox(height: AppSpacing.m),
           const EaseHint(
@@ -43,11 +47,11 @@ class EmployeeFixedShiftsScreen extends StatelessWidget {
           OutlinedButton.icon(
             key: const Key('legacy-shift-history'),
             icon: const Icon(Icons.history),
-            label: const Text('Earlier shifts & clock-out'),
+            label: Text(context.tr('Earlier shifts & clock-out')),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => Scaffold(
-                  appBar: AppBar(title: const Text('Earlier shifts')),
+                  appBar: AppBar(title: Text(context.tr('Earlier shifts'))),
                   body: const EmployeeShiftsScreen(),
                 ),
               ),

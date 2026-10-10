@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
@@ -43,7 +44,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   onPressed: loading
                       ? null
                       : context.read<SessionCoordinator>().signOut,
-                  child: const Text('Sign out'),
+                  child: Text(context.tr('Sign out')),
                 ),
               ],
             ),
@@ -67,8 +68,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             key: const Key('profile-setup-name'),
                             controller: _name,
                             enabled: !loading,
-                            decoration: const InputDecoration(
-                              labelText: 'Full name',
+                            decoration: InputDecoration(
+                              labelText: context.tr('Full name'),
                             ),
                             validator: (value) {
                               final length = value?.trim().length ?? 0;
@@ -118,7 +119,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                       strokeWidth: 2.5,
                                     ),
                                   )
-                                : const Text('Continue'),
+                                : Text(context.tr('Continue')),
                           ),
                         ],
                       ),

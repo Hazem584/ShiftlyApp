@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -28,7 +29,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Notifications'),
+      title: Text(context.tr('Notifications')),
       actions: [
         BlocBuilder<NotificationsCubit, NotificationsState>(
           buildWhen: (previous, current) =>
@@ -61,7 +62,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             message: state.failure!.message,
             action: FilledButton(
               onPressed: context.read<NotificationsCubit>().load,
-              child: const Text('Retry'),
+              child: Text(context.tr('Retry')),
             ),
           );
         }
@@ -169,12 +170,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             key: const Key('confirm-delete-notification'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(context.tr('Delete')),
           ),
         ],
       ),

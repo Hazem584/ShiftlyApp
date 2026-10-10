@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class EmployeeFormActions extends StatelessWidget {
   const EmployeeFormActions({
@@ -22,7 +23,7 @@ class EmployeeFormActions extends StatelessWidget {
         Expanded(
           child: OutlinedButton(
             onPressed: submitting ? null : onCancel,
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
         ),
         const SizedBox(width: 10),

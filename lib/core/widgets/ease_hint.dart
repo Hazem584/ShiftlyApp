@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
@@ -26,7 +27,7 @@ class EaseHint extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              message,
+              context.tr(message),
               style: const TextStyle(
                 fontSize: 13,
                 height: 1.35,

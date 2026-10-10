@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
@@ -110,7 +111,7 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
     actions: [
       TextButton(
         onPressed: _confirming ? null : () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         onPressed: !_allowed || _confirming ? null : _confirm,

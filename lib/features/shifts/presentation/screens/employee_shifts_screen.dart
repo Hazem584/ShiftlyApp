@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
@@ -112,7 +113,10 @@ class EmployeeShiftsScreen extends StatelessWidget {
               ],
               if (history.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.l),
-                Text('History', style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  context.tr('History'),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 const SizedBox(height: AppSpacing.s),
                 for (final shift in history) ...[
                   ShiftCard(
@@ -223,7 +227,7 @@ class EmployeeShiftsScreen extends StatelessWidget {
                               ),
                             )
                           : const Icon(Icons.fingerprint_rounded),
-                      label: const Text('Clock out'),
+                      label: Text(context.tr('Clock out')),
                     );
                   },
                 ),

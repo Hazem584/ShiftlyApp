@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -26,7 +27,7 @@ class DashboardMetricsGrid extends StatelessWidget {
           SizedBox(
             width: width,
             child: SummaryCard(
-              label: 'Total employees',
+              label: context.tr('Total employees'),
               value: data.summary.totalEmployees,
               icon: Icons.groups_outlined,
               color: AppColors.ink,
@@ -36,7 +37,7 @@ class DashboardMetricsGrid extends StatelessWidget {
           SizedBox(
             width: width,
             child: SummaryCard(
-              label: 'Scheduled today',
+              label: context.tr('Scheduled today'),
               value: data.summary.scheduledToday,
               icon: Icons.person_rounded,
               color: AppColors.success,
@@ -46,7 +47,7 @@ class DashboardMetricsGrid extends StatelessWidget {
           SizedBox(
             width: width,
             child: SummaryCard(
-              label: 'Clocked in now',
+              label: context.tr('Clocked in now'),
               value: data.summary.clockedInNow,
               icon: Icons.login_rounded,
               color: AppColors.success,
@@ -56,7 +57,7 @@ class DashboardMetricsGrid extends StatelessWidget {
           SizedBox(
             width: width,
             child: SummaryCard(
-              label: 'Completed today',
+              label: context.tr('Completed today'),
               value: data.summary.completedToday,
               icon: Icons.task_alt_rounded,
               color: AppColors.teal,

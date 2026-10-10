@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -30,7 +31,7 @@ class SummaryCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  label,
+                  context.tr(label),
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -53,7 +54,7 @@ class SummaryCard extends StatelessWidget {
           const SizedBox(height: 12),
           FittedBox(
             fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: Text(
               '$value',
               style: Theme.of(context).textTheme.headlineSmall,
@@ -61,7 +62,7 @@ class SummaryCard extends StatelessWidget {
           ),
           if (caption != null)
             Text(
-              caption!,
+              context.tr(caption!),
               style: const TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 11,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 
 class ChatCacheSettingsTile extends StatefulWidget {
@@ -18,7 +19,7 @@ class _ChatCacheSettingsTileState extends State<ChatCacheSettingsTile> {
       future: cache.size(),
       builder: (_, snapshot) => ListTile(
         leading: const Icon(Icons.storage_outlined),
-        title: const Text('Chat media cache'),
+        title: Text(context.tr('Chat media cache')),
         subtitle: Text(
           '${((snapshot.data ?? 0) / (1024 * 1024)).toStringAsFixed(1)} MiB · active files are retained',
         ),
@@ -33,7 +34,7 @@ class _ChatCacheSettingsTileState extends State<ChatCacheSettingsTile> {
                     if (mounted) setState(() => _busy = false);
                   }
                 },
-          child: const Text('Clear'),
+          child: Text(context.tr('Clear')),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class ChatLoadError extends StatelessWidget {
   const ChatLoadError({
@@ -15,7 +16,7 @@ class ChatLoadError extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(message, textAlign: TextAlign.center),
-        TextButton(onPressed: onRetry, child: const Text('Retry')),
+        TextButton(onPressed: onRetry, child: Text(context.tr('Retry'))),
       ],
     ),
   );

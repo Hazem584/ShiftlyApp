@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
@@ -59,7 +60,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Clock-in outcome needs confirmation'),
+            Text(context.tr('Clock-in outcome needs confirmation')),
             Text('Saved request ID: ${state.recovery!.clientAttendanceId}'),
             Text(
               'Saved ${state.recovery!.occurrenceKind ?? 'unknown'} occurrence on '
@@ -71,7 +72,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
                   : () => context
                         .read<FlexibleAttendanceCubit>()
                         .recoverClockIn(),
-              child: const Text('Recover saved clock-in'),
+              child: Text(context.tr('Recover saved clock-in')),
             ),
           ],
         ),
@@ -273,12 +274,12 @@ class FlexibleAttendancePanel extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             key: const Key('confirm-flexible-clock-in'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Clock in'),
+            child: Text(context.tr('Clock in')),
           ),
         ],
       ),
@@ -308,7 +309,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
           FilledButton(
             key: const Key('confirm-flexible-clock-out'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Clock out'),
+            child: Text(context.tr('Clock out')),
           ),
         ],
       ),

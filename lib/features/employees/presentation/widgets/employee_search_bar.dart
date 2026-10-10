@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
@@ -36,11 +37,11 @@ class EmployeeSearchBar extends StatelessWidget {
             key: const Key('employee-status-filter'),
             onSelected: onStatusChanged,
             tooltip: 'Filter employees',
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(value: null, child: Text('All statuses')),
               PopupMenuItem(
                 value: EmployeeStatusFilter.active,
-                child: Text('Active'),
+                child: Text(context.tr('Active')),
               ),
               PopupMenuItem(
                 value: EmployeeStatusFilter.suspended,

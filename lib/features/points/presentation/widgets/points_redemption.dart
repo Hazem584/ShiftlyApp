@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/points/domain/entities/points_models.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 
@@ -115,7 +116,7 @@ Future<void> _confirm(BuildContext context, PointsWallet wallet) async {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(sheetContext, false),
-                    child: const Text('Cancel'),
+                    child: Text(context.tr('Cancel')),
                   ),
                 ),
                 const SizedBox(width: 12),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
@@ -28,7 +29,7 @@ class LeaveRequestsPanel extends StatelessWidget {
               message: state.failure!.message,
               action: FilledButton(
                 onPressed: context.read<LeaveRequestsCubit>().load,
-                child: const Text('Retry'),
+                child: Text(context.tr('Retry')),
               ),
             );
           }

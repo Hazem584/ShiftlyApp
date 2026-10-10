@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 
@@ -78,7 +79,7 @@ class _AttendanceRejectionDialogState extends State<AttendanceRejectionDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         key: const Key('confirm-reject-attendance'),

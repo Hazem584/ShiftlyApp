@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/app_toast_widget.dart';
 
 abstract final class ToastService {
@@ -69,7 +70,7 @@ abstract final class ToastService {
     toast.removeQueuedCustomToasts();
     toast.showToast(
       child: AppToastWidget(
-        message: message,
+        message: context.tr(message),
         type: type,
         onClose: toast.removeCustomToast,
       ),

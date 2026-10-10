@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/failure.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -54,7 +56,11 @@ class _UnusedRepository implements AuthenticationRepository {
   Future<CurrentUser> loadCurrentUser() => throw UnimplementedError();
 }
 
-Future<SessionCoordinator> _pump(WidgetTester tester, _PendingAuth auth) async {
+Future<SessionCoordinator> _pump(
+  WidgetTester tester,
+  _PendingAuth auth, {
+  Locale? locale,
+}) async {
   final coordinator = SessionCoordinator(
     auth,
     _UnusedRepository(),
@@ -65,6 +71,14 @@ Future<SessionCoordinator> _pump(WidgetTester tester, _PendingAuth auth) async {
     BlocProvider.value(
       value: coordinator,
       child: MaterialApp(
+        locale: locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         theme: AppTheme.lightTheme(),
         home: const LoginScreen(),
       ),
@@ -86,6 +100,40 @@ Future<void> _fillAndSubmit(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets(
+    'Arabic login validates inputs, keeps credentials LTR and translates authentication failures',
+    (tester) async {
+      final auth = _PendingAuth()
+        ..error = const AuthenticationException(
+          Failure(message: 'The email or password is incorrect.'),
+        );
+      await _pump(tester, auth, locale: const Locale('ar'));
+      expect(find.text('أهلًا بك في Shiftly'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(
+              find.descendant(
+                of: find.byKey(const Key('login-email')),
+                matching: find.byType(TextField),
+              ),
+            )
+            .textDirection,
+        TextDirection.ltr,
+      );
+      await tester.tap(find.byKey(const Key('login-submit')));
+      await tester.pump();
+      expect(find.text('أدخل بريدًا إلكترونيًا صحيحًا'), findsOneWidget);
+      expect(find.text('أدخل كلمة المرور'), findsOneWidget);
+      expect(auth.calls, 0);
+      await _fillAndSubmit(tester);
+      await tester.pump();
+      expect(
+        find.text('البريد الإلكتروني أو كلمة المرور غير صحيحة.'),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 4));
+    },
+  );
   testWidgets('login shows loading and prevents duplicate submissions', (
     tester,
   ) async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/clock_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -108,7 +109,7 @@ class ShiftTemplateCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: busy ? null : onEdit,
                     icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit'),
+                    label: Text(context.tr('Edit')),
                   ),
                   TextButton.icon(
                     onPressed: busy ? null : onArchive,

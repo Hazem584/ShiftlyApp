@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
@@ -52,12 +53,12 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             key: const Key('submit-workspace'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Create'),
+            child: Text(context.tr('Create')),
           ),
         ],
       ),
@@ -115,7 +116,7 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
           actions: [
             TextButton(
               onPressed: context.read<SessionCoordinator>().signOut,
-              child: const Text('Sign out'),
+              child: Text(context.tr('Sign out')),
             ),
           ],
         ),
@@ -214,7 +215,7 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
                       Text(state.failure!.message, textAlign: TextAlign.center),
                       TextButton(
                         onPressed: context.read<WorkspacesCubit>().load,
-                        child: const Text('Retry'),
+                        child: Text(context.tr('Retry')),
                       ),
                     ],
                   ],

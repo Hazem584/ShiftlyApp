@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/app_form_dialog.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
@@ -66,7 +67,7 @@ class _EditChatGroupDialogState extends State<EditChatGroupDialog> {
                   controller: _name,
                   maxLength: 80,
                   enabled: !submitting,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: InputDecoration(labelText: context.tr('Name')),
                 ),
                 TextField(
                   key: const Key('edit-group-description'),
@@ -81,7 +82,7 @@ class _EditChatGroupDialogState extends State<EditChatGroupDialog> {
               TextButton(
                 key: const Key('edit-group-cancel'),
                 onPressed: submitting ? null : () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(context.tr('Cancel')),
               ),
               FilledButton(
                 key: const Key('edit-group-submit'),
@@ -91,7 +92,7 @@ class _EditChatGroupDialogState extends State<EditChatGroupDialog> {
                         dimension: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Save'),
+                    : Text(context.tr('Save')),
               ),
             ],
           );

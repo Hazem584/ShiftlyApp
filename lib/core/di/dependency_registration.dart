@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/config/app_config.dart';
 import 'package:shiftly/core/di/dependency_disposal.dart';
 import 'package:shiftly/core/di/service_locator.dart';
+import 'package:shiftly/core/localization/language_preference_store.dart';
+import 'package:shiftly/core/localization/preferences_language_store.dart';
 import 'package:shiftly/core/network/api_client.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
@@ -100,6 +102,9 @@ abstract final class DependencyRegistration {
       ..registerSingleton<AppConfig>(config)
       ..registerSingleton<SupabaseClient>(Supabase.instance.client)
       ..registerSingleton<SharedPreferences>(preferences)
+      ..registerSingleton<LanguagePreferenceStore>(
+        PreferencesLanguageStore(preferences),
+      )
       ..registerLazySingleton<OnboardingStorage>(
         () => PreferencesOnboardingStorage(target()),
       )

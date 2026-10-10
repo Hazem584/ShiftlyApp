@@ -2,11 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/app/app_lifecycle_listener.dart';
 import 'package:shiftly/app/session_feature_coordinator.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/localization/language_cubit.dart';
+import 'package:shiftly/core/localization/language_preference_store.dart';
+import 'package:shiftly/core/localization/language_settings.dart';
+import 'package:shiftly/core/localization/memory_language_store.dart';
 import 'package:shiftly/core/routing/app_router.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
@@ -119,6 +125,7 @@ class AppProviders extends StatefulWidget {
     this.chatRealtime,
     this.fixedShiftRepository,
     this.pointsRepository,
+    this.languageStore,
   });
 
   /// Supplying a locator selects authenticated production composition.
@@ -143,6 +150,7 @@ class AppProviders extends StatefulWidget {
   final ChatRealtime? chatRealtime;
   final FixedShiftRepository? fixedShiftRepository;
   final PointsRepository? pointsRepository;
+  final LanguagePreferenceStore? languageStore;
 
   @override
   State<AppProviders> createState() => _AppProvidersState();
@@ -190,6 +198,7 @@ EmployeeSessionScope? _employeeScope(SessionState state) {
 }
 
 class _AppProvidersState extends State<AppProviders> {
+  late final LanguageCubit _languageCubit;
   late final EmployeeRepository _employees;
   late final InvitationRepository _invitations;
   late final WorkspaceRepository _workspaces;
@@ -230,6 +239,11 @@ class _AppProvidersState extends State<AppProviders> {
   @override
   void initState() {
     super.initState();
+    _languageCubit = LanguageCubit(
+      widget.languageStore ??
+          _registered<LanguagePreferenceStore>() ??
+          MemoryLanguageStore(),
+    );
     _featureCoordinator = SessionFeatureCoordinator(_applySession);
     _sessionCoordinator =
         widget.sessionCoordinator ?? _registered<SessionCoordinator>();
@@ -431,6 +445,7 @@ class _AppProvidersState extends State<AppProviders> {
   @override
   void dispose() {
     _onboardingCubit.close();
+    _languageCubit.close();
     _dashboardCubit.close();
     _employeesCubit.close();
     _workspacesCubit.close();
@@ -475,6 +490,7 @@ class _AppProvidersState extends State<AppProviders> {
       ],
       child: MultiBlocProvider(
         providers: [
+          BlocProvider.value(value: _languageCubit),
           BlocProvider.value(value: _onboardingCubit),
           BlocProvider.value(value: _dashboardCubit),
           BlocProvider.value(value: _employeesCubit),
@@ -494,11 +510,25 @@ class _AppProvidersState extends State<AppProviders> {
           BlocProvider.value(value: _pointsCubit),
           BlocProvider.value(value: _managerPerformanceCubit),
         ],
-        child: MaterialApp.router(
-          title: AppStrings.appName,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme(),
-          routerConfig: _router,
+        child: BlocBuilder<LanguageCubit, LanguageSettings>(
+          buildWhen: (previous, current) =>
+              previous.language != current.language,
+          builder: (context, language) => MaterialApp.router(
+            locale: language.languageCode == null
+                ? null
+                : Locale(language.languageCode!),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            title: AppStrings.appName,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme(),
+            routerConfig: _router,
+          ),
         ),
       ),
     );

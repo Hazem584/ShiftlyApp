@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/widgets/app_form_dialog.dart';
@@ -78,9 +79,9 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
                         helperText: 'Optional',
                       ),
                     ),
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Members'),
+                      child: Text(context.tr('Members')),
                     ),
                     if (widget.employees.isEmpty)
                       const Padding(
@@ -117,7 +118,7 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
               TextButton(
                 key: const Key('create-group-cancel'),
                 onPressed: submitting ? null : () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(context.tr('Cancel')),
               ),
               FilledButton(
                 key: const Key('create-group-submit'),
@@ -127,7 +128,7 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
                         dimension: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Create'),
+                    : Text(context.tr('Create')),
               ),
             ],
           );

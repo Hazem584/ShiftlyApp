@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
@@ -60,7 +61,7 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
           state.resources[ManagerPerformanceCubit.key(_section, null)] ??
           const ManagerResourceState();
       return Scaffold(
-        appBar: AppBar(title: const Text('Performance')),
+        appBar: AppBar(title: Text(context.tr('Performance'))),
         body: state.scope == null
             ? const Center(child: Text('Active manager workspace required.'))
             : RefreshIndicator(

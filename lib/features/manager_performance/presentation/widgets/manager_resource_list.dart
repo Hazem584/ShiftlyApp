@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/manager_performance/domain/entities/manager_points_record.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
@@ -44,7 +45,7 @@ class ManagerResourceList extends StatelessWidget {
         Text(state.error!),
         TextButton(
           onPressed: state.loading ? null : reload,
-          child: const Text('Retry'),
+          child: Text(context.tr('Retry')),
         ),
       ],
       if (!state.loading && state.records.isEmpty && state.error == null)

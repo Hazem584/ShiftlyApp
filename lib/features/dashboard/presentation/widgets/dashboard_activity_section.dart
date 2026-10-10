@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -21,7 +22,10 @@ class DashboardActivitySection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text("Today's shifts", style: Theme.of(context).textTheme.titleLarge),
+      Text(
+        context.tr("Today's shifts"),
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
       const SizedBox(height: AppSpacing.s),
       SurfaceCard(
         padding: shifts.isEmpty ? const EdgeInsets.all(20) : EdgeInsets.zero,
@@ -34,15 +38,17 @@ class DashboardActivitySection extends StatelessWidget {
                     size: 28,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'No shifts are scheduled for this workspace day.',
+                  Text(
+                    context.tr(
+                      'No shifts are scheduled for this workspace day.',
+                    ),
                     textAlign: TextAlign.center,
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => context.push(AppRoutes.managerShifts),
-                    child: const Text('Create a shift'),
+                    child: Text(context.tr('Create a shift')),
                   ),
                 ],
               )

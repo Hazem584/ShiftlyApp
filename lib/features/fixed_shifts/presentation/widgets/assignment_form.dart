@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
@@ -141,7 +142,7 @@ class _AssignmentFormState extends State<AssignmentForm> {
     actions: [
       TextButton(
         onPressed: busy ? null : () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         onPressed: busy || days.isEmpty || templateId == null ? null : _submit,
@@ -182,7 +183,7 @@ class _AssignmentFormState extends State<AssignmentForm> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c, false),
-            child: const Text('Back'),
+            child: Text(context.tr('Back')),
           ),
           FilledButton(
             key: const Key('confirm-work-pattern'),

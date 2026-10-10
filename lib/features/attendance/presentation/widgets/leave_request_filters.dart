@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/utils/leave_requests_panel_formatters.dart';
@@ -16,19 +17,19 @@ class LeaveRequestFilters extends StatelessWidget {
       DropdownButton<LeaveRequestStatus?>(
         value: state.query.status,
         hint: const Text('All statuses'),
-        items: const [
+        items: [
           DropdownMenuItem(value: null, child: Text('All statuses')),
           DropdownMenuItem(
             value: LeaveRequestStatus.pending,
-            child: Text('Pending'),
+            child: Text(context.tr('Pending')),
           ),
           DropdownMenuItem(
             value: LeaveRequestStatus.approved,
-            child: Text('Approved'),
+            child: Text(context.tr('Approved')),
           ),
           DropdownMenuItem(
             value: LeaveRequestStatus.rejected,
-            child: Text('Rejected'),
+            child: Text(context.tr('Rejected')),
           ),
           DropdownMenuItem(
             value: LeaveRequestStatus.cancelled,

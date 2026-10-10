@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/onboarding/presentation/models/onboarding_page_content.dart';
@@ -56,7 +57,7 @@ class OnboardingIllustration extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        feature.$2,
+                        context.tr(feature.$2),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),

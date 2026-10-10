@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
@@ -42,10 +43,13 @@ class ScreenHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  context.tr(title),
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: AppSpacing.xxs),
                 Text(
-                  subtitle,
+                  context.tr(subtitle),
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     height: 1.35,

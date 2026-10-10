@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
@@ -49,7 +50,7 @@ class EmployeeLeaveRequestsPanel extends StatelessWidget {
                     ),
                   ),
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('Request leave'),
+                  label: Text(context.tr('Request leave')),
                 ),
               ],
             ),
@@ -78,7 +79,7 @@ class EmployeeLeaveRequestsPanel extends StatelessWidget {
                         onPressed: context
                             .read<EmployeeLeaveRequestsCubit>()
                             .load,
-                        child: const Text('Retry'),
+                        child: Text(context.tr('Retry')),
                       ),
               )
             else

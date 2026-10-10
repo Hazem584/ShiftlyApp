@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -39,15 +40,15 @@ class ActiveAttendanceCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Active attendance',
+                  Text(
+                    context.tr('Active attendance'),
                     style: TextStyle(
                       color: AppColors.success,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
-                    attendance.templateName ?? 'Fixed shift',
+                    attendance.templateName ?? context.tr('Fixed shift'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleLarge,
@@ -59,30 +60,53 @@ class ActiveAttendanceCard extends StatelessWidget {
           ],
         ),
         Text(
-          attendance.occurrenceKind == 'EXTRA'
-              ? 'Authorized EXTRA ? no automatic BLUE award'
-              : attendance.occurrenceKind == 'BASELINE'
-              ? 'Assigned BASELINE'
-              : 'Historical attendance ? assignment evidence not recorded',
+          context.tr(
+            attendance.occurrenceKind == 'EXTRA'
+                ? 'Authorized EXTRA ? no automatic BLUE award'
+                : attendance.occurrenceKind == 'BASELINE'
+                ? 'Assigned BASELINE'
+                : 'Historical attendance ? assignment evidence not recorded',
+          ),
         ),
         const SizedBox(height: 12),
         Text(
-          'Clocked in: ${WorkspaceTime.dateTime(attendance.clockInAt, attendance.workspaceTimezone ?? timezone, locale: Localizations.localeOf(context).toString())}',
+          context.tr('Clocked in: {time}', {
+            'time': WorkspaceTime.dateTime(
+              attendance.clockInAt,
+              attendance.workspaceTimezone ?? timezone,
+              locale: Localizations.localeOf(context).toString(),
+            ),
+          }),
         ),
         if (attendance.scheduledStartAt != null &&
             attendance.scheduledEndAt != null)
           Text(
-            'Schedule: ${WorkspaceTime.time(attendance.scheduledStartAt, attendance.workspaceTimezone ?? timezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.time(attendance.scheduledEndAt, attendance.workspaceTimezone ?? timezone, locale: Localizations.localeOf(context).toString())}',
+            context.tr('Schedule: {start} – {end}', {
+              'start': WorkspaceTime.time(
+                attendance.scheduledStartAt,
+                attendance.workspaceTimezone ?? timezone,
+                locale: Localizations.localeOf(context).toString(),
+              ),
+              'end': WorkspaceTime.time(
+                attendance.scheduledEndAt,
+                attendance.workspaceTimezone ?? timezone,
+                locale: Localizations.localeOf(context).toString(),
+              ),
+            }),
           ),
         Text(
-          'Operational date: ${attendance.operationalDate ?? 'Unavailable'}',
+          context.tr('Operational date: {date}', {
+            'date': attendance.operationalDate ?? context.tr('Unavailable'),
+          }),
         ),
         Text(
-          '${attendanceClassificationLabel(attendance.classification ?? AttendanceClassification.unknown)}${attendance.minutesLate > 0 ? ' • ${attendance.minutesLate} min late' : ''}',
+          '${context.tr(attendanceClassificationLabel(attendance.classification ?? AttendanceClassification.unknown))}${attendance.minutesLate > 0 ? ' • ${context.tr('{minutes} min late', {'minutes': '${attendance.minutesLate}'})}' : ''}',
         ),
         const SizedBox(height: 6),
-        const Text(
-          'Use Clock out when you finish. Your workspace confirms the final worked duration.',
+        Text(
+          context.tr(
+            'Use Clock out when you finish. Your workspace confirms the final worked duration.',
+          ),
         ),
         StreamBuilder<int>(
           stream: Stream<int>.periodic(
@@ -90,7 +114,11 @@ class ActiveAttendanceCard extends StatelessWidget {
             (value) => value,
           ),
           builder: (_, _) => Text(
-            'Elapsed (display only): ${attendanceElapsed(DateTime.now().toUtc().difference(attendance.clockInAt))}',
+            context.tr('Elapsed (display only): {duration}', {
+              'duration': attendanceElapsed(
+                DateTime.now().toUtc().difference(attendance.clockInAt),
+              ),
+            }),
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
@@ -105,7 +133,7 @@ class ActiveAttendanceCard extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.logout_rounded),
-            label: const Text('Clock out'),
+            label: Text(context.tr('Clock out')),
           ),
         ),
       ],

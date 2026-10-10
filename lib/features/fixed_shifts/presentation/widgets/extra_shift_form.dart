@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/utils/workspace_timestamp_input.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -181,7 +182,7 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
           if (widget.cubit.state.intent != null)
             FilledButton.tonal(
               onPressed: busy ? null : _recover,
-              child: const Text('Recover saved extra operation'),
+              child: Text(context.tr('Recover saved extra operation')),
             ),
           if (error != null)
             Text(
@@ -194,7 +195,7 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
     actions: [
       TextButton(
         onPressed: busy ? null : () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         onPressed:
@@ -290,7 +291,7 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c, false),
-            child: const Text('Back'),
+            child: Text(context.tr('Back')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(c, true),

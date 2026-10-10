@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 
@@ -51,7 +52,7 @@ class AppTabSelector extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    labels[index],
+                    context.tr(labels[index]),
                     key: labelKeys?[index],
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontWeight: FontWeight.w700),

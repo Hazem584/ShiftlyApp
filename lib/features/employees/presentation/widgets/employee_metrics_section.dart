@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_metrics_section_metric.dart';
@@ -38,7 +39,7 @@ class EmployeeMetricsSection extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           EmployeeMetricsSectionMetric(
-            label: 'Active',
+            label: context.tr('Active'),
             value: active,
             icon: Icons.person_rounded,
             color: AppColors.success,

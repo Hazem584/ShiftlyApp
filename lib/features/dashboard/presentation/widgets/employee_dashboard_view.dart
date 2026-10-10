@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
@@ -37,7 +38,7 @@ class EmployeeDashboardView extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
       children: [
         Text(
-          'Hello, ${data.employee.fullName}',
+          context.tr('Hello, {name}', {'name': data.employee.fullName}),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.headlineSmall,
@@ -74,13 +75,15 @@ class EmployeeDashboardView extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Ready for your workday?',
+                context.tr('Ready for your workday?'),
                 style: Theme.of(context).textTheme.titleLarge
                     ?.copyWith(color: Colors.white),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Your shifts, attendance and time off are a tap away.',
+              Text(
+                context.tr(
+                  'Your shifts, attendance and time off are a tap away.',
+                ),
                 style: TextStyle(color: Color(0xFFE4DED6), height: 1.5),
               ),
               const SizedBox(height: 16),
@@ -95,7 +98,7 @@ class EmployeeDashboardView extends StatelessWidget {
                     ),
                     onPressed: () => context.go('/employee?tab=shifts'),
                     icon: const Icon(Icons.fingerprint_rounded),
-                    label: const Text('My Shifts'),
+                    label: Text(context.tr('My Shifts')),
                   ),
                   OutlinedButton.icon(
                     key: const Key('employee-quick-leave'),
@@ -105,7 +108,7 @@ class EmployeeDashboardView extends StatelessWidget {
                     ),
                     onPressed: () => context.go('/employee?tab=leave'),
                     icon: const Icon(Icons.event_note_outlined),
-                    label: const Text('Request leave'),
+                    label: Text(context.tr('Request leave')),
                   ),
                 ],
               ),
@@ -141,7 +144,7 @@ class EmployeeDashboardView extends StatelessWidget {
           children: [
             Expanded(
               child: EmployeeDashboardCountCard(
-                label: 'Pending leave',
+                label: context.tr('Pending leave'),
                 value: data.summary.pendingLeaveRequests,
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
@@ -24,7 +25,7 @@ class EmployeeDashboardCountCard extends StatelessWidget {
           ),
         ),
         Text(
-          label,
+          context.tr(label),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),

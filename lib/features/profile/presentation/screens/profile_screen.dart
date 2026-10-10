@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/localization/language_settings_tile.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
@@ -45,7 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             message: message,
             action: FilledButton(
               onPressed: context.read<ProfileCubit>().load,
-              child: const Text('Retry'),
+              child: Text(context.tr('Retry')),
             ),
           ),
           ProfileLoaded(:final profile, :final action) =>
@@ -69,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           key: const Key('edit-profile'),
                           onPressed: () => setState(() => _editing = true),
                           icon: const Icon(Icons.edit_outlined, size: 17),
-                          label: const Text('Edit'),
+                          label: Text(context.tr('Edit')),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(82, 44),
                             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -81,6 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: AppSpacing.m),
                       ProfileInformationSection(profile: profile),
                       const ChatCacheSettingsTile(),
+                      const LanguageSettingsTile(),
                       if (widget.onLogout != null) ...[
                         const SizedBox(height: AppSpacing.l),
                         OutlinedButton.icon(
@@ -89,14 +92,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ? null
                               : _showWorkspaceChooser,
                           icon: const Icon(Icons.business_outlined),
-                          label: const Text('Switch workspace'),
+                          label: Text(context.tr('Switch workspace')),
                         ),
                         const SizedBox(height: AppSpacing.s),
                         OutlinedButton.icon(
                           key: const Key('manager-logout'),
                           onPressed: widget.onLogout,
                           icon: const Icon(Icons.logout_rounded),
-                          label: const Text('Sign out'),
+                          label: Text(context.tr('Sign out')),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Theme.of(context)
                                 .colorScheme

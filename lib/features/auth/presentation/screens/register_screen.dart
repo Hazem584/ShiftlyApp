@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
@@ -64,19 +65,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextFormField(
                           key: const Key('register-email'),
                           controller: _email,
+                          textDirection: TextDirection.ltr,
                           enabled: !loading,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
+                          decoration: InputDecoration(
+                            labelText: context.tr('Email'),
                             prefixIcon: Icon(Icons.email_outlined),
                           ),
                           validator: (value) {
                             final email = value?.trim() ?? '';
                             if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                                 .hasMatch(email)) {
-                              return 'Enter a valid email address';
+                              return context.tr('Enter a valid email address');
                             }
                             return null;
                           },
@@ -85,17 +87,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextFormField(
                           key: const Key('register-password'),
                           controller: _password,
+                          textDirection: TextDirection.ltr,
                           enabled: !loading,
                           obscureText: _obscurePassword,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.newPassword],
                           decoration: InputDecoration(
-                            labelText: 'Password',
+                            labelText: context.tr('Password'),
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
                             suffixIcon: IconButton(
-                              tooltip: _obscurePassword
-                                  ? 'Show password'
-                                  : 'Hide password',
+                              tooltip: context.tr(
+                                _obscurePassword
+                                    ? 'Show password'
+                                    : 'Hide password',
+                              ),
                               onPressed: loading
                                   ? null
                                   : () => setState(
@@ -111,10 +116,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           validator: (value) {
                             if ((value ?? '').trim().isEmpty) {
-                              return 'Password is required';
+                              return context.tr('Password is required');
                             }
                             if (value!.length < 8) {
-                              return 'Use at least 8 characters';
+                              return context.tr('Use at least 8 characters');
                             }
                             return null;
                           },
@@ -123,18 +128,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextFormField(
                           key: const Key('register-confirm-password'),
                           controller: _confirmPassword,
+                          textDirection: TextDirection.ltr,
                           enabled: !loading,
                           obscureText: _obscureConfirmation,
                           textInputAction: TextInputAction.done,
                           autofillHints: const [AutofillHints.newPassword],
                           onFieldSubmitted: (_) => _submit(loading),
                           decoration: InputDecoration(
-                            labelText: 'Confirm password',
+                            labelText: context.tr('Confirm password'),
                             prefixIcon: const Icon(Icons.lock_outline_rounded),
                             suffixIcon: IconButton(
-                              tooltip: _obscureConfirmation
-                                  ? 'Show password confirmation'
-                                  : 'Hide password confirmation',
+                              tooltip: context.tr(
+                                _obscureConfirmation
+                                    ? 'Show password confirmation'
+                                    : 'Hide password confirmation',
+                              ),
                               onPressed: loading
                                   ? null
                                   : () => setState(
@@ -149,7 +157,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           validator: (value) => value != _password.text
-                              ? 'Passwords do not match'
+                              ? context.tr('Passwords do not match')
                               : null,
                         ),
                         const SizedBox(height: AppSpacing.l),
@@ -164,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('Create account'),
+                              : Text(context.tr('Create account')),
                         ),
                         const SizedBox(height: AppSpacing.s),
                         TextButton(
@@ -172,7 +180,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           onPressed: loading
                               ? null
                               : () => context.go('/login'),
-                          child: const Text('Already have an account? Sign in'),
+                          child: Text(
+                            context.tr('Already have an account? Sign in'),
+                          ),
                         ),
                       ],
                     ),

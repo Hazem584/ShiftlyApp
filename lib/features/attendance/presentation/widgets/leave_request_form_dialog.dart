@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/utils/clock_time_picker.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
@@ -46,7 +47,7 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Request leave'),
+    title: Text(context.tr('Request leave')),
     content: SizedBox(
       width: 480,
       child: Form(
@@ -130,7 +131,7 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       BlocBuilder<EmployeeLeaveRequestsCubit, EmployeeLeaveRequestsState>(
         buildWhen: (previous, current) => previous.creating != current.creating,

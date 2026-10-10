@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/ease_hint.dart';
@@ -34,7 +35,7 @@ class DashboardScreen extends StatelessWidget {
             action: FilledButton.icon(
               onPressed: context.read<DashboardCubit>().load,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try again'),
+              label: Text(context.tr('Try again')),
             ),
           ),
         },

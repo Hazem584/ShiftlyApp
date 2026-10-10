@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -110,7 +111,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             key: const Key('confirm-delete-avatar'),
@@ -196,7 +197,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
         ProfileEditField(
           key: const Key('profile-name-field'),
           controller: _name,
-          label: 'Full name',
+          label: context.tr('Full name'),
           icon: Icons.person_outline_rounded,
           capitalization: TextCapitalization.words,
           enabled: !_busy,
@@ -217,7 +218,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
         ProfileEditField(
           key: const Key('profile-email-field'),
           controller: _email,
-          label: 'Email address',
+          label: context.tr('Email address'),
           icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
           enabled: !_busy,
@@ -232,7 +233,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
         ProfileEditField(
           key: const Key('profile-phone-field'),
           controller: _phone,
-          label: 'Phone number',
+          label: context.tr('Phone number'),
           icon: Icons.phone_outlined,
           keyboardType: TextInputType.phone,
           enabled: !_busy,
@@ -251,7 +252,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
               child: OutlinedButton(
                 key: const Key('cancel-profile-edit'),
                 onPressed: _busy ? null : widget.onCancel,
-                child: const Text('Cancel'),
+                child: Text(context.tr('Cancel')),
               ),
             ),
             const SizedBox(width: 10),
@@ -267,7 +268,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Save changes'),
+                    : Text(context.tr('Save changes')),
               ),
             ),
           ],

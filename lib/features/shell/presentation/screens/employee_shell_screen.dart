@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/localization/language_selector.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/attendance/presentation/screens/employee_attendance_screen.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
@@ -49,8 +51,9 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
     final wide = size.width >= 840 && size.height >= 600;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Employee workspace'),
+        title: Text(context.tr('Employee workspace')),
         actions: [
+          const LanguageSelector(),
           const NotificationBell(),
           IconButton(
             key: const Key('employee-switch-workspace'),
@@ -64,13 +67,13 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                       }
                     },
                   ),
-            tooltip: 'Switch workspace',
+            tooltip: context.tr('Switch workspace'),
             icon: const Icon(Icons.business_outlined),
           ),
           IconButton(
             key: const Key('employee-logout'),
             onPressed: context.read<SessionCoordinator>().signOut,
-            tooltip: 'Sign out',
+            tooltip: context.tr('Sign out'),
             icon: const Icon(Icons.logout_rounded),
           ),
         ],
@@ -120,20 +123,20 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                 onDestinationSelected: (index) =>
                     setState(() => _selectedIndex = index),
                 destinations: [
-                  const NavigationDestination(
+                  NavigationDestination(
                     icon: Icon(Icons.home_outlined),
                     selectedIcon: Icon(Icons.home_rounded),
-                    label: 'Overview',
+                    label: context.tr('Overview'),
                   ),
-                  const NavigationDestination(
+                  NavigationDestination(
                     icon: Icon(Icons.calendar_month_outlined),
                     selectedIcon: Icon(Icons.calendar_month_rounded),
-                    label: 'My Shifts',
+                    label: context.tr('My Shifts'),
                   ),
-                  const NavigationDestination(
+                  NavigationDestination(
                     icon: Icon(Icons.fact_check_outlined),
                     selectedIcon: Icon(Icons.fact_check_rounded),
-                    label: 'Attendance',
+                    label: context.tr('Attendance'),
                   ),
                   NavigationDestination(
                     icon: Badge(
@@ -150,12 +153,12 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                       ),
                       child: const Icon(Icons.chat_bubble_rounded),
                     ),
-                    label: 'Chat',
+                    label: context.tr('Chat'),
                   ),
-                  const NavigationDestination(
+                  NavigationDestination(
                     icon: Icon(Icons.auto_graph_outlined),
                     selectedIcon: Icon(Icons.auto_graph_rounded),
-                    label: 'Performance',
+                    label: context.tr('Performance'),
                   ),
                 ],
               ),

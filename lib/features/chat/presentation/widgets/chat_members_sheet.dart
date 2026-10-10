@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/widgets/app_form_dialog.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
@@ -37,7 +38,7 @@ class ChatMembersSheet extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            'Members',
+                            context.tr('Members'),
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ),
@@ -178,7 +179,7 @@ class ChatMembersSheet extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: submitting ? null : () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
+              child: Text(context.tr('Cancel')),
             ),
             FilledButton(
               onPressed: selected.isEmpty || submitting

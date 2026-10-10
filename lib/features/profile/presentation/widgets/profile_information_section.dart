@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -14,7 +15,7 @@ class ProfileInformationSection extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        'Contact information',
+        context.tr('Contact information'),
         style: Theme.of(context).textTheme.titleLarge,
       ),
       const SizedBox(height: AppSpacing.s),
@@ -24,19 +25,19 @@ class ProfileInformationSection extends StatelessWidget {
           children: [
             ProfileInfoRow(
               icon: Icons.email_outlined,
-              label: 'Email address',
+              label: context.tr('Email address'),
               value: profile.displayEmail,
             ),
             const Divider(height: 1, indent: 58),
             ProfileInfoRow(
               icon: Icons.phone_outlined,
-              label: 'Phone number',
+              label: context.tr('Phone number'),
               value: profile.displayPhone,
             ),
             const Divider(height: 1, indent: 58),
             ProfileInfoRow(
               icon: Icons.business_outlined,
-              label: 'Workplace',
+              label: context.tr('Workplace'),
               value: profile.workplace,
             ),
           ],

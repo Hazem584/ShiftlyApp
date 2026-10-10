@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -131,7 +132,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
                   : FilledButton(
                       onPressed: () =>
                           context.read<ManagerTemplatesCubit>().load(),
-                      child: const Text('Retry'),
+                      child: Text(context.tr('Retry')),
                     ),
             ),
           ],

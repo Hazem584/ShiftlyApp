@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/notifications/presentation/screens/notifications_screen.dart';
 
@@ -16,7 +17,7 @@ class NotificationBell extends StatelessWidget {
           onPressed: () => Navigator.of(context).push<void>(
             MaterialPageRoute(builder: (_) => const NotificationsScreen()),
           ),
-          tooltip: 'Notifications',
+          tooltip: context.tr('Notifications'),
           icon: Badge(
             key: const Key('notification-badge'),
             isLabelVisible: count > 0,

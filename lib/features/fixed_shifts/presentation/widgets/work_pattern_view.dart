@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -156,7 +157,7 @@ class WorkPatternView extends StatelessWidget {
                               page: pagination.page + 1,
                             )
                           : null,
-                      child: const Text('Next'),
+                      child: Text(context.tr('Next')),
                     ),
                   ],
                 ),
