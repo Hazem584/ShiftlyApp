@@ -128,6 +128,12 @@ class _Repository implements EmployeeRepository, InvitationRepository {
   @override
   Future<WorkspaceRecord> acceptInvitation(String inviteToken) =>
       throw UnimplementedError();
+  @override
+  Future<WorkspaceRecord> acceptInvitationById(String invitationId) =>
+      throw UnimplementedError();
+  @override
+  Future<void> declineInvitation(String invitationId) =>
+      throw UnimplementedError();
 }
 
 const _scopeA = EmployeeSessionScope(

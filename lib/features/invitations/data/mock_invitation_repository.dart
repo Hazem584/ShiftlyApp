@@ -4,6 +4,12 @@ import 'package:shiftly/features/workspaces/domain/repositories/workspace_reposi
 class MockInvitationRepository implements InvitationRepository {
   final List<WorkspaceInvitation> _items = [];
   @override
+  Future<WorkspaceRecord> acceptInvitationById(String invitationId) =>
+      acceptInvitation(invitationId);
+  @override
+  Future<void> declineInvitation(String invitationId) async =>
+      _items.removeWhere((item) => item.id == invitationId);
+  @override
   Future<WorkspaceRecord> acceptInvitation(String inviteToken) async =>
       const WorkspaceRecord(
         id: 'preview-workspace',

@@ -1,6 +1,14 @@
 /// Interface messages only. Employee names, chat content and free-text reasons
 /// are supplied as parameters and are never translated.
 const arabicInterfaceTranslations = <String, String>{
+  'Accept': 'قبول',
+  'Decline': 'رفض',
+  'Invitation declined.': 'تم رفض الدعوة.',
+  'Could not update invitation. Please try again.':
+      'تعذّر تحديث الدعوة. حاول مرة أخرى.',
+  'Have an invitation code?': 'عندك رمز دعوة؟',
+  'The invitations sent to your email appear below. Choose Accept to join a workspace.':
+      'الدعوات المرسلة لبريدك تظهر هنا. اضغط قبول للانضمام لمساحة العمل.',
   'Appearance': 'المظهر',
   'Your saved schedule': 'آخر جدول محفوظ',
   'Clock-in outcome needs confirmation': 'تسجيل حضورك يحتاج تأكيدًا',

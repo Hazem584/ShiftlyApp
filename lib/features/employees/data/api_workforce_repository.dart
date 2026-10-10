@@ -166,6 +166,28 @@ class ApiWorkforceRepository
       });
 
   @override
+  Future<WorkspaceRecord> acceptInvitationById(String invitationId) =>
+      _request(() async {
+        final response = await _dio.post<Object?>(
+          '/invitations/${Uri.encodeComponent(invitationId)}/accept',
+        );
+        final body = _map(response.data);
+        final membership = _map(body['membership']);
+        return _workspace(<String, Object?>{
+          ..._map(body['workspace']),
+          'role': membership['role'],
+          'status': membership['status'],
+        });
+      });
+
+  @override
+  Future<void> declineInvitation(String invitationId) => _request(() async {
+    await _dio.post<Object?>(
+      '/invitations/${Uri.encodeComponent(invitationId)}/decline',
+    );
+  });
+
+  @override
   Future<List<Employee>> getEmployees({String query = ''}) async =>
       throw UnsupportedError('A workspace scope is required');
 

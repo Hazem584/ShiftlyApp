@@ -34,6 +34,92 @@ MembershipRefreshResult _authorized(
 );
 
 void main() {
+  test(
+    'accepts the listed invitation by ID and refreshes that workspace',
+    () async {
+      final invitations = _FakeInvitationRepository();
+      String? selected;
+      final cubit = WorkspacesCubit(
+        _FakeWorkspaceRepository(),
+        invitations,
+        onMembershipChanged: (workspaceId, userId) async {
+          selected = workspaceId;
+          return _authorized(
+            workspaceId,
+            userId: userId,
+            role: WorkspaceRole.employee,
+          );
+        },
+      )..bindUser('user-1');
+      await _settle();
+      expect(await cubit.acceptById(_invitation.id), isTrue);
+      expect(invitations.acceptedId, _invitation.id);
+      expect(selected, 'workspace-2');
+      expect(cubit.state.busy, isFalse);
+      await cubit.close();
+    },
+  );
+  test('decline removes the invitation without switching memberships or duplicating requests', () async {
+    final gate = Completer<void>();
+    final invitations = _FakeInvitationRepository()..declineGate = gate.future;
+    var membershipChanges = 0;
+    final cubit = WorkspacesCubit(
+      _FakeWorkspaceRepository(),
+      invitations,
+      onMembershipChanged: (_, _) async {
+        membershipChanges++;
+        return const MembershipRefreshResult.failed();
+      },
+    )..bindUser('user-1');
+    await _settle();
+    final request = cubit.decline(_invitation.id);
+    expect(cubit.state.respondingInvitationId, _invitation.id);
+    expect(await cubit.acceptById(_invitation.id), isFalse);
+    expect(await cubit.decline(_invitation.id), isFalse);
+    gate.complete();
+    expect(await request, isTrue);
+    expect(cubit.state.invitations, isEmpty);
+    expect(cubit.state.workspaces, [_workspace]);
+    expect(membershipChanges, 0);
+    expect(cubit.state.busy, isFalse);
+    await cubit.close();
+  });
+  test('failed decline keeps the invitation and can be retried', () async {
+    final invitations = _FakeInvitationRepository(
+      acceptError: const ApiException(message: 'Offline'),
+    );
+    final cubit = WorkspacesCubit(
+      _FakeWorkspaceRepository(),
+      invitations,
+      onMembershipChanged: (_, _) async =>
+          const MembershipRefreshResult.failed(),
+    )..bindUser('user-1');
+    await _settle();
+    expect(await cubit.decline(_invitation.id), isFalse);
+    expect(cubit.state.invitations, [_invitation]);
+    expect(cubit.state.failure?.message, 'Offline');
+    expect(cubit.state.busy, isFalse);
+    expect(cubit.state.respondingInvitationId, isNull);
+    await cubit.close();
+  });
+  test('old refresh cannot restore a declined invitation', () async {
+    final stale = Completer<List<WorkspaceRecord>>();
+    final workspaces = _FakeWorkspaceRepository();
+    final cubit = WorkspacesCubit(
+      workspaces,
+      _FakeInvitationRepository(),
+      onMembershipChanged: (_, _) async =>
+          const MembershipRefreshResult.failed(),
+    )..bindUser('user-1');
+    await _settle();
+    workspaces.pendingList = stale.future;
+    final oldLoad = cubit.load();
+    expect(await cubit.decline(_invitation.id), isTrue);
+    stale.complete([_workspace]);
+    await oldLoad;
+    expect(cubit.state.invitations, isEmpty);
+    await cubit.close();
+  });
   test('binding a user loads workspaces and personal invitations', () async {
     final workspaces = _FakeWorkspaceRepository();
     final invitations = _FakeInvitationRepository();
@@ -229,7 +315,7 @@ Future<void> _settle() async {
 class _FakeWorkspaceRepository implements WorkspaceRepository {
   _FakeWorkspaceRepository({this.pendingList, this.createError});
 
-  final Future<List<WorkspaceRecord>>? pendingList;
+  Future<List<WorkspaceRecord>>? pendingList;
   final Object? createError;
   int createCalls = 0;
 
@@ -256,6 +342,23 @@ class _FakeInvitationRepository implements InvitationRepository {
 
   final Object? acceptError;
   int acceptCalls = 0;
+  String? acceptedId;
+  String? declinedId;
+  Future<void>? declineGate;
+  List<WorkspaceInvitation> items = const [_invitation];
+  @override
+  Future<WorkspaceRecord> acceptInvitationById(String invitationId) {
+    acceptedId = invitationId;
+    return acceptInvitation(invitationId);
+  }
+
+  @override
+  Future<void> declineInvitation(String invitationId) async {
+    declinedId = invitationId;
+    await declineGate;
+    if (acceptError case final Object error) throw error;
+    items = items.where((item) => item.id != invitationId).toList();
+  }
 
   @override
   Future<WorkspaceRecord> acceptInvitation(String inviteToken) async {
@@ -279,9 +382,7 @@ class _FakeInvitationRepository implements InvitationRepository {
   }) => throw UnimplementedError();
 
   @override
-  Future<List<WorkspaceInvitation>> listMyInvitations() async => const [
-    _invitation,
-  ];
+  Future<List<WorkspaceInvitation>> listMyInvitations() async => items;
 
   @override
   Future<List<WorkspaceInvitation>> listWorkspaceInvitations({

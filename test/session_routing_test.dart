@@ -139,6 +139,23 @@ Future<(_RoutingAuth, _AcceptingInvitations)> _pumpNoWorkspace(
 }
 
 void main() {
+  testWidgets(
+    'decline removes a listed invitation and keeps workspace selection open',
+    (tester) async {
+      final (_, invitations) = await _pumpNoWorkspace(tester);
+      await tester.tap(
+        find.byKey(const Key('decline-invitation-invitation-id')),
+      );
+      await tester.pumpAndSettle();
+      expect(invitations.declinedId, 'invitation-id');
+      expect(
+        find.byKey(const Key('decline-invitation-invitation-id')),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('no-workspace-onboarding')), findsOneWidget);
+      ToastService.dismissAll();
+    },
+  );
   testWidgets('an authenticated manager can open workspace invitations', (
     tester,
   ) async {
@@ -149,8 +166,8 @@ void main() {
     GoRouter.of(context).push('/workspaces');
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('workspace-access')), findsOneWidget);
-    expect(find.byKey(const Key('invitation-token-field')), findsOneWidget);
-    expect(find.byKey(const Key('accept-invitation')), findsOneWidget);
+    expect(find.byKey(const Key('invitation-token-field')), findsNothing);
+    expect(find.byKey(const Key('invitation-code-expander')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -207,14 +224,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('workspace-access')), findsOneWidget);
       expect(find.text('Cairo Operations'), findsOneWidget);
-      await tester.enterText(
-        find.byKey(const Key('invitation-token-field')),
-        ' one-time-token ',
+      expect(find.byKey(const Key('invitation-token-field')), findsNothing);
+      await tester.ensureVisible(
+        find.byKey(const Key('accept-invitation-invitation-id')),
       );
-      await tester.ensureVisible(find.byKey(const Key('accept-invitation')));
-      await tester.tap(find.byKey(const Key('accept-invitation')));
       await tester.pumpAndSettle();
-      expect(invitations.acceptedToken, 'one-time-token');
+      await tester.tap(
+        find.byKey(const Key('accept-invitation-invitation-id')),
+      );
+      await tester.pumpAndSettle();
+      expect(invitations.acceptedId, 'invitation-id');
       expect(
         coordinator.state.activeMembership?.workspace.id,
         'accepted-workspace',
@@ -352,14 +371,12 @@ void main() {
       expect(find.byKey(const Key('no-workspace-onboarding')), findsOneWidget);
       expect(find.byKey(const Key('create-workspace')), findsOneWidget);
 
-      await tester.enterText(
-        find.byKey(const Key('invitation-token-field')),
-        ' one-time-token ',
+      await tester.tap(
+        find.byKey(const Key('accept-invitation-invitation-id')),
       );
-      await tester.tap(find.byKey(const Key('accept-invitation')));
       await tester.pumpAndSettle();
 
-      expect(invitations.acceptedToken, 'one-time-token');
+      expect(invitations.acceptedId, 'invitation-id');
       ToastService.dismissAll();
     },
   );
@@ -385,6 +402,21 @@ class _RoutingChat extends MockChatRepository {
 }
 
 class _AcceptingInvitations implements InvitationRepository {
+  String? acceptedId;
+  String? declinedId;
+  bool declined = false;
+  @override
+  Future<WorkspaceRecord> acceptInvitationById(String invitationId) {
+    acceptedId = invitationId;
+    return acceptInvitation('unused');
+  }
+
+  @override
+  Future<void> declineInvitation(String invitationId) async {
+    declinedId = invitationId;
+    declined = true;
+  }
+
   String? acceptedToken;
   VoidCallback? onAccepted;
 
@@ -410,7 +442,23 @@ class _AcceptingInvitations implements InvitationRepository {
   }) => throw UnimplementedError();
 
   @override
-  Future<List<WorkspaceInvitation>> listMyInvitations() async => const [];
+  Future<List<WorkspaceInvitation>> listMyInvitations() async => declined
+      ? const []
+      : const [
+          WorkspaceInvitation(
+            id: 'invitation-id',
+            workspaceId: 'accepted-workspace',
+            status: InvitationStatus.pending,
+            workspace: WorkspaceRecord(
+              id: 'accepted-workspace',
+              name: 'Accepted workspace',
+              code: 'ACCEPTED',
+              timezone: 'Africa/Cairo',
+              role: WorkspaceAccessRole.employee,
+              status: WorkspaceAccessStatus.invited,
+            ),
+          ),
+        ];
 
   @override
   Future<List<WorkspaceInvitation>> listWorkspaceInvitations({

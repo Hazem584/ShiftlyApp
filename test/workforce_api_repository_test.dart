@@ -90,6 +90,36 @@ Map<String, Object?> _invitation({bool token = false}) => {
 
 void main() {
   test(
+    'listed invitation acceptance and refusal use its ID without token bodies',
+    () async {
+      final client = _repository(
+        (options) => options.path.endsWith('/accept')
+            ? _json({
+                'workspace': _workspace(),
+                'membership': {'role': 'EMPLOYEE', 'status': 'ACTIVE'},
+              }, status: 201)
+            : _json({'id': 'invitation-id', 'status': 'REVOKED'}, status: 201),
+      );
+      final workspace = await client.repository.acceptInvitationById(
+        'invitation-id',
+      );
+      await client.repository.declineInvitation('invitation-id');
+      expect(workspace.role, WorkspaceAccessRole.employee);
+      expect(
+        client.adapter.requests[0].path,
+        '/invitations/invitation-id/accept',
+      );
+      expect(
+        client.adapter.requests[1].path,
+        '/invitations/invitation-id/decline',
+      );
+      expect(
+        client.adapter.requests.every((request) => request.data == null),
+        isTrue,
+      );
+    },
+  );
+  test(
     'workspace create/list/details use confirmed routes and payload',
     () async {
       final client = _repository(

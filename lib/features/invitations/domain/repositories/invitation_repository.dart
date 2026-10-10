@@ -15,4 +15,6 @@ abstract interface class InvitationRepository {
   });
   Future<List<WorkspaceInvitation>> listMyInvitations();
   Future<WorkspaceRecord> acceptInvitation(String inviteToken);
+  Future<WorkspaceRecord> acceptInvitationById(String invitationId);
+  Future<void> declineInvitation(String invitationId);
 }

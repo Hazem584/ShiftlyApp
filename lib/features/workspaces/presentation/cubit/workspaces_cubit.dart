@@ -15,6 +15,8 @@ class WorkspacesState extends Equatable {
     this.invitations = const [],
     this.creating = false,
     this.accepting = false,
+    this.declining = false,
+    this.respondingInvitationId,
     this.failure,
   });
   final bool loading;
@@ -22,6 +24,9 @@ class WorkspacesState extends Equatable {
   final List<WorkspaceInvitation> invitations;
   final bool creating;
   final bool accepting;
+  final bool declining;
+  final String? respondingInvitationId;
+  bool get busy => creating || accepting || declining;
   final Failure? failure;
 
   WorkspacesState copyWith({
@@ -30,6 +35,9 @@ class WorkspacesState extends Equatable {
     List<WorkspaceInvitation>? invitations,
     bool? creating,
     bool? accepting,
+    bool? declining,
+    String? respondingInvitationId,
+    bool clearResponding = false,
     Failure? failure,
     bool clearFailure = false,
   }) => WorkspacesState(
@@ -38,6 +46,10 @@ class WorkspacesState extends Equatable {
     invitations: invitations ?? this.invitations,
     creating: creating ?? this.creating,
     accepting: accepting ?? this.accepting,
+    declining: declining ?? this.declining,
+    respondingInvitationId: clearResponding
+        ? null
+        : respondingInvitationId ?? this.respondingInvitationId,
     failure: clearFailure ? null : failure ?? this.failure,
   );
 
@@ -48,6 +60,8 @@ class WorkspacesState extends Equatable {
     invitations,
     creating,
     accepting,
+    declining,
+    respondingInvitationId,
     failure,
   ];
 }
@@ -69,6 +83,8 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
   var _generation = 0;
   var _createInFlight = false;
   var _acceptInFlight = false;
+  var _declineInFlight = false;
+  var _loadRevision = 0;
   final _membershipOperations = <_MembershipOperation>{};
 
   void bindUser(String? userId) {
@@ -80,8 +96,13 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     }
     _userId = userId;
     _generation += 1;
+    _loadRevision++;
     emit(
-      WorkspacesState(creating: _createInFlight, accepting: _acceptInFlight),
+      WorkspacesState(
+        creating: _createInFlight,
+        accepting: _acceptInFlight,
+        declining: _declineInFlight,
+      ),
     );
     if (userId != null) unawaited(load());
   }
@@ -89,6 +110,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
   Future<void> load() async {
     final userId = _userId;
     final generation = _generation;
+    final revision = ++_loadRevision;
     if (userId == null) return;
     emit(state.copyWith(loading: true, clearFailure: true));
     try {
@@ -96,16 +118,20 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
         _workspaces.listWorkspaces(),
         _invitations.listMyInvitations(),
       ]);
-      if (!_current(userId, generation)) return;
+      if (!_current(userId, generation) || revision != _loadRevision) return;
       emit(
         WorkspacesState(
           loading: false,
           workspaces: results[0] as List<WorkspaceRecord>,
           invitations: results[1] as List<WorkspaceInvitation>,
+          creating: _createInFlight,
+          accepting: _acceptInFlight,
+          declining: _declineInFlight,
+          respondingInvitationId: state.respondingInvitationId,
         ),
       );
     } catch (error) {
-      if (!_current(userId, generation)) return;
+      if (!_current(userId, generation) || revision != _loadRevision) return;
       emit(state.copyWith(loading: false, failure: _failure(error)));
     }
   }
@@ -113,7 +139,12 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
   Future<bool> create({required String name, String? timezone}) async {
     final userId = _userId;
     final generation = _generation;
-    if (userId == null || _createInFlight) return false;
+    if (userId == null ||
+        _createInFlight ||
+        _acceptInFlight ||
+        _declineInFlight) {
+      return false;
+    }
     _createInFlight = true;
     emit(state.copyWith(creating: true, clearFailure: true));
     try {
@@ -143,14 +174,38 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     }
   }
 
-  Future<bool> accept(String inviteToken) async {
+  Future<bool> accept(String inviteToken) =>
+      _accept(() => _invitations.acceptInvitation(inviteToken.trim()));
+
+  Future<bool> acceptById(String invitationId) => _accept(
+    () => _invitations.acceptInvitationById(invitationId),
+    invitationId: invitationId,
+  );
+
+  Future<bool> _accept(
+    Future<WorkspaceRecord> Function() request, {
+    String? invitationId,
+  }) async {
     final userId = _userId;
     final generation = _generation;
-    if (userId == null || _acceptInFlight) return false;
+    if (userId == null ||
+        _acceptInFlight ||
+        _declineInFlight ||
+        _createInFlight) {
+      return false;
+    }
     _acceptInFlight = true;
-    emit(state.copyWith(accepting: true, clearFailure: true));
+    _loadRevision++;
+    emit(
+      state.copyWith(
+        loading: false,
+        accepting: true,
+        respondingInvitationId: invitationId,
+        clearFailure: true,
+      ),
+    );
     try {
-      final workspace = await _invitations.acceptInvitation(inviteToken.trim());
+      final workspace = await request();
       if (!_current(userId, generation)) return false;
       final operation = _MembershipOperation(userId);
       _membershipOperations.add(operation);
@@ -167,8 +222,52 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
       return false;
     } finally {
       _acceptInFlight = false;
-      if (!isClosed && state.accepting) {
-        emit(state.copyWith(accepting: false));
+      if (!isClosed) {
+        emit(state.copyWith(accepting: false, clearResponding: true));
+      }
+    }
+  }
+
+  Future<bool> decline(String invitationId) async {
+    final userId = _userId;
+    final generation = _generation;
+    if (userId == null ||
+        _acceptInFlight ||
+        _declineInFlight ||
+        _createInFlight) {
+      return false;
+    }
+    _declineInFlight = true;
+    _loadRevision++;
+    emit(
+      state.copyWith(
+        loading: false,
+        declining: true,
+        respondingInvitationId: invitationId,
+        clearFailure: true,
+      ),
+    );
+    try {
+      await _invitations.declineInvitation(invitationId);
+      if (!_current(userId, generation)) return false;
+      _loadRevision++;
+      emit(
+        state.copyWith(
+          invitations: state.invitations
+              .where((item) => item.id != invitationId)
+              .toList(growable: false),
+        ),
+      );
+      return true;
+    } catch (error) {
+      if (_current(userId, generation)) {
+        emit(state.copyWith(failure: _failure(error)));
+      }
+      return false;
+    } finally {
+      _declineInFlight = false;
+      if (!isClosed && state.declining) {
+        emit(state.copyWith(declining: false, clearResponding: true));
       }
     }
   }
