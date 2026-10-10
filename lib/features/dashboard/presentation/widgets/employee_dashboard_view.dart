@@ -44,7 +44,10 @@ class EmployeeDashboardView extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         Text(
-          '${data.date} · ${data.timezone}',
+          context.tr('{value1} · {value2}', {
+            'value1': (data.date).toString(),
+            'value2': (data.timezone).toString(),
+          }),
           style: const TextStyle(color: AppColors.textSecondary),
         ),
         if (state.failure != null) ...[
@@ -84,7 +87,7 @@ class EmployeeDashboardView extends StatelessWidget {
                 context.tr(
                   'Your shifts, attendance and time off are a tap away.',
                 ),
-                style: TextStyle(color: Color(0xFFE4DED6), height: 1.5),
+                style: const TextStyle(color: Color(0xFFE4DED6), height: 1.5),
               ),
               const SizedBox(height: 16),
               Wrap(
@@ -127,7 +130,7 @@ class EmployeeDashboardView extends StatelessWidget {
         ),
         if (data.todayShift != null)
           EmployeeDashboardShiftCard(
-            title: 'Scheduled shift',
+            title: context.tr('Scheduled shift'),
             shift: data.todayShift,
             timezone: data.timezone,
             attendance: data.attendance,
@@ -135,7 +138,7 @@ class EmployeeDashboardView extends StatelessWidget {
         const SizedBox(height: AppSpacing.m),
         if (data.nextShift != null)
           EmployeeDashboardShiftCard(
-            title: 'Next scheduled shift',
+            title: context.tr('Next scheduled shift'),
             shift: data.nextShift,
             timezone: data.timezone,
           ),
@@ -151,7 +154,7 @@ class EmployeeDashboardView extends StatelessWidget {
             const SizedBox(width: AppSpacing.s),
             Expanded(
               child: EmployeeDashboardCountCard(
-                label: 'Upcoming approved',
+                label: context.tr('Upcoming approved'),
                 value: data.summary.approvedLeaveRequests,
               ),
             ),
@@ -159,7 +162,7 @@ class EmployeeDashboardView extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.l),
         Text(
-          'Recent leave requests',
+          context.tr('Recent leave requests'),
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: AppSpacing.s),
@@ -168,9 +171,9 @@ class EmployeeDashboardView extends StatelessWidget {
               ? const EdgeInsets.all(16)
               : EdgeInsets.zero,
           child: data.recentLeaveRequests.isEmpty
-              ? const Text(
-                  'No leave requests yet.',
-                  style: TextStyle(color: AppColors.textSecondary),
+              ? Text(
+                  context.tr('No leave requests yet.'),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 )
               : Column(
                   children: [
@@ -181,8 +184,15 @@ class EmployeeDashboardView extends StatelessWidget {
                           employeeDashboardScreenLeaveType(request.type),
                         ),
                         subtitle: Text(
-                          '${WorkspaceTime.dateTime(request.startsAt, data.timezone, locale: Localizations.localeOf(context).toString())}\n'
-                          '${request.reason}',
+                          context.tr('{value1}\n{value2}', {
+                            'value1': (WorkspaceTime.dateTime(
+                              request.startsAt,
+                              data.timezone,
+                              locale: Localizations.localeOf(context)
+                                  .toString(),
+                            )).toString(),
+                            'value2': (request.reason).toString(),
+                          }),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),

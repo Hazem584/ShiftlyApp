@@ -66,7 +66,18 @@ class AttendanceStatusCard extends StatelessWidget {
             if (entry != null) ...[
               const SizedBox(height: 10),
               Text(
-                '${WorkspaceTime.time(entry.scheduledStartAt, savedTimezone, locale: locale)} – ${WorkspaceTime.time(entry.scheduledEndAt, savedTimezone, locale: locale)}',
+                context.tr('{value1} – {value2}', {
+                  'value1': (WorkspaceTime.time(
+                    entry.scheduledStartAt,
+                    savedTimezone,
+                    locale: locale,
+                  )).toString(),
+                  'value2': (WorkspaceTime.time(
+                    entry.scheduledEndAt,
+                    savedTimezone,
+                    locale: locale,
+                  )).toString(),
+                }),
               ),
               Text(
                 context.tr('Shift date: {date}', {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 
 enum ToastType { success, error, warning, info }
@@ -55,7 +56,7 @@ class AppToastWidget extends StatelessWidget {
                 const SizedBox(width: 8),
                 IconButton(
                   onPressed: onClose,
-                  tooltip: 'Dismiss',
+                  tooltip: context.tr('Dismiss'),
                   visualDensity: VisualDensity.compact,
                   icon: const Icon(Icons.close_rounded, size: 18),
                 ),

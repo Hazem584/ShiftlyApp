@@ -34,9 +34,9 @@ class EmployeeDetailsView extends StatelessWidget {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Deactivate employee?'),
-          content: const Text(
-            'The employee will lose active workspace access.',
+          title: Text(context.tr('Deactivate employee?')),
+          content: Text(
+            context.tr('The employee will lose active workspace access.'),
           ),
           actions: [
             TextButton(
@@ -46,7 +46,7 @@ class EmployeeDetailsView extends StatelessWidget {
             FilledButton(
               key: const Key('confirm-deactivate-employee'),
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Deactivate'),
+              child: Text(context.tr('Deactivate')),
             ),
           ],
         ),
@@ -83,7 +83,7 @@ class EmployeeDetailsView extends StatelessWidget {
         EmployeeDetailsLoadingState() => const EmployeeDetailsLoading(),
         EmployeeDetailsErrorState(:final message) => EmptyState(
           icon: Icons.person_search_outlined,
-          title: 'Employee unavailable',
+          title: context.tr('Employee unavailable'),
           message: message,
           action: FilledButton(
             onPressed: () => context.read<EmployeeDetailsCubit>().load(
@@ -101,7 +101,7 @@ class EmployeeDetailsView extends StatelessWidget {
             ListTile(
               key: const Key('employee-performance-link'),
               leading: const Icon(Icons.insights_outlined),
-              title: const Text('Employee Performance'),
+              title: Text(context.tr('Employee Performance')),
               onTap: () =>
                   context.push(AppRoutes.employeePerformance(membershipId)),
             ),
@@ -140,8 +140,8 @@ class EmployeeDetailsView extends StatelessWidget {
                 ),
                 label: Text(
                   employee.employmentStatus == EmploymentStatus.active
-                      ? 'Deactivate employee'
-                      : 'Reactivate employee',
+                      ? context.tr('Deactivate employee')
+                      : context.tr('Reactivate employee'),
                 ),
               ),
           ],

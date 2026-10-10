@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class WeekdayRow extends StatelessWidget {
   const WeekdayRow({required this.days, super.key});
@@ -11,7 +12,15 @@ class WeekdayRow extends StatelessWidget {
       for (final day in days)
         Chip(
           label: Text(
-            const ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day],
+            [
+              context.tr('Sun'),
+              context.tr('Mon'),
+              context.tr('Tue'),
+              context.tr('Wed'),
+              context.tr('Thu'),
+              context.tr('Fri'),
+              context.tr('Sat'),
+            ][day],
           ),
           visualDensity: VisualDensity.compact,
         ),

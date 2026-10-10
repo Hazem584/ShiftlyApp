@@ -16,9 +16,12 @@ class LeaveRequestFilters extends StatelessWidget {
     children: [
       DropdownButton<LeaveRequestStatus?>(
         value: state.query.status,
-        hint: const Text('All statuses'),
+        hint: Text(context.tr('All statuses')),
         items: [
-          DropdownMenuItem(value: null, child: Text('All statuses')),
+          DropdownMenuItem(
+            value: null,
+            child: Text(context.tr('All statuses')),
+          ),
           DropdownMenuItem(
             value: LeaveRequestStatus.pending,
             child: Text(context.tr('Pending')),
@@ -33,7 +36,7 @@ class LeaveRequestFilters extends StatelessWidget {
           ),
           DropdownMenuItem(
             value: LeaveRequestStatus.cancelled,
-            child: Text('Cancelled'),
+            child: Text(context.tr('Cancelled')),
           ),
         ],
         onChanged: (status) => context.read<LeaveRequestsCubit>().load(
@@ -46,26 +49,29 @@ class LeaveRequestFilters extends StatelessWidget {
       ),
       DropdownButton<LeaveRequestType?>(
         value: state.query.type,
-        hint: const Text('All types'),
-        items: const [
-          DropdownMenuItem(value: null, child: Text('All types')),
+        hint: Text(context.tr('All types')),
+        items: [
+          DropdownMenuItem(value: null, child: Text(context.tr('All types'))),
           DropdownMenuItem(
             value: LeaveRequestType.annualLeave,
-            child: Text('Annual'),
+            child: Text(context.tr('Annual')),
           ),
           DropdownMenuItem(
             value: LeaveRequestType.sickLeave,
-            child: Text('Sick'),
+            child: Text(context.tr('Sick')),
           ),
           DropdownMenuItem(
             value: LeaveRequestType.emergencyLeave,
-            child: Text('Emergency'),
+            child: Text(context.tr('Emergency')),
           ),
           DropdownMenuItem(
             value: LeaveRequestType.earlyLeave,
-            child: Text('Early departure'),
+            child: Text(context.tr('Early departure')),
           ),
-          DropdownMenuItem(value: LeaveRequestType.other, child: Text('Other')),
+          DropdownMenuItem(
+            value: LeaveRequestType.other,
+            child: Text(context.tr('Other')),
+          ),
         ],
         onChanged: (type) => context.read<LeaveRequestsCubit>().load(
           query: leaveRequestsPanelQuery(

@@ -43,7 +43,7 @@ class DashboardActivitySection extends StatelessWidget {
                       'No shifts are scheduled for this workspace day.',
                     ),
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 12),
                   TextButton(

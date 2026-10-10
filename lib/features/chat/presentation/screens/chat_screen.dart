@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
@@ -16,8 +17,10 @@ class ChatScreen extends StatelessWidget {
     final groups = context.watch<ChatGroupsCubit>();
     final scope = groups.scope;
     if (scope == null) {
-      return const Scaffold(
-        body: Center(child: Text('Chat session is no longer active.')),
+      return Scaffold(
+        body: Center(
+          child: Text(context.tr('Chat session is no longer active.')),
+        ),
       );
     }
     final repository = context.read<ChatRepository>();

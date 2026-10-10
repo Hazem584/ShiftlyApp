@@ -20,7 +20,7 @@ class EmployeeDashboardScreen extends StatelessWidget {
           DashboardLoaded() => const SizedBox.shrink(),
           DashboardError(:final failure) => EmptyState(
             icon: Icons.cloud_off_outlined,
-            title: 'Could not load your overview',
+            title: context.tr('Could not load your overview'),
             message: failure.message,
             action: FilledButton.icon(
               onPressed: context.read<DashboardCubit>().load,

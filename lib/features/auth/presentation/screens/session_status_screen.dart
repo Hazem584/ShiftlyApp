@@ -52,9 +52,12 @@ class SessionStatusScreen extends StatelessWidget {
               children: [
                 Icon(icon, size: 52),
                 const SizedBox(height: AppSpacing.m),
-                Text(title, style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  context.tr(title),
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: AppSpacing.s),
-                Text(message, textAlign: TextAlign.center),
+                Text(context.tr(message), textAlign: TextAlign.center),
                 const SizedBox(height: AppSpacing.l),
                 if (view != SessionStatusView.verification)
                   FilledButton.icon(
@@ -66,8 +69,8 @@ class SessionStatusScreen extends StatelessWidget {
                   onPressed: context.read<SessionCoordinator>().signOut,
                   child: Text(
                     view == SessionStatusView.verification
-                        ? 'Back to sign in'
-                        : 'Sign out',
+                        ? context.tr('Back to sign in')
+                        : context.tr('Sign out'),
                   ),
                 ),
               ],

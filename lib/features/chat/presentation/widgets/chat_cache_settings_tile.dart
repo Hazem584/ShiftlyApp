@@ -21,7 +21,11 @@ class _ChatCacheSettingsTileState extends State<ChatCacheSettingsTile> {
         leading: const Icon(Icons.storage_outlined),
         title: Text(context.tr('Chat media cache')),
         subtitle: Text(
-          '${((snapshot.data ?? 0) / (1024 * 1024)).toStringAsFixed(1)} MiB · active files are retained',
+          context.tr('{value1} MiB · active files are retained', {
+            'value1': (((snapshot.data ?? 0) / (1024 * 1024)).toStringAsFixed(
+              1,
+            )).toString(),
+          }),
         ),
         trailing: TextButton(
           onPressed: _busy

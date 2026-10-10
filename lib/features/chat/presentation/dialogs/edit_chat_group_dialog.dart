@@ -46,69 +46,72 @@ class _EditChatGroupDialogState extends State<EditChatGroupDialog> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      BlocConsumer<ChatGroupsCubit, ChatGroupsState>(
-        bloc: widget.groups,
-        listenWhen: (_, _) => widget.groups.scope != _scope,
-        listener: (context, _) => _close(context),
-        buildWhen: (before, after) => before.mutating != after.mutating,
-        builder: (context, groupState) {
-          final submitting = groupState.mutating;
-          return AppFormDialog(
-            title: 'Edit group',
-            subtitle: 'Update the name and description your team sees.',
-            icon: Icons.edit_outlined,
-            busy: submitting,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  key: const Key('edit-group-name'),
-                  controller: _name,
-                  maxLength: 80,
-                  enabled: !submitting,
-                  decoration: InputDecoration(labelText: context.tr('Name')),
-                ),
-                TextField(
-                  key: const Key('edit-group-description'),
-                  controller: _description,
-                  maxLength: 500,
-                  enabled: !submitting,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-              ],
+  Widget build(
+    BuildContext context,
+  ) => BlocConsumer<ChatGroupsCubit, ChatGroupsState>(
+    bloc: widget.groups,
+    listenWhen: (_, _) => widget.groups.scope != _scope,
+    listener: (context, _) => _close(context),
+    buildWhen: (before, after) => before.mutating != after.mutating,
+    builder: (context, groupState) {
+      final submitting = groupState.mutating;
+      return AppFormDialog(
+        title: context.tr('Edit group'),
+        subtitle: context.tr('Update the name and description your team sees.'),
+        icon: Icons.edit_outlined,
+        busy: submitting,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              key: const Key('edit-group-name'),
+              controller: _name,
+              maxLength: 80,
+              enabled: !submitting,
+              decoration: InputDecoration(labelText: context.tr('Name')),
             ),
-            actions: [
-              TextButton(
-                key: const Key('edit-group-cancel'),
-                onPressed: submitting ? null : () => Navigator.pop(context),
-                child: Text(context.tr('Cancel')),
-              ),
-              FilledButton(
-                key: const Key('edit-group-submit'),
-                onPressed: submitting ? null : () => _submit(context),
-                child: submitting
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(context.tr('Save')),
-              ),
-            ],
-          );
-        },
+            TextField(
+              key: const Key('edit-group-description'),
+              controller: _description,
+              maxLength: 500,
+              enabled: !submitting,
+              decoration: InputDecoration(labelText: context.tr('Description')),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            key: const Key('edit-group-cancel'),
+            onPressed: submitting ? null : () => Navigator.pop(context),
+            child: Text(context.tr('Cancel')),
+          ),
+          FilledButton(
+            key: const Key('edit-group-submit'),
+            onPressed: submitting ? null : () => _submit(context),
+            child: submitting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(context.tr('Save')),
+          ),
+        ],
       );
+    },
+  );
 
   Future<void> _submit(BuildContext context) async {
     final name = _name.text.trim();
     final description = _description.text.trim();
     if (name.isEmpty) {
-      Fluttertoast.showToast(msg: 'Enter a group name.');
+      if (!mounted) return;
+      Fluttertoast.showToast(msg: context.tr('Enter a group name.'));
       return;
     }
     if (name.length > 80 || description.length > 500) {
+      if (!mounted) return;
       Fluttertoast.showToast(
-        msg: 'Check the group name and description lengths.',
+        msg: context.tr('Check the group name and description lengths.'),
       );
       return;
     }
@@ -129,8 +132,11 @@ class _EditChatGroupDialogState extends State<EditChatGroupDialog> {
         widget.groups.scope != _scope) {
       _close(context);
     } else if (result == ChatMutationResult.failure) {
+      if (!mounted) return;
       Fluttertoast.showToast(
-        msg: widget.groups.state.failure?.message ?? 'Could not update group.',
+        msg: context.tr(
+          widget.groups.state.failure?.message ?? 'Could not update group.',
+        ),
       );
     }
   }

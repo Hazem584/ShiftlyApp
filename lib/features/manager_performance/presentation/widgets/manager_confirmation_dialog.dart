@@ -22,9 +22,11 @@ class ManagerConfirmationDialog extends StatelessWidget {
     builder: (context, snapshot) {
       final allowed = scope != null && snapshot.data?.scope == scope;
       return AlertDialog(
-        title: Text(title),
+        title: Text(context.tr(title)),
         content: SingleChildScrollView(
-          child: Text(allowed ? details : 'Manager access changed.'),
+          child: Text(
+            allowed ? details : context.tr('Manager access changed.'),
+          ),
         ),
         actions: [
           TextButton(
@@ -33,7 +35,7 @@ class ManagerConfirmationDialog extends StatelessWidget {
           ),
           FilledButton(
             onPressed: allowed ? () => Navigator.pop(context, true) : null,
-            child: const Text('Confirm'),
+            child: Text(context.tr('Confirm')),
           ),
         ],
       );

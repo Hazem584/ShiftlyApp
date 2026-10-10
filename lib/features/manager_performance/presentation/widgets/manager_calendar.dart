@@ -40,16 +40,16 @@ class ManagerCalendar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text(monthLabel(month))),
+            Expanded(child: Text(monthLabel(month, context))),
             IconButton(
-              tooltip: 'Previous month',
+              tooltip: context.tr('Previous month'),
               onPressed: month.year == 2000 && month.month == 1
                   ? null
                   : () => changeMonth(DateTime(month.year, month.month - 1)),
               icon: const Icon(Icons.chevron_left),
             ),
             IconButton(
-              tooltip: 'Next month',
+              tooltip: context.tr('Next month'),
               onPressed: month.year == 2100 && month.month == 12
                   ? null
                   : () => changeMonth(DateTime(month.year, month.month + 1)),
@@ -58,7 +58,7 @@ class ManagerCalendar extends StatelessWidget {
           ],
         ),
         if (state.loading) const LinearProgressIndicator(),
-        if (state.error != null) Text(state.error!),
+        if (state.error != null) Text(context.tr(state.error!)),
         LayoutBuilder(
           builder: (context, constraints) {
             // Measure the actual scaled line height, including wrapping in a
@@ -66,7 +66,10 @@ class ManagerCalendar extends StatelessWidget {
             var dateHeight = 0.0;
             for (var number = 1; number <= count; number++) {
               final painter = TextPainter(
-                text: TextSpan(text: '$number', style: dayTextStyle),
+                text: TextSpan(
+                  text: context.tr('{value1}', {'value1': (number).toString()}),
+                  style: dayTextStyle,
+                ),
                 textDirection: Directionality.of(context),
                 textScaler: MediaQuery.textScalerOf(context),
                 locale: Localizations.localeOf(context),
@@ -90,7 +93,10 @@ class ManagerCalendar extends StatelessWidget {
                     '${month.year}-${month.month.toString().padLeft(2, '0')}-${(index - offset + 1).toString().padLeft(2, '0')}';
                 final day = days[date];
                 return Semantics(
-                  label: '$date, ${statusLabel(day?.status)}',
+                  label: context.tr('{value1}, {value2}', {
+                    'value1': (date).toString(),
+                    'value2': (context.tr(statusLabel(day?.status))).toString(),
+                  }),
                   child: InkWell(
                     onTap: day == null
                         ? null
@@ -107,26 +113,60 @@ class ManagerCalendar extends StatelessWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(statusLabel(day.status)),
+                                      Text(context.tr(statusLabel(day.status))),
                                       if (day.templateName != null)
                                         Text(day.templateName!),
                                       if (day.clockInAt != null)
                                         Text(
-                                          'Clock-in: ${WorkspaceTime.dateTime(day.clockInAt!, timezone, locale: Localizations.localeOf(context).toString())}',
+                                          context.tr('Clock-in: {value1}', {
+                                            'value1': (WorkspaceTime.dateTime(
+                                              day.clockInAt!,
+                                              timezone,
+                                              locale: Localizations.localeOf(
+                                                context,
+                                              ).toString(),
+                                            )).toString(),
+                                          }),
                                         ),
                                       if (day.clockOutAt != null)
                                         Text(
-                                          'Clock-out: ${WorkspaceTime.dateTime(day.clockOutAt!, timezone, locale: Localizations.localeOf(context).toString())}',
+                                          context.tr('Clock-out: {value1}', {
+                                            'value1': (WorkspaceTime.dateTime(
+                                              day.clockOutAt!,
+                                              timezone,
+                                              locale: Localizations.localeOf(
+                                                context,
+                                              ).toString(),
+                                            )).toString(),
+                                          }),
                                         ),
                                       if (day.workDurationMinutes != null)
                                         Text(
-                                          'Worked ${day.workDurationMinutes} minutes',
+                                          context.tr(
+                                            'Worked {value1} minutes',
+                                            {
+                                              'value1':
+                                                  (day.workDurationMinutes)
+                                                      .toString(),
+                                            },
+                                          ),
                                         ),
                                       if (day.lateMinutes != null)
-                                        Text('Late ${day.lateMinutes} minutes'),
+                                        Text(
+                                          context.tr('Late {value1} minutes', {
+                                            'value1': (day.lateMinutes)
+                                                .toString(),
+                                          }),
+                                        ),
                                       for (final change in day.pointChanges)
                                         Text(
-                                          '${pointLabel(change.type)} ${change.amount}',
+                                          context.tr('{value1} {value2}', {
+                                            'value1': context.tr(
+                                              pointLabel(change.type),
+                                            ),
+                                            'value2': (change.amount)
+                                                .toString(),
+                                          }),
                                         ),
                                     ],
                                   ),
@@ -144,7 +184,9 @@ class ManagerCalendar extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '${index - offset + 1}',
+                          context.tr('{value1}', {
+                            'value1': (index - offset + 1).toString(),
+                          }),
                           style: dayTextStyle,
                           textAlign: TextAlign.center,
                         ),
@@ -172,7 +214,7 @@ class ManagerCalendar extends StatelessWidget {
                 children: [
                   Icon(statusIcon(status), size: 18),
                   const SizedBox(width: 4),
-                  Flexible(child: Text(statusLabel(status))),
+                  Flexible(child: Text(context.tr(statusLabel(status)))),
                 ],
               ),
           ],

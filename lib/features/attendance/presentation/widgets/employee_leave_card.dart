@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -26,19 +27,21 @@ class EmployeeLeaveCard extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Cancel leave request?'),
-        content: const Text(
-          'This request will no longer be available for manager approval.',
+        title: Text(context.tr('Cancel leave request?')),
+        content: Text(
+          context.tr(
+            'This request will no longer be available for manager approval.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep request'),
+            child: Text(context.tr('Keep request')),
           ),
           FilledButton(
             key: const Key('confirm-cancel-leave'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Cancel request'),
+            child: Text(context.tr('Cancel request')),
           ),
         ],
       ),
@@ -69,7 +72,7 @@ class EmployeeLeaveCard extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                leaveTypeLabel(request.type),
+                context.tr(leaveTypeLabel(request.type)),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -79,8 +82,18 @@ class EmployeeLeaveCard extends StatelessWidget {
         const SizedBox(height: 10),
         LeaveDetailRow(
           icon: Icons.calendar_today_outlined,
-          text:
-              '${WorkspaceTime.dateTime(request.startsAt, timezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.dateTime(request.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+          text: context.tr('{value1} – {value2}', {
+            'value1': (WorkspaceTime.dateTime(
+              request.startsAt,
+              timezone,
+              locale: Localizations.localeOf(context).toString(),
+            )).toString(),
+            'value2': (WorkspaceTime.dateTime(
+              request.endsAt,
+              timezone,
+              locale: Localizations.localeOf(context).toString(),
+            )).toString(),
+          }),
         ),
         const SizedBox(height: 7),
         LeaveDetailRow(icon: Icons.notes_rounded, text: request.reason),
@@ -88,7 +101,9 @@ class EmployeeLeaveCard extends StatelessWidget {
           const SizedBox(height: 7),
           LeaveDetailRow(
             icon: Icons.info_outline,
-            text: 'Rejection reason: ${request.rejectionReason}',
+            text: context.tr('Rejection reason: {value1}', {
+              'value1': (request.rejectionReason).toString(),
+            }),
           ),
         ],
         if (request.canCancel) ...[
@@ -104,7 +119,7 @@ class EmployeeLeaveCard extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.cancel_outlined),
-              label: const Text('Cancel request'),
+              label: Text(context.tr('Cancel request')),
             ),
           ),
         ],

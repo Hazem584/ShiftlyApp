@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
@@ -41,7 +42,7 @@ class AttendanceCalendarSelectedDay extends StatelessWidget {
             Text(timezone, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: AppSpacing.s),
             if (entries.isEmpty)
-              const Text('No attendance events for this date.')
+              Text(context.tr('No attendance events for this date.'))
             else
               ...entries.map(
                 (entry) => AttendanceCalendarEmployeeDayRow(

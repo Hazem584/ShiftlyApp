@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/points/domain/entities/points_models.dart';
 
 class PointsHero extends StatelessWidget {
@@ -21,11 +22,16 @@ class PointsHero extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'My Performance',
+          context.tr('My Performance'),
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 4),
-        Text('${wallet.workspaceName} · ${wallet.timezone}'),
+        Text(
+          context.tr('{value1} · {value2}', {
+            'value1': (wallet.workspaceName).toString(),
+            'value2': (wallet.timezone).toString(),
+          }),
+        ),
         const SizedBox(height: 20),
         Wrap(
           spacing: 28,
@@ -56,7 +62,10 @@ Widget _heroValue(
   String label,
   IconData icon,
 ) => Semantics(
-  label: '$label: $value',
+  label: context.tr('{value1}: {value2}', {
+    'value1': (context.tr(label)).toString(),
+    'value2': (value).toString(),
+  }),
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     mainAxisSize: MainAxisSize.min,
@@ -64,7 +73,7 @@ Widget _heroValue(
       Icon(icon),
       const SizedBox(height: 4),
       Text(value, style: Theme.of(context).textTheme.headlineSmall),
-      Text(label),
+      Text(context.tr(label)),
     ],
   ),
 );

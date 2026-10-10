@@ -67,14 +67,17 @@ class _AttendanceRejectionDialogState extends State<AttendanceRejectionDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Reject attendance?'),
+    title: Text(context.tr('Reject attendance?')),
     content: TextField(
       key: const Key('attendance-rejection-reason'),
       controller: _controller,
       enabled: !_submitting,
       maxLength: 1000,
       maxLines: 3,
-      decoration: InputDecoration(labelText: 'Reason', errorText: _error),
+      decoration: InputDecoration(
+        labelText: context.tr('Reason'),
+        errorText: _error == null ? null : context.tr(_error!),
+      ),
     ),
     actions: [
       TextButton(
@@ -84,7 +87,7 @@ class _AttendanceRejectionDialogState extends State<AttendanceRejectionDialog> {
       FilledButton(
         key: const Key('confirm-reject-attendance'),
         onPressed: _submitting ? null : _submit,
-        child: const Text('Reject'),
+        child: Text(context.tr('Reject')),
       ),
     ],
   );

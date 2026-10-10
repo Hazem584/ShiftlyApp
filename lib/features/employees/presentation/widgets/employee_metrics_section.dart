@@ -32,7 +32,7 @@ class EmployeeMetricsSection extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18),
         children: [
           EmployeeMetricsSectionMetric(
-            label: 'Total Employees',
+            label: context.tr('Total Employees'),
             value: total ?? employees.length,
             icon: Icons.groups_outlined,
             color: AppColors.ink,
@@ -46,7 +46,7 @@ class EmployeeMetricsSection extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           EmployeeMetricsSectionMetric(
-            label: 'Loaded suspended',
+            label: context.tr('Loaded suspended'),
             value: suspended,
             icon: Icons.person_off_outlined,
             color: AppColors.warning,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 
 String attendanceClassificationLabel(AttendanceClassification value) =>
@@ -15,9 +16,14 @@ IconData attendanceClassificationIcon(AttendanceClassification value) =>
       AttendanceClassification.late => Icons.warning_amber_rounded,
       AttendanceClassification.unknown => Icons.help_outline_rounded,
     };
-String attendanceElapsed(Duration value) {
+String attendanceElapsed(Duration value, [BuildContext? context]) {
   final safe = value.isNegative ? Duration.zero : value;
-  return '${safe.inHours}h ${safe.inMinutes.remainder(60)}m';
+  return context == null
+      ? '${safe.inHours}h ${safe.inMinutes.remainder(60)}m'
+      : context.tr('{hours}h {minutes}m', {
+          'hours': '${safe.inHours}',
+          'minutes': '${safe.inMinutes.remainder(60)}',
+        });
 }
 
 Color attendanceTemplateColor(String value) {

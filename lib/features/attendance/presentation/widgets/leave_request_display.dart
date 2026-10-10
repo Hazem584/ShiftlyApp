@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 
@@ -43,7 +44,7 @@ class LeaveStatusBadge extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         child: Text(
-          label,
+          context.tr(label),
           style: TextStyle(
             color: color,
             fontSize: 10,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_date_separator.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_empty_conversation.dart';
@@ -292,7 +293,7 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
               key: const Key('chat-new-messages'),
               onPressed: _scrollToBottom,
               icon: const Icon(Icons.arrow_downward_rounded, size: 18),
-              label: const Text('New messages'),
+              label: Text(context.tr('New messages')),
             ),
           ),
       ],

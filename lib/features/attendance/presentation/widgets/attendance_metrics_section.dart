@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -22,10 +23,10 @@ class AttendanceMetricsSection extends StatelessWidget {
               children: [
                 const Icon(Icons.approval_outlined, color: AppColors.orange),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Manager review queue',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    context.tr('Manager review queue'),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
                 DecoratedBox(
@@ -39,7 +40,9 @@ class AttendanceMetricsSection extends StatelessWidget {
                       vertical: 5,
                     ),
                     child: Text(
-                      '$pending pending',
+                      context.tr('{value1} pending', {
+                        'value1': (pending).toString(),
+                      }),
                       key: const Key('pending-request-count'),
                       style: const TextStyle(
                         fontSize: 11,
@@ -107,7 +110,7 @@ class AttendanceMetricsSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Based on the attendance records shown below.',
+                  context.tr('Based on the attendance records shown below.'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

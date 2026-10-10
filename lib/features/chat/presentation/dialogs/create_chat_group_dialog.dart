@@ -46,9 +46,10 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
         builder: (context, groupState) {
           final submitting = groupState.mutating;
           return AppFormDialog(
-            title: 'Create chat group',
-            subtitle:
-                'Give your team a space to plan shifts and stay in touch.',
+            title: context.tr('Create chat group'),
+            subtitle: context.tr(
+              'Give your team a space to plan shifts and stay in touch.',
+            ),
             icon: Icons.group_add_outlined,
             busy: submitting,
             content: SizedBox(
@@ -63,9 +64,9 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
                       maxLength: 80,
                       enabled: !submitting,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Group name',
-                        hintText: 'e.g. Evening team',
+                      decoration: InputDecoration(
+                        labelText: context.tr('Group name'),
+                        hintText: context.tr('e.g. Evening team'),
                       ),
                     ),
                     TextField(
@@ -73,10 +74,10 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
                       controller: _description,
                       maxLength: 500,
                       enabled: !submitting,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        hintText: 'What is this group for?',
-                        helperText: 'Optional',
+                      decoration: InputDecoration(
+                        labelText: context.tr('Description'),
+                        hintText: context.tr('What is this group for?'),
+                        helperText: context.tr('Optional'),
                       ),
                     ),
                     Align(
@@ -84,10 +85,12 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
                       child: Text(context.tr('Members')),
                     ),
                     if (widget.employees.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(12),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
                         child: Text(
-                          'No active employees are available. The manager will be included.',
+                          context.tr(
+                            'No active employees are available. The manager will be included.',
+                          ),
                         ),
                       ),
                     for (final employee in widget.employees)
@@ -139,12 +142,14 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
     final name = _name.text.trim();
     final description = _description.text.trim();
     if (name.isEmpty) {
-      Fluttertoast.showToast(msg: 'Enter a group name.');
+      if (!mounted) return;
+      Fluttertoast.showToast(msg: context.tr('Enter a group name.'));
       return;
     }
     if (name.length > 80 || description.length > 500) {
+      if (!mounted) return;
       Fluttertoast.showToast(
-        msg: 'Check the group name and description lengths.',
+        msg: context.tr('Check the group name and description lengths.'),
       );
       return;
     }
@@ -163,8 +168,11 @@ class _CreateChatGroupDialogState extends State<CreateChatGroupDialog> {
         widget.cubit.scope != widget.scope) {
       _close(context);
     } else if (result == ChatMutationResult.failure) {
+      if (!mounted) return;
       Fluttertoast.showToast(
-        msg: widget.cubit.state.failure?.message ?? 'Could not create group.',
+        msg: context.tr(
+          widget.cubit.state.failure?.message ?? 'Could not create group.',
+        ),
       );
     }
   }

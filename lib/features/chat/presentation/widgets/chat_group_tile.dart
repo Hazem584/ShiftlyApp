@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
@@ -51,12 +52,17 @@ class ChatGroupTile extends StatelessWidget {
         children: [
           if (group.lastMessage != null)
             Text(
-              group.lastMessage!.text ?? group.lastMessage!.type.toLowerCase(),
+              group.lastMessage!.text ??
+                  (Localizations.localeOf(context).languageCode == 'ar'
+                      ? context.tr(group.lastMessage!.type)
+                      : group.lastMessage!.type.toLowerCase()),
               maxLines: narrow ? 1 : 2,
               overflow: TextOverflow.ellipsis,
             ),
           Text(
-            '${group.memberCount} members',
+            context.tr('{value1} members', {
+              'value1': (group.memberCount).toString(),
+            }),
             style: Theme.of(context).textTheme.labelSmall,
           ),
         ],
@@ -76,7 +82,11 @@ class ChatGroupTile extends StatelessWidget {
           if (group.unreadCount > 0)
             Badge(
               label: Text(
-                group.unreadCount > 99 ? '99+' : '${group.unreadCount}',
+                group.unreadCount > 99
+                    ? '99+'
+                    : context.tr('{value1}', {
+                        'value1': (group.unreadCount).toString(),
+                      }),
               ),
             ),
         ],

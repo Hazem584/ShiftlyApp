@@ -96,7 +96,9 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(
-      widget.actual ? 'Record extra attendance' : 'Authorize an extra shift',
+      widget.actual
+          ? context.tr('Record extra attendance')
+          : context.tr('Authorize an extra shift'),
     ),
     scrollable: true,
     content: SizedBox(
@@ -105,17 +107,22 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Times and operational dates in ${widget.timezone}. Overnight shifts use their start date.',
+            context.tr(
+              'Times and operational dates in {value1}. Overnight shifts use their start date.',
+              {'value1': (widget.timezone).toString()},
+            ),
           ),
           const SizedBox(height: 12),
           if (templates == null)
             TextButton(
               onPressed: busy ? null : _loadTemplates,
-              child: const Text('Load / retry templates'),
+              child: Text(context.tr('Load / retry templates')),
             )
           else if (templates!.isEmpty)
-            const Text(
-              'No active templates. Create one before assigning extras.',
+            Text(
+              context.tr(
+                'No active templates. Create one before assigning extras.',
+              ),
             )
           else
             ActiveTemplateSelector(
@@ -126,19 +133,29 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
           OutlinedButton(
             onPressed: busy ? null : _pickDate,
             child: Text(
-              'Operational date ${WorkspaceTime.localDateKey(year: date.year, month: date.month, day: date.day)}',
+              context.tr('Operational date {value1}', {
+                'value1': (WorkspaceTime.localDateKey(
+                  year: date.year,
+                  month: date.month,
+                  day: date.day,
+                )).toString(),
+              }),
             ),
           ),
           DropdownButtonFormField<String>(
             initialValue: reason,
             isExpanded: true,
-            decoration: const InputDecoration(labelText: 'Structured reason'),
+            decoration: InputDecoration(
+              labelText: context.tr('Structured reason'),
+            ),
             items: [
               for (final value in reasons)
                 DropdownMenuItem(
                   value: value,
                   child: Text(
-                    value.replaceAll('_', ' '),
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? context.tr(value)
+                        : value.replaceAll('_', ' '),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -151,32 +168,36 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
             maxLength: 1000,
             minLines: 2,
             maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'Explanation (3–1000 characters)',
+            decoration: InputDecoration(
+              labelText: context.tr('Explanation (3–1000 characters)'),
             ),
           ),
           if (widget.actual) ...[
-            const Text(
-              'Enter local dates/times with the offset applicable at each instant. During a repeated DST hour, choose the intended offset explicitly. Missing DST times are invalid.',
+            Text(
+              context.tr(
+                'Enter local dates/times with the offset applicable at each instant. During a repeated DST hour, choose the intended offset explicitly. Missing DST times are invalid.',
+              ),
             ),
             TextField(
               controller: actualIn,
               enabled: !busy,
-              decoration: const InputDecoration(
-                labelText: 'Actual clock-in with offset',
+              decoration: InputDecoration(
+                labelText: context.tr('Actual clock-in with offset'),
                 hintText: '2026-10-09T08:00:00+03:00',
               ),
             ),
             TextField(
               controller: actualOut,
               enabled: !busy,
-              decoration: const InputDecoration(
-                labelText: 'Actual clock-out with offset',
+              decoration: InputDecoration(
+                labelText: context.tr('Actual clock-out with offset'),
                 hintText: '2026-10-09T16:00:00+03:00',
               ),
             ),
-            const Text(
-              'Recording EXTRA attendance does not award BLUE. Use Employee Performance → Extra effort approval separately and link the attendance.',
+            Text(
+              context.tr(
+                'Recording EXTRA attendance does not award BLUE. Use Employee Performance → Extra effort approval separately and link the attendance.',
+              ),
             ),
           ],
           if (widget.cubit.state.intent != null)
@@ -202,7 +223,9 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
             busy || templateId == null || widget.cubit.state.recoveryBlocked
             ? null
             : _submit,
-        child: Text(busy ? 'Saving…' : 'Review and save'),
+        child: Text(
+          busy ? context.tr('Saving…') : context.tr('Review and save'),
+        ),
       ),
     ],
   );
@@ -283,10 +306,45 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Confirm extra shift'),
+        title: Text(context.tr('Confirm extra shift')),
         scrollable: true,
         content: Text(
-          '${templates!.firstWhere((t) => t.id == templateId).name}\n${payload['operationalDate']} · ${widget.timezone}\n$reason\n$text${widget.actual ? '\nClock-in: ${WorkspaceTime.dateTime(DateTime.parse(payload['actualClockInAt'] as String), widget.timezone)}\nClock-out: ${WorkspaceTime.dateTime(DateTime.parse(payload['actualClockOutAt'] as String), widget.timezone)}\nNo automatic BLUE award.' : ''}',
+          context.tr(
+            '{value1}\n{value2} · {value3}\n{value4}\n{value5}{value6}',
+            {
+              'value1': (templates!.firstWhere((t) => t.id == templateId).name)
+                  .toString(),
+              'value2': (payload['operationalDate']).toString(),
+              'value3': (widget.timezone).toString(),
+              'value4': context.tr(reason),
+              'value5': (text).toString(),
+              'value6':
+                  (widget.actual
+                          ? context.tr(
+                              '\nClock-in: {start}\nClock-out: {end}\nNo automatic BLUE award.',
+                              {
+                                'start': WorkspaceTime.dateTime(
+                                  DateTime.parse(
+                                    payload['actualClockInAt'] as String,
+                                  ),
+                                  widget.timezone,
+                                  locale: Localizations.localeOf(context)
+                                      .toString(),
+                                ),
+                                'end': WorkspaceTime.dateTime(
+                                  DateTime.parse(
+                                    payload['actualClockOutAt'] as String,
+                                  ),
+                                  widget.timezone,
+                                  locale: Localizations.localeOf(context)
+                                      .toString(),
+                                ),
+                              },
+                            )
+                          : '')
+                      .toString(),
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -295,7 +353,7 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('Confirm'),
+            child: Text(context.tr('Confirm')),
           ),
         ],
       ),

@@ -21,7 +21,11 @@ class NotificationBell extends StatelessWidget {
           icon: Badge(
             key: const Key('notification-badge'),
             isLabelVisible: count > 0,
-            label: Text(count > 99 ? '99+' : '$count'),
+            label: Text(
+              count > 99
+                  ? '99+'
+                  : context.tr('{value1}', {'value1': (count).toString()}),
+            ),
             child: Icon(Icons.notifications_none_rounded, color: color),
           ),
         ),

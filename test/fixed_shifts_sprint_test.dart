@@ -747,7 +747,7 @@ void main() {
       throwsFormatException,
     );
     expect(
-      () => WorkPattern.fromJson({
+      () => WorkPattern.fromJson(const {
         'id': 'pattern',
         'workspaceId': 'workspace-id',
         'employeeMembershipId': 'membership-id',
@@ -2016,7 +2016,7 @@ void assignedSprintTests() {
             .canClockIn,
         isTrue,
       );
-      final legacy = WorkPattern.fromJson({
+      final legacy = WorkPattern.fromJson(const {
         'id': 'old',
         'workspaceId': 'workspace-id',
         'employeeMembershipId': 'membership-id',

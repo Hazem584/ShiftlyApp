@@ -45,7 +45,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     dimension: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Mark all read'),
+                : Text(context.tr('Mark all read')),
           ),
         ),
       ],
@@ -58,7 +58,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (state.notifications.isEmpty && state.failure != null) {
           return EmptyState(
             icon: Icons.cloud_off_outlined,
-            title: 'Could not load notifications',
+            title: context.tr('Could not load notifications'),
             message: state.failure!.message,
             action: FilledButton(
               onPressed: context.read<NotificationsCubit>().load,
@@ -82,9 +82,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const SizedBox(height: AppSpacing.s),
               ],
               if (state.notifications.isEmpty)
-                const EmptyState(
+                EmptyState(
                   icon: Icons.notifications_none_rounded,
-                  title: 'No notifications',
+                  title: context.tr('No notifications'),
                   message: 'Workspace updates will appear here. Pull down to refresh.',
                 )
               else
@@ -112,7 +112,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           dimension: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Load more'),
+                      : Text(context.tr('Load more')),
                 ),
             ],
           ),
@@ -165,8 +165,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete notification?'),
-        content: const Text('This notification will be permanently removed.'),
+        title: Text(context.tr('Delete notification?')),
+        content: Text(
+          context.tr('This notification will be permanently removed.'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),

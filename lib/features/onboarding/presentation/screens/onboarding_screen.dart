@@ -53,7 +53,7 @@ class OnboardingScreen extends StatelessWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Shiftly',
+                                  context.tr('Shiftly'),
                                   style: Theme.of(context).textTheme.titleLarge,
                                 ),
                               ),

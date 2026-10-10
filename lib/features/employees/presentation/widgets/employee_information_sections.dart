@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_detail.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_information_section.dart';
@@ -10,16 +11,16 @@ class EmployeeContactSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmployeeInformationSection(
-    title: 'Contact information',
+    title: context.tr('Contact information'),
     rows: [
       EmployeeDetail(
         icon: Icons.email_outlined,
-        title: 'Email',
+        title: context.tr('Email'),
         value: employee.displayEmail,
       ),
       EmployeeDetail(
         icon: Icons.phone_outlined,
-        title: 'Phone',
+        title: context.tr('Phone'),
         value: employee.displayPhone,
       ),
     ],

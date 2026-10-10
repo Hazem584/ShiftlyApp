@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_legend.dart';
@@ -76,7 +77,10 @@ class AttendanceCalendarGrid extends StatelessWidget {
             return Semantics(
               button: true,
               selected: selected,
-              label: '$key${label.isEmpty ? '' : ', $label'}',
+              label: context.tr('{value1}{value2}', {
+                'value1': (key).toString(),
+                'value2': (label.isEmpty ? '' : ', $label').toString(),
+              }),
               child: InkWell(
                 key: Key('calendar-day-$key'),
                 onTap: () => onSelected(date),
@@ -103,7 +107,7 @@ class AttendanceCalendarGrid extends StatelessWidget {
                     children: [
                       FittedBox(
                         child: Text(
-                          '$day',
+                          context.tr('{value1}', {'value1': (day).toString()}),
                           style: TextStyle(
                             color: selected ? Colors.white : null,
                             fontWeight: today || selected

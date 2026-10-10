@@ -25,7 +25,7 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             DecoratedBox(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.orangeSoft,
                 shape: BoxShape.circle,
               ),

@@ -4,6 +4,7 @@ import 'package:shiftly/core/widgets/failure_notice.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
 import 'package:shiftly/features/manager_performance/presentation/widgets/manager_confirmation_dialog.dart';
+import 'package:shiftly/features/manager_performance/presentation/widgets/manager_operation_formatters.dart';
 
 class ManagerRecoveryBanner extends StatelessWidget {
   const ManagerRecoveryBanner({
@@ -36,11 +37,21 @@ class ManagerRecoveryBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Saved operation: ${intent.resource}'),
-                if (intent.target != null)
-                  Text('Employee membership: ${intent.target}'),
                 Text(
-                  'New changes are blocked until this operation is resolved.',
+                  context.tr('Saved operation: {value1}', {
+                    'value1': managerOperationLabel(context, intent.resource),
+                  }),
+                ),
+                if (intent.target != null)
+                  Text(
+                    context.tr('Employee membership: {value1}', {
+                      'value1': (intent.target).toString(),
+                    }),
+                  ),
+                Text(
+                  context.tr(
+                    'New changes are blocked until this operation is resolved.',
+                  ),
                 ),
                 OutlinedButton(
                   onPressed: state.busy || state.restoring
@@ -55,11 +66,11 @@ class ManagerRecoveryBanner extends StatelessWidget {
                               title: intent.hasUuid
                                   ? 'Retry saved operation?'
                                   : 'Check canonical outcome?',
-                              details: intent.payload.entries
-                                  .map(
-                                    (entry) => '${entry.key}: ${entry.value}',
-                                  )
-                                  .join('\n\n'),
+                              details: managerOperationDetails(
+                                context,
+                                intent.payload,
+                                resource: intent.resource,
+                              ),
                             ),
                           );
                           if (confirmed == true &&
@@ -70,8 +81,8 @@ class ManagerRecoveryBanner extends StatelessWidget {
                         },
                   child: Text(
                     intent.hasUuid
-                        ? 'Retry exact saved request'
-                        : 'Read canonical outcome',
+                        ? context.tr('Retry exact saved request')
+                        : context.tr('Read canonical outcome'),
                   ),
                 ),
               ],

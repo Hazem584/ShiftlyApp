@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
@@ -96,7 +97,7 @@ class LeaveRequestCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
-                      leaveTypeLabel(request.type),
+                      context.tr(leaveTypeLabel(request.type)),
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -111,22 +112,39 @@ class LeaveRequestCard extends StatelessWidget {
           const SizedBox(height: 13),
           LeaveDetailRow(
             icon: Icons.calendar_today_outlined,
-            text:
-                '${WorkspaceTime.dateTime(request.startsAt, timezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.dateTime(request.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+            text: context.tr('{value1} – {value2}', {
+              'value1': (WorkspaceTime.dateTime(
+                request.startsAt,
+                timezone,
+                locale: Localizations.localeOf(context).toString(),
+              )).toString(),
+              'value2': (WorkspaceTime.dateTime(
+                request.endsAt,
+                timezone,
+                locale: Localizations.localeOf(context).toString(),
+              )).toString(),
+            }),
           ),
           const SizedBox(height: 7),
           LeaveDetailRow(icon: Icons.notes_rounded, text: request.reason),
           const SizedBox(height: 7),
           LeaveDetailRow(
             icon: Icons.schedule_rounded,
-            text:
-                'Submitted ${WorkspaceTime.dateTime(request.createdAt, timezone, locale: Localizations.localeOf(context).toString())}',
+            text: context.tr('Submitted {value1}', {
+              'value1': (WorkspaceTime.dateTime(
+                request.createdAt,
+                timezone,
+                locale: Localizations.localeOf(context).toString(),
+              )).toString(),
+            }),
           ),
           if (request.rejectionReason?.isNotEmpty == true) ...[
             const SizedBox(height: 7),
             LeaveDetailRow(
               icon: Icons.info_outline,
-              text: 'Reason: ${request.rejectionReason}',
+              text: context.tr('Reason: {value1}', {
+                'value1': (request.rejectionReason).toString(),
+              }),
             ),
           ],
           if (pending) ...[
@@ -140,7 +158,7 @@ class LeaveRequestCard extends StatelessWidget {
                       ? null
                       : () => _decide(context, LeaveReviewDecision.rejected),
                   icon: const Icon(Icons.close_rounded, size: 17),
-                  label: const Text('Reject'),
+                  label: Text(context.tr('Reject')),
                 );
                 final approve = FilledButton.icon(
                   key: Key('approve-${request.id}'),
@@ -156,7 +174,7 @@ class LeaveRequestCard extends StatelessWidget {
                           ),
                         )
                       : const Icon(Icons.check_rounded, size: 17),
-                  label: const Text('Approve'),
+                  label: Text(context.tr('Approve')),
                 );
                 return compact
                     ? Column(

@@ -38,7 +38,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           final loading = state.status == SessionStatus.loadingCurrentUser;
           return Scaffold(
             appBar: AppBar(
-              title: const Text('Complete your profile'),
+              title: Text(context.tr('Complete your profile')),
               actions: [
                 TextButton(
                   onPressed: loading
@@ -59,9 +59,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const AuthBrandHeader(
-                            title: 'Complete your profile',
-                            subtitle: 'Tell us how your name and phone should appear in Shiftly.',
+                          AuthBrandHeader(
+                            title: context.tr('Complete your profile'),
+                            subtitle: context.tr(
+                              'Tell us how your name and phone should appear in Shiftly.',
+                            ),
                           ),
                           const SizedBox(height: AppSpacing.l),
                           TextFormField(
@@ -73,8 +75,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             ),
                             validator: (value) {
                               final length = value?.trim().length ?? 0;
-                              if (length < 1) return 'Full name is required';
-                              if (length > 120) return 'Full name is too long';
+                              if (length < 1) {
+                                return context.tr('Full name is required');
+                              }
+                              if (length > 120) {
+                                return context.tr('Full name is too long');
+                              }
                               return null;
                             },
                           ),
@@ -84,12 +90,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             controller: _phone,
                             enabled: !loading,
                             keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                              labelText: 'Phone (optional)',
+                            decoration: InputDecoration(
+                              labelText: context.tr('Phone (optional)'),
                             ),
                             validator: (value) =>
                                 (value?.trim().length ?? 0) > 30
-                                ? 'Phone number is too long'
+                                ? context.tr('Phone number is too long')
                                 : null,
                           ),
                           const SizedBox(height: AppSpacing.l),

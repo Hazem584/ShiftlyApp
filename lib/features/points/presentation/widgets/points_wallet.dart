@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/points/domain/entities/points_models.dart';
 
 class PointsWalletView extends StatelessWidget {
@@ -9,7 +10,10 @@ class PointsWalletView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text('Points wallet', style: Theme.of(context).textTheme.titleLarge),
+      Text(
+        context.tr('Points wallet'),
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
       const SizedBox(height: 10),
       LayoutBuilder(
         builder: (context, constraints) {
@@ -76,7 +80,10 @@ Widget _balanceCard(
   Color color,
   double width,
 ) => Semantics(
-  label: '$label balance: $value',
+  label: context.tr('{label} balance: {value}', {
+    'label': context.tr(label),
+    'value': '$value',
+  }),
   child: Container(
     width: width,
     constraints: const BoxConstraints(minHeight: 104),
@@ -90,8 +97,11 @@ Widget _balanceCard(
       children: [
         Icon(icon, color: color),
         const SizedBox(height: 8),
-        Text('$value', style: Theme.of(context).textTheme.titleLarge),
-        Text(label, maxLines: 2),
+        Text(
+          context.tr('{value1}', {'value1': (value).toString()}),
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        Text(context.tr(label)),
       ],
     ),
   ),

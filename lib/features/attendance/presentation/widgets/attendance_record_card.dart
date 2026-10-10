@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -62,7 +63,7 @@ class AttendanceRecordCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  _month(date.month),
+                  context.tr(_month(date.month)),
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 10,
@@ -78,7 +79,7 @@ class AttendanceRecordCard extends StatelessWidget {
               children: [
                 Text(
                   record.source == AttendanceSource.template
-                      ? record.templateName ?? 'Fixed shift'
+                      ? record.templateName ?? context.tr('Fixed shift')
                       : record.employee.displayName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -87,21 +88,39 @@ class AttendanceRecordCard extends StatelessWidget {
                 if (record.source == AttendanceSource.template)
                   Text(
                     record.occurrenceKind == 'EXTRA'
-                        ? 'EXTRA (optional; no automatic BLUE)'
+                        ? context.tr('EXTRA (optional; no automatic BLUE)')
                         : record.occurrenceKind == 'BASELINE'
-                        ? 'BASELINE'
-                        : 'Historical template attendance; assignment evidence not recorded',
+                        ? context.tr('BASELINE')
+                        : context.tr(
+                            'Historical template attendance; assignment evidence not recorded',
+                          ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 if (record.source == AttendanceSource.template)
                   Text(
-                    'Operational date: ${record.operationalDate?.split('T').first ?? 'Not recorded'} / $savedTimezone',
+                    context.tr('Operational date: {value1} / {value2}', {
+                      'value1':
+                          (record.operationalDate?.split('T').first ??
+                                  'Not recorded')
+                              .toString(),
+                      'value2': (savedTimezone).toString(),
+                    }),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 const SizedBox(height: 3),
                 Text(
-                  'In: ${WorkspaceTime.time(record.clockInAt, savedTimezone, locale: Localizations.localeOf(context).toString())}  '
-                  'Out: ${WorkspaceTime.time(record.clockOutAt, savedTimezone, locale: Localizations.localeOf(context).toString())}',
+                  context.tr('In: {value1}  Out: {value2}', {
+                    'value1': (WorkspaceTime.time(
+                      record.clockInAt,
+                      savedTimezone,
+                      locale: Localizations.localeOf(context).toString(),
+                    )).toString(),
+                    'value2': (WorkspaceTime.time(
+                      record.clockOutAt,
+                      savedTimezone,
+                      locale: Localizations.localeOf(context).toString(),
+                    )).toString(),
+                  }),
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
@@ -109,14 +128,16 @@ class AttendanceRecordCard extends StatelessWidget {
                 ),
                 Text(
                   record.isOpen
-                      ? 'Open attendance'
+                      ? context.tr('Open attendance')
                       : record.reviewStatus ==
                                 AttendanceReviewStatus.rejected &&
                             record.clockOutAt == null
-                      ? 'Rejected; occurrence remains used'
+                      ? context.tr('Rejected; occurrence remains used')
                       : record.workedMinutes == null
-                      ? 'Duration not recorded'
-                      : '${record.workedMinutes} minutes worked',
+                      ? context.tr('Duration not recorded')
+                      : context.tr('{value1} minutes worked', {
+                          'value1': (record.workedMinutes).toString(),
+                        }),
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
@@ -138,7 +159,7 @@ class AttendanceRecordCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   child: Text(
-                    label,
+                    context.tr(label),
                     style: TextStyle(
                       color: color,
                       fontSize: 10,

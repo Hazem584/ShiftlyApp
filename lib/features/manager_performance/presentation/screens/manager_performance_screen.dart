@@ -63,7 +63,9 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
       return Scaffold(
         appBar: AppBar(title: Text(context.tr('Performance'))),
         body: state.scope == null
-            ? const Center(child: Text('Active manager workspace required.'))
+            ? Center(
+                child: Text(context.tr('Active manager workspace required.')),
+              )
             : RefreshIndicator(
                 onRefresh: () async {
                   await cubit.load(_section, query: _query);
@@ -87,7 +89,7 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                           'warnings': 'Warnings',
                         }.entries)
                           ChoiceChip(
-                            label: Text(section.value),
+                            label: Text(context.tr(section.value)),
                             selected: _section == section.key,
                             onSelected: (_) {
                               setState(() => _section = section.key);
@@ -102,9 +104,9 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                         key: ValueKey(state.scope),
                         initialValue: _search,
                         maxLength: 100,
-                        decoration: const InputDecoration(
-                          labelText: 'Employee name',
-                          suffixIcon: Icon(Icons.search),
+                        decoration: InputDecoration(
+                          labelText: context.tr('Employee name'),
+                          suffixIcon: const Icon(Icons.search),
                         ),
                         onFieldSubmitted: (value) {
                           setState(() => _search = value.trim());
@@ -123,7 +125,7 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                             'CANCELLED',
                           ])
                             FilterChip(
-                              label: Text(status ?? 'All'),
+                              label: Text(context.tr(status ?? 'All')),
                               selected: _status == status,
                               onSelected: (_) {
                                 setState(() => _status = status);
@@ -133,7 +135,7 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                         ],
                       ),
                     if (_section == 'policies') ...[
-                      const Text('Current policy'),
+                      Text(context.tr('Current policy')),
                       if (state
                               .resources['workspace:policies/current']
                               ?.loading ==
@@ -141,11 +143,17 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                         const LinearProgressIndicator(),
                       if (state.resources['workspace:policies/current']?.error
                           case final error?)
-                        Text(error),
+                        Text(context.tr(error)),
                       if (state.resources['workspace:policies/current']?.object
                           case final current?)
                         Text(
-                          'Effective ${current['effectiveFrom']} · Points enabled: ${current['isEnabled']}',
+                          context.tr(
+                            'Effective {value1} · Points enabled: {value2}',
+                            {
+                              'value1': (current['effectiveFrom']).toString(),
+                              'value2': context.tr('${current['isEnabled']}'),
+                            },
+                          ),
                         ),
                       FilledButton.icon(
                         onPressed:
@@ -171,7 +179,9 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                                     await showDialog<Map<String, Object?>>(
                                       context: context,
                                       builder: (_) => ManagerActionDialog(
-                                        title: 'Create policy version',
+                                        title: context.tr(
+                                          'Create policy version',
+                                        ),
                                         fields: ManagerForms.policy,
                                         cubit: cubit,
                                         scope: scope,
@@ -193,9 +203,9 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                                 }
                               },
                         icon: const Icon(Icons.add),
-                        label: const Text('New future-effective version'),
+                        label: Text(context.tr('New future-effective version')),
                       ),
-                      const Text('Version history'),
+                      Text(context.tr('Version history')),
                     ],
                     ManagerResourceList(
                       resource: _section,

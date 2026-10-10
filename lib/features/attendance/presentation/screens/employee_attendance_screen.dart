@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/app_tab_selector.dart';
@@ -50,9 +51,11 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const ScreenHeader(
-                  title: 'Attendance & Leave',
-                  subtitle: 'Your workspace attendance and leave requests',
+                ScreenHeader(
+                  title: context.tr('Attendance & Leave'),
+                  subtitle: context.tr(
+                    'Your workspace attendance and leave requests',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.m),
                 AppTabSelector(

@@ -16,7 +16,7 @@ class PointsFailureView extends StatelessWidget {
         children: [
           const Icon(Icons.cloud_off_outlined, size: 48),
           const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
+          Text(context.tr(message), textAlign: TextAlign.center),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: context.read<PointsCubit>().load,

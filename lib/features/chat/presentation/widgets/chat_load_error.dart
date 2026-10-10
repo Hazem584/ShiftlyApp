@@ -15,7 +15,7 @@ class ChatLoadError extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(message, textAlign: TextAlign.center),
+        Text(context.tr(message), textAlign: TextAlign.center),
         TextButton(onPressed: onRetry, child: Text(context.tr('Retry'))),
       ],
     ),

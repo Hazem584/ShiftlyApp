@@ -1,3 +1,8 @@
+import 'package:shiftly/core/localization/arabic_error_translations.dart';
+import 'package:shiftly/core/localization/arabic_interface_translations.dart';
+import 'package:shiftly/core/localization/arabic_points_translations.dart';
+import 'package:shiftly/core/localization/arabic_workflow_translations.dart';
+
 const arabicTranslations = <String, String>{
   'Error code: {code}': 'رمز الخطأ: {code}',
   'This reversal would subtract points that are no longer available. Reverse the related deduction adjustment first, then reverse the original award.': 'هذا الإلغاء سيخصم نقاطًا لم تعد متاحة. اعكس تعديل السحب المرتبط أولًا، ثم ألغِ المنحة الأصلية.',
@@ -37,7 +42,7 @@ const arabicTranslations = <String, String>{
   'Unknown occurrence; read-only': 'شيفت غير معروف؛ للعرض فقط',
   'Already used; cannot reopen': 'تم تسجيله بالفعل؛ لا يمكن إعادة فتحه',
   'Outside check-in window / read-only': 'خارج وقت تسجيل الحضور؛ للعرض فقط',
-  '{minutes} min late': 'تأخير {minutes} دقيقة',
+
   'Clocked in: {time}': 'وقت الحضور: {time}',
   'Schedule: {start} – {end}': 'موعد الشيفت: {start} – {end}',
   'Operational date: {date}': 'تاريخ يوم العمل: {date}',
@@ -63,8 +68,7 @@ const arabicTranslations = <String, String>{
   'Completed': 'مكتمل',
   'No shift scheduled.': 'لا يوجد شيفت مجدول.',
   'Create your Shiftly account': 'أنشئ حسابك على Shiftly',
-  'Use the exact email address your manager invited.':
-      'استخدم نفس البريد الإلكتروني الذي دعاك به المدير.',
+
   'Use at least 8 characters': 'استخدم ٨ أحرف على الأقل',
   'Passwords do not match': 'كلمتا المرور غير متطابقتين',
   'Show password': 'إظهار كلمة المرور',
@@ -133,19 +137,17 @@ const arabicTranslations = <String, String>{
   'Dashboard': 'الرئيسية',
   'Overview': 'نظرة عامة',
   'Employees': 'الموظفون',
-  'Attendance': 'الحضور',
+
   'Chat': 'المحادثات',
   'Profile': 'الملف الشخصي',
   'Performance': 'الأداء',
   'My Shifts': 'شيفتاتي',
   'Employee workspace': 'مساحة عمل الموظف',
   'Manager Profile': 'الملف الشخصي للمدير',
-  'Your personal and workplace information': 'بياناتك الشخصية وبيانات العمل',
+
   'Switch workspace': 'تغيير مساحة العمل',
   'Sign out': 'تسجيل الخروج',
-  'Welcome to Shiftly': 'أهلًا بك في Shiftly',
-  'Sign in to continue to your workspace. Use the email your manager invited.':
-      'سجّل الدخول إلى مساحة عملك بالبريد الإلكتروني الذي دعاك به المدير.',
+
   'Sign in': 'تسجيل الدخول',
   'Unable to sign in.': 'تعذّر تسجيل الدخول.',
   'Email': 'البريد الإلكتروني',
@@ -153,7 +155,7 @@ const arabicTranslations = <String, String>{
   'Confirm password': 'تأكيد كلمة المرور',
   'Enter a valid email address': 'أدخل بريدًا إلكترونيًا صحيحًا',
   'Password is required': 'أدخل كلمة المرور',
-  'Don’t have an account? Create account': 'ليس لديك حساب؟ أنشئ حسابًا',
+
   'Create account': 'إنشاء حساب',
   'Create your account': 'أنشئ حسابك',
   'Full name': 'الاسم الكامل',
@@ -186,8 +188,7 @@ const arabicTranslations = <String, String>{
   'Active': 'نشط',
   'Inactive': 'غير نشط',
   'All': 'الكل',
-  'Today': 'اليوم',
-  'Yesterday': 'أمس',
+
   'Name': 'الاسم',
   'Description (optional)': 'الوصف (اختياري)',
   'Members': 'الأعضاء',
@@ -200,7 +201,7 @@ const arabicTranslations = <String, String>{
   'No notifications yet': 'لا توجد إشعارات بعد',
   'Clear': 'مسح',
   'Chat media cache': 'ملفات المحادثات المحفوظة مؤقتًا',
-  'Could not load profile': 'تعذّر تحميل الملف الشخصي',
+
   'Edit profile': 'تعديل الملف الشخصي',
   'Personal information': 'البيانات الشخصية',
   'Work information': 'بيانات العمل',
@@ -210,10 +211,9 @@ const arabicTranslations = <String, String>{
   'Manager': 'مدير',
   'Employee': 'موظف',
   'Department': 'القسم',
-  'Job title': 'المسمّى الوظيفي',
-  'Dashboard unavailable': 'تعذّر تحميل الصفحة الرئيسية',
+
   'Preparing your dashboard': 'جارٍ تجهيز صفحتك الرئيسية',
-  'Quick actions': 'إجراءات سريعة',
+
   'Total employees': 'إجمالي الموظفين',
   'Scheduled today': 'المجدولون اليوم',
   'Clocked in now': 'حاضرون الآن',
@@ -228,8 +228,7 @@ const arabicTranslations = <String, String>{
   'Hello, {name}': 'أهلًا، {name}',
   'Request leave': 'طلب إجازة',
   'Pending leave': 'إجازات قيد المراجعة',
-  'Scheduled shift': 'الشيفت المجدول',
-  'Next scheduled shift': 'الشيفت القادم',
+
   'Fixed shifts': 'الشيفتات الثابتة',
   'Earlier shifts & clock-out': 'الشيفتات السابقة وتسجيل الانصراف',
   'Open My Shifts': 'افتح شيفتاتي',
@@ -240,8 +239,7 @@ const arabicTranslations = <String, String>{
   'Recorded': 'مسجّل',
   'On time': 'في الموعد',
   'Early': 'مبكر',
-  'Late': 'متأخر',
-  'Not recorded': 'غير مسجّل',
+
   'Your clock-in needs confirmation': 'تسجيل حضورك يحتاج إلى تأكيد',
   'Your last request is saved. Confirm its outcome below before starting another shift.':
       'طلبك الأخير محفوظ. أكّد نتيجته بالأسفل قبل بدء شيفت آخر.',
@@ -286,7 +284,7 @@ const arabicTranslations = <String, String>{
   'Access needs attention': 'راجع صلاحية الوصول',
   'Review this action': 'راجع هذا الإجراء',
   'Service temporarily unavailable': 'الخدمة غير متاحة مؤقتًا',
-  'Request cancelled': 'تم إلغاء الطلب',
+
   'Unable to confirm the latest status': 'تعذّر تأكيد الحالة الحالية',
   'Support reference: {id}': 'رقم مرجعي للدعم: {id}',
   'Refresh status': 'تحديث الحالة',
@@ -317,4 +315,8 @@ const arabicTranslations = <String, String>{
   'Approved': 'مقبول',
   'Rejected': 'مرفوض',
   'Pending': 'قيد المراجعة',
+  ...arabicInterfaceTranslations,
+  ...arabicPointsTranslations,
+  ...arabicErrorTranslations,
+  ...arabicWorkflowTranslations,
 };

@@ -19,7 +19,7 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
   Widget build(BuildContext context) => AlertDialog(
     title: Row(
       children: [
-        Expanded(child: Text(leaveTypeLabel(request.type))),
+        Expanded(child: Text(context.tr(leaveTypeLabel(request.type)))),
         LeaveStatusBadge(status: request.status),
       ],
     ),
@@ -35,36 +35,58 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
           const SizedBox(height: 14),
           LeaveDetailRow(
             icon: Icons.calendar_today_outlined,
-            text:
-                'Starts: ${WorkspaceTime.dateTime(request.startsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+            text: context.tr('Starts: {value1}', {
+              'value1': (WorkspaceTime.dateTime(
+                request.startsAt,
+                timezone,
+                locale: Localizations.localeOf(context).toString(),
+              )).toString(),
+            }),
           ),
           const SizedBox(height: 8),
           LeaveDetailRow(
             icon: Icons.event_available_outlined,
-            text:
-                'Ends: ${WorkspaceTime.dateTime(request.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+            text: context.tr('Ends: {value1}', {
+              'value1': (WorkspaceTime.dateTime(
+                request.endsAt,
+                timezone,
+                locale: Localizations.localeOf(context).toString(),
+              )).toString(),
+            }),
           ),
           const SizedBox(height: 8),
           LeaveDetailRow(icon: Icons.notes_rounded, text: request.reason),
           const SizedBox(height: 8),
           LeaveDetailRow(
             icon: Icons.schedule_rounded,
-            text:
-                'Submitted: ${WorkspaceTime.dateTime(request.createdAt, timezone, locale: Localizations.localeOf(context).toString())}',
+            text: context.tr('Submitted: {value1}', {
+              'value1': (WorkspaceTime.dateTime(
+                request.createdAt,
+                timezone,
+                locale: Localizations.localeOf(context).toString(),
+              )).toString(),
+            }),
           ),
           if (request.reviewedAt != null) ...[
             const SizedBox(height: 8),
             LeaveDetailRow(
               icon: Icons.fact_check_outlined,
-              text:
-                  'Reviewed: ${WorkspaceTime.dateTime(request.reviewedAt!, timezone, locale: Localizations.localeOf(context).toString())}',
+              text: context.tr('Reviewed: {value1}', {
+                'value1': (WorkspaceTime.dateTime(
+                  request.reviewedAt!,
+                  timezone,
+                  locale: Localizations.localeOf(context).toString(),
+                )).toString(),
+              }),
             ),
           ],
           if (request.rejectionReason?.isNotEmpty == true) ...[
             const SizedBox(height: 8),
             LeaveDetailRow(
               icon: Icons.info_outline,
-              text: 'Rejection reason: ${request.rejectionReason}',
+              text: context.tr('Rejection reason: {value1}', {
+                'value1': (request.rejectionReason).toString(),
+              }),
             ),
           ],
         ],

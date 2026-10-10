@@ -33,20 +33,42 @@ class ManagerAuditDialog extends StatelessWidget {
     cubit: cubit,
     scope: scope,
     child: AlertDialog(
-      title: const Text('Immutable audit record'),
+      title: Text(context.tr('Immutable audit record')),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ID: ${record.id}'),
-            Text('Reason: ${record.text('reason')}'),
+            Text(
+              context.tr('ID: {value1}', {'value1': (record.id).toString()}),
+            ),
+            Text(
+              context.tr('Reason: {value1}', {
+                'value1': context.tr(record.text('reason')),
+              }),
+            ),
             Text(record.text('explanation')),
-            Text('Created: ${_date(context, 'createdAt')}'),
-            Text('Actor membership: ${record.text('createdByMembershipId')}'),
-            Text('Policy version: ${record.text('policyVersionId')}'),
+            Text(
+              context.tr('Created: {value1}', {
+                'value1': (_date(context, 'createdAt')).toString(),
+              }),
+            ),
+            Text(
+              context.tr('Actor membership: {value1}', {
+                'value1': (record.text('createdByMembershipId')).toString(),
+              }),
+            ),
+            Text(
+              context.tr('Policy version: {value1}', {
+                'value1': (record.text('policyVersionId')).toString(),
+              }),
+            ),
             if (record.reversed) ...[
-              Text('Reversed: ${_date(context, 'reversedAt')}'),
+              Text(
+                context.tr('Reversed: {value1}', {
+                  'value1': (_date(context, 'reversedAt')).toString(),
+                }),
+              ),
               Text(record.text('reversalReason')),
               Text(record.text('reversalExplanation')),
             ],
@@ -55,7 +77,17 @@ class ManagerAuditDialog extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Text(
-                    '${entry['pointType'] ?? 'Unknown'} ${entry['amount'] ?? 'Unknown'} · ${entry['reason'] ?? 'Unknown'}\nEntry: ${entry['id'] ?? 'Unknown'}',
+                    context.tr(
+                      '{value1} {value2} · {value3}\nEntry: {value4}',
+                      {
+                        'value1': context.tr(
+                          '${entry['pointType'] ?? 'Unknown'}',
+                        ),
+                        'value2': (entry['amount'] ?? 'Unknown').toString(),
+                        'value3': context.tr('${entry['reason'] ?? 'Unknown'}'),
+                        'value4': (entry['id'] ?? 'Unknown').toString(),
+                      },
+                    ),
                   ),
                 ),
           ],
@@ -75,7 +107,7 @@ class ManagerAuditDialog extends StatelessWidget {
                       Navigator.pop(context, true);
                     }
                   },
-            child: const Text('Reverse record'),
+            child: Text(context.tr('Reverse record')),
           ),
       ],
     ),

@@ -45,7 +45,7 @@ class ChatMembersSheet extends StatelessWidget {
                         if (canManage && group != null)
                           IconButton(
                             onPressed: () => _add(context, group),
-                            tooltip: 'Add members',
+                            tooltip: context.tr('Add members'),
                             icon: const Icon(Icons.person_add_alt_1),
                           ),
                       ],
@@ -68,7 +68,7 @@ class ChatMembersSheet extends StatelessWidget {
                                       : Text(member.email!),
                                   trailing: canManage
                                       ? IconButton(
-                                          tooltip: 'Remove member',
+                                          tooltip: context.tr('Remove member'),
                                           onPressed: state.mutating
                                               ? null
                                               : () => _remove(context, member),
@@ -93,7 +93,9 @@ class ChatMembersSheet extends StatelessWidget {
     final confirmed = await ShiftlyChatDialog.confirm(
       context,
       title: 'Remove member?',
-      message: '${member.displayName} will lose access to this group.',
+      message: context.tr('{value1} will lose access to this group.', {
+        'value1': member.displayName,
+      }),
       confirmText: 'Remove',
       destructive: true,
     );
@@ -114,7 +116,10 @@ class ChatMembersSheet extends StatelessWidget {
         scope,
       );
     } catch (_) {
-      Fluttertoast.showToast(msg: 'Could not load active workspace members.');
+      if (!context.mounted) return;
+      Fluttertoast.showToast(
+        msg: context.tr('Could not load active workspace members.'),
+      );
       return;
     }
     if (!context.mounted || context.read<ChatGroupsCubit>().scope != scope) {
@@ -130,8 +135,8 @@ class ChatMembersSheet extends StatelessWidget {
       context,
       body: StatefulBuilder(
         builder: (dialogContext, setState) => AppFormDialog(
-          title: 'Add members',
-          subtitle: 'Choose the people you want to include.',
+          title: context.tr('Add members'),
+          subtitle: context.tr('Choose the people you want to include.'),
           icon: Icons.person_add_alt_1_outlined,
           busy: submitting,
           content: SizedBox(
@@ -144,7 +149,7 @@ class ChatMembersSheet extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      failure!,
+                      context.tr(failure!),
                       style: TextStyle(
                         color: Theme.of(dialogContext).colorScheme.error,
                       ),
@@ -152,8 +157,10 @@ class ChatMembersSheet extends StatelessWidget {
                   ),
                 Flexible(
                   child: choices.isEmpty
-                      ? const Text(
-                          'No other active workspace members are available.',
+                      ? Text(
+                          context.tr(
+                            'No other active workspace members are available.',
+                          ),
                         )
                       : ListView(
                           shrinkWrap: true,
@@ -202,7 +209,9 @@ class ChatMembersSheet extends StatelessWidget {
                         });
                       }
                     },
-              child: Text(submitting ? 'Adding…' : 'Add'),
+              child: Text(
+                submitting ? context.tr('Adding…') : context.tr('Add'),
+              ),
             ),
           ],
         ),

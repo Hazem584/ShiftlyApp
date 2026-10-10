@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 
 class NavigationDestinationItem extends StatelessWidget {
@@ -45,7 +46,13 @@ class NavigationDestinationItem extends StatelessWidget {
                 duration: const Duration(milliseconds: 220),
                 child: Badge(
                   isLabelVisible: badgeCount > 0,
-                  label: Text(badgeCount > 99 ? '99+' : '$badgeCount'),
+                  label: Text(
+                    badgeCount > 99
+                        ? '99+'
+                        : context.tr('{value1}', {
+                            'value1': (badgeCount).toString(),
+                          }),
+                  ),
                   child: Icon(
                     icon,
                     size: 22,

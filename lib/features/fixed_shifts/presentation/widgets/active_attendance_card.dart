@@ -42,7 +42,7 @@ class ActiveAttendanceCard extends StatelessWidget {
                 children: [
                   Text(
                     context.tr('Active attendance'),
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.success,
                       fontWeight: FontWeight.w700,
                     ),
@@ -100,7 +100,18 @@ class ActiveAttendanceCard extends StatelessWidget {
           }),
         ),
         Text(
-          '${context.tr(attendanceClassificationLabel(attendance.classification ?? AttendanceClassification.unknown))}${attendance.minutesLate > 0 ? ' • ${context.tr('{minutes} min late', {'minutes': '${attendance.minutesLate}'})}' : ''}',
+          context.tr('{value1}{value2}', {
+            'value1': (context.tr(
+              attendanceClassificationLabel(
+                attendance.classification ?? AttendanceClassification.unknown,
+              ),
+            )).toString(),
+            'value2':
+                (attendance.minutesLate > 0
+                        ? ' • ${context.tr('{minutes} min late', {'minutes': '${attendance.minutesLate}'})}'
+                        : '')
+                    .toString(),
+          }),
         ),
         const SizedBox(height: 6),
         Text(
@@ -117,6 +128,7 @@ class ActiveAttendanceCard extends StatelessWidget {
             context.tr('Elapsed (display only): {duration}', {
               'duration': attendanceElapsed(
                 DateTime.now().toUtc().difference(attendance.clockInAt),
+                context,
               ),
             }),
             style: Theme.of(context).textTheme.bodySmall,

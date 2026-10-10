@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
@@ -50,7 +51,9 @@ class _VoiceMessageState extends State<ChatVoiceMessage> {
         child: Row(
           children: [
             IconButton.filledTonal(
-              tooltip: playing ? 'Pause voice message' : 'Play voice message',
+              tooltip: context.tr(
+                playing ? 'Pause voice message' : 'Play voice message',
+              ),
               onPressed: _loading || buffering
                   ? null
                   : () => _toggle(active, playing),
@@ -107,7 +110,10 @@ class _VoiceMessageState extends State<ChatVoiceMessage> {
                         ),
                       ),
                       Text(
-                        '${_duration(shown)} / ${_duration(duration)}',
+                        context.tr('{value1} / {value2}', {
+                          'value1': (_duration(shown)).toString(),
+                          'value2': (_duration(duration)).toString(),
+                        }),
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
                     ],
@@ -175,7 +181,10 @@ class _VoiceMessageState extends State<ChatVoiceMessage> {
       setState(() => _loading = false);
       await widget.player.play();
     } catch (_) {
-      Fluttertoast.showToast(msg: 'This voice message is unavailable.');
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: context.tr('This voice message is unavailable.'),
+      );
     } finally {
       if (mounted) setState(() => _loading = false);
     }

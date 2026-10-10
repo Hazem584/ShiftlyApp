@@ -25,7 +25,7 @@ class AttendanceCalendarStateView extends StatelessWidget {
           if (state.failure != null && !state.hasData) {
             return EmptyState(
               icon: Icons.calendar_month_outlined,
-              title: 'Could not load calendar',
+              title: context.tr('Could not load calendar'),
               message: state.failure!.message,
               action: FilledButton(
                 key: const Key('calendar-retry'),
@@ -48,7 +48,7 @@ class AttendanceCalendarStateView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Attendance Calendar',
+                        context.tr('Attendance Calendar'),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: AppSpacing.m),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class ProfileEditField extends StatelessWidget {
   const ProfileEditField({
@@ -30,7 +31,13 @@ class ProfileEditField extends StatelessWidget {
     keyboardType: keyboardType,
     textCapitalization: capitalization,
     textInputAction: TextInputAction.next,
-    validator: validator,
-    decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon)),
+    validator: (value) {
+      final error = validator(value);
+      return error == null ? null : context.tr(error);
+    },
+    decoration: InputDecoration(
+      labelText: context.tr(label),
+      prefixIcon: Icon(icon),
+    ),
   );
 }

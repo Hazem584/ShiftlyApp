@@ -25,7 +25,7 @@ class LeaveRequestsPanel extends StatelessWidget {
           if (state.requests.isEmpty && state.failure != null) {
             return EmptyState(
               icon: Icons.cloud_off_outlined,
-              title: 'Could not load requests',
+              title: context.tr('Could not load requests'),
               message: state.failure!.message,
               action: FilledButton(
                 onPressed: context.read<LeaveRequestsCubit>().load,
@@ -47,9 +47,9 @@ class LeaveRequestsPanel extends StatelessWidget {
                 const SizedBox(height: AppSpacing.s),
               ],
               if (state.requests.isEmpty)
-                const EmptyState(
+                EmptyState(
                   icon: Icons.event_available_outlined,
-                  title: 'All caught up',
+                  title: context.tr('All caught up'),
                   message: 'New employee requests will appear here for review.',
                 )
               else ...[
@@ -57,12 +57,14 @@ class LeaveRequestsPanel extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Employee requests',
+                        context.tr('Employee requests'),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
                     Text(
-                      '${state.requests.length} loaded',
+                      context.tr('{value1} loaded', {
+                        'value1': (state.requests.length).toString(),
+                      }),
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -89,7 +91,7 @@ class LeaveRequestsPanel extends StatelessWidget {
                             dimension: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Load more'),
+                        : Text(context.tr('Load more')),
                   ),
               ],
             ],

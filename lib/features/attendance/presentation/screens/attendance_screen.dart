@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
@@ -64,11 +65,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             key: const Key('attendance-content'),
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
             children: [
-              const ScreenHeader(
+              ScreenHeader(
                 icon: Icons.fact_check_rounded,
-                title: 'Attendance & Leave',
-                subtitle:
-                    'Check who is in, review leave, and open the calendar',
+                title: context.tr('Attendance & Leave'),
+                subtitle: context.tr(
+                  'Check who is in, review leave, and open the calendar',
+                ),
               ),
               const SizedBox(height: AppSpacing.m),
               const AttendanceMetricsSection(),

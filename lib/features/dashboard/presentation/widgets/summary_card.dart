@@ -56,7 +56,7 @@ class SummaryCard extends StatelessWidget {
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
             child: Text(
-              '$value',
+              context.tr('{value1}', {'value1': (value).toString()}),
               style: Theme.of(context).textTheme.headlineSmall,
             ),
           ),

@@ -22,7 +22,7 @@ class ManagerScopedDetails extends StatelessWidget {
         snapshot.data?.scope == scope && scope != null
         ? child
         : AlertDialog(
-            title: const Text('Manager access changed.'),
+            title: Text(context.tr('Manager access changed.')),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),

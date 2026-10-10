@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class AttendanceCalendarMonthHeader extends StatelessWidget {
   const AttendanceCalendarMonthHeader({
@@ -35,12 +36,15 @@ class AttendanceCalendarMonthHeader extends StatelessWidget {
       IconButton(
         key: const Key('calendar-previous-month'),
         onPressed: onPrevious,
-        tooltip: 'Previous month',
+        tooltip: context.tr('Previous month'),
         icon: const Icon(Icons.chevron_left_rounded),
       ),
       Expanded(
         child: Text(
-          '${_months[month - 1]} $year',
+          context.tr('{value1} {value2}', {
+            'value1': context.tr(_months[month - 1]),
+            'value2': (year).toString(),
+          }),
           key: const Key('calendar-visible-month'),
           textAlign: TextAlign.center,
           maxLines: 1,
@@ -51,7 +55,7 @@ class AttendanceCalendarMonthHeader extends StatelessWidget {
       IconButton(
         key: const Key('calendar-next-month'),
         onPressed: onNext,
-        tooltip: 'Next month',
+        tooltip: context.tr('Next month'),
         icon: const Icon(Icons.chevron_right_rounded),
       ),
     ],

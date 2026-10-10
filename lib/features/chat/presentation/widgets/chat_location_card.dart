@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -13,7 +14,7 @@ class ChatLocationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final value = location;
     if (value == null || !value.isValid) {
-      return const Text('Location unavailable');
+      return Text(context.tr('Location unavailable'));
     }
     final fallback =
         '${value.latitude.toStringAsFixed(5)}, ${value.longitude.toStringAsFixed(5)}';
@@ -26,7 +27,9 @@ class ChatLocationCard extends StatelessWidget {
             children: [
               const Icon(Icons.location_on_outlined),
               const SizedBox(width: 8),
-              Expanded(child: Text(value.label ?? 'Shared location')),
+              Expanded(
+                child: Text(value.label ?? context.tr('Shared location')),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -34,9 +37,9 @@ class ChatLocationCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
-              onPressed: () => _open(value),
+              onPressed: () => _open(context, value),
               icon: const Icon(Icons.open_in_new, size: 18),
-              label: const Text('Open map'),
+              label: Text(context.tr('Open map')),
             ),
           ),
         ],
@@ -44,13 +47,16 @@ class ChatLocationCard extends StatelessWidget {
     );
   }
 
-  Future<void> _open(ChatLocation value) async {
+  Future<void> _open(BuildContext context, ChatLocation value) async {
     final uri = Uri.https('www.google.com', '/maps/search/', {
       'api': '1',
       'query': '${value.latitude},${value.longitude}',
     });
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      Fluttertoast.showToast(msg: 'No maps application is available.');
+      if (!context.mounted) return;
+      Fluttertoast.showToast(
+        msg: context.tr('No maps application is available.'),
+      );
     }
   }
 }

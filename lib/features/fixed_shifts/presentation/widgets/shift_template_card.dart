@@ -57,22 +57,37 @@ class ShiftTemplateCard extends StatelessWidget {
                 template.active
                     ? Icons.check_circle_outline
                     : Icons.archive_outlined,
-                template.active ? 'Active' : 'Archived',
+                context.tr(template.active ? 'Active' : 'Archived'),
               ),
             ),
             const SizedBox(height: 10),
             Text(
-              '${ClockTime.minutes(template.startMinute, locale: Localizations.localeOf(context).toString())} – ${ClockTime.minutes(template.endMinute, locale: Localizations.localeOf(context).toString())}  •  ${shiftTemplatesScreenDuration(template.durationMinutes)}',
+              context.tr('{value1} – {value2}  •  {value3}', {
+                'value1': (ClockTime.minutes(
+                  template.startMinute,
+                  locale: Localizations.localeOf(context).toString(),
+                )).toString(),
+                'value2': (ClockTime.minutes(
+                  template.endMinute,
+                  locale: Localizations.localeOf(context).toString(),
+                )).toString(),
+                'value3': (shiftTemplatesScreenDuration(
+                  template.durationMinutes,
+                  context,
+                )).toString(),
+              }),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             if (template.overnight)
-              const Padding(
-                padding: EdgeInsets.only(top: 3),
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
                 child: Row(
                   children: [
-                    Icon(Icons.nights_stay_outlined, size: 15),
-                    SizedBox(width: 4),
-                    Flexible(child: Text('Overnight / next-day end')),
+                    const Icon(Icons.nights_stay_outlined, size: 15),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(context.tr('Overnight / next-day end')),
+                    ),
                   ],
                 ),
               ),
@@ -83,19 +98,30 @@ class ShiftTemplateCard extends StatelessWidget {
               children: [
                 _policy(
                   Icons.hourglass_top_rounded,
-                  '${template.graceMinutes}m grace',
+                  context.tr('{minutes}m grace', {
+                    'minutes': '${template.graceMinutes}',
+                  }),
                 ),
                 _policy(
                   Icons.login_rounded,
-                  '${template.allowedEarlyCheckInMinutes}m early',
+                  context.tr('{minutes}m early', {
+                    'minutes': '${template.allowedEarlyCheckInMinutes}',
+                  }),
                 ),
                 _policy(
                   Icons.more_time_rounded,
-                  '${template.allowedLateCheckInMinutes}m late',
+                  context.tr('{minutes}m late', {
+                    'minutes': '${template.allowedLateCheckInMinutes}',
+                  }),
                 ),
                 _policy(
                   Icons.timer_outlined,
-                  '${shiftTemplatesScreenDuration(template.minimumWorkMinutes)} minimum',
+                  context.tr('{duration} minimum', {
+                    'duration': shiftTemplatesScreenDuration(
+                      template.minimumWorkMinutes,
+                      context,
+                    ),
+                  }),
                 ),
               ],
             ),
@@ -119,12 +145,12 @@ class ShiftTemplateCard extends StatelessWidget {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.archive_outlined),
-                    label: const Text('Archive'),
+                    label: Text(context.tr('Archive')),
                   ),
                 ] else
-                  const Text(
-                    'Read-only history',
-                    style: TextStyle(color: AppColors.textSecondary),
+                  Text(
+                    context.tr('Read-only history'),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
               ],
             ),

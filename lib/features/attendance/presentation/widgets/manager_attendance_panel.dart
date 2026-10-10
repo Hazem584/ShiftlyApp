@@ -39,7 +39,7 @@ class ManagerAttendancePanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Recent Attendance',
+              context.tr('Recent Attendance'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             EmptyState(
@@ -72,20 +72,23 @@ class ManagerAttendancePanel extends StatelessWidget {
             label: Text(
               state.query.from == null &&
                       state.query.employeeMembershipId == null
-                  ? 'Date and employee filters'
-                  : 'Change active filters',
+                  ? context.tr('Date and employee filters')
+                  : context.tr('Change active filters'),
             ),
           ),
           const SizedBox(height: AppSpacing.s),
           DropdownButtonFormField<AttendanceReviewStatus?>(
             key: const Key('attendance-review-filter'),
             initialValue: state.query.reviewStatus,
-            decoration: const InputDecoration(
-              labelText: 'Review status',
-              prefixIcon: Icon(Icons.filter_list_rounded),
+            decoration: InputDecoration(
+              labelText: context.tr('Review status'),
+              prefixIcon: const Icon(Icons.filter_list_rounded),
             ),
             items: [
-              DropdownMenuItem(value: null, child: Text('All records')),
+              DropdownMenuItem(
+                value: null,
+                child: Text(context.tr('All records')),
+              ),
               DropdownMenuItem(
                 value: AttendanceReviewStatus.pending,
                 child: Text(context.tr('Pending')),
@@ -121,7 +124,7 @@ class ManagerAttendancePanel extends StatelessWidget {
             AttendanceRecordsList(
               records: state.pending,
               timezone: timezone,
-              title: 'Pending attendance requests',
+              title: context.tr('Pending attendance requests'),
               onTap: (record) => _details(context, record.id),
               trailing: (record) => state.reviewingIds.contains(record.id)
                   ? const SizedBox.square(
@@ -135,7 +138,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                 onPressed: state.loadingMorePending
                     ? null
                     : context.read<ManagerAttendanceCubit>().loadMorePending,
-                child: const Text('Load more requests'),
+                child: Text(context.tr('Load more requests')),
               ),
           ],
           if (state.records.isNotEmpty) ...[
@@ -150,7 +153,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                 onPressed: state.loadingMore
                     ? null
                     : context.read<ManagerAttendanceCubit>().loadMore,
-                child: const Text('Load more attendance'),
+                child: Text(context.tr('Load more attendance')),
               ),
           ],
         ],
@@ -187,7 +190,7 @@ class ManagerAttendancePanel extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Attendance filters'),
+          title: Text(context.tr('Attendance filters')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -195,9 +198,9 @@ class ManagerAttendancePanel extends StatelessWidget {
                 initialValue: employeeId,
                 decoration: InputDecoration(labelText: context.tr('Employee')),
                 items: [
-                  const DropdownMenuItem(
+                  DropdownMenuItem(
                     value: null,
-                    child: Text('All employees'),
+                    child: Text(context.tr('All employees')),
                   ),
                   for (final employee in employees)
                     DropdownMenuItem(
@@ -227,9 +230,18 @@ class ManagerAttendancePanel extends StatelessWidget {
                 icon: const Icon(Icons.date_range_outlined),
                 label: Text(
                   dates == null
-                      ? 'Any date'
-                      : '${dates!.start.year}-${dates!.start.month}-${dates!.start.day} '
-                            'to ${dates!.end.year}-${dates!.end.month}-${dates!.end.day}',
+                      ? context.tr('Any date')
+                      : context.tr(
+                          '{value1}-{value2}-{value3} to {value4}-{value5}-{value6}',
+                          {
+                            'value1': (dates!.start.year).toString(),
+                            'value2': (dates!.start.month).toString(),
+                            'value3': (dates!.start.day).toString(),
+                            'value4': (dates!.end.year).toString(),
+                            'value5': (dates!.end.month).toString(),
+                            'value6': (dates!.end.day).toString(),
+                          },
+                        ),
                 ),
               ),
             ],
@@ -266,7 +278,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                         ),
                 ),
               ),
-              child: const Text('Apply'),
+              child: Text(context.tr('Apply')),
             ),
           ],
         ),
@@ -300,43 +312,107 @@ class ManagerAttendancePanel extends StatelessWidget {
                 const SizedBox(height: AppSpacing.m),
                 Text(
                   record.source == AttendanceSource.template
-                      ? 'Template: ${record.templateName ?? 'Unavailable'} • ${record.operationalDate ?? 'Unknown date'}'
-                      : 'Shift: ${record.shift == null ? 'Unavailable' : WorkspaceTime.dateTime(record.shift!.startsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                      ? context.tr('Template: {value1} • {value2}', {
+                          'value1': (record.templateName ?? 'Unavailable')
+                              .toString(),
+                          'value2': (record.operationalDate ?? 'Unknown date')
+                              .toString(),
+                        })
+                      : context.tr('Shift: {value1}', {
+                          'value1':
+                              (record.shift == null
+                                      ? 'Unavailable'
+                                      : WorkspaceTime.dateTime(
+                                          record.shift!.startsAt,
+                                          timezone,
+                                          locale: Localizations.localeOf(
+                                            context,
+                                          ).toString(),
+                                        ))
+                                  .toString(),
+                        }),
                 ),
                 Text(
-                  'Clock-in: ${WorkspaceTime.time(record.clockInAt, record.workspaceTimezone ?? timezone, locale: Localizations.localeOf(context).toString())}',
+                  context.tr('Clock-in: {value1}', {
+                    'value1': (WorkspaceTime.time(
+                      record.clockInAt,
+                      record.workspaceTimezone ?? timezone,
+                      locale: Localizations.localeOf(context).toString(),
+                    )).toString(),
+                  }),
                 ),
                 Text(
-                  'Clock-out: ${WorkspaceTime.time(record.clockOutAt, record.workspaceTimezone ?? timezone, locale: Localizations.localeOf(context).toString())}',
+                  context.tr('Clock-out: {value1}', {
+                    'value1': (WorkspaceTime.time(
+                      record.clockOutAt,
+                      record.workspaceTimezone ?? timezone,
+                      locale: Localizations.localeOf(context).toString(),
+                    )).toString(),
+                  }),
                 ),
                 if (record.source == AttendanceSource.template) ...[
                   Text(
                     record.occurrenceKind == 'EXTRA'
-                        ? 'EXTRA: no baseline substitution or automatic BLUE'
+                        ? context.tr(
+                            'EXTRA: no baseline substitution or automatic BLUE',
+                          )
                         : record.occurrenceKind == 'BASELINE'
-                        ? 'BASELINE attendance'
-                        : 'Historical template attendance; assignment evidence not recorded',
+                        ? context.tr('BASELINE attendance')
+                        : context.tr(
+                            'Historical template attendance; assignment evidence not recorded',
+                          ),
                   ),
                   if (record.assignmentId != null)
-                    Text('Assignment: ${record.assignmentId}'),
+                    Text(
+                      context.tr('Assignment: {value1}', {
+                        'value1': (record.assignmentId).toString(),
+                      }),
+                    ),
                   if (record.extraAuthorizationId != null)
-                    Text('Extra authorization: ${record.extraAuthorizationId}'),
+                    Text(
+                      context.tr('Extra authorization: {value1}', {
+                        'value1': (record.extraAuthorizationId).toString(),
+                      }),
+                    ),
                   if (record.enteredByMembershipId != null)
                     Text(
-                      'Entered by membership: ${record.enteredByMembershipId}',
+                      context.tr('Entered by membership: {value1}', {
+                        'value1': (record.enteredByMembershipId).toString(),
+                      }),
                     ),
                   if (record.scheduledStartAt != null &&
                       record.scheduledEndAt != null)
                     Text(
-                      'Saved schedule: ${WorkspaceTime.dateTime(record.scheduledStartAt!, record.workspaceTimezone ?? timezone)} to ${WorkspaceTime.dateTime(record.scheduledEndAt!, record.workspaceTimezone ?? timezone)}',
+                      context.tr('Saved schedule: {value1} to {value2}', {
+                        'value1': (WorkspaceTime.dateTime(
+                          record.scheduledStartAt!,
+                          record.workspaceTimezone ?? timezone,
+                        )).toString(),
+                        'value2': (WorkspaceTime.dateTime(
+                          record.scheduledEndAt!,
+                          record.workspaceTimezone ?? timezone,
+                        )).toString(),
+                      }),
                     ),
                 ],
-                Text('Late: ${record.minutesLate} minutes'),
+                Text(
+                  context.tr('Late: {value1} minutes', {
+                    'value1': (record.minutesLate).toString(),
+                  }),
+                ),
                 if (record.workedMinutes != null)
-                  Text('Worked: ${record.workedMinutes} minutes'),
+                  Text(
+                    context.tr('Worked: {value1} minutes', {
+                      'value1': (record.workedMinutes).toString(),
+                    }),
+                  ),
                 if (record.rejectionReason != null) ...[
                   const SizedBox(height: AppSpacing.s),
-                  Text('Rejection reason: ${record.rejectionReason}'),
+                  Text(
+                    context.tr('Rejection reason: {value1}', {
+                      'value1': (record.rejectionReason).toString(),
+                    }),
+                  ),
                 ],
                 if (record.canReview) ...[
                   const SizedBox(height: AppSpacing.l),
@@ -356,7 +432,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                       }
                     },
                     icon: const Icon(Icons.check_rounded),
-                    label: const Text('Approve'),
+                    label: Text(context.tr('Approve')),
                   ),
                   const SizedBox(height: AppSpacing.s),
                   OutlinedButton.icon(
@@ -366,7 +442,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                       _reject(context, record.id);
                     },
                     icon: const Icon(Icons.close_rounded),
-                    label: const Text('Reject'),
+                    label: Text(context.tr('Reject')),
                   ),
                 ],
               ],

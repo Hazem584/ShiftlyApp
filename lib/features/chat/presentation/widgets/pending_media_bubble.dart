@@ -63,14 +63,14 @@ class PendingMediaBubble extends StatelessWidget {
                 cacheWidth: 720,
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) =>
-                    const Text('Image preview unavailable'),
+                    Text(context.tr('Image preview unavailable')),
               )
             else
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.image_outlined),
-                  SizedBox(width: 8),
-                  Text('Image'),
+                  const Icon(Icons.image_outlined),
+                  const SizedBox(width: 8),
+                  Text(context.tr('Image')),
                 ],
               )
           else
@@ -78,7 +78,7 @@ class PendingMediaBubble extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.play_arrow),
-                  tooltip: 'Play prepared recording',
+                  tooltip: context.tr('Play prepared recording'),
                   onPressed: pending.localPath == null || player == null
                       ? null
                       : () async {
@@ -115,7 +115,7 @@ class PendingMediaBubble extends StatelessWidget {
                         },
                 ),
                 const SizedBox(width: 8),
-                const Expanded(child: Text('Voice message')),
+                Expanded(child: Text(context.tr('Voice message'))),
                 if (pending.durationMs != null) ...[
                   const SizedBox(width: 8),
                   Text(_durationLabel(pending.durationMs!)),
@@ -135,17 +135,18 @@ class PendingMediaBubble extends StatelessWidget {
                   : pending.progress.clamp(0, 1),
             ),
           Text(switch (pending.status) {
-            ChatUploadState.queued => 'Queued',
-            ChatUploadState.sending => 'Sending',
-            ChatUploadState.uncertain =>
+            ChatUploadState.queued => context.tr('Queued'),
+            ChatUploadState.sending => context.tr('Sending'),
+            ChatUploadState.uncertain => context.tr(
               'Confirmation unavailable — retry safely',
-            ChatUploadState.preparing => 'Preparing…',
-            ChatUploadState.uploading => 'Uploading…',
-            ChatUploadState.finalizing => 'Sending…',
-            ChatUploadState.sent => 'Sent',
+            ),
+            ChatUploadState.preparing => context.tr('Preparing…'),
+            ChatUploadState.uploading => context.tr('Uploading…'),
+            ChatUploadState.finalizing => context.tr('Sending…'),
+            ChatUploadState.sent => context.tr('Sent'),
             ChatUploadState.failed =>
-              pending.failure?.message ?? 'Upload failed',
-            ChatUploadState.cancelled => 'Cancelled',
+              pending.failure?.message ?? context.tr('Upload failed'),
+            ChatUploadState.cancelled => context.tr('Cancelled'),
           }),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
@@ -34,13 +35,13 @@ class EmailVerificationScreen extends StatelessWidget {
                     const Icon(Icons.mark_email_read_outlined, size: 52),
                     const SizedBox(height: AppSpacing.m),
                     Text(
-                      'Verify your email',
+                      context.tr('Verify your email'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: AppSpacing.s),
-                    const Text(
-                      'We sent a confirmation email to:',
+                    Text(
+                      context.tr('We sent a confirmation email to:'),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.s),
@@ -51,8 +52,10 @@ class EmailVerificationScreen extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: AppSpacing.m),
-                    const Text(
-                      'Open the link in your browser. If the app does not reopen automatically, return here and sign in after verification.',
+                    Text(
+                      context.tr(
+                        'Open the link in your browser. If the app does not reopen automatically, return here and sign in after verification.',
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.l),
@@ -77,7 +80,7 @@ class EmailVerificationScreen extends StatelessWidget {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.refresh_rounded),
-                      label: const Text('Resend confirmation email'),
+                      label: Text(context.tr('Resend confirmation email')),
                     ),
                     const SizedBox(height: AppSpacing.s),
                     TextButton(
@@ -85,7 +88,7 @@ class EmailVerificationScreen extends StatelessWidget {
                       onPressed: state.resendingVerification
                           ? null
                           : context.read<SessionCoordinator>().signOut,
-                      child: const Text('Back to sign in'),
+                      child: Text(context.tr('Back to sign in')),
                     ),
                   ],
                 ),

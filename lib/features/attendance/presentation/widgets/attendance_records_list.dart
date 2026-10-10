@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_record_card.dart';
@@ -23,7 +24,7 @@ class AttendanceRecordsList extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: Theme.of(context).textTheme.titleLarge),
+      Text(context.tr(title), style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: AppSpacing.s),
       for (final record in records) ...[
         AttendanceRecordCard(

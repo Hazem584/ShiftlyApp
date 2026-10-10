@@ -72,11 +72,15 @@ class DashboardHeroSection extends StatelessWidget {
               children: [
                 DashboardHeroChip(
                   icon: Icons.groups_outlined,
-                  label: '${data.summary.totalEmployees} employees',
+                  label: context.tr('{value1} employees', {
+                    'value1': (data.summary.totalEmployees).toString(),
+                  }),
                 ),
                 DashboardHeroChip(
                   icon: Icons.check_circle_outline,
-                  label: '${data.summary.clockedInNow} clocked in',
+                  label: context.tr('{value1} clocked in', {
+                    'value1': (data.summary.clockedInNow).toString(),
+                  }),
                 ),
                 DashboardHeroChip(
                   icon: Icons.calendar_today_outlined,

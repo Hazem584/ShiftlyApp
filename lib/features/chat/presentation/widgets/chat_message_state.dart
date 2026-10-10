@@ -13,12 +13,12 @@ class ChatMessageState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DecoratedBox(
+          const DecoratedBox(
             decoration: BoxDecoration(
               color: AppColors.orangeSoft,
               shape: BoxShape.circle,
             ),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(18),
               child: Icon(
                 Icons.forum_outlined,
@@ -39,7 +39,7 @@ class ChatMessageState extends StatelessWidget {
               'Workspace groups appear here once a manager creates one.',
             ),
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary),
+            style: const TextStyle(color: AppColors.textSecondary),
           ),
           if (action != null)
             TextButton(onPressed: action, child: Text(context.tr('Retry'))),

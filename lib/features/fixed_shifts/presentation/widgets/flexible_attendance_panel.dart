@@ -61,10 +61,21 @@ class FlexibleAttendancePanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(context.tr('Clock-in outcome needs confirmation')),
-            Text('Saved request ID: ${state.recovery!.clientAttendanceId}'),
             Text(
-              'Saved ${state.recovery!.occurrenceKind ?? 'unknown'} occurrence on '
-              '${state.recovery!.operationalDate ?? 'unknown date'}. A new shift is blocked until recovery finishes.',
+              context.tr('Saved request ID: {value1}', {
+                'value1': (state.recovery!.clientAttendanceId).toString(),
+              }),
+            ),
+            Text(
+              context.tr(
+                'Saved {value1} occurrence on {value2}. A new shift is blocked until recovery finishes.',
+                {
+                  'value1': (state.recovery!.occurrenceKind ?? 'unknown')
+                      .toString(),
+                  'value2': (state.recovery!.operationalDate ?? 'unknown date')
+                      .toString(),
+                },
+              ),
             ),
             FilledButton(
               onPressed: state.submittingTemplateId != null
@@ -118,14 +129,18 @@ class FlexibleAttendancePanel extends StatelessWidget {
                 children: [
                   Text(
                     current.source == AttendanceSource.legacyShift
-                        ? 'Legacy shift attendance is active'
-                        : 'Active attendance is unavailable',
+                        ? context.tr('Legacy shift attendance is active')
+                        : context.tr('Active attendance is unavailable'),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   Text(
                     current.source == AttendanceSource.legacyShift
-                        ? 'Open My Shifts, then Legacy shift history / active clock-out to finish this attendance.'
-                        : 'Refresh before taking another attendance action.',
+                        ? context.tr(
+                            'Open My Shifts, then Legacy shift history / active clock-out to finish this attendance.',
+                          )
+                        : context.tr(
+                            'Refresh before taking another attendance action.',
+                          ),
                   ),
                 ],
               ),
@@ -149,12 +164,12 @@ class FlexibleAttendancePanel extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Clock in to a fixed shift',
+                  context.tr('Clock in to a fixed shift'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
               IconButton(
-                tooltip: 'Refresh eligibility',
+                tooltip: context.tr('Refresh eligibility'),
                 onPressed: state.refreshing
                     ? null
                     : () => context.read<FlexibleAttendanceCubit>().load(
@@ -170,31 +185,46 @@ class FlexibleAttendancePanel extends StatelessWidget {
             ],
           ),
           if (state.eligibility?.status == 'SHIFT_ASSIGNMENT_REQUIRED')
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'Ask your manager to assign your baseline fixed shift. Explicitly authorized extras remain optional.',
+                context.tr(
+                  'Ask your manager to assign your baseline fixed shift. Explicitly authorized extras remain optional.',
+                ),
               ),
             ),
           if (state.eligibility?.openAttendanceId != null)
-            const Text(
-              'Attendance is already open. Refresh to restore it before another action.',
+            Text(
+              context.tr(
+                'Attendance is already open. Refresh to restore it before another action.',
+              ),
             ),
           if (current != null && !current.isOpen)
             Text(
-              'Attendance ${current.occurrenceKind ?? 'historical'} on '
-              '${current.operationalDate ?? 'unrecorded date'} is used and cannot be reopened.',
+              context.tr(
+                'Attendance {value1} on {value2} is used and cannot be reopened.',
+                {
+                  'value1': (current.occurrenceKind ?? 'historical').toString(),
+                  'value2': (current.operationalDate ?? 'unrecorded date')
+                      .toString(),
+                },
+              ),
             ),
           if (entries.isEmpty) ...[
             const SizedBox(height: 10),
-            const Row(
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.event_busy_outlined, color: AppColors.textSecondary),
-                SizedBox(width: 10),
+                const Icon(
+                  Icons.event_busy_outlined,
+                  color: AppColors.textSecondary,
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'No template is eligible at this time. Your manager may need to add a work pattern, or the check-in window may not be open.',
+                    context.tr(
+                      'No template is eligible at this time. Your manager may need to add a work pattern, or the check-in window may not be open.',
+                    ),
                   ),
                 ),
               ],
@@ -203,7 +233,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
                 state.eligibility?.status == 'ASSIGNED') ...[
               const SizedBox(height: 12),
               Text(
-                'Assigned shift schedule',
+                context.tr('Assigned shift schedule'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 6),
@@ -257,17 +287,44 @@ class FlexibleAttendancePanel extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('Clock in to ${entry.template.name}?'),
+        title: Text(
+          context.tr('Clock in to {value1}?', {
+            'value1': (entry.template.name).toString(),
+          }),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${WorkspaceTime.time(entry.scheduledStartAt, timezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.time(entry.scheduledEndAt, timezone, locale: Localizations.localeOf(context).toString())}',
+              context.tr('{value1} – {value2}', {
+                'value1': (WorkspaceTime.time(
+                  entry.scheduledStartAt,
+                  timezone,
+                  locale: Localizations.localeOf(context).toString(),
+                )).toString(),
+                'value2': (WorkspaceTime.time(
+                  entry.scheduledEndAt,
+                  timezone,
+                  locale: Localizations.localeOf(context).toString(),
+                )).toString(),
+              }),
             ),
-            Text('Operational date: ${entry.operationalDate}'),
             Text(
-              'Classification: ${attendanceClassificationLabel(entry.classification)}${entry.lateMinutes > 0 ? ' • ${entry.lateMinutes} min late' : ''}',
+              context.tr('Operational date: {value1}', {
+                'value1': (entry.operationalDate).toString(),
+              }),
+            ),
+            Text(
+              context.tr('Classification: {value1}{value2}', {
+                'value1': (attendanceClassificationLabel(entry.classification))
+                    .toString(),
+                'value2':
+                    (entry.lateMinutes > 0
+                            ? ' • ${entry.lateMinutes} min late'
+                            : '')
+                        .toString(),
+              }),
             ),
           ],
         ),
@@ -297,14 +354,16 @@ class FlexibleAttendancePanel extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clock out now?'),
-        content: const Text(
-          'Your final worked duration will be calculated by the server.',
+        title: Text(context.tr('Clock out now?')),
+        content: Text(
+          context.tr(
+            'Your final worked duration will be calculated by the server.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Stay clocked in'),
+            child: Text(context.tr('Stay clocked in')),
           ),
           FilledButton(
             key: const Key('confirm-flexible-clock-out'),

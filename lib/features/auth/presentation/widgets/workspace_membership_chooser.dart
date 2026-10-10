@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 
@@ -40,7 +41,9 @@ class WorkspaceMembershipChooser extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: Text(
-            membership.role == WorkspaceRole.manager ? 'Manager' : 'Employee',
+            membership.role == WorkspaceRole.manager
+                ? context.tr('Manager')
+                : context.tr('Employee'),
           ),
           trailing: switching
               ? const SizedBox.square(
@@ -48,12 +51,12 @@ class WorkspaceMembershipChooser extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : current
-              ? const Row(
+              ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle_rounded, size: 20),
-                    SizedBox(width: 4),
-                    Text('Current'),
+                    const Icon(Icons.check_circle_rounded, size: 20),
+                    const SizedBox(width: 4),
+                    Text(context.tr('Current')),
                   ],
                 )
               : const Icon(Icons.chevron_right_rounded),

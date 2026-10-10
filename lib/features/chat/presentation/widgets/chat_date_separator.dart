@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class ChatDateSeparator extends StatelessWidget {
   const ChatDateSeparator({super.key, required this.date});
@@ -9,9 +10,9 @@ class ChatDateSeparator extends StatelessWidget {
     final local = date.toLocal();
     final now = DateTime.now();
     final text = DateUtils.isSameDay(local, now)
-        ? 'Today'
+        ? context.tr('Today')
         : DateUtils.isSameDay(local, now.subtract(const Duration(days: 1)))
-        ? 'Yesterday'
+        ? context.tr('Yesterday')
         : MaterialLocalizations.of(context).formatMediumDate(local);
     return Center(
       child: Container(

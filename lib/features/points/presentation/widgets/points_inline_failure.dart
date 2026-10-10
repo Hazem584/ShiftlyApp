@@ -14,16 +14,18 @@ class PointsInlineFailure extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          Expanded(child: Text(state.partialFailure!.message)),
+          Expanded(child: Text(context.tr(state.partialFailure!.message))),
           if (state.partialFailure!.requestId != null)
             IconButton(
-              tooltip: 'Support details',
+              tooltip: context.tr('Support details'),
               onPressed: () => showDialog<void>(
                 context: context,
                 builder: (_) => AlertDialog(
-                  title: const Text('Support details'),
+                  title: Text(context.tr('Support details')),
                   content: SelectableText(
-                    'Request ID: ${state.partialFailure!.requestId}',
+                    context.tr('Request ID: {value1}', {
+                      'value1': (state.partialFailure!.requestId).toString(),
+                    }),
                   ),
                   actions: [
                     TextButton(

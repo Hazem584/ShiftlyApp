@@ -72,7 +72,7 @@ class ChatGroupsScreen extends StatelessWidget {
           const ChatCacheSettingsTile(),
         if (state.failure != null)
           MaterialBanner(
-            content: Text(state.failure!.message),
+            content: Text(context.tr(state.failure!.message)),
             actions: [
               TextButton(
                 onPressed: () =>
@@ -133,7 +133,10 @@ class ChatGroupsScreen extends StatelessWidget {
         scope,
       );
     } catch (_) {
-      Fluttertoast.showToast(msg: 'Could not load active workspace members.');
+      if (!context.mounted) return;
+      Fluttertoast.showToast(
+        msg: context.tr('Could not load active workspace members.'),
+      );
       return;
     }
     if (!context.mounted || cubit.scope != scope) return;

@@ -30,7 +30,7 @@ class EmployeeFixedShiftsScreen extends StatelessWidget {
         children: [
           ScreenHeader(
             icon: Icons.calendar_month_rounded,
-            title: 'Fixed shifts',
+            title: context.tr('Fixed shifts'),
             subtitle: context.tr(
               'Your workday, in one place · Times in {timezone}',
               {'timezone': timezone},

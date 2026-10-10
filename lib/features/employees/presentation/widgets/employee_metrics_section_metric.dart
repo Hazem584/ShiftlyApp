@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
@@ -35,7 +36,10 @@ class EmployeeMetricsSectionMetric extends StatelessWidget {
                     fontSize: 11,
                   ),
                 ),
-                Text('$value', style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  context.tr('{value1}', {'value1': (value).toString()}),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ],
             ),
           ),

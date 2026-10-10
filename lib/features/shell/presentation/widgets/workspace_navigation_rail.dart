@@ -51,22 +51,30 @@ class WorkspaceNavigationRail extends StatelessWidget {
             label: Text(context.tr(employee ? 'My Shifts' : 'Employees')),
           ),
           NavigationRailDestination(
-            icon: Icon(Icons.fact_check_outlined),
-            selectedIcon: Icon(Icons.fact_check_rounded),
+            icon: const Icon(Icons.fact_check_outlined),
+            selectedIcon: const Icon(Icons.fact_check_rounded),
             label: Text(context.tr('Attendance')),
           ),
           NavigationRailDestination(
             icon: Badge(
               isLabelVisible: chat.unreadCount > 0,
               label: Text(
-                chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                chat.unreadCount > 99
+                    ? '99+'
+                    : context.tr('{value1}', {
+                        'value1': (chat.unreadCount).toString(),
+                      }),
               ),
               child: const Icon(Icons.chat_bubble_outline_rounded),
             ),
             selectedIcon: Badge(
               isLabelVisible: chat.unreadCount > 0,
               label: Text(
-                chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                chat.unreadCount > 99
+                    ? '99+'
+                    : context.tr('{value1}', {
+                        'value1': (chat.unreadCount).toString(),
+                      }),
               ),
               child: const Icon(Icons.chat_bubble_rounded),
             ),

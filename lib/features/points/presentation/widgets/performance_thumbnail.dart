@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 
@@ -23,10 +24,15 @@ class PerformanceThumbnail extends StatelessWidget {
         return Semantics(
           button: true,
           label: wallet == null
-              ? 'My Performance, loading'
-              : 'My Performance, ${wallet.green.available} available GREEN, '
-                    '${wallet.red.active} active RED, '
-                    '${wallet.currentStreak} day streak',
+              ? context.tr('My Performance, loading')
+              : context.tr(
+                  'My Performance, {green} available GREEN, {red} active RED, {streak} day streak',
+                  {
+                    'green': '${wallet.green.available}',
+                    'red': '${wallet.red.active}',
+                    'streak': '${wallet.currentStreak}',
+                  },
+                ),
           child: Card(
             key: const Key('performance-thumbnail'),
             clipBehavior: Clip.antiAlias,
@@ -45,19 +51,19 @@ class PerformanceThumbnail extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.all(18),
                 child: wallet == null
-                    ? const Row(
+                    ? Row(
                         children: [
-                          SizedBox.square(
+                          const SizedBox.square(
                             dimension: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Text(
-                            'Loading My Performance…',
-                            style: TextStyle(color: Colors.white),
+                            context.tr('Loading My Performance…'),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ],
                       )
@@ -73,7 +79,7 @@ class PerformanceThumbnail extends StatelessWidget {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'My Performance',
+                                  context.tr('My Performance'),
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(color: Colors.white),
                                 ),

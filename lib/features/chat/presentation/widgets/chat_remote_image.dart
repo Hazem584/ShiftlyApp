@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
@@ -78,7 +79,7 @@ class _RemoteImageState extends State<ChatRemoteImage> {
             child: TextButton.icon(
               onPressed: () => setState(_resolve),
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry image'),
+              label: Text(context.tr('Retry image')),
             ),
           ),
         );
@@ -150,7 +151,7 @@ class _RemoteImageState extends State<ChatRemoteImage> {
                       cacheWidth: 960,
                       errorBuilder: (_, _, _) => TextButton(
                         onPressed: () => setState(_resolve),
-                        child: const Text('Retry image'),
+                        child: Text(context.tr('Retry image')),
                       ),
                     )
                   : Image.network(
@@ -164,7 +165,7 @@ class _RemoteImageState extends State<ChatRemoteImage> {
                           child: TextButton.icon(
                             onPressed: () => setState(_resolve),
                             icon: const Icon(Icons.refresh),
-                            label: const Text('Retry image'),
+                            label: Text(context.tr('Retry image')),
                           ),
                         ),
                       ),

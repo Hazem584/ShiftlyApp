@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class LeaveRequestDateButton extends StatelessWidget {
   const LeaveRequestDateButton({
@@ -17,7 +18,12 @@ class LeaveRequestDateButton extends StatelessWidget {
     label: Align(
       alignment: Alignment.centerLeft,
       child: Text(
-        '$label: ${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}',
+        context.tr('{value1}: {value2}-{value3}-{value4}', {
+          'value1': (label).toString(),
+          'value2': (value.year).toString(),
+          'value3': (value.month.toString().padLeft(2, '0')).toString(),
+          'value4': (value.day.toString().padLeft(2, '0')).toString(),
+        }),
       ),
     ),
   );

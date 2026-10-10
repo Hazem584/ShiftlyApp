@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/points/domain/entities/points_models.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
@@ -26,19 +27,19 @@ class PointsCalendar extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                monthLabel(month),
+                monthLabel(month, context),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
             IconButton(
-              tooltip: 'Previous month',
+              tooltip: context.tr('Previous month'),
               onPressed: () => context.read<PointsCubit>().changeMonth(
                 DateTime(month.year, month.month - 1),
               ),
               icon: const Icon(Icons.chevron_left),
             ),
             IconButton(
-              tooltip: 'Next month',
+              tooltip: context.tr('Next month'),
               onPressed: () => context.read<PointsCubit>().changeMonth(
                 DateTime(month.year, month.month + 1),
               ),
@@ -51,9 +52,11 @@ class PointsCalendar extends StatelessWidget {
         const SizedBox(height: 10),
         if (state.loadingCalendar) const LinearProgressIndicator(),
         if (state.calendarFailure != null && !state.calendarMatchesVisibleMonth)
-          const PointsEmpty(
+          PointsEmpty(
             icon: Icons.event_busy_outlined,
-            text: 'This month could not be loaded. Pull to refresh or retry.',
+            text: context.tr(
+              'This month could not be loaded. Pull to refresh or retry.',
+            ),
           )
         else
           GridView.builder(
@@ -89,7 +92,7 @@ class PointsCalendar extends StatelessWidget {
 }
 
 Widget _legend(BuildContext context) => Semantics(
-  label: 'Calendar status legend',
+  label: context.tr('Calendar status legend'),
   child: Wrap(
     key: const Key('calendar-legend'),
     spacing: 10,
@@ -107,7 +110,7 @@ Widget _legend(BuildContext context) => Semantics(
               ),
               const SizedBox(width: 3),
               Text(
-                statusLabel(status),
+                context.tr(statusLabel(status)),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -126,8 +129,12 @@ Widget _calendarCell(
   final status = day?.status;
   final color = statusColor(context, status);
   return Semantics(
-    label:
-        'Day $number, ${statusLabel(status)}${day?.extraEffort == true ? ', extra effort' : ''}${isToday ? ', today' : ''}',
+    label: context.tr('Day {day}, {status}{extra}{today}', {
+      'day': '$number',
+      'status': context.tr(statusLabel(status)),
+      'extra': day?.extraEffort == true ? context.tr(', extra effort') : '',
+      'today': isToday ? context.tr(', today') : '',
+    }),
     button: day != null,
     child: InkWell(
       onTap: day == null
@@ -152,7 +159,7 @@ Widget _calendarCell(
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Text('$number'),
+            Text(context.tr('{value1}', {'value1': (number).toString()})),
             if (status != null)
               Positioned(
                 bottom: 4,
@@ -171,77 +178,98 @@ Widget _calendarCell(
   );
 }
 
-void _showDay(
-  BuildContext context,
-  PerformanceDay day,
-  String timezone,
-) => showModalBottomSheet<void>(
-  context: context,
-  showDragHandle: true,
-  isScrollControlled: true,
-  builder: (context) => SafeArea(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(day.date.value, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(
-              statusIcon(day.status),
-              color: statusColor(context, day.status),
-            ),
-            title: Text(statusLabel(day.status)),
-            subtitle: day.status == PerformanceStatus.pending
-                ? const Text(
-                    'This day is unresolved. It is not recorded as an absence.',
-                  )
-                : null,
-          ),
-          if (day.templateName != null) detailRow('Shift', day.templateName!),
-          detailRow(
-            'Clock in',
-            WorkspaceTime.time(
-              day.clockInAt,
-              timezone,
-              locale: Localizations.localeOf(context).toString(),
-            ),
-          ),
-          detailRow(
-            'Clock out',
-            WorkspaceTime.time(
-              day.clockOutAt,
-              timezone,
-              locale: Localizations.localeOf(context).toString(),
-            ),
-          ),
-          if (day.workDurationMinutes != null)
-            detailRow('Worked', '${day.workDurationMinutes} minutes'),
-          if (day.lateMinutes != null)
-            detailRow('Late', '${day.lateMinutes} minutes'),
-          if (day.extraEffort) detailRow('Extra effort', 'Recognized'),
-          if (day.pointChanges.isNotEmpty) ...[
-            const Divider(),
-            Text(
-              'Point changes',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            ...day.pointChanges.map(
-              (change) => ListTile(
+void _showDay(BuildContext context, PerformanceDay day, String timezone) =>
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                day.date.value,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(pointIcon(change.type)),
-                title: Text(pointLabel(change.type)),
-                trailing: Text(
-                  '${change.amount > 0 ? '+' : ''}${change.amount}',
+                leading: Icon(
+                  statusIcon(day.status),
+                  color: statusColor(context, day.status),
+                ),
+                title: Text(context.tr(statusLabel(day.status))),
+                subtitle: day.status == PerformanceStatus.pending
+                    ? Text(
+                        context.tr(
+                          'This day is unresolved. It is not recorded as an absence.',
+                        ),
+                      )
+                    : null,
+              ),
+              if (day.templateName != null)
+                detailRow(context, 'Shift', day.templateName!),
+              detailRow(
+                context,
+                'Clock in',
+                WorkspaceTime.time(
+                  day.clockInAt,
+                  timezone,
+                  locale: Localizations.localeOf(context).toString(),
                 ),
               ),
-            ),
-          ],
-        ],
+              detailRow(
+                context,
+                'Clock out',
+                WorkspaceTime.time(
+                  day.clockOutAt,
+                  timezone,
+                  locale: Localizations.localeOf(context).toString(),
+                ),
+              ),
+              if (day.workDurationMinutes != null)
+                detailRow(
+                  context,
+                  'Worked',
+                  context.tr('{minutes} minutes', {
+                    'minutes': '${day.workDurationMinutes}',
+                  }),
+                ),
+              if (day.lateMinutes != null)
+                detailRow(
+                  context,
+                  'Late',
+                  context.tr('{minutes} minutes', {
+                    'minutes': '${day.lateMinutes}',
+                  }),
+                ),
+              if (day.extraEffort)
+                detailRow(context, 'Extra effort', context.tr('Recognized')),
+              if (day.pointChanges.isNotEmpty) ...[
+                const Divider(),
+                Text(
+                  context.tr('Point changes'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                ...day.pointChanges.map(
+                  (change) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(pointIcon(change.type)),
+                    title: Text(context.tr(pointLabel(change.type))),
+                    trailing: Text(
+                      context.tr('{value1}{value2}', {
+                        'value1': (change.amount > 0 ? '+' : '').toString(),
+                        'value2': (change.amount).toString(),
+                      }),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
-    ),
-  ),
-);
+    );

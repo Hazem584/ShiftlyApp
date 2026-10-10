@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
@@ -125,12 +126,12 @@ class ChatMessageBubble extends StatelessWidget {
       playback: playback,
     ),
     'LOCATION' => ChatLocationCard(location: message.location),
-    _ => const Row(
+    _ => Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.help_outline, size: 18),
-        SizedBox(width: 8),
-        Text('Unsupported message'),
+        const Icon(Icons.help_outline, size: 18),
+        const SizedBox(width: 8),
+        Text(context.tr('Unsupported message')),
       ],
     ),
   };

@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/points/domain/entities/points_models.dart';
 
-String monthLabel(DateTime value) {
+String monthLabel(DateTime value, [BuildContext? context]) {
+  if (context != null) {
+    return DateFormat.yMMMM(Localizations.localeOf(context).toString())
+        .format(value);
+  }
   const months = [
     'January',
     'February',
@@ -82,11 +88,11 @@ Color statusColor(BuildContext context, PerformanceStatus? status) =>
       null => Theme.of(context).colorScheme.outline,
     };
 
-Widget detailRow(String label, String value) => Padding(
+Widget detailRow(BuildContext context, String label, String value) => Padding(
   padding: const EdgeInsets.symmetric(vertical: 5),
   child: Row(
     children: [
-      Expanded(child: Text(label)),
+      Expanded(child: Text(context.tr(label))),
       Flexible(
         child: Text(
           value,

@@ -19,7 +19,7 @@ abstract final class ShiftlyChatDialog {
             icon: destructive
                 ? Icons.warning_amber_rounded
                 : Icons.chat_outlined,
-            content: Text(message),
+            content: Text(context.tr(message)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
@@ -32,7 +32,7 @@ abstract final class ShiftlyChatDialog {
                       )
                     : null,
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: Text(confirmText),
+                child: Text(context.tr(confirmText)),
               ),
             ],
           ),

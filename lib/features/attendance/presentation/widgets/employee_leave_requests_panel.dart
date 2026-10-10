@@ -36,7 +36,7 @@ class EmployeeLeaveRequestsPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'My leave requests',
+                    context.tr('My leave requests'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -101,7 +101,7 @@ class EmployeeLeaveRequestsPanel extends StatelessWidget {
                         dimension: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Load more'),
+                    : Text(context.tr('Load more')),
               ),
           ],
         ),

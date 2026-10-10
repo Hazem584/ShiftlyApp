@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/manager_performance/domain/entities/manager_points_record.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
@@ -172,9 +173,11 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
       final wallet = json == null ? null : PointsWallet.fromJson(json);
       final resource = _resource(state, _section);
       return Scaffold(
-        appBar: AppBar(title: const Text('Employee Performance')),
+        appBar: AppBar(title: Text(context.tr('Employee Performance'))),
         body: state.scope == null
-            ? const Center(child: Text('Active manager workspace required.'))
+            ? Center(
+                child: Text(context.tr('Active manager workspace required.')),
+              )
             : RefreshIndicator(
                 onRefresh: () async {
                   await _cubit.load(
@@ -193,26 +196,61 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
                     ManagerRecoveryBanner(cubit: _cubit, state: state),
-                    Text('Membership: ${widget.membershipId}'),
+                    Text(
+                      context.tr('Membership: {value1}', {
+                        'value1': (widget.membershipId).toString(),
+                      }),
+                    ),
                     if (walletResource.loading) const LinearProgressIndicator(),
                     if (walletResource.error != null)
-                      Text(walletResource.error!),
+                      Text(context.tr(walletResource.error!)),
                     if (wallet != null) ...[
                       PointsWalletView(wallet: wallet),
                       Text(
-                        'BLACK total: ${wallet.black.total} · This month: ${wallet.black.currentMonth}',
+                        context.tr(
+                          'BLACK total: {value1} · This month: {value2}',
+                          {
+                            'value1': (wallet.black.total).toString(),
+                            'value2': (wallet.black.currentMonth).toString(),
+                          },
+                        ),
                       ),
                       Text(
-                        'ORANGE total: ${wallet.orange.total} · This month: ${wallet.orange.currentMonth}',
+                        context.tr(
+                          'ORANGE total: {value1} · This month: {value2}',
+                          {
+                            'value1': (wallet.orange.total).toString(),
+                            'value2': (wallet.orange.currentMonth).toString(),
+                          },
+                        ),
                       ),
                       Text(
-                        'BLUE total: ${wallet.blue.total} · This month: ${wallet.blue.currentMonth}',
+                        context.tr(
+                          'BLUE total: {value1} · This month: {value2}',
+                          {
+                            'value1': (wallet.blue.total).toString(),
+                            'value2': (wallet.blue.currentMonth).toString(),
+                          },
+                        ),
                       ),
                       Text(
-                        'GREEN earned: ${wallet.green.earned} · Bonuses: ${wallet.green.bonuses} · Adjusted: ${wallet.green.adjusted}',
+                        context.tr(
+                          'GREEN earned: {value1} · Bonuses: {value2} · Adjusted: {value3}',
+                          {
+                            'value1': (wallet.green.earned).toString(),
+                            'value2': (wallet.green.bonuses).toString(),
+                            'value3': (wallet.green.adjusted).toString(),
+                          },
+                        ),
                       ),
                       Text(
-                        'GREEN spent on compensation: ${wallet.green.redeemed} · RED compensated: ${wallet.red.compensated}',
+                        context.tr(
+                          'GREEN spent on compensation: {value1} · RED compensated: {value2}',
+                          {
+                            'value1': (wallet.green.redeemed).toString(),
+                            'value2': (wallet.red.compensated).toString(),
+                          },
+                        ),
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -230,7 +268,7 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
                                 )
                               : null,
                           icon: const Icon(Icons.tune),
-                          label: const Text('Adjust points'),
+                          label: Text(context.tr('Adjust points')),
                         ),
                         FilledButton.tonalIcon(
                           onPressed: state.canMutate && wallet != null
@@ -242,7 +280,7 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
                                 )
                               : null,
                           icon: const Icon(Icons.volunteer_activism),
-                          label: const Text('Grant BLUE'),
+                          label: Text(context.tr('Grant BLUE')),
                         ),
                       ],
                     ),
@@ -260,7 +298,7 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
                           'adjustments': 'Adjustments',
                         }.entries)
                           ChoiceChip(
-                            label: Text(section.value),
+                            label: Text(context.tr(section.value)),
                             selected: _section == section.key,
                             onSelected: (_) {
                               setState(() => _section = section.key);
@@ -287,7 +325,7 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
                             'BLUE',
                           ])
                             FilterChip(
-                              label: Text(type ?? 'All'),
+                              label: Text(context.tr(type ?? 'All')),
                               selected: _type == type,
                               onSelected: (_) {
                                 setState(() => _type = type);
@@ -318,7 +356,8 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
                       )
                     else if (_section == 'achievements') ...[
                       if (resource.loading) const LinearProgressIndicator(),
-                      if (resource.error != null) Text(resource.error!),
+                      if (resource.error != null)
+                        Text(context.tr(resource.error!)),
                       PointsAchievements(
                         emptyText: "This employee's active GOLD badges will appear here.",
                         items: resource.records

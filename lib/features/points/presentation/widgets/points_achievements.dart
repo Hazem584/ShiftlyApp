@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/points/domain/entities/points_models.dart';
 import 'package:shiftly/features/points/presentation/widgets/points_empty.dart';
@@ -18,7 +19,10 @@ class PointsAchievements extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text('Achievements', style: Theme.of(context).textTheme.titleLarge),
+      Text(
+        context.tr('Achievements'),
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
       const SizedBox(height: 8),
       if (items.isEmpty)
         PointsEmpty(icon: Icons.emoji_events_outlined, text: emptyText)
@@ -34,7 +38,13 @@ class PointsAchievements extends StatelessWidget {
                     color: Colors.amber,
                   ),
                   label: Text(
-                    '${_achievementLabel(item.type)} · ${WorkspaceTime.dateKey(item.earnedAt, timezone)}',
+                    context.tr('{value1} · {value2}', {
+                      'value1': context.tr(_achievementLabel(item.type)),
+                      'value2': (WorkspaceTime.dateKey(
+                        item.earnedAt,
+                        timezone,
+                      )).toString(),
+                    }),
                   ),
                 ),
               )

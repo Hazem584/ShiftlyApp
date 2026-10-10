@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class PointsEmpty extends StatelessWidget {
   const PointsEmpty({required this.icon, required this.text, super.key});
@@ -17,7 +18,7 @@ class PointsEmpty extends StatelessWidget {
       children: [
         Icon(icon),
         const SizedBox(height: 8),
-        Text(text, textAlign: TextAlign.center),
+        Text(context.tr(text), textAlign: TextAlign.center),
       ],
     ),
   );

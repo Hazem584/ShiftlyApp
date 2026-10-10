@@ -83,34 +83,31 @@ class AppTheme {
           color: AppColors.ink,
         ),
       ),
-      inputDecorationTheme: InputDecorationTheme(
+      inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
-        contentPadding: const EdgeInsets.symmetric(
+        contentPadding: EdgeInsets.symmetric(
           horizontal: AppSpacing.m,
           vertical: 16,
         ),
-        hintStyle: const TextStyle(color: AppColors.lighterGray),
-        helperStyle: const TextStyle(
-          color: AppColors.textSecondary,
-          fontSize: 12,
-        ),
+        hintStyle: TextStyle(color: AppColors.lighterGray),
+        helperStyle: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         prefixIconColor: AppColors.textSecondary,
         border: OutlineInputBorder(
           borderRadius: radius,
-          borderSide: const BorderSide(color: AppColors.borderColor),
+          borderSide: BorderSide(color: AppColors.borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: radius,
-          borderSide: const BorderSide(color: AppColors.borderColor),
+          borderSide: BorderSide(color: AppColors.borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: radius,
-          borderSide: const BorderSide(color: AppColors.orange, width: 1.6),
+          borderSide: BorderSide(color: AppColors.orange, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: radius,
-          borderSide: const BorderSide(color: AppColors.error),
+          borderSide: BorderSide(color: AppColors.error),
         ),
       ),
       cardTheme: CardThemeData(
@@ -244,7 +241,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: radius),
+          shape: const RoundedRectangleBorder(borderRadius: radius),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -253,7 +250,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           disabledBackgroundColor: const Color(0xFFD9D9E0),
           minimumSize: const Size(48, 52),
-          shape: RoundedRectangleBorder(borderRadius: radius),
+          shape: const RoundedRectangleBorder(borderRadius: radius),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.m),
           textStyle: const TextStyle(
             fontFamily: 'Cairo',
@@ -267,7 +264,7 @@ class AppTheme {
           foregroundColor: AppColors.ink,
           side: const BorderSide(color: AppColors.borderColor),
           minimumSize: const Size(48, 52),
-          shape: RoundedRectangleBorder(borderRadius: radius),
+          shape: const RoundedRectangleBorder(borderRadius: radius),
         ),
       ),
       textButtonTheme: TextButtonThemeData(

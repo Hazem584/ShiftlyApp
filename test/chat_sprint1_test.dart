@@ -104,8 +104,8 @@ void main() {
       () async {
         final group = ChatGroup.fromJson({
           ..._groupJson(),
-          '_count': {'members': 2},
-          'members': [
+          '_count': const {'members': 2},
+          'members': const [
             {
               'joinedAt': '2026-10-01T10:00:00Z',
               'membership': {
@@ -122,7 +122,7 @@ void main() {
         final messageJson = _messageJson()..remove('sender');
         final message = ChatMessage.fromJson({
           ...messageJson,
-          'senderMembership': {
+          'senderMembership': const {
             'id': _membership,
             'profile': {'id': _message2, 'fullName': 'Taylor'},
           },
@@ -1610,12 +1610,12 @@ void main() {
           ],
           child: BlocProvider.value(
             value: groups,
-            child: MediaQuery(
-              data: const MediaQueryData(
+            child: const MediaQuery(
+              data: MediaQueryData(
                 size: Size(320, 700),
                 textScaler: TextScaler.linear(1.3),
               ),
-              child: const MaterialApp(home: ChatScreen(groupId: _group)),
+              child: MaterialApp(home: ChatScreen(groupId: _group)),
             ),
           ),
         ),

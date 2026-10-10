@@ -42,12 +42,14 @@ class DashboardApprovalsCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$pendingRequests leave requests waiting',
+                    context.tr('{value1} leave requests waiting', {
+                      'value1': (pendingRequests).toString(),
+                    }),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const Text(
-                    'Tap to review and reply',
-                    style: TextStyle(
+                  Text(
+                    context.tr('Tap to review and reply'),
+                    style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),
@@ -57,7 +59,7 @@ class DashboardApprovalsCard extends StatelessWidget {
             ),
             IconButton(
               onPressed: () => context.go(AppRoutes.attendanceLeaveRequests),
-              tooltip: 'Review leave requests',
+              tooltip: context.tr('Review leave requests'),
               icon: const Icon(Icons.arrow_forward_rounded),
             ),
           ],

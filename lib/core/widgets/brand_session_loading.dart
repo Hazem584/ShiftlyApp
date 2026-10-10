@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 
@@ -21,7 +22,7 @@ class BrandSessionLoading extends StatelessWidget {
                 Semantics(
                   liveRegion: true,
                   child: Text(
-                    'Getting Shiftly ready',
+                    context.tr('Getting Shiftly ready'),
                     style: TextStyle(
                       color: dark ? Colors.white : AppColors.ink,
                       fontSize: 18,
@@ -31,7 +32,7 @@ class BrandSessionLoading extends StatelessWidget {
                 const SizedBox(height: 16),
                 CircularProgressIndicator(
                   color: dark ? Colors.white : AppColors.ink,
-                  semanticsLabel: 'Restoring your session',
+                  semanticsLabel: context.tr('Restoring your session'),
                 ),
               ],
             ),

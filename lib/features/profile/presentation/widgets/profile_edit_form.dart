@@ -106,8 +106,8 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove profile photo?'),
-        content: const Text('Your initials will be shown instead.'),
+        title: Text(context.tr('Remove profile photo?')),
+        content: Text(context.tr('Your initials will be shown instead.')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -116,7 +116,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
           FilledButton(
             key: const Key('confirm-delete-avatar'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove'),
+            child: Text(context.tr('Remove')),
           ),
         ],
       ),
@@ -155,9 +155,9 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
       key: const Key('profile-edit-content'),
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
       children: [
-        const ScreenHeader(
-          title: 'Edit Profile',
-          subtitle: 'Update your manager information',
+        ScreenHeader(
+          title: context.tr('Edit Profile'),
+          subtitle: context.tr('Update your manager information'),
         ),
         const SizedBox(height: AppSpacing.l),
         Center(child: ProfileAvatar(profile: widget.profile, radius: 44)),
@@ -173,10 +173,10 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
                 : const Icon(Icons.photo_camera_outlined, size: 18),
             label: Text(
               _picking
-                  ? 'Opening gallery…'
+                  ? context.tr('Opening gallery…')
                   : widget.action == ProfileAction.uploadingAvatar
-                  ? 'Uploading…'
-                  : 'Change photo',
+                  ? context.tr('Uploading…')
+                  : context.tr('Change photo'),
             ),
           ),
         ),
@@ -188,8 +188,8 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
               onPressed: _busy ? null : _deletePhoto,
               child: Text(
                 widget.action == ProfileAction.deletingAvatar
-                    ? 'Removing…'
-                    : 'Remove photo',
+                    ? context.tr('Removing…')
+                    : context.tr('Remove photo'),
               ),
             ),
           ),
@@ -207,7 +207,7 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
         const SizedBox(height: 13),
         ProfileEditField(
           controller: _role,
-          label: 'Role / title',
+          label: context.tr('Role / title'),
           icon: Icons.badge_outlined,
           enabled: !_busy,
           readOnly: true,

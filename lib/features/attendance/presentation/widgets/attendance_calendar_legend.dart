@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
 
 Color calendarStatusColor(CalendarAttendanceStatus status) => switch (status) {
@@ -37,7 +38,7 @@ class AttendanceCalendarLegend extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(calendarStatusLabel(status)),
+              Text(context.tr(calendarStatusLabel(status))),
             ],
           ),
         )

@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ProfileLoading() => const Center(child: CircularProgressIndicator()),
           ProfileError(:final message) => EmptyState(
             icon: Icons.cloud_off_outlined,
-            title: 'Could not load profile',
+            title: context.tr('Could not load profile'),
             message: message,
             action: FilledButton(
               onPressed: context.read<ProfileCubit>().load,
@@ -65,8 +65,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       ScreenHeader(
                         icon: Icons.person_rounded,
-                        title: 'Manager Profile',
-                        subtitle: 'Your personal and workplace information',
+                        title: context.tr('Manager Profile'),
+                        subtitle: context.tr(
+                          'Your personal and workplace information',
+                        ),
                         action: FilledButton.icon(
                           key: const Key('edit-profile'),
                           onPressed: () => setState(() => _editing = true),

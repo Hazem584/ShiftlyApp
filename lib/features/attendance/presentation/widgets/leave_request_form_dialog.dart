@@ -59,13 +59,15 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
               DropdownButtonFormField<LeaveRequestType>(
                 key: const Key('leave-type'),
                 initialValue: _type,
-                decoration: const InputDecoration(labelText: 'Leave type'),
+                decoration: InputDecoration(
+                  labelText: context.tr('Leave type'),
+                ),
                 items: LeaveRequestType.values
                     .where((type) => type != LeaveRequestType.unknown)
                     .map(
                       (type) => DropdownMenuItem(
                         value: type,
-                        child: Text(leaveTypeLabel(type)),
+                        child: Text(context.tr(leaveTypeLabel(type))),
                       ),
                     )
                     .toList(),
@@ -78,13 +80,13 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
               ),
               const SizedBox(height: 12),
               LeaveRequestDateButton(
-                label: 'Start date',
+                label: context.tr('Start date'),
                 value: _startDate,
                 onPressed: () => _pickDate(start: true),
               ),
               const SizedBox(height: 8),
               LeaveRequestDateButton(
-                label: 'End date',
+                label: context.tr('End date'),
                 value: _endDate,
                 onPressed: _type == LeaveRequestType.earlyLeave
                     ? null
@@ -96,7 +98,7 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
                   children: [
                     Expanded(
                       child: LeaveRequestTimeButton(
-                        label: 'Start time',
+                        label: context.tr('Start time'),
                         value: _startTime,
                         onPressed: () => _pickTime(start: true),
                       ),
@@ -104,7 +106,7 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: LeaveRequestTimeButton(
-                        label: 'End time',
+                        label: context.tr('End time'),
                         value: _endTime,
                         onPressed: () => _pickTime(start: false),
                       ),
@@ -118,9 +120,9 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
                 controller: _reason,
                 maxLength: 1000,
                 maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Reason'),
+                decoration: InputDecoration(labelText: context.tr('Reason')),
                 validator: (value) => value?.trim().isEmpty != false
-                    ? 'A reason is required'
+                    ? context.tr('A reason is required')
                     : null,
               ),
             ],
@@ -146,7 +148,7 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
                     color: Colors.white,
                   ),
                 )
-              : const Text('Submit'),
+              : Text(context.tr('Submit')),
         ),
       ),
     ],

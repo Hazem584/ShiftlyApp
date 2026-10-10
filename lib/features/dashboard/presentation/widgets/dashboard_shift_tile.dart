@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -27,8 +28,18 @@ class DashboardShiftTile extends StatelessWidget {
       overflow: TextOverflow.ellipsis,
     ),
     subtitle: Text(
-      '${WorkspaceTime.time(shift.startsAt, timezone, locale: Localizations.localeOf(context).toString())} – '
-      '${WorkspaceTime.time(shift.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+      context.tr('{value1} – {value2}', {
+        'value1': (WorkspaceTime.time(
+          shift.startsAt,
+          timezone,
+          locale: Localizations.localeOf(context).toString(),
+        )).toString(),
+        'value2': (WorkspaceTime.time(
+          shift.endsAt,
+          timezone,
+          locale: Localizations.localeOf(context).toString(),
+        )).toString(),
+      }),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     ),

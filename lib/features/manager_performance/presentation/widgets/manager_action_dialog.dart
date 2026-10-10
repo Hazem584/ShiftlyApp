@@ -69,7 +69,7 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
       widget.cubit.state.scope == widget.scope && widget.cubit.state.canMutate;
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(widget.title),
+    title: Text(context.tr(widget.title)),
     content: SizedBox(
       width: 480,
       child: SingleChildScrollView(
@@ -79,8 +79,10 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (!_allowed)
-                const Text(
-                  'Manager access changed or another operation needs recovery.',
+                Text(
+                  context.tr(
+                    'Manager access changed or another operation needs recovery.',
+                  ),
                 ),
               if (_allowed)
                 for (final (index, field) in widget.fields.indexed) ...[
@@ -93,7 +95,7 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text(
-                          field.label.split(' · ').first,
+                          context.tr(field.label.split(' · ').first),
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
@@ -115,7 +117,7 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
       ),
       FilledButton(
         onPressed: !_allowed || _confirming ? null : _confirm,
-        child: const Text('Review change'),
+        child: Text(context.tr('Review change')),
       ),
     ],
   );
@@ -123,7 +125,7 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
     if (field.boolean) {
       return SwitchListTile(
         contentPadding: EdgeInsets.zero,
-        title: Text(field.label),
+        title: Text(context.tr(field.label)),
         value: _values[field.key] == true,
         onChanged: !_allowed
             ? null
@@ -135,12 +137,17 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
         itemHeight: null,
         initialValue: _values[field.key] as String?,
         isExpanded: true,
-        decoration: InputDecoration(labelText: field.label),
+        decoration: InputDecoration(labelText: context.tr(field.label)),
         items: field.choices!
             .map(
               (value) => DropdownMenuItem(
                 value: value,
-                child: Text(value.replaceAll('_', ' '), softWrap: true),
+                child: Text(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? context.tr(value)
+                      : value.replaceAll('_', ' '),
+                  softWrap: true,
+                ),
               ),
             )
             .toList(),
@@ -157,8 +164,8 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
       minLines: numeric || field.date ? 1 : 2,
       maxLines: numeric || field.date ? 1 : 5,
       decoration: InputDecoration(
-        labelText: field.label,
-        helperText: field.help,
+        labelText: context.tr(field.label),
+        helperText: field.help == null ? null : context.tr(field.help!),
         helperMaxLines: 5,
       ),
       validator: (text) {
@@ -168,7 +175,7 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
           if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value) ||
               parsed == null ||
               WorkspaceTime.dateKey(parsed.toUtc(), 'Etc/UTC') != value) {
-            return 'Enter a real calendar date.';
+            return context.tr('Enter a real calendar date.');
           }
           final today = WorkspaceTime.dateKey(
             DateTime.now(),
@@ -177,7 +184,7 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
           if (value.compareTo(today) <= 0 ||
               (widget.afterDate != null &&
                   value.compareTo(widget.afterDate!) <= 0)) {
-            return 'Choose a future date after the latest version.';
+            return context.tr('Choose a future date after the latest version.');
           }
         } else if (numeric) {
           final number = int.tryParse(value);
@@ -185,11 +192,19 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
               number < field.minimum! ||
               number > field.maximum! ||
               (field.key == 'amount' && number == 0)) {
-            return 'Enter ${field.minimum} to ${field.maximum}${field.key == 'amount' ? ', excluding zero' : ''}.';
+            return context.tr(
+              field.key == 'amount'
+                  ? 'Enter {minimum} to {maximum}, excluding zero.'
+                  : 'Enter {minimum} to {maximum}.',
+              {'minimum': '${field.minimum}', 'maximum': '${field.maximum}'},
+            );
           }
         } else if (value.length < (field.minimum ?? 1) ||
             value.length > (field.maximum ?? 1000)) {
-          return 'Use ${field.minimum ?? 1}–${field.maximum ?? 1000} characters.';
+          return context.tr('Use {minimum}–{maximum} characters.', {
+            'minimum': '${field.minimum ?? 1}',
+            'maximum': '${field.maximum ?? 1000}',
+          });
         }
         return null;
       },
@@ -214,9 +229,19 @@ class _ManagerActionDialogState extends State<ManagerActionDialog> {
       builder: (_) => ManagerConfirmationDialog(
         cubit: widget.cubit,
         scope: widget.scope,
-        title: 'Confirm ${widget.title.toLowerCase()}?',
+        title: Localizations.localeOf(context).languageCode == 'ar'
+            ? context.tr('Confirm {action}?', {
+                'action': context.tr(widget.title),
+              })
+            : 'Confirm ${widget.title.toLowerCase()}?',
         details: widget.fields
-            .map((field) => '${field.label}: ${payload[field.key]}')
+            .map((field) {
+              final value = '${payload[field.key]}';
+              final displayValue = field.boolean || field.choices != null
+                  ? context.tr(value)
+                  : value;
+              return '${context.tr(field.label)}: $displayValue';
+            })
             .join('\n\n'),
       ),
     );

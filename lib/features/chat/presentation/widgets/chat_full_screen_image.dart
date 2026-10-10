@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
 
@@ -43,7 +44,7 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
     appBar: AppBar(
       foregroundColor: Colors.white,
       backgroundColor: Colors.black,
-      title: const Text('Image'),
+      title: Text(context.tr('Image')),
       actions: [
         if (!kIsWeb &&
             const [
@@ -53,7 +54,7 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
             widget.saveImage != null)
           IconButton(
             key: const Key('save-chat-image'),
-            tooltip: 'Save to photos',
+            tooltip: context.tr('Save to photos'),
             onPressed: _saving ? null : _save,
             icon: _saving
                 ? const SizedBox.square(
@@ -74,10 +75,10 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
             builder: (_, _) =>
                 scope != null && cache!.storage.authorized(scope!)
                 ? _image()
-                : const Center(
+                : Center(
                     child: Text(
-                      'Chat access unavailable.',
-                      style: TextStyle(color: Colors.white),
+                      context.tr('Chat access unavailable.'),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
           ),
@@ -89,9 +90,9 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
     try {
       await widget.saveImage!();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Image saved to photos.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.tr('Image saved to photos.'))),
+        );
       }
     } catch (error) {
       if (mounted) {
@@ -100,8 +101,12 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
             content: Text(
               error is PlatformException &&
                       error.code == 'PHOTO_PERMISSION_DENIED'
-                  ? 'Allow photo access in your phone settings to save images.'
-                  : 'Could not save this image. Check your connection and try again.',
+                  ? context.tr(
+                      'Allow photo access in your phone settings to save images.',
+                    )
+                  : context.tr(
+                      'Could not save this image. Check your connection and try again.',
+                    ),
             ),
           ),
         );

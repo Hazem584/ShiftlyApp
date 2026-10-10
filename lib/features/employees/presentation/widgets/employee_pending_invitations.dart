@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
 
 class EmployeePendingInvitations extends StatelessWidget {
@@ -16,7 +17,10 @@ class EmployeePendingInvitations extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
     ),
     child: Text(
-      '${invitations.length} pending invitation${invitations.length == 1 ? '' : 's'}',
+      context.tr('{value1} pending invitation{value2}', {
+        'value1': (invitations.length).toString(),
+        'value2': (invitations.length == 1 ? '' : 's').toString(),
+      }),
       style: const TextStyle(fontWeight: FontWeight.w600),
     ),
   );

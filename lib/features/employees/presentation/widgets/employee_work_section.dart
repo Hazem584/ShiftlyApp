@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_detail.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_information_section.dart';
@@ -10,23 +11,23 @@ class EmployeeWorkSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => EmployeeInformationSection(
-    title: 'Work details',
+    title: context.tr('Work details'),
     rows: [
       EmployeeDetail(
         icon: Icons.work_outline_rounded,
-        title: 'Employment status',
-        value: _employmentLabel(employee.employmentStatus),
+        title: context.tr('Employment status'),
+        value: context.tr(_employmentLabel(employee.employmentStatus)),
       ),
       EmployeeDetail(
         icon: Icons.badge_outlined,
-        title: 'Job title',
+        title: context.tr('Job title'),
         value: employee.displayJobTitle,
       ),
       EmployeeDetail(
         icon: Icons.calendar_today_outlined,
-        title: 'Joined',
+        title: context.tr('Joined'),
         value: employee.startDate == null
-            ? 'Not provided'
+            ? context.tr('Not provided')
             : '${employee.startDate!.day}/${employee.startDate!.month}/${employee.startDate!.year}',
       ),
     ],

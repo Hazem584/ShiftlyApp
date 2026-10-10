@@ -16,7 +16,7 @@ class DashboardQuickActions extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     children: [
       SectionHeading(
-        title: 'Quick actions',
+        title: context.tr('Quick actions'),
         trailing: DecoratedBox(
           decoration: BoxDecoration(
             color: pendingRequests > 0 ? AppColors.orangeSoft : AppColors.field,
@@ -25,7 +25,9 @@ class DashboardQuickActions extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             child: Text(
-              '$pendingRequests pending',
+              context.tr('{value1} pending', {
+                'value1': (pendingRequests).toString(),
+              }),
               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
             ),
           ),
@@ -37,12 +39,12 @@ class DashboardQuickActions extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.insights_outlined, color: AppColors.orange),
+          leading: const Icon(Icons.insights_outlined, color: AppColors.orange),
           title: Text(context.tr('Performance')),
           subtitle: Text(
             context.tr('Employee points, policies, disputes and warnings'),
           ),
-          trailing: Icon(Icons.chevron_right_rounded),
+          trailing: const Icon(Icons.chevron_right_rounded),
         ),
       ),
       const SizedBox(height: 10),

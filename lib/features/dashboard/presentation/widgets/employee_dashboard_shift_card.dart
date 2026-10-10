@@ -29,7 +29,7 @@ class EmployeeDashboardShiftCard extends StatelessWidget {
         child: shift == null
             ? Text(
                 context.tr('No shift scheduled.'),
-                style: TextStyle(color: AppColors.textSecondary),
+                style: const TextStyle(color: AppColors.textSecondary),
               )
             : Row(
                 children: [
@@ -37,8 +37,18 @@ class EmployeeDashboardShiftCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      '${WorkspaceTime.time(shift!.startsAt, timezone, locale: Localizations.localeOf(context).toString())} – '
-                      '${WorkspaceTime.time(shift!.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                      context.tr('{value1} – {value2}', {
+                        'value1': (WorkspaceTime.time(
+                          shift!.startsAt,
+                          timezone,
+                          locale: Localizations.localeOf(context).toString(),
+                        )).toString(),
+                        'value2': (WorkspaceTime.time(
+                          shift!.endsAt,
+                          timezone,
+                          locale: Localizations.localeOf(context).toString(),
+                        )).toString(),
+                      }),
                       maxLines: 2,
                     ),
                   ),

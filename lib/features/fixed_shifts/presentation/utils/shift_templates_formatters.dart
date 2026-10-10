@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 
 TimeOfDay shiftTemplatesScreenTod(int minute) =>
     TimeOfDay(hour: minute ~/ 60, minute: minute % 60);
 
-String shiftTemplatesScreenDuration(int minutes) =>
-    '${minutes ~/ 60}h ${minutes % 60}m';
+String shiftTemplatesScreenDuration(int minutes, [BuildContext? context]) =>
+    context == null
+    ? '${minutes ~/ 60}h ${minutes % 60}m'
+    : context.tr('{hours}h {minutes}m', {
+        'hours': '${minutes ~/ 60}',
+        'minutes': '${minutes % 60}',
+      });
 Color shiftTemplatesScreenColor(String value) {
   final hex = value.replaceFirst('#', '');
   final parsed = hex.length == 6 ? int.tryParse('FF$hex', radix: 16) : null;

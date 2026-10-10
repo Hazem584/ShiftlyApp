@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/points/presentation/widgets/points_achievements.dart';
 import 'package:shiftly/features/points/presentation/widgets/points_calendar.dart';
@@ -22,7 +23,7 @@ class MyPerformanceScreen extends StatelessWidget {
     listener: (context, state) {
       HapticFeedback.mediumImpact();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('RED compensation completed.')),
+        SnackBar(content: Text(context.tr('RED compensation completed.'))),
       );
     },
     builder: (context, state) {

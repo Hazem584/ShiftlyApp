@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:shiftly/features/notifications/presentation/utils/notification_display_text.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_presentation.dart';
 
 class NotificationCard extends StatelessWidget {
@@ -53,7 +55,7 @@ class NotificationCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            notification.title,
+                            context.tr(notification.title),
                             style: TextStyle(
                               fontWeight: notification.isUnread
                                   ? FontWeight.w800
@@ -74,12 +76,23 @@ class NotificationCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      notification.message,
+                      notificationDisplayMessage(
+                        context,
+                        notification.type,
+                        notification.message,
+                      ),
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${presentation.label} · ${WorkspaceTime.dateTime(notification.createdAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                      context.tr('{value1} · {value2}', {
+                        'value1': context.tr(presentation.label),
+                        'value2': (WorkspaceTime.dateTime(
+                          notification.createdAt,
+                          timezone,
+                          locale: Localizations.localeOf(context).toString(),
+                        )).toString(),
+                      }),
                       style: const TextStyle(
                         color: AppColors.lighterGray,
                         fontSize: 11,
@@ -91,7 +104,7 @@ class NotificationCard extends StatelessWidget {
               IconButton(
                 key: Key('delete-${notification.id}'),
                 onPressed: mutating ? null : onDelete,
-                tooltip: 'Delete notification',
+                tooltip: context.tr('Delete notification'),
                 icon: mutating
                     ? const SizedBox.square(
                         dimension: 18,

@@ -78,7 +78,7 @@ class EmployeeAttendanceHistory extends StatelessWidget {
                 AttendanceRecordsList(
                   records: state.records,
                   timezone: timezone,
-                  title: 'Attendance history',
+                  title: context.tr('Attendance history'),
                 ),
                 if (state.hasMore)
                   OutlinedButton(
@@ -90,7 +90,7 @@ class EmployeeAttendanceHistory extends StatelessWidget {
                             dimension: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Load more'),
+                        : Text(context.tr('Load more')),
                   ),
               ],
             ),

@@ -31,23 +31,31 @@ class PointsRedemption extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Compensate RED',
+              context.tr('Compensate RED'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
-            Text('${wallet.greenCostPerRed} GREEN compensates 1 RED'),
+            Text(
+              context.tr('{value1} GREEN compensates 1 RED', {
+                'value1': (wallet.greenCostPerRed).toString(),
+              }),
+            ),
             const SizedBox(height: 12),
             LinearProgressIndicator(value: progress),
             const SizedBox(height: 8),
             Text(
               wallet.greenNeededForOneRed == 0
-                  ? 'You have enough GREEN for your next compensation.'
-                  : '${wallet.greenNeededForOneRed} more GREEN needed.',
+                  ? context.tr(
+                      'You have enough GREEN for your next compensation.',
+                    )
+                  : context.tr('{value1} more GREEN needed.', {
+                      'value1': (wallet.greenNeededForOneRed).toString(),
+                    }),
             ),
             if (state.domainCode != null) ...[
               const SizedBox(height: 8),
               Text(
-                _domainMessage(state.domainCode!),
+                context.tr(_domainMessage(state.domainCode!)),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
@@ -61,7 +69,7 @@ class PointsRedemption extends StatelessWidget {
                         retry: true,
                       ),
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Retry same redemption'),
+                label: Text(context.tr('Retry same redemption')),
               ),
             ],
             const SizedBox(height: 14),
@@ -76,7 +84,7 @@ class PointsRedemption extends StatelessWidget {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.redeem_rounded),
-                label: const Text('Compensate 1 RED'),
+                label: Text(context.tr('Compensate 1 RED')),
               ),
             ),
           ],
@@ -98,17 +106,26 @@ Future<void> _confirm(BuildContext context, PointsWallet wallet) async {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Compensate 1 RED?',
+              context.tr('Compensate 1 RED?'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 10),
-            Text('Exact cost: ${wallet.greenCostPerRed} GREEN'),
             Text(
-              'Estimated remaining balance: ${wallet.green.available - wallet.greenCostPerRed} GREEN',
+              context.tr('Exact cost: {value1} GREEN', {
+                'value1': (wallet.greenCostPerRed).toString(),
+              }),
+            ),
+            Text(
+              context.tr('Estimated remaining balance: {value1} GREEN', {
+                'value1': (wallet.green.available - wallet.greenCostPerRed)
+                    .toString(),
+              }),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Your wallet will refresh from the server after confirmation.',
+            Text(
+              context.tr(
+                'Your wallet will refresh from the server after confirmation.',
+              ),
             ),
             const SizedBox(height: 18),
             Row(
@@ -124,7 +141,7 @@ Future<void> _confirm(BuildContext context, PointsWallet wallet) async {
                   child: FilledButton(
                     key: const Key('confirm-redemption'),
                     onPressed: () => Navigator.pop(sheetContext, true),
-                    child: const Text('Confirm'),
+                    child: Text(context.tr('Confirm')),
                   ),
                 ),
               ],

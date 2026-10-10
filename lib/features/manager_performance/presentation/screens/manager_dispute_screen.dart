@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
 import 'package:shiftly/features/manager_performance/presentation/widgets/manager_action_dialog.dart';
@@ -35,40 +36,67 @@ class _ManagerDisputeScreenState extends State<ManagerDisputeScreen> {
       final record = resource?.object;
       final event = record?['targetLedgerEntry'];
       return Scaffold(
-        appBar: AppBar(title: const Text('Points dispute')),
+        appBar: AppBar(title: Text(context.tr('Points dispute'))),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             ManagerRecoveryBanner(cubit: cubit, state: state),
-            if (state.scope == null) const Text('Manager access required.'),
+            if (state.scope == null)
+              Text(context.tr('Manager access required.')),
             if (resource?.loading == true) const LinearProgressIndicator(),
-            if (resource?.error case final error?) Text(error),
+            if (resource?.error case final error?) Text(context.tr(error)),
             TextButton(
               onPressed: resource?.loading == true
                   ? null
                   : () => cubit.load(_resource, object: true),
-              child: const Text('Refresh detail'),
+              child: Text(context.tr('Refresh detail')),
             ),
             if (record != null) ...[
               Text(
-                'Status: ${record['status'] ?? 'Unknown'}',
+                context.tr('Status: {value1}', {
+                  'value1': context.tr('${record['status'] ?? 'Unknown'}'),
+                }),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               Text(
-                'Employee membership: ${record['employeeMembershipId'] ?? 'Unknown'}',
+                context.tr('Employee membership: {value1}', {
+                  'value1': (record['employeeMembershipId'] ?? 'Unknown')
+                      .toString(),
+                }),
               ),
-              Text('Employee reason: ${record['reason'] ?? 'Unknown'}'),
+              Text(
+                context.tr('Employee reason: {value1}', {
+                  'value1': (record['reason'] ?? 'Unknown').toString(),
+                }),
+              ),
               if (event is Map)
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      'Related immutable event\n${event['pointType'] ?? 'Unknown'} ${event['amount'] ?? 'Unknown'}\n${event['reason'] ?? 'Unknown'}\nOperational date: ${event['operationalDate'] ?? 'Unknown'}',
+                      context.tr(
+                        'Related immutable event\n{value1} {value2}\n{value3}\nOperational date: {value4}',
+                        {
+                          'value1': context.tr(
+                            '${event['pointType'] ?? 'Unknown'}',
+                          ),
+                          'value2': (event['amount'] ?? 'Unknown').toString(),
+                          'value3': context.tr(
+                            '${event['reason'] ?? 'Unknown'}',
+                          ),
+                          'value4': (event['operationalDate'] ?? 'Unknown')
+                              .toString(),
+                        },
+                      ),
                     ),
                   ),
                 ),
               if (record['managerResponse'] != null)
-                Text('Manager response: ${record['managerResponse']}'),
+                Text(
+                  context.tr('Manager response: {value1}', {
+                    'value1': (record['managerResponse']).toString(),
+                  }),
+                ),
               FilledButton(
                 onPressed:
                     !state.canMutate ||
@@ -81,7 +109,7 @@ class _ManagerDisputeScreenState extends State<ManagerDisputeScreen> {
                         final payload = await showDialog<Map<String, Object?>>(
                           context: context,
                           builder: (_) => ManagerActionDialog(
-                            title: 'Review dispute',
+                            title: context.tr('Review dispute'),
                             fields: ManagerForms.review,
                             cubit: cubit,
                             scope: scope,
@@ -100,7 +128,7 @@ class _ManagerDisputeScreenState extends State<ManagerDisputeScreen> {
                           }
                         }
                       },
-                child: const Text('Review dispute'),
+                child: Text(context.tr('Review dispute')),
               ),
             ],
           ],

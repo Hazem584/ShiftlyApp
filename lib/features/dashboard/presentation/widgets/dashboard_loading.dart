@@ -9,30 +9,30 @@ class DashboardLoadingView extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(18),
     children: [
-      DashboardSkeleton(height: 42, width: 180),
-      SizedBox(height: 16),
-      DashboardSkeleton(height: 160),
-      SizedBox(height: 16),
-      Row(
+      const DashboardSkeleton(height: 42, width: 180),
+      const SizedBox(height: 16),
+      const DashboardSkeleton(height: 160),
+      const SizedBox(height: 16),
+      const Row(
         children: [
           Expanded(child: DashboardSkeleton(height: 120)),
           SizedBox(width: 12),
           Expanded(child: DashboardSkeleton(height: 120)),
         ],
       ),
-      SizedBox(height: 12),
-      Row(
+      const SizedBox(height: 12),
+      const Row(
         children: [
           Expanded(child: DashboardSkeleton(height: 120)),
           SizedBox(width: 12),
           Expanded(child: DashboardSkeleton(height: 120)),
         ],
       ),
-      SizedBox(height: 20),
+      const SizedBox(height: 20),
       Center(
         child: Text(
           context.tr('Preparing your dashboard…'),
-          style: TextStyle(color: AppColors.textSecondary),
+          style: const TextStyle(color: AppColors.textSecondary),
         ),
       ),
     ],

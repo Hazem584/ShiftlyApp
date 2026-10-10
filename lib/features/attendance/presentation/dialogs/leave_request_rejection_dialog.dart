@@ -21,14 +21,16 @@ class _RejectionDialogState extends State<LeaveRequestRejectionDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Reject request?'),
+    title: Text(context.tr('Reject request?')),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Explain why ${widget.employeeName}’s request is being rejected.',
+            context.tr('Explain why {value1}’s request is being rejected.', {
+              'value1': (widget.employeeName).toString(),
+            }),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -37,8 +39,8 @@ class _RejectionDialogState extends State<LeaveRequestRejectionDialog> {
             maxLength: 1000,
             maxLines: 3,
             decoration: InputDecoration(
-              labelText: 'Rejection reason',
-              errorText: _error,
+              labelText: context.tr('Rejection reason'),
+              errorText: _error == null ? null : context.tr(_error!),
             ),
           ),
         ],
@@ -59,7 +61,7 @@ class _RejectionDialogState extends State<LeaveRequestRejectionDialog> {
           }
           Navigator.pop(context, reason);
         },
-        child: const Text('Reject'),
+        child: Text(context.tr('Reject')),
       ),
     ],
   );

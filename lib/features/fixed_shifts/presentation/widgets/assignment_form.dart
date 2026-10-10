@@ -72,7 +72,7 @@ class _AssignmentFormState extends State<AssignmentForm> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Assign a fixed shift'),
+    title: Text(context.tr('Assign a fixed shift')),
     scrollable: true,
     content: SizedBox(
       width: 480,
@@ -80,16 +80,19 @@ class _AssignmentFormState extends State<AssignmentForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Effective dates use ${widget.timezone}. Saved assignment schedules remain unchanged when a template is edited.',
+            context.tr(
+              'Effective dates use {value1}. Saved assignment schedules remain unchanged when a template is edited.',
+              {'value1': (widget.timezone).toString()},
+            ),
           ),
           const SizedBox(height: 12),
           if (templates == null)
             TextButton(
               onPressed: busy ? null : _load,
-              child: const Text('Load / retry templates'),
+              child: Text(context.tr('Load / retry templates')),
             )
           else if (templates!.isEmpty)
-            const Text('No active templates. Create one first.')
+            Text(context.tr('No active templates. Create one first.'))
           else
             ActiveTemplateSelector(
               templates: templates!,
@@ -97,7 +100,7 @@ class _AssignmentFormState extends State<AssignmentForm> {
               onChanged: busy ? null : (v) => setState(() => templateId = v),
             ),
           const SizedBox(height: 12),
-          const Text('Expected weekdays'),
+          Text(context.tr('Expected weekdays')),
           Wrap(
             spacing: 6,
             runSpacing: 6,
@@ -106,14 +109,14 @@ class _AssignmentFormState extends State<AssignmentForm> {
                 FilterChip(
                   key: Key('weekday-$day'),
                   label: Text(
-                    const [
-                      'Sun',
-                      'Mon',
-                      'Tue',
-                      'Wed',
-                      'Thu',
-                      'Fri',
-                      'Sat',
+                    [
+                      context.tr('Sun'),
+                      context.tr('Mon'),
+                      context.tr('Tue'),
+                      context.tr('Wed'),
+                      context.tr('Thu'),
+                      context.tr('Fri'),
+                      context.tr('Sat'),
                     ][day],
                   ),
                   selected: days.contains(day),
@@ -128,7 +131,13 @@ class _AssignmentFormState extends State<AssignmentForm> {
           OutlinedButton(
             onPressed: busy ? null : _pickDate,
             child: Text(
-              'Effective ${WorkspaceTime.localDateKey(year: date.year, month: date.month, day: date.day)}',
+              context.tr('Effective {value1}', {
+                'value1': (WorkspaceTime.localDateKey(
+                  year: date.year,
+                  month: date.month,
+                  day: date.day,
+                )).toString(),
+              }),
             ),
           ),
           if (error != null)
@@ -146,7 +155,9 @@ class _AssignmentFormState extends State<AssignmentForm> {
       ),
       FilledButton(
         onPressed: busy || days.isEmpty || templateId == null ? null : _submit,
-        child: Text(busy ? 'Saving…' : 'Review replacement'),
+        child: Text(
+          busy ? context.tr('Saving…') : context.tr('Review replacement'),
+        ),
       ),
     ],
   );
@@ -176,9 +187,17 @@ class _AssignmentFormState extends State<AssignmentForm> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Replace the baseline assignment?'),
+        title: Text(context.tr('Replace the baseline assignment?')),
         content: Text(
-          '${templates!.firstWhere((v) => v.id == templateId).name}\nEffective $key · ${widget.timezone}\nThe previous version ends the day before. Captured history is protected; the server may reject this replacement.',
+          context.tr(
+            '{value1}\nEffective {value2} · {value3}\nThe previous version ends the day before. Captured history is protected; the server may reject this replacement.',
+            {
+              'value1': (templates!.firstWhere((v) => v.id == templateId).name)
+                  .toString(),
+              'value2': (key).toString(),
+              'value3': (widget.timezone).toString(),
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -188,7 +207,7 @@ class _AssignmentFormState extends State<AssignmentForm> {
           FilledButton(
             key: const Key('confirm-work-pattern'),
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('Create version'),
+            child: Text(context.tr('Create version')),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
@@ -27,14 +28,39 @@ class AttendanceCalendarEmployeeDayRow extends StatelessWidget {
         .toUpperCase();
     final details = <String>[
       if (entry.shift != null)
-        'Shift ${WorkspaceTime.time(entry.shift!.startsAt, timezone, locale: Localizations.localeOf(context).toString())}–${WorkspaceTime.time(entry.shift!.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+        context.tr('Shift {start}–{end}', {
+          'start': WorkspaceTime.time(
+            entry.shift!.startsAt,
+            timezone,
+            locale: Localizations.localeOf(context).toString(),
+          ),
+          'end': WorkspaceTime.time(
+            entry.shift!.endsAt,
+            timezone,
+            locale: Localizations.localeOf(context).toString(),
+          ),
+        }),
       if (entry.attendance != null)
-        'In ${WorkspaceTime.time(entry.attendance!.clockInAt, timezone, locale: Localizations.localeOf(context).toString())}',
+        context.tr('In {time}', {
+          'time': WorkspaceTime.time(
+            entry.attendance!.clockInAt,
+            timezone,
+            locale: Localizations.localeOf(context).toString(),
+          ),
+        }),
       if (entry.attendance?.clockOutAt != null)
-        'Out ${WorkspaceTime.time(entry.attendance!.clockOutAt, timezone, locale: Localizations.localeOf(context).toString())}',
+        context.tr('Out {time}', {
+          'time': WorkspaceTime.time(
+            entry.attendance!.clockOutAt,
+            timezone,
+            locale: Localizations.localeOf(context).toString(),
+          ),
+        }),
       if ((entry.attendance?.minutesLate ?? 0) > 0)
-        '${entry.attendance!.minutesLate} min late',
-      if (entry.leave != null) _leaveLabel(entry.leave!.type),
+        context.tr('{minutes} min late', {
+          'minutes': '${entry.attendance!.minutesLate}',
+        }),
+      if (entry.leave != null) context.tr(_leaveLabel(entry.leave!.type)),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -64,7 +90,7 @@ class AttendanceCalendarEmployeeDayRow extends StatelessWidget {
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              calendarStatusLabel(entry.status),
+              context.tr(calendarStatusLabel(entry.status)),
               style: TextStyle(
                 color: calendarStatusColor(entry.status),
                 fontWeight: FontWeight.w700,

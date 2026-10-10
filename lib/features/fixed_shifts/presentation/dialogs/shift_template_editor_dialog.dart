@@ -43,10 +43,14 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
     _end = shiftTemplatesScreenTod(value?.endMinute ?? 1020);
     _colorValue = value?.color ?? _colors.first;
     _policies = [
-      TextEditingController(text: '${value?.graceMinutes ?? 10}'),
-      TextEditingController(text: '${value?.allowedEarlyCheckInMinutes ?? 30}'),
-      TextEditingController(text: '${value?.allowedLateCheckInMinutes ?? 120}'),
-      TextEditingController(text: '${value?.minimumWorkMinutes ?? 0}'),
+      TextEditingController(text: (value?.graceMinutes ?? 10).toString()),
+      TextEditingController(
+        text: (value?.allowedEarlyCheckInMinutes ?? 30).toString(),
+      ),
+      TextEditingController(
+        text: (value?.allowedLateCheckInMinutes ?? 120).toString(),
+      ),
+      TextEditingController(text: (value?.minimumWorkMinutes ?? 0).toString()),
     ];
   }
 
@@ -79,7 +83,9 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
     builder: (context, state) => AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       title: Text(
-        widget.template == null ? 'Create fixed shift' : 'Edit fixed shift',
+        widget.template == null
+            ? context.tr('Create fixed shift')
+            : context.tr('Edit fixed shift'),
       ),
       content: SizedBox(
         width: 520,
@@ -92,7 +98,9 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                 TextFormField(
                   controller: _name,
                   maxLength: 100,
-                  decoration: const InputDecoration(labelText: 'Template name'),
+                  decoration: InputDecoration(
+                    labelText: context.tr('Template name'),
+                  ),
                   validator: (_) => _input.validate()?.contains('name') == true
                       ? _input.validate()
                       : null,
@@ -115,21 +123,33 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                       onPressed: state.saving ? null : () => _pick(true),
                       icon: const Icon(Icons.login_rounded),
                       label: Text(
-                        'Start ${ClockTime.format(_start.hour, _start.minute, locale: Localizations.localeOf(context).toString())}',
+                        context.tr('Start {value1}', {
+                          'value1': (ClockTime.format(
+                            _start.hour,
+                            _start.minute,
+                            locale: Localizations.localeOf(context).toString(),
+                          )).toString(),
+                        }),
                       ),
                     ),
                     OutlinedButton.icon(
                       onPressed: state.saving ? null : () => _pick(false),
                       icon: const Icon(Icons.logout_rounded),
                       label: Text(
-                        'End ${ClockTime.format(_end.hour, _end.minute, locale: Localizations.localeOf(context).toString())}',
+                        context.tr('End {value1}', {
+                          'value1': (ClockTime.format(
+                            _end.hour,
+                            _end.minute,
+                            locale: Localizations.localeOf(context).toString(),
+                          )).toString(),
+                        }),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Semantics(
-                  label: 'Template color',
+                  label: context.tr('Template color'),
                   child: Wrap(
                     spacing: 10,
                     children: [
@@ -180,14 +200,16 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                             child: TextFormField(
                               controller: _policies[i],
                               keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: labels[i]),
+                              decoration: InputDecoration(
+                                labelText: context.tr(labels[i]),
+                              ),
                               onChanged: (_) => setState(() {}),
                               validator: (value) {
                                 final number = int.tryParse(value ?? '');
                                 return number == null ||
                                         number < 0 ||
                                         number > 1440
-                                    ? 'Use 0 to 1440'
+                                    ? context.tr('Use 0 to 1440')
                                     : null;
                               },
                             ),
@@ -204,11 +226,29 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${ClockTime.format(_start.hour, _start.minute, locale: Localizations.localeOf(context).toString())} – ${ClockTime.format(_end.hour, _end.minute, locale: Localizations.localeOf(context).toString())} • ${shiftTemplatesScreenDuration(_input.durationMinutes)} • ${_input.durationMinutes == 1440
-                        ? '24-hour'
-                        : _input.endMinute <= _input.startMinute
-                        ? 'Overnight'
-                        : 'Same day'}',
+                    context.tr('{value1} – {value2} • {value3} • {value4}', {
+                      'value1': (ClockTime.format(
+                        _start.hour,
+                        _start.minute,
+                        locale: Localizations.localeOf(context).toString(),
+                      )).toString(),
+                      'value2': (ClockTime.format(
+                        _end.hour,
+                        _end.minute,
+                        locale: Localizations.localeOf(context).toString(),
+                      )).toString(),
+                      'value3': (shiftTemplatesScreenDuration(
+                        _input.durationMinutes,
+                        context,
+                      )).toString(),
+                      'value4': context.tr(
+                        _input.durationMinutes == 1440
+                            ? '24-hour'
+                            : _input.endMinute <= _input.startMinute
+                            ? 'Overnight'
+                            : 'Same day',
+                      ),
+                    }),
                   ),
                 ),
                 if (state.failure != null) ...[
@@ -226,7 +266,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                 if (_localError != null) ...[
                   const SizedBox(height: 10),
                   Text(
-                    _localError!,
+                    context.tr(_localError!),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                     ),
@@ -250,7 +290,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                   dimension: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save template'),
+              : Text(context.tr('Save template')),
         ),
       ],
     ),

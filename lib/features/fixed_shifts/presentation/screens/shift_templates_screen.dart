@@ -25,10 +25,10 @@ class ShiftTemplatesScreen extends StatelessWidget {
         : null;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fixed shift templates'),
+        title: Text(context.tr('Fixed shift templates')),
         actions: [
           IconButton(
-            tooltip: 'Create template',
+            tooltip: context.tr('Create template'),
             onPressed: () => _openEditor(context),
             icon: const Icon(Icons.add_rounded),
           ),
@@ -62,13 +62,27 @@ class ShiftTemplatesScreen extends StatelessWidget {
                               Text(
                                 workspaceName ??
                                     workspace?.name ??
-                                    'Current workspace',
+                                    context.tr('Current workspace'),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                               Text(
-                                '${timezone ?? workspace?.timezone ?? 'Etc/UTC'} • ${state.templates.where((item) => item.active).length} active templates',
+                                context.tr(
+                                  '{value1} • {value2} active templates',
+                                  {
+                                    'value1':
+                                        (timezone ??
+                                                workspace?.timezone ??
+                                                'Etc/UTC')
+                                            .toString(),
+                                    'value2':
+                                        (state.templates
+                                                .where((item) => item.active)
+                                                .length)
+                                            .toString(),
+                                  },
+                                ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodySmall,
@@ -83,7 +97,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: FilterChip(
                         key: const Key('show-archived-templates'),
-                        label: const Text('Archived'),
+                        label: Text(context.tr('Archived')),
                         selected: state.includeArchived,
                         onSelected: (value) => context
                             .read<ManagerTemplatesCubit>()
@@ -101,7 +115,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openEditor(context),
         icon: const Icon(Icons.add_rounded),
-        label: const Text('New template'),
+        label: Text(context.tr('New template')),
       ),
     );
   }
@@ -202,19 +216,22 @@ class ShiftTemplatesScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Archive template?'),
+        title: Text(context.tr('Archive template?')),
         content: Text(
-          '${template.name} will become read-only and remain in history. Existing attendance is preserved.',
+          context.tr(
+            '{value1} will become read-only and remain in history. Existing attendance is preserved.',
+            {'value1': (template.name).toString()},
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Keep active'),
+            child: Text(context.tr('Keep active')),
           ),
           FilledButton(
             key: const Key('confirm-archive-template'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Archive'),
+            child: Text(context.tr('Archive')),
           ),
         ],
       ),

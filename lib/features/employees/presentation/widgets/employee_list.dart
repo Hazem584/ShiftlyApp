@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_list_employee_card.dart';
@@ -41,7 +42,7 @@ class EmployeeList extends StatelessWidget {
                   key: const Key('load-more-employees'),
                   onPressed: onLoadMore,
                   icon: const Icon(Icons.expand_more_rounded),
-                  label: const Text('Load more'),
+                  label: Text(context.tr('Load more')),
                 ),
         );
       },

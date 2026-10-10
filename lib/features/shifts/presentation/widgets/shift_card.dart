@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
@@ -64,7 +65,13 @@ class ShiftCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'to ${WorkspaceTime.dateTime(shift.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                context.tr('to {value1}', {
+                  'value1': (WorkspaceTime.dateTime(
+                    shift.endsAt,
+                    timezone,
+                    locale: Localizations.localeOf(context).toString(),
+                  )).toString(),
+                }),
                 style: const TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 12,

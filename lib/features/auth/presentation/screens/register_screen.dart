@@ -57,9 +57,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const AuthBrandHeader(
-                          title: 'Create your Shiftly account',
-                          subtitle: 'Use the exact email address your manager invited.',
+                        AuthBrandHeader(
+                          title: context.tr('Create your Shiftly account'),
+                          subtitle: context.tr(
+                            'Use the exact email address your manager invited.',
+                          ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         TextFormField(
@@ -72,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           autofillHints: const [AutofillHints.email],
                           decoration: InputDecoration(
                             labelText: context.tr('Email'),
-                            prefixIcon: Icon(Icons.email_outlined),
+                            prefixIcon: const Icon(Icons.email_outlined),
                           ),
                           validator: (value) {
                             final email = value?.trim() ?? '';

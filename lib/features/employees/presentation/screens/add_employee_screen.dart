@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
@@ -61,13 +62,15 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('Invitation created'),
+      title: Text(context.tr('Invitation created')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Share this one-time token only with the intended employee.',
+          Text(
+            context.tr(
+              'Share this one-time token only with the intended employee.',
+            ),
           ),
           const SizedBox(height: 12),
           SelectableText(token, key: const Key('invitation-token')),
@@ -83,11 +86,11 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
             }
           },
           icon: const Icon(Icons.copy_rounded),
-          label: const Text('Copy'),
+          label: Text(context.tr('Copy')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(dialogContext),
-          child: const Text('Done'),
+          child: Text(context.tr('Done')),
         ),
       ],
     ),
@@ -96,7 +99,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: const Text('Invite Employee'),
+      title: Text(context.tr('Invite Employee')),
       bottom: const PreferredSize(
         preferredSize: Size.fromHeight(1),
         child: Divider(height: 1, color: AppColors.borderColor),
@@ -119,9 +122,9 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
               controller: _email,
               enabled: !_submitting,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Employee email',
-                prefixIcon: Icon(Icons.email_outlined),
+              decoration: InputDecoration(
+                labelText: context.tr('Employee email'),
+                prefixIcon: const Icon(Icons.email_outlined),
               ),
               validator: (value) =>
                   RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
@@ -135,9 +138,9 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
               controller: _jobTitle,
               enabled: !_submitting,
               maxLength: 120,
-              decoration: const InputDecoration(
-                labelText: 'Job title (optional)',
-                prefixIcon: Icon(Icons.badge_outlined),
+              decoration: InputDecoration(
+                labelText: context.tr('Job title (optional)'),
+                prefixIcon: const Icon(Icons.badge_outlined),
               ),
             ),
             EmployeeFormActions(

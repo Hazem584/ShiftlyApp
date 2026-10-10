@@ -32,12 +32,14 @@ class EmployeesScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
               child: ScreenHeader(
                 icon: Icons.groups_rounded,
-                title: 'Employee Management',
-                subtitle: 'Search, invite, and manage your team in one place',
+                title: context.tr('Employee Management'),
+                subtitle: context.tr(
+                  'Search, invite, and manage your team in one place',
+                ),
                 action: FilledButton.icon(
                   onPressed: () => _openAddEmployee(context),
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Add'),
+                  label: Text(context.tr('Add')),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(80, 44),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -70,7 +72,7 @@ class EmployeesScreen extends StatelessWidget {
         EmployeesLoading() => const EmployeesLoadingView(),
         EmployeesError(:final message) => EmptyState(
           icon: Icons.cloud_off_outlined,
-          title: 'Could not load employees',
+          title: context.tr('Could not load employees'),
           message: message,
           action: FilledButton(
             onPressed: () => context.read<EmployeesCubit>().load(),
@@ -108,7 +110,7 @@ class EmployeesScreen extends StatelessWidget {
                     ? FilledButton.icon(
                         onPressed: () => _openAddEmployee(context),
                         icon: const Icon(Icons.add_rounded),
-                        label: const Text('Invite employee'),
+                        label: Text(context.tr('Invite employee')),
                       )
                     : null,
               )

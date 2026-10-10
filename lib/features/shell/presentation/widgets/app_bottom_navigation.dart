@@ -31,9 +31,9 @@ class AppBottomNavigation extends StatelessWidget {
         buildWhen: (before, after) => before.unreadCount != after.unreadCount,
         builder: (context, chat) => DecoratedBox(
           key: const Key('manager-bottom-navigation'),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppColors.surface,
-            border: const Border(top: BorderSide(color: AppColors.borderColor)),
+            border: Border(top: BorderSide(color: AppColors.borderColor)),
             boxShadow: AppShadows.soft,
           ),
           child: SafeArea(

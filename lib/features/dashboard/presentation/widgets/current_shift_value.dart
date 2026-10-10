@@ -23,7 +23,7 @@ class CurrentShiftValue extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
-            '$value',
+            context.tr('{value1}', {'value1': (value).toString()}),
             style: Theme.of(context).textTheme.headlineSmall
                 ?.copyWith(color: color),
           ),

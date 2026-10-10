@@ -131,8 +131,10 @@ class _ChatViewState extends State<ChatConversationView>
         child: BlocBuilder<ChatGroupDetailsCubit, ChatGroupDetailsState>(
           builder: (context, details) {
             if (context.read<ChatConversationCubit>().state.accessLost) {
-              return const Scaffold(
-                body: Center(child: Text('Chat access unavailable.')),
+              return Scaffold(
+                body: Center(
+                  child: Text(context.tr('Chat access unavailable.')),
+                ),
               );
             }
             final group = details.group;
@@ -149,7 +151,7 @@ class _ChatViewState extends State<ChatConversationView>
                           .colorScheme
                           .primaryContainer,
                       child: Text(
-                        _initials(group?.name ?? 'Chat'),
+                        _initials(group?.name ?? context.tr('Chat')),
                         style: Theme.of(context).textTheme.labelMedium,
                       ),
                     ),
@@ -159,15 +161,19 @@ class _ChatViewState extends State<ChatConversationView>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            group?.name ?? 'Chat',
+                            group?.name ?? context.tr('Chat'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (group != null)
                             Text(
                               group.isArchived
-                                  ? '${group.memberCount} members · Read only'
-                                  : '${group.memberCount} members',
+                                  ? context.tr('{value1} members · Read only', {
+                                      'value1': (group.memberCount).toString(),
+                                    })
+                                  : context.tr('{value1} members', {
+                                      'value1': (group.memberCount).toString(),
+                                    }),
                               style: Theme.of(context).textTheme.labelSmall,
                             ),
                         ],
@@ -177,7 +183,7 @@ class _ChatViewState extends State<ChatConversationView>
                 ),
                 actions: [
                   IconButton(
-                    tooltip: 'Group members',
+                    tooltip: context.tr('Group members'),
                     onPressed: group == null ? null : () => _showMembers(group),
                     icon: const Icon(Icons.group_outlined),
                   ),
@@ -185,11 +191,14 @@ class _ChatViewState extends State<ChatConversationView>
                     PopupMenuButton<String>(
                       onSelected: (value) =>
                           value == 'edit' ? _edit(group) : _archive(group),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'edit', child: Text('Edit group')),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Text(context.tr('Edit group')),
+                        ),
                         PopupMenuItem(
                           value: 'archive',
-                          child: Text('Archive group'),
+                          child: Text(context.tr('Archive group')),
                         ),
                       ],
                     ),
@@ -199,7 +208,7 @@ class _ChatViewState extends State<ChatConversationView>
                 children: [
                   if (details.failure != null)
                     MaterialBanner(
-                      content: Text(details.failure!.message),
+                      content: Text(context.tr(details.failure!.message)),
                       actions: [
                         TextButton(
                           onPressed: context.read<ChatGroupDetailsCubit>().load,
@@ -210,8 +219,8 @@ class _ChatViewState extends State<ChatConversationView>
                   if (group?.isArchived == true)
                     ColoredBox(
                       color: Theme.of(context).colorScheme.secondaryContainer,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 10,
                         ),
@@ -221,8 +230,8 @@ class _ChatViewState extends State<ChatConversationView>
                           spacing: 8,
                           runSpacing: 4,
                           children: [
-                            Icon(Icons.archive_outlined, size: 18),
-                            Text('Archived group — read only'),
+                            const Icon(Icons.archive_outlined, size: 18),
+                            Text(context.tr('Archived group — read only')),
                           ],
                         ),
                       ),
@@ -241,80 +250,85 @@ class _ChatViewState extends State<ChatConversationView>
     return words.take(2).map((word) => word[0].toUpperCase()).join();
   }
 
-  Widget
-  _messages() => BlocBuilder<ChatConversationCubit, ChatConversationState>(
-    builder: (context, state) {
-      final scope = context.read<ChatGroupsCubit>().scope;
-      if (scope == null || state.accessLost) {
-        return const Center(child: Text('Chat access unavailable.'));
-      }
-      return Column(
-        children: [
-          if (state.historyGap)
-            TextButton(
-              onPressed: state.loadingOlder
-                  ? null
-                  : context.read<ChatConversationCubit>().loadOlder,
-              child: const Text('History has a gap — load missing messages'),
-            ),
-          if (state.failure != null && state.messages.isNotEmpty)
-            TextButton(
-              onPressed: () =>
-                  context.read<ChatConversationCubit>().load(refresh: true),
-              child: const Text('Refresh unavailable — retry'),
-            ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () =>
-                  context.read<ChatConversationCubit>().load(refresh: true),
-              child: ShiftlyChatMessageList(
-                key: ValueKey(
-                  '${scope.userId}:${scope.workspaceId}:${widget.groupId}',
+  Widget _messages() =>
+      BlocBuilder<ChatConversationCubit, ChatConversationState>(
+        builder: (context, state) {
+          final scope = context.read<ChatGroupsCubit>().scope;
+          if (scope == null || state.accessLost) {
+            return Center(child: Text(context.tr('Chat access unavailable.')));
+          }
+          return Column(
+            children: [
+              if (state.historyGap)
+                TextButton(
+                  onPressed: state.loadingOlder
+                      ? null
+                      : context.read<ChatConversationCubit>().loadOlder,
+                  child: Text(
+                    context.tr('History has a gap — load missing messages'),
+                  ),
                 ),
-                messages: state.messages,
-                currentMembershipId: scope.membershipId,
-                loading: state.loading,
-                failureMessage: state.messages.isEmpty
-                    ? state.failure?.message
-                    : null,
-                hasMore: state.hasMore,
-                loadingOlder: state.loadingOlder,
-                onLoadOlder: context.read<ChatConversationCubit>().loadOlder,
-                onRetry: context.read<ChatConversationCubit>().load,
-                trailingMessages: [
-                  for (final pending in state.pending)
-                    PendingMediaBubble(
-                      key: ValueKey(pending.clientMessageId),
-                      pending: pending,
-                      player: _player,
-                      playback: _playback,
-                      cacheScope: ChatCacheScope.fromSession(
-                        scope,
-                        widget.groupId,
-                      ),
-                      onRetry: (id) =>
-                          context.read<ChatConversationCubit>().retryMedia(id),
-                      onCancel: _confirmCancelPending,
+              if (state.failure != null && state.messages.isNotEmpty)
+                TextButton(
+                  onPressed: () =>
+                      context.read<ChatConversationCubit>().load(refresh: true),
+                  child: Text(context.tr('Refresh unavailable — retry')),
+                ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () =>
+                      context.read<ChatConversationCubit>().load(refresh: true),
+                  child: ShiftlyChatMessageList(
+                    key: ValueKey(
+                      '${scope.userId}:${scope.workspaceId}:${widget.groupId}',
                     ),
-                ],
-                messageBuilder: (message, mine, showSender) =>
-                    ChatMessageBubble(
-                      message: message,
-                      mine: mine,
-                      showSender: showSender,
-                      repository: context.read<ChatRepository>(),
-                      workspaceId: scope.workspaceId,
-                      timezone: scope.timezone,
-                      player: _player,
-                      playback: _playback,
-                    ),
+                    messages: state.messages,
+                    currentMembershipId: scope.membershipId,
+                    loading: state.loading,
+                    failureMessage: state.messages.isEmpty
+                        ? state.failure?.message
+                        : null,
+                    hasMore: state.hasMore,
+                    loadingOlder: state.loadingOlder,
+                    onLoadOlder: context
+                        .read<ChatConversationCubit>()
+                        .loadOlder,
+                    onRetry: context.read<ChatConversationCubit>().load,
+                    trailingMessages: [
+                      for (final pending in state.pending)
+                        PendingMediaBubble(
+                          key: ValueKey(pending.clientMessageId),
+                          pending: pending,
+                          player: _player,
+                          playback: _playback,
+                          cacheScope: ChatCacheScope.fromSession(
+                            scope,
+                            widget.groupId,
+                          ),
+                          onRetry: (id) => context
+                              .read<ChatConversationCubit>()
+                              .retryMedia(id),
+                          onCancel: _confirmCancelPending,
+                        ),
+                    ],
+                    messageBuilder: (message, mine, showSender) =>
+                        ChatMessageBubble(
+                          message: message,
+                          mine: mine,
+                          showSender: showSender,
+                          repository: context.read<ChatRepository>(),
+                          workspaceId: scope.workspaceId,
+                          timezone: scope.timezone,
+                          player: _player,
+                          playback: _playback,
+                        ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       );
-    },
-  );
 
   Future<void> _confirmCancelPending(String clientId) async {
     final confirmed = await ShiftlyChatDialog.confirm(
@@ -342,9 +356,11 @@ class _ChatViewState extends State<ChatConversationView>
               if (_preparedImage != null || _preparedVoicePath != null)
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Prepared media was not saved. Retry to keep it.',
+                        context.tr(
+                          'Prepared media was not saved. Retry to keep it.',
+                        ),
                       ),
                     ),
                     TextButton(
@@ -358,7 +374,9 @@ class _ChatViewState extends State<ChatConversationView>
               if (state.failedText != null)
                 Row(
                   children: [
-                    const Expanded(child: Text('Message failed to send.')),
+                    Expanded(
+                      child: Text(context.tr('Message failed to send.')),
+                    ),
                     TextButton(
                       onPressed: state.sending
                           ? null
@@ -376,17 +394,26 @@ class _ChatViewState extends State<ChatConversationView>
                 child: Row(
                   children: [
                     PopupMenuButton<int>(
-                      tooltip: 'Attach',
+                      tooltip: context.tr('Attach'),
                       enabled: !effectiveDisabled && !_mediaBusy,
                       onSelected: (value) {
                         if (value == 0) unawaited(_pickImage());
                         if (value == 1) unawaited(_startRecording());
                         if (value == 2) unawaited(_shareLocation());
                       },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 0, child: Text('Image')),
-                        PopupMenuItem(value: 1, child: Text('Voice')),
-                        PopupMenuItem(value: 2, child: Text('Location')),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                          value: 0,
+                          child: Text(context.tr('Image')),
+                        ),
+                        PopupMenuItem(
+                          value: 1,
+                          child: Text(context.tr('Voice')),
+                        ),
+                        PopupMenuItem(
+                          value: 2,
+                          child: Text(context.tr('Location')),
+                        ),
                       ],
                       icon: const Icon(Icons.add_circle_outline),
                     ),
@@ -411,7 +438,7 @@ class _ChatViewState extends State<ChatConversationView>
                     ),
                     IconButton(
                       key: const Key('record-voice-message'),
-                      tooltip: 'Record voice message',
+                      tooltip: context.tr('Record voice message'),
                       onPressed: effectiveDisabled || _mediaBusy
                           ? null
                           : _startRecording,
@@ -419,7 +446,7 @@ class _ChatViewState extends State<ChatConversationView>
                     ),
                     IconButton.filled(
                       key: const Key('send-chat-message'),
-                      tooltip: 'Send',
+                      tooltip: context.tr('Send'),
                       onPressed:
                           effectiveDisabled ||
                               _savingText ||
@@ -435,7 +462,7 @@ class _ChatViewState extends State<ChatConversationView>
                 Row(
                   children: [
                     IconButton(
-                      tooltip: 'Cancel recording',
+                      tooltip: context.tr('Cancel recording'),
                       onPressed: () => _finishRecording(send: false),
                       icon: const Icon(Icons.delete_outline),
                     ),
@@ -445,7 +472,7 @@ class _ChatViewState extends State<ChatConversationView>
                     FilledButton.icon(
                       onPressed: () => _finishRecording(send: true),
                       icon: const Icon(Icons.send),
-                      label: const Text('Send'),
+                      label: Text(context.tr('Send')),
                     ),
                   ],
                 ),
@@ -462,8 +489,9 @@ class _ChatViewState extends State<ChatConversationView>
     final text = _text.text.trim();
     if (text.isEmpty) return;
     if (text.length > 4000) {
+      if (!mounted) return;
       Fluttertoast.showToast(
-        msg: 'Messages can contain at most 4000 characters.',
+        msg: context.tr('Messages can contain at most 4000 characters.'),
       );
       return;
     }
@@ -473,8 +501,9 @@ class _ChatViewState extends State<ChatConversationView>
       if (accepted && _text.text == input) _text.clear();
       setState(() => _savingText = false);
       if (!accepted) {
+        if (!mounted) return;
         Fluttertoast.showToast(
-          msg: 'Message was not saved. Keep your input and retry.',
+          msg: context.tr('Message was not saved. Keep your input and retry.'),
         );
       }
     }
@@ -488,13 +517,19 @@ class _ChatViewState extends State<ChatConversationView>
       if (selected == null || !mounted) return;
       final length = await selected.length();
       if (length < 1 || length > ChatMediaValidation.imageMaxBytes) {
-        Fluttertoast.showToast(msg: 'Images must be 5 MiB or smaller.');
+        if (!mounted) return;
+        Fluttertoast.showToast(
+          msg: context.tr('Images must be 5 MiB or smaller.'),
+        );
         return;
       }
       final bytes = await selected.readAsBytes();
       final mime = ChatMediaValidation.imageMime(bytes);
       if (mime == null) {
-        Fluttertoast.showToast(msg: 'Choose a valid JPEG, PNG, or WebP image.');
+        if (!mounted) return;
+        Fluttertoast.showToast(
+          msg: context.tr('Choose a valid JPEG, PNG, or WebP image.'),
+        );
         return;
       }
       if (mounted) {
@@ -503,7 +538,10 @@ class _ChatViewState extends State<ChatConversationView>
         if (id != null) _preparedImage = null;
       }
     } catch (_) {
-      Fluttertoast.showToast(msg: 'The image could not be prepared.');
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: context.tr('The image could not be prepared.'),
+      );
     } finally {
       if (mounted) setState(() => _mediaBusy = false);
     }
@@ -514,8 +552,9 @@ class _ChatViewState extends State<ChatConversationView>
     setState(() => _mediaBusy = true);
     try {
       if (!await _recorder.hasPermission()) {
+        if (!mounted) return;
         Fluttertoast.showToast(
-          msg: 'Microphone permission is required to record.',
+          msg: context.tr('Microphone permission is required to record.'),
         );
         return;
       }
@@ -539,7 +578,10 @@ class _ChatViewState extends State<ChatConversationView>
       });
       if (mounted) setState(() => _recording = true);
     } catch (_) {
-      Fluttertoast.showToast(msg: 'Recording could not be started.');
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: context.tr('Recording could not be started.'),
+      );
     } finally {
       if (mounted) setState(() => _mediaBusy = false);
     }
@@ -579,8 +621,9 @@ class _ChatViewState extends State<ChatConversationView>
         mimeType: 'audio/mp4',
         durationMs: duration,
       )) {
+        if (!mounted) return;
         Fluttertoast.showToast(
-          msg: 'The recording is empty, invalid, or too long.',
+          msg: context.tr('The recording is empty, invalid, or too long.'),
         );
         return;
       }
@@ -599,7 +642,10 @@ class _ChatViewState extends State<ChatConversationView>
         }
       }
     } catch (_) {
-      Fluttertoast.showToast(msg: 'The recording could not be prepared.');
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: context.tr('The recording could not be prepared.'),
+      );
     } finally {
       if (path != null && (accepted || _preparedVoicePath != path)) {
         try {
@@ -629,7 +675,8 @@ class _ChatViewState extends State<ChatConversationView>
     }
     if (mounted) {
       setState(() {});
-      Fluttertoast.showToast(msg: 'Recording was interrupted.');
+      if (!mounted) return;
+      Fluttertoast.showToast(msg: context.tr('Recording was interrupted.'));
     }
   }
 
@@ -654,8 +701,11 @@ class _ChatViewState extends State<ChatConversationView>
         }
       }
     } catch (_) {
+      if (!mounted) return;
       Fluttertoast.showToast(
-        msg: 'Media could not be saved. Retry when storage is available.',
+        msg: context.tr(
+          'Media could not be saved. Retry when storage is available.',
+        ),
       );
     } finally {
       if (mounted) setState(() => _mediaBusy = false);
@@ -676,8 +726,9 @@ class _ChatViewState extends State<ChatConversationView>
     setState(() => _mediaBusy = true);
     try {
       if (!await Geolocator.isLocationServiceEnabled()) {
+        if (!mounted) return;
         Fluttertoast.showToast(
-          msg: 'Turn on location services to share a location.',
+          msg: context.tr('Turn on location services to share a location.'),
         );
         return;
       }
@@ -687,10 +738,13 @@ class _ChatViewState extends State<ChatConversationView>
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
         Fluttertoast.showToast(
-          msg: permission == LocationPermission.deniedForever
-              ? 'Location permission is blocked in system settings.'
-              : 'Location permission was denied.',
+          msg: context.tr(
+            permission == LocationPermission.deniedForever
+                ? 'Location permission is blocked in system settings.'
+                : 'Location permission was denied.',
+          ),
         );
         return;
       }
@@ -715,9 +769,13 @@ class _ChatViewState extends State<ChatConversationView>
         await context.read<ChatConversationCubit>().sendLocation(location);
       }
     } on TimeoutException {
-      Fluttertoast.showToast(msg: 'Location request timed out.');
+      if (!mounted) return;
+      Fluttertoast.showToast(msg: context.tr('Location request timed out.'));
     } catch (_) {
-      Fluttertoast.showToast(msg: 'Your location is currently unavailable.');
+      if (!mounted) return;
+      Fluttertoast.showToast(
+        msg: context.tr('Your location is currently unavailable.'),
+      );
     } finally {
       if (mounted) setState(() => _mediaBusy = false);
     }

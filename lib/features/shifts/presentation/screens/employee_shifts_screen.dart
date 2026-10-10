@@ -42,11 +42,11 @@ class EmployeeShiftsScreen extends StatelessWidget {
                 context.read<EmployeeShiftsCubit>().load(refresh: true),
             child: ListView(
               children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(18, 14, 18, 0),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
                   child: ScreenHeader(
-                    title: 'Legacy shifts',
-                    subtitle: 'Historical assigned schedules',
+                    title: context.tr('Legacy shifts'),
+                    subtitle: context.tr('Historical assigned schedules'),
                   ),
                 ),
                 SizedBox(
@@ -83,9 +83,11 @@ class EmployeeShiftsScreen extends StatelessWidget {
             key: const Key('employee-shifts-list'),
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
             children: [
-              const ScreenHeader(
-                title: 'Legacy shifts',
-                subtitle: 'Historical assigned schedules and active clock-out',
+              ScreenHeader(
+                title: context.tr('Legacy shifts'),
+                subtitle: context.tr(
+                  'Historical assigned schedules and active clock-out',
+                ),
               ),
               if (state.failure != null) ...[
                 const SizedBox(height: AppSpacing.s),
@@ -97,7 +99,7 @@ class EmployeeShiftsScreen extends StatelessWidget {
               if (upcoming.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.l),
                 Text(
-                  'Legacy schedules',
+                  context.tr('Legacy schedules'),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: AppSpacing.s),
@@ -138,7 +140,7 @@ class EmployeeShiftsScreen extends StatelessWidget {
                           dimension: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Load more'),
+                      : Text(context.tr('Load more')),
                 ),
             ],
           ),
@@ -167,19 +169,35 @@ class EmployeeShiftsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Shift details',
+                context.tr('Shift details'),
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: AppSpacing.s),
               ShiftStatusBadge(status: record.status),
               const SizedBox(height: AppSpacing.m),
               Text(
-                'Starts: ${WorkspaceTime.dateTime(record.startsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                context.tr('Starts: {value1}', {
+                  'value1': (WorkspaceTime.dateTime(
+                    record.startsAt,
+                    timezone,
+                    locale: Localizations.localeOf(context).toString(),
+                  )).toString(),
+                }),
               ),
               Text(
-                'Ends: ${WorkspaceTime.dateTime(record.endsAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                context.tr('Ends: {value1}', {
+                  'value1': (WorkspaceTime.dateTime(
+                    record.endsAt,
+                    timezone,
+                    locale: Localizations.localeOf(context).toString(),
+                  )).toString(),
+                }),
               ),
-              Text('Break: ${record.breakMinutes} minutes'),
+              Text(
+                context.tr('Break: {value1} minutes', {
+                  'value1': (record.breakMinutes).toString(),
+                }),
+              ),
               if (record.notes != null) ...[
                 const SizedBox(height: AppSpacing.s),
                 Text(record.notes!),
@@ -187,12 +205,26 @@ class EmployeeShiftsScreen extends StatelessWidget {
               if (record.attendance case final attendance?) ...[
                 const SizedBox(height: AppSpacing.m),
                 Text(
-                  'Clock-in: ${WorkspaceTime.time(attendance.clockInAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                  context.tr('Clock-in: {value1}', {
+                    'value1': (WorkspaceTime.time(
+                      attendance.clockInAt,
+                      timezone,
+                      locale: Localizations.localeOf(context).toString(),
+                    )).toString(),
+                  }),
                 ),
                 Text(
-                  'Clock-out: ${WorkspaceTime.time(attendance.clockOutAt, timezone, locale: Localizations.localeOf(context).toString())}',
+                  context.tr('Clock-out: {value1}', {
+                    'value1': (WorkspaceTime.time(
+                      attendance.clockOutAt,
+                      timezone,
+                      locale: Localizations.localeOf(context).toString(),
+                    )).toString(),
+                  }),
                 ),
-                Text(attendanceReviewLabel(attendance.reviewStatus)),
+                Text(
+                  context.tr(attendanceReviewLabel(attendance.reviewStatus)),
+                ),
               ],
               if (record.canClockOut) ...[
                 const SizedBox(height: AppSpacing.l),

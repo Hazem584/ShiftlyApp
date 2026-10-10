@@ -24,11 +24,11 @@ class ManagerResourceList extends StatelessWidget {
   String _date(BuildContext context, ManagerPointsRecord record, String key) {
     final value = record.fields[key];
     if (value is! String) {
-      return 'Unknown';
+      return context.tr('Unknown');
     }
     final parsed = DateTime.tryParse(value);
     return parsed == null
-        ? 'Unknown'
+        ? context.tr('Unknown')
         : WorkspaceTime.dateTime(
             parsed,
             timezone,
@@ -42,19 +42,19 @@ class ManagerResourceList extends StatelessWidget {
     children: [
       if (state.loading) const LinearProgressIndicator(),
       if (state.error != null) ...[
-        Text(state.error!),
+        Text(context.tr(state.error!)),
         TextButton(
           onPressed: state.loading ? null : reload,
           child: Text(context.tr('Retry')),
         ),
       ],
       if (!state.loading && state.records.isEmpty && state.error == null)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
-          child: Text('No records for this selection.'),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Text(context.tr('No records for this selection.')),
         ),
       if (['warnings', 'extra-effort', 'adjustments'].contains(resource))
-        const Text('Showing up to the 100 most recent server records.'),
+        Text(context.tr('Showing up to the 100 most recent server records.')),
       for (final record in state.records)
         Card(
           child: Padding(
@@ -68,7 +68,7 @@ class ManagerResourceList extends StatelessWidget {
       if (state.hasMore)
         TextButton(
           onPressed: state.loading ? null : more,
-          child: const Text('Load more'),
+          child: Text(context.tr('Load more')),
         ),
     ],
   );
@@ -85,40 +85,67 @@ class ManagerResourceList extends StatelessWidget {
 
       return [
         Text(
-          name is String ? name : 'Employee',
+          name is String ? name : context.tr('Employee'),
           style: Theme.of(context).textTheme.titleMedium,
         ),
         Text(
-          'GREEN available: ${record.text('greenAvailable')} · Active RED: ${record.text('redActive')}',
+          context.tr('GREEN available: {value1} · Active RED: {value2}', {
+            'value1': (record.text('greenAvailable')).toString(),
+            'value2': (record.text('redActive')).toString(),
+          }),
         ),
         Text(
-          'BLACK total: ${total('black')} · ORANGE total: ${total('orange')} · BLUE total: ${total('blue')}',
+          context.tr(
+            'BLACK total: {value1} · ORANGE total: {value2} · BLUE total: {value3}',
+            {
+              'value1': (total('black')).toString(),
+              'value2': (total('orange')).toString(),
+              'value3': (total('blue')).toString(),
+            },
+          ),
         ),
-        Text('Achievements: ${record.text('achievementCount')}'),
+        Text(
+          context.tr('Achievements: {value1}', {
+            'value1': (record.text('achievementCount')).toString(),
+          }),
+        ),
         OutlinedButton.icon(
           onPressed: () =>
               context.push('/dashboard/performance/employees/${record.id}'),
           icon: const Icon(Icons.insights_outlined),
-          label: const Text('Employee Performance'),
+          label: Text(context.tr('Employee Performance')),
         ),
       ];
     }
     if (resource == 'policies') {
       return [
         Text(
-          'Effective ${record.text('effectiveFrom')} – ${record.fields['effectiveTo'] ?? 'open ended'}',
+          context.tr('Effective {value1} – {value2}', {
+            'value1': (record.text('effectiveFrom')).toString(),
+            'value2': (record.fields['effectiveTo'] ?? context.tr('open ended'))
+                .toString(),
+          }),
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        Text('Version ID: ${record.id}'),
+        Text(
+          context.tr('Version ID: {value1}', {
+            'value1': (record.id).toString(),
+          }),
+        ),
         ExpansionTile(
-          title: const Text('Policy settings'),
+          title: Text(context.tr('Policy settings')),
           children: [
             for (final field in ManagerForms.policy.where(
               (field) => !field.date,
             ))
               Padding(
                 padding: const EdgeInsets.all(8),
-                child: Text('${field.label}: ${record.text(field.key)}'),
+                child: Text(
+                  context.tr('{value1}: {value2}', {
+                    'value1': context.tr(field.label),
+                    'value2': context.tr(record.text(field.key)),
+                  }),
+                ),
               ),
           ],
         ),
@@ -126,15 +153,18 @@ class ManagerResourceList extends StatelessWidget {
     }
     if (resource == 'warnings') {
       return [
-        const Row(
+        Row(
           children: [
-            Icon(Icons.warning_amber_rounded),
-            SizedBox(width: 8),
-            Expanded(child: Text('BLACK warning')),
+            const Icon(Icons.warning_amber_rounded),
+            const SizedBox(width: 8),
+            Expanded(child: Text(context.tr('BLACK warning'))),
           ],
         ),
         Text(
-          'Cycle: ${record.text('cycle')} · Threshold: ${record.text('threshold')}',
+          context.tr('Cycle: {value1} · Threshold: {value2}', {
+            'value1': (record.text('cycle')).toString(),
+            'value2': (record.text('threshold')).toString(),
+          }),
         ),
         Text(_date(context, record, 'createdAt')),
         if (record.fields['employeeMembershipId'] is String)
@@ -142,18 +172,22 @@ class ManagerResourceList extends StatelessWidget {
             onPressed: () => context.push(
               '/dashboard/performance/employees/${record.fields['employeeMembershipId']}',
             ),
-            child: const Text('Employee Performance'),
+            child: Text(context.tr('Employee Performance')),
           ),
       ];
     }
     if (resource == 'disputes') {
       return [
-        Text('Status: ${record.text('status')}'),
+        Text(
+          context.tr('Status: {value1}', {
+            'value1': context.tr(record.text('status')),
+          }),
+        ),
         Text(record.text('reason')),
         Text(_date(context, record, 'createdAt')),
         OutlinedButton(
           onPressed: () => onRecord?.call(record),
-          child: const Text('View dispute'),
+          child: Text(context.tr('View dispute')),
         ),
       ];
     }
@@ -167,32 +201,57 @@ class ManagerResourceList extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                '${record.text('amount')} ${known ? type : 'Unknown point type'}',
+                context.tr('{value1} {value2}', {
+                  'value1': (record.text('amount')).toString(),
+                  'value2': context.tr(known ? type : 'Unknown point type'),
+                }),
               ),
             ),
           ],
         ),
-        Text(record.text('reason').replaceAll('_', ' ')),
+        Text(
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? context.tr(record.text('reason'))
+              : record.text('reason').replaceAll('_', ' '),
+        ),
         Text(
           record.fields['operationalDate'] is String
               ? record.text('operationalDate')
               : _date(context, record, 'createdAt'),
         ),
         if (record.fields['reversedEntryId'] != null)
-          Text('Reverses entry ${record.text('reversedEntryId')}'),
+          Text(
+            context.tr('Reverses entry {value1}', {
+              'value1': (record.text('reversedEntryId')).toString(),
+            }),
+          ),
       ];
     }
     return [
       Text(
         resource == 'extra-effort'
-            ? 'BLUE ${record.text('bluePoints')} · Linked GREEN ${record.text('greenBonus')}'
-            : '${record.text('amount')} ${record.text('pointType')}',
+            ? context.tr('BLUE {value1} · Linked GREEN {value2}', {
+                'value1': (record.text('bluePoints')).toString(),
+                'value2': (record.text('greenBonus')).toString(),
+              })
+            : context.tr('{value1} {value2}', {
+                'value1': (record.text('amount')).toString(),
+                'value2': context.tr(record.text('pointType')),
+              }),
       ),
-      Text(record.text('reason').replaceAll('_', ' ')),
+      Text(
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? context.tr(record.text('reason'))
+            : record.text('reason').replaceAll('_', ' '),
+      ),
       Text(record.text('explanation')),
       Text(_date(context, record, 'createdAt')),
       if (record.reversed) ...[
-        Text('Reversed: ${_date(context, record, 'reversedAt')}'),
+        Text(
+          context.tr('Reversed: {value1}', {
+            'value1': (_date(context, record, 'reversedAt')).toString(),
+          }),
+        ),
         Text(record.text('reversalReason')),
         Text(record.text('reversalExplanation')),
       ],
@@ -201,10 +260,10 @@ class ManagerResourceList extends StatelessWidget {
           onPressed: () => onRecord?.call(record),
           child: Text(
             resource == 'adjustments'
-                ? 'Details / reversal'
+                ? context.tr('Details / reversal')
                 : record.reversed
-                ? 'View record'
-                : 'Reverse award',
+                ? context.tr('View record')
+                : context.tr('Reverse award'),
           ),
         ),
     ];

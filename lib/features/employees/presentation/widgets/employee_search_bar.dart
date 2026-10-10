@@ -24,9 +24,9 @@ class EmployeeSearchBar extends StatelessWidget {
             key: const Key('employee-search'),
             onChanged: onChanged,
             textInputAction: TextInputAction.search,
-            decoration: const InputDecoration(
-              prefixIcon: Icon(Icons.search_rounded, size: 20),
-              hintText: 'Search by name or email',
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search_rounded, size: 20),
+              hintText: context.tr('Search by name or email'),
             ),
           ),
         ),
@@ -36,16 +36,19 @@ class EmployeeSearchBar extends StatelessWidget {
           child: PopupMenuButton<EmployeeStatusFilter?>(
             key: const Key('employee-status-filter'),
             onSelected: onStatusChanged,
-            tooltip: 'Filter employees',
+            tooltip: context.tr('Filter employees'),
             itemBuilder: (_) => [
-              PopupMenuItem(value: null, child: Text('All statuses')),
+              PopupMenuItem(
+                value: null,
+                child: Text(context.tr('All statuses')),
+              ),
               PopupMenuItem(
                 value: EmployeeStatusFilter.active,
                 child: Text(context.tr('Active')),
               ),
               PopupMenuItem(
                 value: EmployeeStatusFilter.suspended,
-                child: Text('Suspended'),
+                child: Text(context.tr('Suspended')),
               ),
             ],
             child: Icon(

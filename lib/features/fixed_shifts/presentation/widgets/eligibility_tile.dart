@@ -79,7 +79,25 @@ class EligibilityTile extends StatelessWidget {
             ],
           ),
           subtitle: Text(
-            '${WorkspaceTime.time(entry.scheduledStartAt, savedTimezone, locale: Localizations.localeOf(context).toString())} – ${WorkspaceTime.time(entry.scheduledEndAt, savedTimezone, locale: Localizations.localeOf(context).toString())}\n${entry.operationalDate} • ${context.tr(status)}${entry.lateMinutes > 0 ? ' • ${context.tr('{minutes} min late', {'minutes': '${entry.lateMinutes}'})}' : ''}',
+            context.tr('{value1} – {value2}\n{value3} • {value4}{value5}', {
+              'value1': (WorkspaceTime.time(
+                entry.scheduledStartAt,
+                savedTimezone,
+                locale: Localizations.localeOf(context).toString(),
+              )).toString(),
+              'value2': (WorkspaceTime.time(
+                entry.scheduledEndAt,
+                savedTimezone,
+                locale: Localizations.localeOf(context).toString(),
+              )).toString(),
+              'value3': (entry.operationalDate).toString(),
+              'value4': (context.tr(status)).toString(),
+              'value5':
+                  (entry.lateMinutes > 0
+                          ? ' • ${context.tr('{minutes} min late', {'minutes': '${entry.lateMinutes}'})}'
+                          : '')
+                      .toString(),
+            }),
           ),
           trailing: busy
               ? const SizedBox.square(

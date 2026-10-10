@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/utils/saved_schedule_formatter.dart';
 
 class ExtraAuthorizationCard extends StatelessWidget {
   const ExtraAuthorizationCard({required this.value, this.onRevoke, super.key});
@@ -18,16 +20,28 @@ class ExtraAuthorizationCard extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
           ),
           Text(
-            'EXTRA · ${value.status} · Operational date ${value.operationalDate}',
+            context.tr('EXTRA · {value1} · Operational date {value2}', {
+              'value1': context.tr(value.status),
+              'value2': (value.operationalDate).toString(),
+            }),
           ),
-          Text(value.schedule.summary),
-          Text('${value.fields['reason']} · ${value.fields['explanation']}'),
+          Text(savedScheduleLabel(context, value.schedule)),
           Text(
-            'Authorization: ${value.id}',
+            context.tr('{value1} · {value2}', {
+              'value1': context.tr('${value.fields['reason']}'),
+              'value2': (value.fields['explanation']).toString(),
+            }),
+          ),
+          Text(
+            context.tr('Authorization: {value1}', {
+              'value1': (value.id).toString(),
+            }),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           Text(
-            'Created by membership ${value.fields['createdByMembershipId']}',
+            context.tr('Created by membership {value1}', {
+              'value1': (value.fields['createdByMembershipId']).toString(),
+            }),
           ),
           for (final key in [
             'createdAt',
@@ -38,25 +52,44 @@ class ExtraAuthorizationCard extends StatelessWidget {
           ])
             if (value.fields[key] is String)
               Text(
-                '$key: ${WorkspaceTime.dateTime(DateTime.parse(value.fields[key] as String), value.schedule.timezone)}',
+                context.tr('{value1}: {value2}', {
+                  'value1': context.tr(key),
+                  'value2': (WorkspaceTime.dateTime(
+                    DateTime.parse(value.fields[key] as String),
+                    value.schedule.timezone,
+                  )).toString(),
+                }),
               ),
           if (value.fields['revokedByMembershipId'] != null)
             Text(
-              'Revoked by membership ${value.fields['revokedByMembershipId']}',
+              context.tr('Revoked by membership {value1}', {
+                'value1': (value.fields['revokedByMembershipId']).toString(),
+              }),
             ),
           for (final record in value.attendance.whereType<Map>())
             Text(
-              'Attendance ${record['id']} · ${record['reviewStatus'] ?? 'Status unavailable'}\nEntered by membership ${record['enteredByMembershipId'] ?? 'Not recorded'}',
+              context.tr(
+                'Attendance {value1} · {value2}\nEntered by membership {value3}',
+                {
+                  'value1': (record['id']).toString(),
+                  'value2': (record['reviewStatus'] ?? 'Status unavailable')
+                      .toString(),
+                  'value3': (record['enteredByMembershipId'] ?? 'Not recorded')
+                      .toString(),
+                },
+              ),
             ),
           if (!value.schedule.supported)
-            const Text(
-              'Unknown schedule conversion policy. Read-only evidence; contact support.',
+            Text(
+              context.tr(
+                'Unknown schedule conversion policy. Read-only evidence; contact support.',
+              ),
             ),
           if (onRevoke != null && value.canRevoke)
             OutlinedButton.icon(
               onPressed: onRevoke,
               icon: const Icon(Icons.cancel_outlined),
-              label: const Text('Revoke unused authorization'),
+              label: Text(context.tr('Revoke unused authorization')),
             ),
         ],
       ),

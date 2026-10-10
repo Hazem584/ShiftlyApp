@@ -7,6 +7,7 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/utils/saved_schedule_formatter.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/assignment_form.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/weekday_row.dart';
 
@@ -41,12 +42,12 @@ class WorkPatternView extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Work pattern',
+                    context.tr('Work pattern'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Refresh work pattern',
+                  tooltip: context.tr('Refresh work pattern'),
                   onPressed: () =>
                       context.read<WorkPatternCubit>().load(retain: true),
                   icon: const Icon(Icons.refresh_rounded),
@@ -57,43 +58,61 @@ class WorkPatternView extends StatelessWidget {
             const SizedBox(height: 8),
             if (state.failure != null) ...[
               Text(
-                state.failure!.message,
+                context.tr(state.failure!.message),
                 style: const TextStyle(color: AppColors.error),
               ),
               if (state.failure!.requestId != null)
                 Text(
-                  'Support reference: ${state.failure!.requestId}',
+                  context.tr('Support reference: {value1}', {
+                    'value1': (state.failure!.requestId).toString(),
+                  }),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               const SizedBox(height: 8),
             ],
             if (state.history?.current case final current?) ...[
-              const Text(
-                'Current schedule',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              Text(
+                context.tr('Current schedule'),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
-                current.assignmentSnapshot?.summary ??
-                    'Historical assignment evidence is not recorded.',
+                current.assignmentSnapshot != null
+                    ? savedScheduleLabel(context, current.assignmentSnapshot!)
+                    : context.tr(
+                        'Historical assignment evidence is not recorded.',
+                      ),
               ),
               WeekdayRow(days: current.expectedWeekdays),
               const SizedBox(height: 5),
               Text(
-                'Effective ${current.effectiveFrom}${current.effectiveTo == null ? '' : ' through ${current.effectiveTo}'}',
+                context.tr('Effective {value1}{value2}', {
+                  'value1': (current.effectiveFrom).toString(),
+                  'value2':
+                      (current.effectiveTo == null
+                              ? ''
+                              : context.tr(' through {date}', {
+                                  'date': '${current.effectiveTo}',
+                                }))
+                          .toString(),
+                }),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ] else
-              const Text('No work pattern is currently effective.'),
+              Text(context.tr('No work pattern is currently effective.')),
             if ((state.history?.history.length ?? 0) > 0) ...[
               const Divider(height: 28),
               ExpansionTile(
                 tilePadding: EdgeInsets.zero,
                 title: Text(
-                  'Version history (${state.history!.history.length})',
+                  context.tr('Version history ({value1})', {
+                    'value1': (state.history!.history.length).toString(),
+                  }),
                 ),
-                subtitle: const Text(
-                  'New patterns create versions; history is never overwritten.',
+                subtitle: Text(
+                  context.tr(
+                    'New patterns create versions; history is never overwritten.',
+                  ),
                 ),
                 children: [
                   for (final pattern in state.history!.history)
@@ -109,7 +128,7 @@ class WorkPatternView extends StatelessWidget {
                         children: [
                           Text(
                             pattern.id == state.history?.current?.id
-                                ? 'Current assignment'
+                                ? context.tr('Current assignment')
                                 : pattern.effectiveFrom.compareTo(
                                         WorkspaceTime.dateKey(
                                           DateTime.now().toUtc(),
@@ -117,15 +136,25 @@ class WorkPatternView extends StatelessWidget {
                                         ),
                                       ) >
                                       0
-                                ? 'Future assignment'
-                                : 'Historical assignment',
+                                ? context.tr('Future assignment')
+                                : context.tr('Historical assignment'),
                           ),
                           WeekdayRow(days: pattern.expectedWeekdays),
                         ],
                       ),
                       subtitle: Text(
-                        '${pattern.assignmentSnapshot?.summary ?? 'Assignment evidence not recorded'}\n'
-                        '${pattern.effectiveFrom} → ${pattern.effectiveTo ?? 'ongoing'}',
+                        context.tr('{value1}\n{value2} → {value3}', {
+                          'value1': pattern.assignmentSnapshot != null
+                              ? savedScheduleLabel(
+                                  context,
+                                  pattern.assignmentSnapshot!,
+                                )
+                              : context.tr('Assignment evidence not recorded'),
+                          'value2': (pattern.effectiveFrom).toString(),
+                          'value3':
+                              (pattern.effectiveTo ?? context.tr('ongoing'))
+                                  .toString(),
+                        }),
                       ),
                     ),
                 ],
@@ -145,9 +174,14 @@ class WorkPatternView extends StatelessWidget {
                               page: pagination.page - 1,
                             )
                           : null,
-                      child: const Text('Previous'),
+                      child: Text(context.tr('Previous')),
                     ),
-                    Text('Page ${pagination.page} of ${pagination.totalPages}'),
+                    Text(
+                      context.tr('Page {value1} of {value2}', {
+                        'value1': (pagination.page).toString(),
+                        'value2': (pagination.totalPages).toString(),
+                      }),
+                    ),
                     TextButton(
                       onPressed: state.loading
                           ? null
@@ -180,16 +214,20 @@ class WorkPatternView extends StatelessWidget {
                       )
                     : const Icon(Icons.edit_calendar_outlined),
                 label: Text(
-                  canEdit ? 'Schedule a new version' : 'Employee is inactive',
+                  canEdit
+                      ? context.tr('Schedule a new version')
+                      : context.tr('Employee is inactive'),
                 ),
               ),
             ),
             if (!WorkspaceTime.isValid(timezone))
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'The workspace timezone is invalid. Pattern changes are disabled.',
-                  style: TextStyle(color: AppColors.error),
+                  context.tr(
+                    'The workspace timezone is invalid. Pattern changes are disabled.',
+                  ),
+                  style: const TextStyle(color: AppColors.error),
                 ),
               ),
           ],

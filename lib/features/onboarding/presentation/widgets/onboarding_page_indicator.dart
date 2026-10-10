@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 
 class OnboardingPageIndicator extends StatelessWidget {
   const OnboardingPageIndicator({
@@ -9,7 +10,10 @@ class OnboardingPageIndicator extends StatelessWidget {
   final int page, count;
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Page ${page + 1} of $count',
+    label: context.tr('Page {value1} of {value2}', {
+      'value1': (page + 1).toString(),
+      'value2': (count).toString(),
+    }),
     liveRegion: true,
     child: ExcludeSemantics(
       child: Row(

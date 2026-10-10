@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 
@@ -16,7 +17,7 @@ class EmployeeInformationSection extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: Theme.of(context).textTheme.titleLarge),
+      Text(context.tr(title), style: Theme.of(context).textTheme.titleLarge),
       const SizedBox(height: AppSpacing.s),
       SurfaceCard(
         padding: EdgeInsets.zero,

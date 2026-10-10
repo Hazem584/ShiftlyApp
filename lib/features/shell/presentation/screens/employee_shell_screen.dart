@@ -124,40 +124,48 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                     setState(() => _selectedIndex = index),
                 destinations: [
                   NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home_rounded),
+                    icon: const Icon(Icons.home_outlined),
+                    selectedIcon: const Icon(Icons.home_rounded),
                     label: context.tr('Overview'),
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.calendar_month_outlined),
-                    selectedIcon: Icon(Icons.calendar_month_rounded),
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    selectedIcon: const Icon(Icons.calendar_month_rounded),
                     label: context.tr('My Shifts'),
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.fact_check_outlined),
-                    selectedIcon: Icon(Icons.fact_check_rounded),
+                    icon: const Icon(Icons.fact_check_outlined),
+                    selectedIcon: const Icon(Icons.fact_check_rounded),
                     label: context.tr('Attendance'),
                   ),
                   NavigationDestination(
                     icon: Badge(
                       isLabelVisible: chat.unreadCount > 0,
                       label: Text(
-                        chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                        chat.unreadCount > 99
+                            ? '99+'
+                            : context.tr('{value1}', {
+                                'value1': (chat.unreadCount).toString(),
+                              }),
                       ),
                       child: const Icon(Icons.chat_bubble_outline_rounded),
                     ),
                     selectedIcon: Badge(
                       isLabelVisible: chat.unreadCount > 0,
                       label: Text(
-                        chat.unreadCount > 99 ? '99+' : '${chat.unreadCount}',
+                        chat.unreadCount > 99
+                            ? '99+'
+                            : context.tr('{value1}', {
+                                'value1': (chat.unreadCount).toString(),
+                              }),
                       ),
                       child: const Icon(Icons.chat_bubble_rounded),
                     ),
                     label: context.tr('Chat'),
                   ),
                   NavigationDestination(
-                    icon: Icon(Icons.auto_graph_outlined),
-                    selectedIcon: Icon(Icons.auto_graph_rounded),
+                    icon: const Icon(Icons.auto_graph_outlined),
+                    selectedIcon: const Icon(Icons.auto_graph_rounded),
                     label: context.tr('Performance'),
                   ),
                 ],
