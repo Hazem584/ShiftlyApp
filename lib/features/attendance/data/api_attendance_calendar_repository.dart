@@ -34,7 +34,14 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
     );
     final results = await Future.wait<Object>([
       _allShifts(workspaceId, range.start, range.end),
-      _allAttendance(workspaceId, range.start, range.end),
+      // Template check-in windows can extend 24 hours before/after the
+      // scheduled start. Include neighbouring days, then filter by the
+      // server's operational date so month-edge overnight records survive.
+      _allAttendance(
+        workspaceId,
+        range.start.subtract(const Duration(days: 2)),
+        range.end.add(const Duration(days: 2)),
+      ),
       _allLeave(workspaceId, range.start, range.end),
     ]);
     return deriveAttendanceCalendarMonth(

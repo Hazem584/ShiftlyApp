@@ -5,6 +5,7 @@ import 'package:shiftly/features/attendance/domain/entities/calendar_attendance_
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/services/fixed_shift_dates.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 import 'package:timezone/timezone.dart' as timezone;
 
@@ -30,16 +31,43 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
     }
   }
   final validAttendance = <String, AttendanceRecordApi>{};
+  final templateDays = <String, String>{};
   for (final record in attendance) {
-    if (record.workspaceId == workspaceId &&
-        record.source == AttendanceSource.legacyShift &&
-        record.shift != null &&
-        record.reviewStatus != AttendanceReviewStatus.rejected &&
-        record.reviewStatus != AttendanceReviewStatus.unknown &&
-        record.shift!.status != ShiftStatus.cancelled &&
-        record.shift!.status != ShiftStatus.unknown) {
-      validAttendance.putIfAbsent(record.id, () => record);
+    if (record.workspaceId != workspaceId ||
+        validAttendance.containsKey(record.id) ||
+        record.reviewStatus == AttendanceReviewStatus.rejected ||
+        record.reviewStatus == AttendanceReviewStatus.unknown) {
+      continue;
     }
+    switch (record.source) {
+      case AttendanceSource.legacyShift:
+        if (record.shift == null ||
+            record.shift!.status == ShiftStatus.cancelled ||
+            record.shift!.status == ShiftStatus.unknown) {
+          continue;
+        }
+      case AttendanceSource.template:
+        if (record.operationalDate == null ||
+            record.clockInClassification == AttendanceClassification.unknown) {
+          continue;
+        }
+        try {
+          // DateTime parsing normalizes impossible dates in timestamps.
+          // Validate the calendar date before accepting either representation.
+          fixedShiftDateOnly({
+            'date': record.operationalDate!.split('T').first,
+          }, 'date');
+          final date = fixedShiftOperationalDate({
+            'date': record.operationalDate,
+          }, 'date');
+          templateDays.putIfAbsent(record.id, () => date);
+        } on FormatException {
+          continue;
+        }
+      case AttendanceSource.unknown:
+        continue;
+    }
+    validAttendance.putIfAbsent(record.id, () => record);
   }
   final approvedLeave = <String, LeaveRequestRecord>{};
   for (final request in leaveRequests) {
@@ -75,9 +103,21 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
               item.endsAt.isAfter(day.toUtc()),
         )
         .toList(growable: false);
+    final dayAttendance = validAttendance.values
+        .where(
+          (item) => item.source == AttendanceSource.template
+              ? templateDays[item.id] == key
+              : dayShifts.any(
+                  (shift) =>
+                      shift.id == item.shiftId &&
+                      shift.employeeMembershipId == item.employeeMembershipId,
+                ),
+        )
+        .toList(growable: false);
     final employees = <String>{
       ...dayShifts.map((item) => item.employeeMembershipId),
       ...dayLeave.map((item) => item.employeeMembershipId),
+      ...dayAttendance.map((item) => item.employeeMembershipId),
     };
     final entries = <AttendanceCalendarEntry>[];
     for (final employeeId in employees) {
@@ -87,18 +127,23 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
       final employeeLeave = dayLeave
           .where((item) => item.employeeMembershipId == employeeId)
           .firstOrNull;
-      final records = validAttendance.values
-          .where(
-            (item) =>
-                item.employeeMembershipId == employeeId &&
-                employeeShifts.any((shift) => shift.id == item.shiftId),
-          )
+      final records = dayAttendance
+          .where((item) => item.employeeMembershipId == employeeId)
           .toList();
       final attendanceRecord = records.isEmpty ? null : records.first;
       final lateRecord = records
-          .where((item) => item.minutesLate > 0)
+          .where(
+            (item) =>
+                item.minutesLate > 0 ||
+                item.clockInClassification == AttendanceClassification.late,
+          )
           .firstOrNull;
-      final shift = employeeShifts.firstOrNull;
+      final selectedRecord = lateRecord ?? attendanceRecord;
+      final shift = selectedRecord == null
+          ? employeeShifts.firstOrNull
+          : employeeShifts
+                .where((item) => item.id == selectedRecord.shiftId)
+                .firstOrNull;
       final employee =
           attendanceRecord?.employee ??
           shift?.employee ??

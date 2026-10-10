@@ -14,8 +14,10 @@ import 'package:shiftly/features/attendance/presentation/cubit/attendance_calend
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_employee_day_row.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_state.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 const _workspace = 'workspace';
@@ -91,6 +93,57 @@ LeaveRequestRecord _leave(String id, String employeeId) => LeaveRequestRecord(
   employee: _employee(employeeId),
 );
 
+AttendanceRecordApi _templateAttendance({
+  String id = 'template-attendance',
+  String employeeId = 'template-employee',
+  String workspaceId = _workspace,
+  String? operationalDate = '2026-03-10',
+  String? occurrenceKind = 'BASELINE',
+  AttendanceSource source = AttendanceSource.template,
+  AttendanceReviewStatus reviewStatus = AttendanceReviewStatus.approved,
+  AttendanceClassification classification = AttendanceClassification.onTime,
+  int minutesLate = 0,
+  DateTime? clockInAt,
+}) {
+  final start = DateTime.utc(2026, 3, 10, 22);
+  return AttendanceRecordApi(
+    id: id,
+    workspaceId: workspaceId,
+    shiftId: null,
+    employeeMembershipId: employeeId,
+    employee: _employee(employeeId),
+    source: source,
+    occurrenceKind: occurrenceKind,
+    operationalDate: operationalDate,
+    shiftTemplateId: 'template',
+    templateName: 'Night shift',
+    scheduledStartAt: start,
+    scheduledEndAt: DateTime.utc(2026, 3, 11, 6),
+    clockInAt: clockInAt ?? DateTime.utc(2026, 3, 11),
+    clockOutAt: DateTime.utc(2026, 3, 11, 6),
+    clockInClassification: classification,
+    minutesLate: minutesLate,
+    reviewStatus: reviewStatus,
+    createdAt: start,
+    updatedAt: start,
+  );
+}
+
+AttendanceCalendarMonth _deriveTemplates(
+  List<AttendanceRecordApi> records, {
+  List<ShiftRecord> shifts = const [],
+  List<LeaveRequestRecord> leave = const [],
+}) => deriveAttendanceCalendarMonth(
+  workspaceId: _workspace,
+  timezoneName: 'Etc/UTC',
+  year: 2026,
+  month: 3,
+  shifts: shifts,
+  attendance: records,
+  leaveRequests: leave,
+  nowUtc: DateTime.utc(2026, 3, 15),
+);
+
 ApiPagination _pagination(int page, int totalPages) => ApiPagination(
   page: page,
   limit: 100,
@@ -114,6 +167,8 @@ class _ShiftRepository implements ShiftRepository {
 }
 
 class _AttendanceRepository implements AttendanceRepository {
+  _AttendanceRepository({this.records = const []});
+  final List<AttendanceRecordApi> records;
   final queries = <AttendanceQuery>[];
   @override
   Future<AttendancePage> listWorkspaceAttendance(
@@ -122,7 +177,7 @@ class _AttendanceRepository implements AttendanceRepository {
   ) async {
     queries.add(query);
     return AttendancePage(
-      data: const [],
+      data: records,
       pagination: _pagination(query.page, 2),
     );
   }
@@ -228,9 +283,148 @@ void main() {
       expect(shifts.queries.first.limit, 100);
       expect(shifts.queries.first.from, DateTime.utc(2026, 3, 1, 5));
       expect(shifts.queries.first.to, DateTime.utc(2026, 4, 1, 4));
+      expect(attendance.queries.first.from, DateTime.utc(2026, 2, 27, 5));
+      expect(attendance.queries.first.to, DateTime.utc(2026, 4, 3, 4));
       expect(leave.queries.first.status, LeaveRequestStatus.approved);
     },
   );
+
+  test('template, flexible and extra attendance use the operational day', () {
+    final records = [
+      _templateAttendance(id: 'baseline', employeeId: 'a'),
+      _templateAttendance(
+        id: 'flexible',
+        employeeId: 'b',
+        occurrenceKind: null,
+        operationalDate: '2026-03-10T00:00:00.000Z',
+      ),
+      _templateAttendance(
+        id: 'extra',
+        employeeId: 'c',
+        occurrenceKind: 'EXTRA',
+        classification: AttendanceClassification.late,
+      ),
+    ];
+    final data = _deriveTemplates([...records, records.first]);
+    expect(data.days.keys, ['2026-03-10']);
+    final entries = data.days['2026-03-10']!;
+    expect(entries, hasLength(3));
+    expect(
+      entries.where((e) => e.status == CalendarAttendanceStatus.present),
+      hasLength(2),
+    );
+    expect(entries.last.status, CalendarAttendanceStatus.late);
+    expect(entries.every((e) => e.shift == null), isTrue);
+  });
+
+  test('ignores unsafe template records and does not invent absence', () {
+    final data = _deriveTemplates([
+      _templateAttendance(
+        id: 'rejected',
+        reviewStatus: AttendanceReviewStatus.rejected,
+      ),
+      _templateAttendance(
+        id: 'unknown-review',
+        reviewStatus: AttendanceReviewStatus.unknown,
+      ),
+      _templateAttendance(
+        id: 'unknown-source',
+        source: AttendanceSource.unknown,
+      ),
+      _templateAttendance(
+        id: 'unknown-classification',
+        classification: AttendanceClassification.unknown,
+      ),
+      _templateAttendance(id: 'missing-date', operationalDate: null),
+      _templateAttendance(id: 'invalid-date', operationalDate: '2026-02-30'),
+      _templateAttendance(
+        id: 'invalid-timestamp',
+        operationalDate: '2026-02-30T00:00:00.000Z',
+      ),
+      _templateAttendance(id: 'other-workspace', workspaceId: 'other'),
+      _templateAttendance(id: 'other-month', operationalDate: '2026-04-01'),
+    ]);
+    expect(data.days, isEmpty);
+  });
+
+  test(
+    'mixed attendance keeps one outcome and matching schedule per employee',
+    () {
+      final shift = _shift(
+        id: 'legacy',
+        employeeId: 'a',
+        start: DateTime.utc(2026, 3, 10, 8),
+        end: DateTime.utc(2026, 3, 10, 16),
+      );
+      final late = _templateAttendance(employeeId: 'a', minutesLate: 15);
+      final data = _deriveTemplates(
+        [_attendanceRecord(id: 'legacy-attendance', shift: shift), late],
+        shifts: [shift],
+      );
+      final entry = data.days['2026-03-10']!.single;
+      expect(entry.status, CalendarAttendanceStatus.late);
+      expect(entry.attendance, late);
+      expect(entry.shift, isNull);
+    },
+  );
+
+  test('template presence takes precedence over approved leave', () {
+    final record = _templateAttendance(operationalDate: '2026-03-11');
+    final data = _deriveTemplates(
+      [record],
+      leave: [_leave('leave', record.employeeMembershipId)],
+    );
+    expect(
+      data.days['2026-03-11']!.single.status,
+      CalendarAttendanceStatus.present,
+    );
+    expect(
+      data.days['2026-03-12']!.single.status,
+      CalendarAttendanceStatus.leave,
+    );
+  });
+
+  test('month-edge clock-in remains on the server operational date', () async {
+    final record = _templateAttendance(
+      operationalDate: '2026-03-31',
+      clockInAt: DateTime.utc(2026, 4, 1),
+    );
+    final repository = ApiAttendanceCalendarRepository(
+      _ShiftRepository(),
+      _AttendanceRepository(records: [record]),
+      _LeaveRepository(),
+    );
+    final data = await repository.loadMonth(
+      workspaceId: _workspace,
+      timezone: 'Etc/UTC',
+      year: 2026,
+      month: 3,
+    );
+    expect(data.days.keys, ['2026-03-31']);
+    expect(data.days['2026-03-31']!.single.attendance, record);
+  });
+
+  testWidgets('template calendar details show the saved schedule and times', (
+    tester,
+  ) async {
+    final entry = _deriveTemplates([_templateAttendance()])
+        .days['2026-03-10']!
+        .single;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AttendanceCalendarEmployeeDayRow(
+            entry: entry,
+            timezone: 'Etc/UTC',
+          ),
+        ),
+      ),
+    );
+    expect(find.textContaining('Night shift'), findsOneWidget);
+    expect(find.textContaining('10:00 PM'), findsOneWidget);
+    expect(find.textContaining('6:00 AM'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   test(
     'derives canonical statuses, precedence, unknown safety and deduplication',

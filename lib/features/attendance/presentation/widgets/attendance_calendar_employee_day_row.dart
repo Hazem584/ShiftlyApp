@@ -18,6 +18,8 @@ class AttendanceCalendarEmployeeDayRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = entry.employee.displayName;
+    final start = entry.shift?.startsAt ?? entry.attendance?.scheduledStartAt;
+    final end = entry.shift?.endsAt ?? entry.attendance?.scheduledEndAt;
     final initials = name
         .trim()
         .split(RegExp(r'\s+'))
@@ -27,15 +29,17 @@ class AttendanceCalendarEmployeeDayRow extends StatelessWidget {
         .join()
         .toUpperCase();
     final details = <String>[
-      if (entry.shift != null)
+      if (entry.attendance?.templateName?.trim().isNotEmpty == true)
+        entry.attendance!.templateName!,
+      if (start != null && end != null)
         context.tr('Shift {start}–{end}', {
           'start': WorkspaceTime.time(
-            entry.shift!.startsAt,
+            start,
             timezone,
             locale: Localizations.localeOf(context).toString(),
           ),
           'end': WorkspaceTime.time(
-            entry.shift!.endsAt,
+            end,
             timezone,
             locale: Localizations.localeOf(context).toString(),
           ),
