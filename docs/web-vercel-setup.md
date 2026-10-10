@@ -89,3 +89,15 @@ flutter build web --release --dart-define-from-file=config/web.local.json
 - تسجيل الصوت لا يبدأ: اسمح بالميكروفون، واستخدم HTTPS، وتأكد من دعم المتصفح للتسجيل.
 
 مراجع: [Flutter web deployment](https://docs.flutter.dev/deployment/web)، [Vercel configuration](https://vercel.com/docs/project-configuration/vercel-json)، [Supabase redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
+
+### فشل تنزيل Dart SDK على Vercel
+
+لو السجل يظهر `End-of-central-directory signature not found` بعد تنزيل ملف حجمه مئات البايتات، فالملف ليس أرشيف Dart SDK صالحًا. السكربت الحالي ينزّل أرشيف Flutter Linux الرسمي كاملًا في مجلد مؤقت جديد لكل بناء، ويتحقق من SHA-256 ونسخة Flutter وDart قبل تشغيله. لا يعيد استخدام نسخة SDK الموجودة في كاش Vercel؛ تحميل SDK من جديد يزيد وقت البناء.
+
+بعد رفع تعديل `scripts/build-vercel.sh` إلى GitHub:
+
+1. افتح مشروع واجهة Shiftly في Vercel، ثم **Deployments**، وتأكد أن النشر يستخدم آخر commit الذي يحتوي على إصلاح السكربت.
+2. عند إعادة النشر، اختَر **Redeploy** وألغِ **Use existing Build Cache** لهذه المحاولة لإزالة أثر الكاش القديم.
+3. ينبغي أن يظهر `Verified Flutter 3.47.6 stable / Dart 3.13.5` قبل بناء التطبيق. لا تحتاج لتغيير إعدادات Supabase أو CORS بسبب هذا الخطأ.
+
+مراجع: [أرشيف Flutter الرسمي](https://docs.flutter.dev/install/archive)، [إعادة النشر بدون كاش Vercel](https://vercel.com/docs/deployments/troubleshoot-a-build#managing-build-cache).
