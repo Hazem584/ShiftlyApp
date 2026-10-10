@@ -634,15 +634,30 @@ class _AppProvidersState extends State<AppProviders> {
     _managerPerformanceCubit.invalidate();
   }
 
-  void _showPushNotice(PushNotice notice) {
+  Future<void> _showPushNotice(PushNotice notice) async {
     unawaited(_notificationsCubit.load(refresh: true));
     _dashboardCubit.invalidate();
+    final scope = _notificationsCubit.scope;
+    if (scope == null || _pushDevices == null) return;
+    String? content;
+    try {
+      final record = await _pushDevices!.getNotification(notice.notificationId);
+      if (!mounted ||
+          _notificationsCubit.scope != scope ||
+          record.workspaceId != scope.workspaceId ||
+          record.id != notice.notificationId) {
+        return;
+      }
+      content = '${record.title}\n${record.message}';
+    } catch (_) {
+      return;
+    }
     final context =
         _router.routerDelegate.navigatorKey.currentState?.overlay?.context;
-    if (!mounted || context == null) return;
+    if (!mounted || context == null || !context.mounted) return;
     _messengerKey.currentState?.showSnackBar(
       SnackBar(
-        content: Text(context.tr('You have a new Shiftly update.')),
+        content: Text(content),
         action: SnackBarAction(
           label: context.tr('View'),
           onPressed: () => unawaited(_openPushNotice(notice)),

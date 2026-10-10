@@ -36,9 +36,17 @@ The worker uses atomic leases, a source deduplication key, per-device delivery s
 ## App behavior and validation
 
 - Mobile notifications are opt-in, saved per account on this installation. No permission prompt appears at startup. Unsupported desktop platforms continue normally; missing native Firebase configuration does not block sign-in or the rest of the app.
-- Foreground pushes refresh notifications/dashboard and show a generic localized in-app alert with a View action. Background/terminated taps wait for a validated session. Payloads contain only notification/workspace/recipient identifiers; arbitrary URLs/routes are ignored.
+- Foreground pushes refresh notifications/dashboard and fetch the authenticated canonical record to show its title/message with a View action. Background/terminated taps wait for a validated session. Data payloads contain only notification/workspace/recipient identifiers; arbitrary URLs/routes are ignored.
 - The active account and workspace must match the push. Cross-workspace notifications do not automatically switch workspaces. The canonical notification and destination are fetched through existing authenticated APIs before opening shifts, attendance, leave or the chat conversation.
 - Logout/opt-out invalidates the FCM token even when the backend revocation request is offline. Token refresh re-registers the device. Revoked OS permission disables the active registration; ordinary refresh never triggers a permission prompt.
-- Lock-screen text is generic: no employee names, chat content or leave reasons are included. Tokens/keys/provider responses are not logged.
+- Lock-screen text includes the event and workspace, chat sender/group/message preview, or attendance shift/time. Preview text is bounded; deleted chat messages are skipped. These details are visible wherever the OS displays notifications. Tokens/keys/provider responses are not logged.
+
+Successful chat, attendance, shift and leave mutations trigger a bounded delivery pass
+after the business transaction commits. The pass is awaited so a serverless instance
+does not suspend before dispatch; failures preserve the successful action response.
+This can extend API response time while Firebase is contacted. Newly enqueued
+deliveries are eligible in the same pass, removing the second scheduler interval.
+Keep the one-minute cron for retries, backlog and reminders. Device/network/Firebase
+conditions can still delay delivery; immediate dispatch is not a delivery guarantee.
 
 Verify on real configured devices: foreground, background, cold-start tap, denied permission, token rotation, opt-out, logout/account switching, stale/deleted destination, and another workspace's notice. On the backend verify concurrent workers, retries, invalid-token removal, group removal, and reminder cancellation/rescheduling. Unit tests cover these rules with mocks, not live Firebase/Apple delivery.
