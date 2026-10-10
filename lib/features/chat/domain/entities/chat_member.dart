@@ -9,6 +9,9 @@ class ChatMember extends Equatable {
     this.email,
     this.avatarUrl,
     this.role,
+    this.joinedAt,
+    this.lastReadMessageId,
+    this.lastReadMessageCreatedAt,
   });
 
   final String membershipId;
@@ -17,6 +20,9 @@ class ChatMember extends Equatable {
   final String? email;
   final String? avatarUrl;
   final String? role;
+  final DateTime? joinedAt;
+  final String? lastReadMessageId;
+  final DateTime? lastReadMessageCreatedAt;
 
   String get displayName => fullName ?? email ?? 'Workspace member';
 
@@ -40,6 +46,11 @@ class ChatMember extends Equatable {
         membership['avatarUrl'] ?? profile['avatarUrl'],
       ),
       role: chatModelsOptionalText(membership['role']),
+      joinedAt: chatModelsOptionalDate(json['joinedAt']),
+      lastReadMessageId: chatOptionalUuid(json['lastReadMessageId']),
+      lastReadMessageCreatedAt: chatModelsOptionalDate(
+        json['lastReadMessageCreatedAt'],
+      ),
     );
   }
 
@@ -51,5 +62,8 @@ class ChatMember extends Equatable {
     email,
     avatarUrl,
     role,
+    joinedAt,
+    lastReadMessageId,
+    lastReadMessageCreatedAt,
   ];
 }

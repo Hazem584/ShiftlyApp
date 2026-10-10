@@ -1591,6 +1591,47 @@ void main() {
       await groups.close();
     });
 
+    testWidgets('loading an active conversation never flashes read only', (
+      tester,
+    ) async {
+      final gate = Completer<ChatGroup>();
+      final repository = _FakeChatRepository()..detailsResult = gate.future;
+      final groups = ChatGroupsCubit(repository)..bindSession(_scope);
+      await tester.pumpWidget(
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<ChatRepository>.value(value: repository),
+            RepositoryProvider<ChatRealtime>.value(value: _FakeRealtime()),
+          ],
+          child: BlocProvider.value(
+            value: groups,
+            child: const MaterialApp(home: ChatScreen(groupId: _group)),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Loading conversation…'), findsOneWidget);
+      expect(find.textContaining('read only'), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('chat-message-input')))
+            .enabled,
+        isFalse,
+      );
+      gate.complete(_chatGroup());
+      await tester.pumpAndSettle();
+      expect(find.text('Loading conversation…'), findsNothing);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('chat-message-input')))
+            .enabled,
+        isTrue,
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await groups.close();
+    });
+
     testWidgets('archived conversation is read only at compact text scale', (
       tester,
     ) async {
@@ -1726,6 +1767,7 @@ class _FakeChatRepository extends ChatRepository {
   int createCalls = 0;
   int updateCalls = 0;
   ChatGroup details = _chatGroup();
+  Future<ChatGroup>? detailsResult;
   Future<ChatGroup>? createResult;
   Future<void>? updateResult;
 
@@ -1779,7 +1821,7 @@ class _FakeChatRepository extends ChatRepository {
 
   @override
   Future<ChatGroup> getGroup(String workspaceId, String groupId) async =>
-      details;
+      detailsResult ?? details;
   @override
   Future<void> addMembers(
     String workspaceId,

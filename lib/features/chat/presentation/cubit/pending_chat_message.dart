@@ -43,6 +43,7 @@ class PendingChatMessage extends Equatable {
     this.location,
     this.localPath,
     this.canCancel = true,
+    this.createdAt,
   });
 
   final String clientMessageId;
@@ -56,6 +57,7 @@ class PendingChatMessage extends Equatable {
   final ChatLocation? location;
   final String? localPath;
   final bool canCancel;
+  final DateTime? createdAt;
 
   PendingChatMessage copyWith({
     ChatUploadState? status,
@@ -75,6 +77,7 @@ class PendingChatMessage extends Equatable {
     location: location,
     localPath: localPath,
     canCancel: canCancel,
+    createdAt: createdAt,
   );
 
   @override
@@ -90,5 +93,6 @@ class PendingChatMessage extends Equatable {
     location,
     localPath,
     canCancel,
+    createdAt,
   ];
 }

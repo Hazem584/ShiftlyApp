@@ -11,6 +11,7 @@ import 'package:shiftly/features/chat/presentation/chat_playback_coordinator.dar
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_location_card.dart';
+import 'package:shiftly/features/chat/presentation/widgets/pending_message_footer.dart';
 
 class PendingMediaBubble extends StatelessWidget {
   const PendingMediaBubble({
@@ -30,142 +31,119 @@ class PendingMediaBubble extends StatelessWidget {
   final Future<void> Function(String) onCancel;
 
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerRight,
-    child: Container(
-      constraints: const BoxConstraints(maxWidth: 320),
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (pending.mediaType == PendingChatMediaType.text)
-            Text(pending.text ?? '')
-          else if (pending.mediaType == PendingChatMediaType.location)
-            ChatLocationCard(location: pending.location!)
-          else if (pending.mediaType == PendingChatMediaType.image)
-            if (pending.previewBytes != null)
-              Image.memory(
-                pending.previewBytes!,
-                height: 160,
-                width: 260,
-                cacheWidth: 720,
-                fit: BoxFit.cover,
-              )
-            else if (pending.localPath != null)
-              LocalMediaImage(
-                ChatLocalFile(pending.localPath!),
-                height: 160,
-                width: 260,
-                cacheWidth: 720,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    Text(context.tr('Image preview unavailable')),
-              )
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        width: (constraints.maxWidth * .82).clamp(0, 560),
+        constraints: BoxConstraints(
+          maxWidth: (constraints.maxWidth * .82).clamp(0, 560),
+        ),
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+            bottomLeft: Radius.circular(18),
+            bottomRight: Radius.circular(5),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (pending.mediaType == PendingChatMediaType.text)
+              Text(pending.text ?? '')
+            else if (pending.mediaType == PendingChatMediaType.location)
+              ChatLocationCard(location: pending.location!)
+            else if (pending.mediaType == PendingChatMediaType.image)
+              if (pending.previewBytes != null)
+                Image.memory(
+                  pending.previewBytes!,
+                  height: 160,
+                  width: 260,
+                  cacheWidth: 720,
+                  fit: BoxFit.cover,
+                )
+              else if (pending.localPath != null)
+                LocalMediaImage(
+                  ChatLocalFile(pending.localPath!),
+                  height: 160,
+                  width: 260,
+                  cacheWidth: 720,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) =>
+                      Text(context.tr('Image preview unavailable')),
+                )
+              else
+                Row(
+                  children: [
+                    const Icon(Icons.image_outlined),
+                    const SizedBox(width: 8),
+                    Text(context.tr('Image')),
+                  ],
+                )
             else
               Row(
                 children: [
-                  const Icon(Icons.image_outlined),
-                  const SizedBox(width: 8),
-                  Text(context.tr('Image')),
-                ],
-              )
-          else
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.play_arrow),
-                  tooltip: context.tr('Play prepared recording'),
-                  onPressed: pending.localPath == null || player == null
-                      ? null
-                      : () async {
-                          if (playback != null && cacheScope != null) {
-                            try {
-                              await playback!.playPending(
-                                cacheScope!,
-                                ChatLocalFile(pending.localPath!),
-                                pending.clientMessageId,
-                              );
-                            } catch (_) {
-                              /* Scoped media is unavailable. */
+                  IconButton(
+                    icon: const Icon(Icons.play_arrow),
+                    tooltip: context.tr('Play prepared recording'),
+                    onPressed: pending.localPath == null || player == null
+                        ? null
+                        : () async {
+                            if (playback != null && cacheScope != null) {
+                              try {
+                                await playback!.playPending(
+                                  cacheScope!,
+                                  ChatLocalFile(pending.localPath!),
+                                  pending.clientMessageId,
+                                );
+                              } catch (_) {
+                                /* Scoped media is unavailable. */
+                              }
+                              return;
                             }
-                            return;
-                          }
-                          final cache = context
-                              .read<ChatGroupsCubit?>()
-                              ?.mediaCache;
-                          final file = ChatLocalFile(pending.localPath!);
-                          cache?.pin(file);
-                          try {
-                            await player!.setAudioSource(
-                              AudioSource.uri(
-                                await chatFilePlaybackUri(file),
-                                tag: pending.clientMessageId,
-                              ),
-                            );
-                            await player!.play();
-                          } catch (_) {
-                            /* A scoped purge may interrupt pending playback. */
-                          } finally {
-                            cache?.unpin(file);
-                          }
-                        },
-                ),
-                const SizedBox(width: 8),
-                Expanded(child: Text(context.tr('Voice message'))),
-                if (pending.durationMs != null) ...[
+                            final cache = context
+                                .read<ChatGroupsCubit?>()
+                                ?.mediaCache;
+                            final file = ChatLocalFile(pending.localPath!);
+                            cache?.pin(file);
+                            try {
+                              await player!.setAudioSource(
+                                AudioSource.uri(
+                                  await chatFilePlaybackUri(file),
+                                  tag: pending.clientMessageId,
+                                ),
+                              );
+                              await player!.play();
+                            } catch (_) {
+                              /* A scoped purge may interrupt pending playback. */
+                            } finally {
+                              cache?.unpin(file);
+                            }
+                          },
+                  ),
                   const SizedBox(width: 8),
-                  Text(_durationLabel(pending.durationMs!)),
+                  Expanded(child: Text(context.tr('Voice message'))),
+                  if (pending.durationMs != null) ...[
+                    const SizedBox(width: 8),
+                    Text(_durationLabel(pending.durationMs!)),
+                  ],
                 ],
-              ],
+              ),
+            const SizedBox(height: 4),
+            PendingMessageFooter(
+              pending: pending,
+              timezone:
+                  context.read<ChatGroupsCubit?>()?.scope?.timezone ??
+                  'Etc/UTC',
+              onRetry: onRetry,
+              onCancel: onCancel,
             ),
-          const SizedBox(height: 8),
-          if (const [
-            ChatUploadState.preparing,
-            ChatUploadState.uploading,
-            ChatUploadState.finalizing,
-            ChatUploadState.sending,
-          ].contains(pending.status))
-            LinearProgressIndicator(
-              value: pending.status == ChatUploadState.preparing
-                  ? null
-                  : pending.progress.clamp(0, 1),
-            ),
-          Text(switch (pending.status) {
-            ChatUploadState.queued => context.tr('Queued'),
-            ChatUploadState.sending => context.tr('Sending'),
-            ChatUploadState.uncertain => context.tr(
-              'Confirmation unavailable — retry safely',
-            ),
-            ChatUploadState.preparing => context.tr('Preparing…'),
-            ChatUploadState.uploading => context.tr('Uploading…'),
-            ChatUploadState.finalizing => context.tr('Sending…'),
-            ChatUploadState.sent => context.tr('Sent'),
-            ChatUploadState.failed =>
-              pending.failure?.message ?? context.tr('Upload failed'),
-            ChatUploadState.cancelled => context.tr('Cancelled'),
-          }),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (pending.status == ChatUploadState.failed ||
-                  pending.status == ChatUploadState.uncertain)
-                TextButton(
-                  onPressed: () => onRetry(pending.clientMessageId),
-                  child: Text(context.tr('Retry')),
-                ),
-              if (pending.canCancel)
-                TextButton(
-                  onPressed: () => onCancel(pending.clientMessageId),
-                  child: Text(context.tr('Cancel')),
-                ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );

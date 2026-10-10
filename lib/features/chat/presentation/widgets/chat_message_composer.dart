@@ -9,6 +9,7 @@ class ChatMessageComposer extends StatelessWidget {
   const ChatMessageComposer({
     super.key,
     required this.disabled,
+    this.loadingAccess = false,
     required this.textController,
     required this.savingText,
     required this.mediaBusy,
@@ -24,6 +25,7 @@ class ChatMessageComposer extends StatelessWidget {
     required this.onFinishRecording,
   });
   final bool disabled, savingText, mediaBusy, recording, hasPreparedMedia;
+  final bool loadingAccess;
   final TextEditingController textController;
   final String recordingLabel;
   final VoidCallback onTextChanged;
@@ -38,7 +40,7 @@ class ChatMessageComposer extends StatelessWidget {
     top: false,
     child: BlocBuilder<ChatConversationCubit, ChatConversationState>(
       builder: (context, state) {
-        final effectiveDisabled = disabled || state.accessLost;
+        final effectiveDisabled = disabled || loadingAccess || state.accessLost;
         return Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
           child: Column(
@@ -117,9 +119,15 @@ class ChatMessageComposer extends StatelessWidget {
                         minLines: 1,
                         maxLines: 5,
                         decoration: InputDecoration(
-                          hintText: effectiveDisabled
-                              ? 'This group is read only'
-                              : 'Message',
+                          hintText: context.tr(
+                            state.accessLost
+                                ? 'Chat access unavailable.'
+                                : loadingAccess
+                                ? 'Loading conversation…'
+                                : disabled
+                                ? 'This group is read only'
+                                : 'Message',
+                          ),
                           counterText: '',
                           border: InputBorder.none,
                         ),

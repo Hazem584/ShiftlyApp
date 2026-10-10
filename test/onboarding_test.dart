@@ -78,6 +78,41 @@ Future<SessionCoordinator> _pumpApp(
 }
 
 void main() {
+  for (final direction in [TextDirection.ltr, TextDirection.rtl]) {
+    testWidgets(
+      'swiping advances and returns in $direction, Next stays synchronized',
+      (tester) async {
+        final cubit = OnboardingCubit(OnboardingTestStorage());
+        addTearDown(cubit.close);
+        await cubit.restore();
+        await tester.pumpWidget(
+          MaterialApp(
+            home: BlocProvider.value(
+              value: cubit,
+              child: Directionality(
+                textDirection: direction,
+                child: const OnboardingScreen(),
+              ),
+            ),
+          ),
+        );
+        final pager = find.byKey(const Key('onboarding-pager'));
+        final dx = direction == TextDirection.ltr ? -360.0 : 360.0;
+        await tester.drag(pager, Offset(dx, 0));
+        await tester.pumpAndSettle();
+        expect(cubit.state.page, 1);
+        await tester.drag(pager, Offset(-dx, 0));
+        await tester.pumpAndSettle();
+        expect(cubit.state.page, 0);
+        await tester.ensureVisible(find.text('Next'));
+        await tester.tap(find.text('Next'));
+        await tester.pumpAndSettle();
+        expect(cubit.state.page, 1);
+        expect(tester.widget<PageView>(pager).controller!.page, 1);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   test(
     'versioned preference restores completion and preserves unrelated keys',
     () async {
@@ -429,9 +464,10 @@ void main() {
         expect(find.text('Stay connected'), findsOneWidget);
         expect(
           tester
-              .widget<AnimatedSwitcher>(find.byType(AnimatedSwitcher).first)
-              .duration,
-          Duration.zero,
+              .widget<PageView>(find.byKey(const Key('onboarding-pager')))
+              .controller!
+              .page,
+          2,
         );
       },
     );

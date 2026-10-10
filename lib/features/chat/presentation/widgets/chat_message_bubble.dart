@@ -9,6 +9,7 @@ import 'package:shiftly/features/chat/presentation/utils/chat_formatters.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_location_card.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_remote_image.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_voice_message.dart';
+import 'package:shiftly/features/chat/presentation/widgets/message_delivery_status.dart';
 
 class ChatMessageBubble extends StatelessWidget {
   const ChatMessageBubble({
@@ -21,6 +22,7 @@ class ChatMessageBubble extends StatelessWidget {
     required this.timezone,
     required this.player,
     this.playback,
+    this.readByAll = false,
   });
   final ChatMessage message;
   final bool mine;
@@ -30,6 +32,7 @@ class ChatMessageBubble extends StatelessWidget {
   final String timezone;
   final AudioPlayer player;
   final ChatPlaybackCoordinator? playback;
+  final bool readByAll;
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -64,14 +67,23 @@ class ChatMessageBubble extends StatelessWidget {
               _content(context),
               Align(
                 alignment: Alignment.centerRight,
-                child: Text(
-                  WorkspaceTime.time(
-                    message.createdAt,
-                    timezone,
-                    locale: Localizations.localeOf(context).toString(),
-                  ),
-                  style: Theme.of(context).textTheme.labelSmall
-                      ?.copyWith(color: foreground.withValues(alpha: .72)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      WorkspaceTime.time(
+                        message.createdAt,
+                        timezone,
+                        locale: Localizations.localeOf(context).toString(),
+                      ),
+                      style: Theme.of(context).textTheme.labelSmall
+                          ?.copyWith(color: foreground.withValues(alpha: .72)),
+                    ),
+                    if (mine) ...[
+                      const SizedBox(width: 5),
+                      MessageDeliveryStatus(readByAll: readByAll),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -83,7 +95,9 @@ class ChatMessageBubble extends StatelessWidget {
       builder: (context, constraints) => Align(
         alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: constraints.maxWidth * .76),
+          constraints: BoxConstraints(
+            maxWidth: (constraints.maxWidth * .82).clamp(0, 560),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,

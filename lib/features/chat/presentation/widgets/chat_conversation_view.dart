@@ -8,6 +8,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/services/message_read_status.dart';
 import 'package:shiftly/features/chat/presentation/chat_playback_coordinator.dart';
 import 'package:shiftly/features/chat/presentation/controllers/chat_media_capture.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
@@ -52,7 +53,7 @@ class _ChatViewState extends State<ChatConversationView>
     WidgetsBinding.instance.addObserver(this);
     final cache = context.read<ChatGroupsCubit>().mediaCache;
     if (cache != null) _playback = ChatPlaybackCoordinator(_player, cache);
-    _accessTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+    _accessTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (mounted &&
           WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
         unawaited(context.read<ChatGroupDetailsCubit>().load());
@@ -216,7 +217,8 @@ class _ChatViewState extends State<ChatConversationView>
                     ),
                   Expanded(child: _messages()),
                   ChatMessageComposer(
-                    disabled: group == null || group.isArchived,
+                    disabled: group?.isArchived == true,
+                    loadingAccess: group == null,
                     textController: _text,
                     savingText: _savingText,
                     mediaBusy: _media.mediaBusy,
@@ -314,6 +316,10 @@ class _ChatViewState extends State<ChatConversationView>
                           timezone: scope.timezone,
                           player: _player,
                           playback: _playback,
+                          readByAll: messageReadByAll(
+                            message,
+                            context.read<ChatGroupDetailsCubit>().state.group,
+                          ),
                         ),
                   ),
                 ),

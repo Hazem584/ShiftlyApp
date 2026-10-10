@@ -185,6 +185,7 @@ class ChatOutboxController {
             : ChatUploadState.failed,
     };
     final value = PendingChatMessage(
+      createdAt: operation.createdAt,
       clientMessageId: operation.id,
       mediaType: type,
       status: status,
