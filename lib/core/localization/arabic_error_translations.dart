@@ -1,4 +1,6 @@
 const arabicErrorTranslations = <String, String>{
+  'An account with this email already exists. Try signing in.':
+      'يوجد حساب بهذا البريد الإلكتروني بالفعل. جرّب تسجيل الدخول.',
   'That employee could not be found.': 'الموظف غير موجود.',
   'Choose a change before saving.': 'حدّد تغييرًا قبل الحفظ.',
   'This person is already a workspace member.':

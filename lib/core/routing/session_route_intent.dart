@@ -11,7 +11,6 @@ class SessionRouteIntent {
     '/register',
     '/verify-email',
     '/profile-setup',
-    '/workspaces',
     '/offline',
     '/session-error',
   };
@@ -39,7 +38,10 @@ class SessionRouteIntent {
     final employeeRoute =
         destination.path == '/employee' ||
         destination.path.startsWith('/employee/chat/');
-    if (status == SessionStatus.authenticatedEmployee && !employeeRoute) {
+    final sharedRoute = destination.path == '/workspaces';
+    if (status == SessionStatus.authenticatedEmployee &&
+        !employeeRoute &&
+        !sharedRoute) {
       return null;
     }
     if (status == SessionStatus.authenticatedManager && employeeRoute) {

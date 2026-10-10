@@ -51,12 +51,12 @@ flutter run -d chrome --web-port=5173 --dart-define-from-file=config/web.local.j
 6. بعد ظهور رابط الواجهة، أضفه إلى `CORS_ORIGINS` في مشروع **الباك إند** واعمل Redeploy للباك إند.
 7. في Supabase افتح **Authentication → URL Configuration**:
    - **Site URL**: رابط الواجهة النهائي.
-   - **Redirect URLs**: أضف `https://YOUR_FRONTEND.vercel.app/login` و`http://localhost:5173/login`.
-   - تسجيل حساب جديد وإعادة إرسال التأكيد من الويب يعيدان المستخدم إلى `/login` على نفس الموقع.
+   - **Redirect URLs**: أضف `https://YOUR_FRONTEND.vercel.app/email-confirmed.html` و`http://localhost:5173/email-confirmed.html`، مع الاحتفاظ بروابطك الحالية.
+   - تسجيل حساب جديد وإعادة إرسال التأكيد يعيدان المستخدم إلى صفحة تأكيد مستقلة، ثم يختار العودة لتسجيل الدخول.
 
 كل Push إلى فرع Production المرتبط بـ Vercel يبني وينشر تلقائيًا. تغيير Environment Variables يحتاج Redeploy. إعدادات Vercel للواجهة والباك إند منفصلة.
 
-روابط Preview تختلف من نشر لآخر. الباك إند يقبل أصولًا محددة؛ أضف أصل Preview المطلوب، أو استخدم دومين اختبار ثابت. لا تفتح CORS لكل المواقع. أضف رابط `/login` لنفس موقع الاختبار في Supabase أيضًا.
+روابط Preview تختلف من نشر لآخر. الباك إند يقبل أصولًا محددة؛ أضف أصل Preview المطلوب، أو استخدم دومين اختبار ثابت. لا تفتح CORS لكل المواقع. أضف رابط `/email-confirmed.html` لنفس موقع الاختبار في Supabase أيضًا. خطوات إعداد صفحة التأكيد وقبول دعوة مع عضوية موجودة في [دليل الحسابات والدعوات](account-verification-and-invitations.md).
 
 ## ما الذي جهّزناه؟
 

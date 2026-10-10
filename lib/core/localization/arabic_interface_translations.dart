@@ -1,6 +1,7 @@
 /// Interface messages only. Employee names, chat content and free-text reasons
 /// are supplied as parameters and are never translated.
 const arabicInterfaceTranslations = <String, String>{
+  'Workspaces and invitations': 'مساحات العمل والدعوات',
   'Loading conversation…': 'جارٍ تحميل المحادثة…',
   'Read by everyone': 'قرأها جميع المستلمين',
   'Download image': 'تنزيل الصورة',

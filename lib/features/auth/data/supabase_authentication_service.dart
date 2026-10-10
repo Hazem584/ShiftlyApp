@@ -12,6 +12,14 @@ class SupabaseAuthenticationService implements AuthenticationService {
 
   final GoTrueClient _auth;
 
+  static String get _emailRedirect => kIsWeb
+      ? '${Uri.base.origin}/email-confirmed.html'
+      : const String.fromEnvironment(
+          'AUTH_EMAIL_REDIRECT_URL',
+          defaultValue:
+              'https://shiftly-app-smoky.vercel.app/email-confirmed.html',
+        );
+
   @override
   AuthSession? get currentSession => _mapSession(_auth.currentSession);
 
@@ -59,13 +67,27 @@ class SupabaseAuthenticationService implements AuthenticationService {
       final response = await _auth.signUp(
         email: email.trim().toLowerCase(),
         password: password,
-        emailRedirectTo: kIsWeb ? '${Uri.base.origin}/login' : null,
+        emailRedirectTo: _emailRedirect,
       );
+      // Supabase can mask duplicate confirmed accounts with an empty identity
+      // list instead of returning an error. This is not a new registration.
+      if (response.session == null &&
+          response.user?.identities?.isEmpty == true) {
+        throw const AuthenticationException(
+          Failure(
+            message:
+                'An account with this email already exists. Try signing in.',
+            kind: FailureKind.validation,
+          ),
+        );
+      }
       return AuthenticationResult(
         session: _mapSession(response.session),
         emailVerificationRequired:
             response.user != null && response.session == null,
       );
+    } on AuthenticationException {
+      rethrow;
     } on AuthException catch (error) {
       throw AuthenticationException(_safeFailure(error));
     } on TimeoutException {
@@ -91,7 +113,7 @@ class SupabaseAuthenticationService implements AuthenticationService {
       await _auth.resend(
         type: OtpType.signup,
         email: email.trim().toLowerCase(),
-        emailRedirectTo: kIsWeb ? '${Uri.base.origin}/login' : null,
+        emailRedirectTo: _emailRedirect,
       );
     } on AuthException catch (error) {
       throw AuthenticationException(_safeFailure(error));
@@ -154,7 +176,9 @@ class SupabaseAuthenticationService implements AuthenticationService {
         message: 'Too many attempts. Please wait and try again.',
       );
     }
-    if (normalized.contains('already registered') ||
+    if (error.code == 'user_already_exists' ||
+        error.code == 'email_exists' ||
+        normalized.contains('already registered') ||
         normalized.contains('already exists') ||
         normalized.contains('user_already_exists')) {
       return const Failure(

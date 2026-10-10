@@ -262,7 +262,9 @@ String? _redirect(
           : '/session-error',
     SessionStatus.authenticatedManager => _managerRedirect(location),
     SessionStatus.authenticatedEmployee =>
-      location == '/employee' || location.startsWith('/employee/chat/')
+      location == '/workspaces' ||
+              location == '/employee' ||
+              location.startsWith('/employee/chat/')
           ? null
           : '/employee',
   };
@@ -277,7 +279,6 @@ String? _managerRedirect(String location) {
     '/register',
     '/verify-email',
     '/profile-setup',
-    '/workspaces',
     '/offline',
     '/session-error',
     '/employee',

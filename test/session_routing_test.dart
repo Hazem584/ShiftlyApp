@@ -51,7 +51,7 @@ class _RoutingAuth implements AuthenticationService {
 
 class _RoutingRepository implements AuthenticationRepository {
   _RoutingRepository(this.user);
-  final CurrentUser user;
+  CurrentUser user;
 
   @override
   Future<void> bootstrapProfile({String? fullName, String? phone}) async {}
@@ -139,6 +139,107 @@ Future<(_RoutingAuth, _AcceptingInvitations)> _pumpNoWorkspace(
 }
 
 void main() {
+  testWidgets('an authenticated manager can open workspace invitations', (
+    tester,
+  ) async {
+    await _pumpRole(tester, WorkspaceRole.manager);
+    final context = tester.element(
+      find.byKey(const Key('manager-bottom-navigation')),
+    );
+    GoRouter.of(context).push('/workspaces');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('workspace-access')), findsOneWidget);
+    expect(find.byKey(const Key('invitation-token-field')), findsOneWidget);
+    expect(find.byKey(const Key('accept-invitation')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'an existing employee can accept another workspace and switch back',
+    (tester) async {
+      final auth = _RoutingAuth();
+      final original = _routingUser(WorkspaceRole.employee);
+      final repository = _RoutingRepository(original);
+      final invitations = _AcceptingInvitations();
+      invitations.onAccepted = () {
+        repository.user = CurrentUser(
+          id: original.id,
+          createdAt: original.createdAt,
+          updatedAt: original.updatedAt,
+          memberships: [
+            ...original.memberships,
+            const WorkspaceMembership(
+              id: 'accepted-membership',
+              role: WorkspaceRole.employee,
+              status: MembershipStatus.active,
+              workspace: Workspace(
+                id: 'accepted-workspace',
+                name: 'Accepted workspace',
+                code: 'ACCEPTED',
+                timezone: 'Africa/Cairo',
+              ),
+            ),
+          ],
+        );
+      };
+      final coordinator = SessionCoordinator(
+        auth,
+        repository,
+        MemoryActiveWorkspaceStorage(),
+      );
+      await coordinator.initialize();
+      await tester.pumpWidget(
+        ShiftlyApp.preview(
+          sessionCoordinator: coordinator,
+          invitationRepository: invitations,
+          notificationRepository: MockNotificationRepository(),
+          dashboardRepository: MockDashboardRepository(
+            employeeRepository: MockEmployeeRepository(delay: Duration.zero),
+            delay: Duration.zero,
+          ),
+        ),
+      );
+      addTearDown(auth.events.close);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('employee-switch-workspace')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('manage-workspace-invitations')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('workspace-access')), findsOneWidget);
+      expect(find.text('Cairo Operations'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('invitation-token-field')),
+        ' one-time-token ',
+      );
+      await tester.ensureVisible(find.byKey(const Key('accept-invitation')));
+      await tester.tap(find.byKey(const Key('accept-invitation')));
+      await tester.pumpAndSettle();
+      expect(invitations.acceptedToken, 'one-time-token');
+      expect(
+        coordinator.state.activeMembership?.workspace.id,
+        'accepted-workspace',
+      );
+      expect(
+        find.byKey(const Key('employee-switch-workspace')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('employee-switch-workspace')));
+      await tester.pumpAndSettle();
+      expect(find.text('Current'), findsOneWidget);
+      await tester.tap(
+        find.byKey(
+          Key('workspace-${original.memberships.single.workspace.id}'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        coordinator.state.activeMembership?.workspace.id,
+        original.memberships.single.workspace.id,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'manager conversation covers navigation and returns to chat list',
     (tester) async {
@@ -285,10 +386,12 @@ class _RoutingChat extends MockChatRepository {
 
 class _AcceptingInvitations implements InvitationRepository {
   String? acceptedToken;
+  VoidCallback? onAccepted;
 
   @override
   Future<WorkspaceRecord> acceptInvitation(String inviteToken) async {
     acceptedToken = inviteToken;
+    onAccepted?.call();
     return const WorkspaceRecord(
       id: 'accepted-workspace',
       name: 'Accepted workspace',

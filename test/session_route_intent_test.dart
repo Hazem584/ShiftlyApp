@@ -3,6 +3,16 @@ import 'package:shiftly/core/routing/session_route_intent.dart';
 import 'package:shiftly/core/session/session_state.dart';
 
 void main() {
+  test('workspace invitations entry survives restoration for either role', () {
+    for (final status in [
+      SessionStatus.authenticatedEmployee,
+      SessionStatus.authenticatedManager,
+    ]) {
+      final intent = SessionRouteIntent();
+      intent.remember(Uri.parse('/workspaces'), SessionStatus.initializing);
+      expect(intent.takeFor(status), '/workspaces');
+    }
+  });
   test('manager entry URL survives loading and login with query intact', () {
     final intent = SessionRouteIntent();
     intent.remember(

@@ -1,0 +1,12 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #171024; background: #f6f4ee; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px; }
+main { width: min(100%, 460px); background: #fff; border: 1px solid #e9e4ee; border-radius: 28px; padding: 40px 28px; text-align: center; box-shadow: 0 20px 60px #251b3e0d; }
+.brand { font-weight: 800; font-size: 22px; letter-spacing: -.5px; }
+#status-icon { display: grid; place-items: center; width: 72px; height: 72px; margin: 28px auto 20px; border-radius: 50%; background: #f0eaff; color: #623ac0; font-size: 32px; }
+h1 { font-size: 26px; line-height: 1.25; }
+p { color: #655d72; line-height: 1.7; margin-bottom: 28px; }
+a { display: block; padding: 15px; border-radius: 14px; background: #171024; color: #fff; text-decoration: none; font-weight: 600; }
+a:hover { background: #382950; }
+a:focus-visible { outline: 3px solid #ad8af4; outline-offset: 4px; }
+small { display: block; margin-top: 22px; color: #655d72; line-height: 1.6; }

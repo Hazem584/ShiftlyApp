@@ -214,11 +214,12 @@ void main() {
       lessThan(tester.getTopLeft(signOut).dy),
     );
     await tester.tap(switchButton);
-    await tester.pump();
+    await tester.pumpAndSettle();
     expect(
-      find.text('No other active workspace is available.'),
+      find.byKey(const Key('manage-workspace-invitations')),
       findsOneWidget,
     );
+    expect(find.text('Current'), findsOneWidget);
     expect(coordinator.state.isAuthenticated, isTrue);
     await tester.pump(const Duration(seconds: 4));
   });

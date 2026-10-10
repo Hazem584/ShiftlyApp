@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
@@ -12,13 +13,6 @@ Future<void> showWorkspaceSwitcher(
   final coordinator = context.read<SessionCoordinator>();
   final memberships = coordinator.selectableMemberships;
   final currentId = coordinator.state.activeMembership?.workspace.id;
-  if (memberships.where((item) => item.workspace.id != currentId).isEmpty) {
-    ToastService.info(
-      context,
-      message: 'No other active workspace is available.',
-    );
-    return;
-  }
   String? switchingId;
   await showModalBottomSheet<void>(
     context: context,
@@ -62,6 +56,20 @@ Future<void> showWorkspaceSwitcher(
                     );
                   }
                 },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+              child: OutlinedButton.icon(
+                key: const Key('manage-workspace-invitations'),
+                icon: const Icon(Icons.mark_email_unread_outlined),
+                label: Text(context.tr('Workspaces and invitations')),
+                onPressed: switchingId != null
+                    ? null
+                    : () {
+                        Navigator.of(sheetContext).pop();
+                        context.push('/workspaces');
+                      },
               ),
             ),
           ],
