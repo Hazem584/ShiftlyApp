@@ -128,6 +128,116 @@ Future<SessionCoordinator> _coordinator(
 }
 
 void main() {
+  test('signed-out startup events do not invent an expired session', () async {
+    final auth = _Auth();
+    final repository = _Repository(_user([]));
+    final coordinator = SessionCoordinator(
+      auth,
+      repository,
+      MemoryActiveWorkspaceStorage(),
+    );
+    addTearDown(coordinator.close);
+    addTearDown(auth.controller.close);
+    auth.controller.add(
+      const AuthenticationEvent(AuthenticationEventType.signedOut),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(coordinator.state.status, SessionStatus.initializing);
+    await coordinator.initialize();
+    auth.controller.add(
+      const AuthenticationEvent(AuthenticationEventType.signedOut),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(coordinator.state.status, SessionStatus.unauthenticated);
+    expect(coordinator.state.failure, isNull);
+    expect(repository.loads, 0);
+  });
+
+  test(
+    'a delayed signed-out event after intentional logout has no warning',
+    () async {
+      final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+      final storage = MemoryActiveWorkspaceStorage();
+      final coordinator = await _coordinator(
+        auth,
+        _user([_membership('one', WorkspaceRole.manager)]),
+        storage,
+      );
+      await coordinator.signOut();
+      auth.controller.add(
+        const AuthenticationEvent(AuthenticationEventType.signedOut),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(coordinator.state.status, SessionStatus.unauthenticated);
+      expect(coordinator.state.failure, isNull);
+      expect(storage.value, isNull);
+    },
+  );
+
+  test(
+    'unexpected sign-out expires a newly signed-in session only once',
+    () async {
+      final auth = _Auth();
+      final storage = MemoryActiveWorkspaceStorage();
+      final coordinator = await _coordinator(
+        auth,
+        _user([_membership('one', WorkspaceRole.manager)]),
+        storage,
+      );
+      await coordinator.signIn(
+        email: 'person@example.com',
+        password: 'password',
+      );
+      expect(coordinator.state.isAuthenticated, isTrue);
+      final states = <SessionState>[];
+      final subscription = coordinator.stream.listen(states.add);
+      addTearDown(subscription.cancel);
+      auth.session = null;
+      auth.controller.add(
+        const AuthenticationEvent(AuthenticationEventType.signedOut),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(coordinator.state, const SessionState.expired());
+      expect(coordinator.state.currentUser, isNull);
+      expect(storage.value, isNull);
+      auth.controller.add(
+        const AuthenticationEvent(AuthenticationEventType.signedOut),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(coordinator.state, const SessionState.expired());
+      expect(
+        states.where((state) => state.status == SessionStatus.sessionExpired),
+        hasLength(1),
+      );
+    },
+  );
+
+  test(
+    'sign-out during saved-session restoration discards the pending user',
+    () async {
+      final auth = _Auth()..session = const AuthSession(accessToken: 'saved');
+      final pending = Completer<CurrentUser>();
+      final storage = MemoryActiveWorkspaceStorage()..value = 'one';
+      final coordinator = SessionCoordinator(
+        auth,
+        _Repository(pending.future),
+        storage,
+      );
+      addTearDown(coordinator.close);
+      addTearDown(auth.controller.close);
+      final initialization = coordinator.initialize();
+      auth.session = null;
+      auth.controller.add(
+        const AuthenticationEvent(AuthenticationEventType.signedOut),
+      );
+      await Future<void>.delayed(Duration.zero);
+      pending.complete(_user([_membership('one', WorkspaceRole.manager)]));
+      await initialization;
+      expect(coordinator.state, const SessionState.expired());
+      expect(storage.value, isNull);
+    },
+  );
+
   test('no session routes to unauthenticated', () async {
     final coordinator = await _coordinator(
       _Auth(),
@@ -456,7 +566,7 @@ void main() {
       expect(auth.currentSession, isNull);
       expect(auth.signOutCalls, 1);
       expect(storage.value, isNull);
-      expect(coordinator.state.status, SessionStatus.unauthenticated);
+      expect(coordinator.state, const SessionState.expired());
     },
   );
 

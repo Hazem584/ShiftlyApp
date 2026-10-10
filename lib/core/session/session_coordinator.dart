@@ -24,6 +24,7 @@ class SessionCoordinator extends Cubit<SessionState> {
     this._repository,
     this._workspaceStorage,
   ) : super(const SessionState.initializing()) {
+    _hasObservedSession = _authentication.currentSession != null;
     _authSubscription = _authentication.authStateChanges.listen(
       _onAuthEvent,
       onError: (_) {
@@ -46,6 +47,7 @@ class SessionCoordinator extends Cubit<SessionState> {
   final ActiveWorkspaceStorage _workspaceStorage;
   late final StreamSubscription<AuthenticationEvent> _authSubscription;
   bool _loggingOut = false;
+  late bool _hasObservedSession;
   bool _resolving = false;
   bool _switchingWorkspace = false;
   var _resolutionGeneration = 0;
@@ -322,6 +324,7 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> signOut() async {
     _loggingOut = true;
+    _hasObservedSession = false;
     _authenticationGeneration += 1;
     _resolutionGeneration += 1;
     emit(const SessionState(status: SessionStatus.unauthenticated));
@@ -335,6 +338,7 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> _resolveCurrentUser({String? preferredWorkspaceId}) async {
     if (_resolving) return;
+    _hasObservedSession = true;
     _resolving = true;
     final generation = ++_resolutionGeneration;
     emit(const SessionState(status: SessionStatus.loadingCurrentUser));
@@ -395,15 +399,7 @@ class SessionCoordinator extends Cubit<SessionState> {
       } else if (error.statusCode == 401) {
         await _clearExpiredAuthentication();
         emit(const SessionState(status: SessionStatus.sessionExpired));
-        emit(
-          const SessionState(
-            status: SessionStatus.unauthenticated,
-            failure: Failure(
-              message: 'Your session has expired. Please sign in again.',
-              kind: FailureKind.authentication,
-            ),
-          ),
-        );
+        emit(const SessionState.expired());
       } else {
         emit(
           SessionState(
@@ -419,6 +415,7 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   Future<void> _clearExpiredAuthentication() async {
     _loggingOut = true;
+    _hasObservedSession = false;
     _resolutionGeneration += 1;
     try {
       if (_authentication.currentSession != null) {
@@ -458,28 +455,29 @@ class SessionCoordinator extends Cubit<SessionState> {
 
   void _onAuthEvent(AuthenticationEvent event) {
     if (event.type == AuthenticationEventType.signedIn &&
+        _authentication.currentSession != null) {
+      _hasObservedSession = true;
+    }
+    if (event.type == AuthenticationEventType.signedIn &&
         state.status == SessionStatus.emailVerificationRequired &&
         _authentication.currentSession != null) {
       _authenticationGeneration += 1;
       unawaited(_resolveCurrentUser());
       return;
     }
-    if (event.type != AuthenticationEventType.signedOut || _loggingOut) return;
+    if (event.type != AuthenticationEventType.signedOut ||
+        _loggingOut ||
+        !_hasObservedSession) {
+      return;
+    }
+    _hasObservedSession = false;
     _authenticationGeneration += 1;
     _resolutionGeneration += 1;
     unawaited(_workspaceStorage.clear());
     emit(const SessionState(status: SessionStatus.sessionExpired));
     scheduleMicrotask(() {
       if (!isClosed && state.status == SessionStatus.sessionExpired) {
-        emit(
-          const SessionState(
-            status: SessionStatus.unauthenticated,
-            failure: Failure(
-              message: 'Your session has expired. Please sign in again.',
-              kind: FailureKind.authentication,
-            ),
-          ),
-        );
+        emit(const SessionState.expired());
       }
     });
   }

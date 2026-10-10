@@ -30,6 +30,15 @@ class SessionState extends Equatable {
 
   const SessionState.initializing() : this(status: SessionStatus.initializing);
 
+  const SessionState.expired()
+    : this(
+        status: SessionStatus.unauthenticated,
+        failure: const Failure(
+          message: 'Your session has expired. Please sign in again.',
+          kind: FailureKind.authentication,
+        ),
+      );
+
   final SessionStatus status;
   final CurrentUser? currentUser;
   final WorkspaceMembership? activeMembership;

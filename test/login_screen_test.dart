@@ -101,6 +101,33 @@ Future<void> _fillAndSubmit(WidgetTester tester) async {
 
 void main() {
   testWidgets(
+    'fresh login does not show an expiry warning on signed-out events',
+    (tester) async {
+      final auth = _PendingAuth();
+      await _pump(tester, auth);
+      expect(find.byKey(const Key('login-session-message')), findsNothing);
+      auth.events.add(
+        const AuthenticationEvent(AuthenticationEventType.signedOut),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('login-session-message')), findsNothing);
+      expect(
+        find.text('Your session has expired. Please sign in again.'),
+        findsNothing,
+      );
+      await _fillAndSubmit(tester);
+      expect(auth.calls, 1);
+      auth.completer.complete(
+        const AuthenticationResult(
+          session: null,
+          emailVerificationRequired: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
     'Arabic login validates inputs, keeps credentials LTR and translates authentication failures',
     (tester) async {
       final auth = _PendingAuth()
