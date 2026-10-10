@@ -25,6 +25,22 @@ DioException _error({
 }
 
 void main() {
+  test('account email conflicts explain setup recovery without exposing database details', () {
+    final result = ApiErrorParser.parse(
+      _error(
+        status: 409,
+        data: {
+          'code': 'PROFILE_EMAIL_CONFLICT',
+          'message': 'unique constraint internal detail',
+          'requestId': 'setup-request',
+        },
+      ),
+    );
+    expect(result.message, contains('Contact support'));
+    expect(result.kind, FailureKind.validation);
+    expect(result.requestId, 'setup-request');
+    expect(result.message, isNot(contains('constraint')));
+  });
   test('insufficient reversal balance explains recovery without exposing backend detail', () {
     final result = ApiErrorParser.parse(
       _error(

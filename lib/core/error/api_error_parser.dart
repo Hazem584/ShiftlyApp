@@ -90,6 +90,7 @@ abstract final class ApiErrorParser {
     if (validation.isNotEmpty) return validation.first;
     return switch (code) {
       'PROFILE_NOT_INITIALIZED' => 'Complete your profile to continue.',
+      'PROFILE_EMAIL_CONFLICT' => 'This email is linked to another account. Contact support to complete setup.',
       'INVALID_CREDENTIALS' => 'The email or password is incorrect.',
       'RATE_LIMIT_EXCEEDED' => 'Too many requests. Please wait and try again.',
       'EMPLOYEE_NOT_FOUND' => 'That employee could not be found.',

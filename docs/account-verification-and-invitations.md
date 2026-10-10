@@ -36,6 +36,14 @@
 
 ## التحقق
 
+### إعادة التسجيل بعد حذف حساب Authentication
+
+حذف المستخدم من Supabase Authentication قد يترك سجلّه في `public.profiles`، لأن المشروع يحتفظ بتاريخ العضويات والحضور. الحساب الذي يُنشأ مرة أخرى له معرّف جديد، وقد يمنع قيد الإيميل الفريد إكمال البروفايل الجديد.
+
+إصلاح الباك إند في `src/modules/auth/bootstrap-profile.ts` يتحقق داخل transaction من غياب الهوية القديمة من `auth.users`، ووجود الهوية الجديدة وتأكيد بريدها ومطابقته للطلب. بعدها يحرّر الإيميل من البروفايل القديم ويزيل تسجيلات أجهزته للإشعارات، وينشئ بروفايلًا بمعرّف الحساب الجديد. العضويات والبيانات التاريخية تظل مرتبطة بالمعرّف القديم؛ لا تنتقل بالإيميل. إذا كانت الهوية القديمة موجودة، يرجع `PROFILE_EMAIL_CONFLICT` برسالة واضحة.
+
+هذا الإصلاح يتطلب وصول اتصال قاعدة بيانات الباك إند إلى `auth.users` في نفس مشروع Supabase. لا يحتاج migration. انشر تغييرات `shiftly-backend` على Vercel لتطبيقه على الحالات المستقبلية، ثم أعد حفظ الاسم ورقم الموبايل من شاشة إعداد الحساب.
+
 ```powershell
 flutter test test/supabase_registration_test.dart test/session_routing_test.dart test/profile_widget_test.dart test/workspaces_cubit_test.dart
 node scripts/email-confirmation.test.mjs
