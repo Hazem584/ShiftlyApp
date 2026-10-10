@@ -1,4 +1,6 @@
 const arabicTranslations = <String, String>{
+  'Error code: {code}': 'رمز الخطأ: {code}',
+  'This reversal would subtract points that are no longer available. Reverse the related deduction adjustment first, then reverse the original award.': 'هذا الإلغاء سيخصم نقاطًا لم تعد متاحة. اعكس تعديل السحب المرتبط أولًا، ثم ألغِ المنحة الأصلية.',
   'Workspace groups appear here once a manager creates one.':
       'ستظهر مجموعات العمل هنا بعد أن ينشئها المدير.',
   'Active employees': 'الموظفون النشطون',

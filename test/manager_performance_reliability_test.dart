@@ -49,6 +49,45 @@ ManagerPointsPage page(List<String> ids, int page, {int pages = 2}) =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  for (final resource in ['extra-effort/a/reverse', 'adjustments/a/reverse']) {
+    test(
+      'confirmed insufficient balance clears saved $resource and allows fixing the deduction',
+      () async {
+        final repository = ManagerPointsFake();
+        final storage = DelayedManagerStorage();
+        final cubit = ManagerPerformanceCubit(repository, storage);
+        addTearDown(cubit.close);
+        await ready(cubit);
+        repository.onMutate = (_, _, _) async => throw const ApiException(
+          message: 'Service temporarily unavailable',
+          statusCode: 500,
+          requestId: 'request-server',
+        );
+        await cubit.submit(
+          resource,
+          {'reason': 'OTHER', 'explanation': 'Reverse award'},
+          target: 'target',
+          uuidField: 'clientReversalId',
+        );
+        final payload = cubit.state.intent!.payload;
+        expect(cubit.state.canMutate, isFalse);
+        expect(cubit.state.failure?.requestId, 'request-server');
+        repository.onMutate = (_, _, _) async => throw const ApiException(
+          message: 'Reverse the related deduction first.',
+          statusCode: 409,
+          code: 'POINTS_REVERSAL_INSUFFICIENT_BALANCE',
+          requestId: 'request-balance',
+        );
+        await cubit.recover();
+        expect(repository.calls.last['payload'], payload);
+        expect(cubit.state.intent, isNull);
+        expect(await storage.read(managerScope), isNull);
+        expect(cubit.state.canMutate, isTrue);
+        expect(cubit.state.message, contains('deduction'));
+        expect(cubit.state.failure?.requestId, 'request-balance');
+      },
+    );
+  }
   late ManagerPointsFake repository;
   late DelayedManagerStorage storage;
   late ManagerPerformanceCubit cubit;

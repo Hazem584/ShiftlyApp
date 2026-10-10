@@ -269,6 +269,7 @@ abstract final class ApiErrorParser {
       'POINTS_HISTORICAL_CONTEXT_UNAVAILABLE' => 'This date is unresolved because historical work context is unavailable.',
       'POINTS_BALANCE_INVARIANT_VIOLATION' =>
         'Your points balance needs support review.',
+      'POINTS_REVERSAL_INSUFFICIENT_BALANCE' => 'This reversal would subtract points that are no longer available. Reverse the related deduction adjustment first, then reverse the original award.',
       _ => switch (status) {
         400 => 'Please check the information you entered.',
         401 => 'Your session has expired. Please sign in again.',

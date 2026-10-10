@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/manager_performance/domain/entities/manager_mutation_intent.dart';
 import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
@@ -76,6 +77,7 @@ class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
     bool? restoring,
     bool? busy,
     String? message,
+    Failure? failure,
   }) {
     if (isClosed) {
       return;
@@ -88,6 +90,7 @@ class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
         restoring: restoring ?? state.restoring,
         busy: busy ?? state.busy,
         message: message,
+        failure: message == null ? null : failure ?? state.failure,
       ),
     );
   }
@@ -336,6 +339,8 @@ class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
               {
                 'EXTRA_EFFORT_ALREADY_REVERSED',
                 'POINT_ADJUSTMENT_ALREADY_REVERSED',
+                'POINTS_REVERSAL_INSUFFICIENT_BALANCE',
+                'POINTS_CORRECTION_DEPENDENCY_CONFLICT',
               }.contains(parsed.code)) ||
           (intent.resource == 'adjustments' &&
               parsed.statusCode == 409 &&
@@ -346,7 +351,7 @@ class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
                   (parsed.statusCode == 400 &&
                       parsed.code == 'EXTRA_EFFORT_INVALID')));
       if (_current(scope, epoch)) {
-        _update(message: parsed.message);
+        _update(message: parsed.message, failure: parsed.toFailure());
       }
     }
     if (success || terminal) {
@@ -357,7 +362,7 @@ class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
             clearIntent: true,
             message: success
                 ? 'Change confirmed by the server.'
-                : 'Canonical records confirm this operation cannot proceed.',
+                : state.message ?? 'Canonical records confirm this operation cannot proceed.',
           );
         }
       } catch (_) {
@@ -374,6 +379,8 @@ class ManagerPerformanceCubit extends Cubit<ManagerPerformanceState> {
       _update(busy: false, message: state.message);
       if (success) {
         onChanged?.call();
+      }
+      if (success || terminal) {
         final resources = Map<String, ManagerResourceState>.from(
           state.resources,
         );

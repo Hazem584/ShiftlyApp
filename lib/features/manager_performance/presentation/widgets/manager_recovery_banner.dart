@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/failure_notice.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
 import 'package:shiftly/features/manager_performance/presentation/widgets/manager_confirmation_dialog.dart';
@@ -16,8 +18,17 @@ class ManagerRecoveryBanner extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       if (state.busy || state.restoring) const LinearProgressIndicator(),
-      if (state.message != null)
-        Padding(padding: const EdgeInsets.all(8), child: Text(state.message!)),
+      if (state.failure != null) ...[
+        FailureNotice(failure: state.failure!),
+        if (state.failure!.code != null)
+          SelectableText(
+            context.tr('Error code: {code}', {'code': state.failure!.code!}),
+          ),
+      ] else if (state.message != null)
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Text(context.tr(state.message!)),
+        ),
       if (state.intent case final intent?)
         Card(
           child: Padding(
