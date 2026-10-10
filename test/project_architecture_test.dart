@@ -26,6 +26,17 @@ void main() {
     expect(sources.keys.where((path) => path.contains('/parts/')), isEmpty);
   });
 
+  test('production files stay below 500 lines', () {
+    for (final entry in sources.entries) {
+      final lines = entry.value.split('\n').length;
+      expect(
+        lines,
+        lessThan(500),
+        reason: '${entry.key}: $lines lines; extract a focused collaborator.',
+      );
+    }
+  });
+
   test('each file owns at most one widget, including widget subclasses', () {
     final classes = RegExp(r'\bclass\s+(\w+)\s+extends\s+(\w+)');
     final bases = <String, String>{

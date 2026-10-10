@@ -4,13 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/legacy_clock_in_review.dart';
-import 'package:shiftly/features/fixed_shifts/domain/policies/confirmed_mutation_rejection.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/legacy_clock_in_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shift_cubit_helpers.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 
-class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState> {
+import 'flexible_attendance_host.dart';
+import 'flexible_clock_in_controller.dart';
+
+class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
+    implements FlexibleAttendanceHost {
   FlexibleAttendanceCubit(
     this._repository, {
     this.onAttendanceChanged,
@@ -220,301 +223,6 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState> {
     }
   }
 
-  Future<FixedShiftMutationResult> clockIn(
-    EligibleShiftOccurrence occurrence,
-  ) async {
-    if (_busy) {
-      return FixedShiftMutationResult.busy;
-    }
-    final scope = _scope;
-    if (scope == null ||
-        !occurrence.canClockIn ||
-        state.recoveryBlocked ||
-        state.legacyReviewRequired ||
-        state.loading ||
-        state.refreshing ||
-        state.failure != null ||
-        !const {
-          'ASSIGNED',
-          'SHIFT_ASSIGNMENT_REQUIRED',
-        }.contains(state.eligibility?.status) ||
-        _consumed.contains(occurrence.identity)) {
-      return FixedShiftMutationResult.failure;
-    }
-    if (_busy ||
-        state.current?.isOpen == true ||
-        state.eligibility?.openAttendanceId != null) {
-      return FixedShiftMutationResult.busy;
-    }
-    if (!(state.eligibility?.authorizedOccurrences.any(
-          (v) =>
-              v.identity == occurrence.identity &&
-              v.canClockIn &&
-              v.template.workspaceId == scope.workspaceId,
-        ) ??
-        false)) {
-      return FixedShiftMutationResult.failure;
-    }
-    final revision = _beginMutation();
-    final generation = _generation;
-    emit(
-      state.copyWith(
-        submittingTemplateId: occurrence.template.id,
-        loading: false,
-        refreshing: false,
-        clearFailure: true,
-      ),
-    );
-    try {
-      final stored = await _repository.loadPendingClockIn(
-        userId: scope.userId,
-        workspaceId: scope.workspaceId,
-        membershipId: scope.membershipId,
-        templateId: occurrence.template.id,
-      );
-      if (!_current(scope, generation, revision)) {
-        return FixedShiftMutationResult.stale;
-      }
-      if (stored != null) {
-        emit(
-          state.copyWith(
-            recovery: stored,
-            recoveryBlocked: true,
-            clearSubmitting: true,
-          ),
-        );
-        return FixedShiftMutationResult.failure;
-      }
-      final fresh = await _repository.getEligibility(scope.workspaceId);
-      if (!_current(scope, generation, revision)) {
-        return FixedShiftMutationResult.stale;
-      }
-      if (fresh.workspaceId != scope.workspaceId ||
-          fresh.openAttendanceId != null ||
-          !fresh.authorizedOccurrences.any(
-            (v) =>
-                v.identity == occurrence.identity &&
-                v.canClockIn &&
-                v.template.workspaceId == scope.workspaceId,
-          )) {
-        emit(state.copyWith(eligibility: fresh, clearSubmitting: true));
-        return FixedShiftMutationResult.failure;
-      }
-      final pending = PendingClockIn(
-        userId: scope.userId,
-        workspaceId: scope.workspaceId,
-        membershipId: scope.membershipId,
-        templateId: occurrence.template.id,
-        clientAttendanceId: _uuid(),
-        occurrenceKind: occurrence.occurrenceKind,
-        assignmentId: occurrence.assignmentId,
-        extraAuthorizationId: occurrence.extraAuthorizationId,
-        operationalDate: occurrence.operationalDate,
-      );
-      await _repository.savePendingClockIn(pending);
-      if (!_current(scope, generation, revision)) {
-        return FixedShiftMutationResult.stale;
-      }
-      emit(state.copyWith(recovery: pending, recoveryBlocked: true));
-      return await _submitPending(scope, generation, revision, pending);
-    } catch (error) {
-      if (_current(scope, generation, revision)) {
-        emit(
-          state.copyWith(
-            clearSubmitting: true,
-            recoveryBlocked: true,
-            failure: fixedShiftFailure(
-              error,
-              'Clock-in recovery needs review. Refresh or contact your manager.',
-            ),
-          ),
-        );
-      }
-      return FixedShiftMutationResult.failure;
-    } finally {
-      _release(scope, generation, revision);
-    }
-  }
-
-  Future<FixedShiftMutationResult> recoverClockIn() async {
-    final scope = _scope;
-    final pending = state.recovery;
-    if (scope == null ||
-        pending == null ||
-        !pending.hasEvidence ||
-        pending.userId != scope.userId ||
-        pending.workspaceId != scope.workspaceId ||
-        pending.membershipId != scope.membershipId) {
-      return FixedShiftMutationResult.failure;
-    }
-    if (_busy) {
-      return FixedShiftMutationResult.busy;
-    }
-    final revision = _beginMutation();
-    final generation = _generation;
-    emit(
-      state.copyWith(
-        submittingTemplateId: pending.templateId,
-        loading: false,
-        refreshing: false,
-        clearFailure: true,
-      ),
-    );
-    try {
-      final canonical = await _repository.findPendingAttendance(pending);
-      if (!_current(scope, generation, revision)) {
-        return FixedShiftMutationResult.stale;
-      }
-      if (canonical != null) {
-        return await _submitPending(
-          scope,
-          generation,
-          revision,
-          pending,
-          recovered: canonical,
-        );
-      }
-      if (pending.occurrenceKind == 'BASELINE') {
-        final fresh = await _repository.getEligibility(scope.workspaceId);
-        if (!_current(scope, generation, revision)) {
-          return FixedShiftMutationResult.stale;
-        }
-        if (fresh.workspaceId != scope.workspaceId ||
-            !fresh.authorizedOccurrences.any(
-              (v) =>
-                  pending.sameOccurrence(v) &&
-                  v.canClockIn &&
-                  v.template.workspaceId == scope.workspaceId &&
-                  !_now().toUtc().isAfter(v.checkInWindowEnd),
-            )) {
-          emit(
-            state.copyWith(
-              clearSubmitting: true,
-              failure: const Failure(
-                message: 'The original baseline window is no longer available. The saved operation is retained. Contact support with the original date and saved request ID; this app has no review or date-pinned retry endpoint and it cannot be replayed against a later occurrence.',
-              ),
-            ),
-          );
-          return FixedShiftMutationResult.failure;
-        }
-      }
-      return await _submitPending(scope, generation, revision, pending);
-    } catch (error) {
-      if (_current(scope, generation, revision)) {
-        emit(
-          state.copyWith(
-            clearSubmitting: true,
-            failure: fixedShiftFailure(
-              error,
-              'Unable to resolve saved clock-in. Retry recovery when access is restored.',
-            ),
-          ),
-        );
-      }
-      return FixedShiftMutationResult.failure;
-    } finally {
-      _release(scope, generation, revision);
-    }
-  }
-
-  Future<FixedShiftMutationResult> _submitPending(
-    FeatureSessionScope scope,
-    int generation,
-    int revision,
-    PendingClockIn pending, {
-    FlexibleAttendance? recovered,
-  }) async {
-    try {
-      final canonical =
-          recovered ??
-          await _repository.flexibleClockIn(
-            workspaceId: pending.workspaceId,
-            shiftTemplateId: pending.templateId,
-            clientAttendanceId: pending.clientAttendanceId,
-            assignmentId: pending.assignmentId,
-            extraAuthorizationId: pending.extraAuthorizationId,
-          );
-      if (!_current(scope, generation, revision)) {
-        return FixedShiftMutationResult.stale;
-      }
-      if (canonical.workspaceId != scope.workspaceId ||
-          canonical.employeeMembershipId != scope.membershipId ||
-          canonical.shiftTemplateId != pending.templateId ||
-          canonical.clientAttendanceId != pending.clientAttendanceId ||
-          canonical.occurrenceKind != pending.occurrenceKind ||
-          canonical.assignmentId != pending.assignmentId ||
-          canonical.extraAuthorizationId != pending.extraAuthorizationId ||
-          canonical.operationalDate != pending.operationalDate) {
-        throw const FormatException('Invalid canonical attendance');
-      }
-      _consumed.add(
-        '${pending.occurrenceKind}|${pending.templateId}|${pending.assignmentId}|${pending.extraAuthorizationId}|${pending.operationalDate}',
-      );
-      emit(
-        state.copyWith(
-          current: canonical,
-          clearSubmitting: true,
-          loading: false,
-          refreshing: false,
-          clearFailure: true,
-        ),
-      );
-      try {
-        await _repository.clearPendingClockIn(pending);
-        if (_current(scope, generation, revision)) {
-          emit(
-            state.copyWith(
-              clearRecovery: true,
-              recoveryBlocked: state.legacyReviewRequired,
-            ),
-          );
-        }
-      } catch (_) {}
-      if (_current(scope, generation, revision)) {
-        unawaited(_refreshAfterMutation(scope, generation, revision));
-      }
-      return FixedShiftMutationResult.success;
-    } catch (error) {
-      if (!_current(scope, generation, revision)) {
-        return FixedShiftMutationResult.stale;
-      }
-      if (confirmedMutationRejection(error)) {
-        var cleared = false;
-        try {
-          await _repository.clearPendingClockIn(pending);
-          cleared = true;
-        } catch (_) {}
-        if (!_current(scope, generation, revision)) {
-          return FixedShiftMutationResult.stale;
-        }
-        emit(
-          state.copyWith(
-            clearRecovery: cleared,
-            recoveryBlocked: true,
-            clearSubmitting: true,
-            failure: fixedShiftFailure(
-              error,
-              'Refresh before another clock-in.',
-            ),
-          ),
-        );
-      } else {
-        emit(
-          state.copyWith(
-            recovery: pending,
-            recoveryBlocked: true,
-            clearSubmitting: true,
-            failure: fixedShiftFailure(
-              error,
-              'Clock-in may have succeeded. Recover the saved operation before starting another shift.',
-            ),
-          ),
-        );
-      }
-      return FixedShiftMutationResult.failure;
-    }
-  }
-
   Future<FixedShiftMutationResult> clockOut() async {
     final scope = _scope;
     final active = state.current;
@@ -613,4 +321,41 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState> {
       }
     }
   }
+
+  late final _clockIn = FlexibleClockInController(this);
+  Future<FixedShiftMutationResult> clockIn(
+    EligibleShiftOccurrence occurrence,
+  ) => _clockIn.clockIn(occurrence);
+  Future<FixedShiftMutationResult> recoverClockIn() =>
+      _clockIn.recoverClockIn();
+  @override
+  FeatureSessionScope? get scope => _scope;
+  @override
+  int get generation => _generation;
+  @override
+  bool get busy => _busy;
+  @override
+  Set<String> get consumed => _consumed;
+  @override
+  FixedShiftRepository get repository => _repository;
+  @override
+  String newRequestId() => _uuid();
+  @override
+  DateTime now() => _now();
+  @override
+  void emitState(FlexibleAttendanceState value) => emit(value);
+  @override
+  bool current(FeatureSessionScope scope, int generation, int revision) =>
+      _current(scope, generation, revision);
+  @override
+  int beginMutation() => _beginMutation();
+  @override
+  void release(FeatureSessionScope scope, int generation, int revision) =>
+      _release(scope, generation, revision);
+  @override
+  Future<void> refreshAfterMutation(
+    FeatureSessionScope scope,
+    int generation,
+    int revision,
+  ) => _refreshAfterMutation(scope, generation, revision);
 }

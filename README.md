@@ -30,6 +30,29 @@ at composition time. Preview repositories remain explicit and are also used by t
 widgets in one file, infrastructure imports in presentation, and framework or
 outer-layer imports in domain. Run `flutter analyze` and `flutter test` after changes.
 
+Handwritten production files stay below 500 lines, enforced by the architecture
+test. Split by responsibility before reaching that limit; most collaborators should
+be substantially smaller. Do not use `part` files or split a method into numbered
+fragments to satisfy the limit.
+
+`AppProviders` renders and routes notifications. `AppDependencies` describes
+composition inputs; `AppComposition` creates, binds, and disposes feature Cubits.
+Session scope factories and router refresh have independent files.
+
+Chat history stays in `ChatConversationCubit`. `ChatReadReceipts` owns read-position
+synchronization, `ChatOutboxController` owns durable pending operations, and
+`ChatMessageDelivery` owns upload and delivery confirmation. They communicate
+through `ChatConversationHost`, preserving account and workspace generation checks.
+`ChatMediaCapture` owns recording, image selection, and location confirmation;
+`ChatMessageComposer` renders their controls. Use the Cubit's public methods from
+screens rather than reaching into these collaborators.
+
+Fixed-shift HTTP requests remain in `ApiFixedShiftRepository`; saved operation
+ownership and legacy inspection belong to `FixedShiftIntentStore`. Clock-in and
+recovery are handled by `FlexibleClockInController`, while the attendance Cubit
+keeps session binding, loading, and clock-out. State records and session results
+remain available through their previous exports.
+
 ## Branding, native launch, and onboarding
 
 The approved, unchanged logo is `assets/images/Logo.png` (1254×1254, opaque RGB,

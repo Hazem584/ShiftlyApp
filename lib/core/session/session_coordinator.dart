@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
+import 'package:shiftly/core/session/profile_session_update.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
@@ -12,29 +13,10 @@ import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 
-class MembershipRefreshResult {
-  const MembershipRefreshResult._({this.userId, this.workspaceId, this.role});
+import 'session_results.dart';
+import 'workspace_membership_policy.dart';
 
-  const MembershipRefreshResult.failed() : this._();
-
-  const MembershipRefreshResult.authorized({
-    required String userId,
-    required String workspaceId,
-    required WorkspaceRole role,
-  }) : this._(userId: userId, workspaceId: workspaceId, role: role);
-
-  final String? userId;
-  final String? workspaceId;
-  final WorkspaceRole? role;
-
-  bool authorizes({required String userId, required String workspaceId}) =>
-      this.userId == userId &&
-      this.workspaceId == workspaceId &&
-      role != null &&
-      role != WorkspaceRole.unknown;
-}
-
-enum WorkspaceSwitchResult { success, noAlternative, invalid, busy, failure }
+export 'session_results.dart';
 
 class SessionCoordinator extends Cubit<SessionState> {
   SessionCoordinator(
@@ -283,14 +265,7 @@ class SessionCoordinator extends Cubit<SessionState> {
   }
 
   List<WorkspaceMembership> get selectableMemberships =>
-      state.currentUser?.memberships
-          .where(
-            (item) =>
-                item.status == MembershipStatus.active &&
-                item.role != WorkspaceRole.unknown,
-          )
-          .toList(growable: false) ??
-      const [];
+      activeWorkspaceMemberships(state.currentUser?.memberships ?? const []);
 
   Future<WorkspaceSwitchResult> selectWorkspace(String workspaceId) =>
       _switchWorkspace(workspaceId, requireAlternative: false);
@@ -341,23 +316,8 @@ class SessionCoordinator extends Cubit<SessionState> {
   }
 
   void synchronizeProfile(ManagerProfile profile) {
-    final user = state.currentUser;
-    if (user == null || profile.id != user.id) return;
-    final updated = user.copyWithProfile(
-      email: profile.email,
-      fullName: profile.fullName,
-      phone: profile.phone,
-      avatarUrl: profile.avatarUrl,
-      updatedAt: profile.updatedAt,
-    );
-    emit(
-      SessionState(
-        status: state.status,
-        currentUser: updated,
-        activeMembership: state.activeMembership,
-        failure: state.failure,
-      ),
-    );
+    final updated = sessionWithUpdatedProfile(state, profile);
+    if (updated != null) emit(updated);
   }
 
   Future<void> signOut() async {
@@ -381,13 +341,7 @@ class SessionCoordinator extends Cubit<SessionState> {
     try {
       final user = await _repository.loadCurrentUser();
       if (!_resolutionIsCurrent(generation)) return;
-      final memberships = user.memberships
-          .where(
-            (item) =>
-                item.status == MembershipStatus.active &&
-                item.role != WorkspaceRole.unknown,
-          )
-          .toList(growable: false);
+      final memberships = activeWorkspaceMemberships(user.memberships);
       final savedId = preferredWorkspaceId ?? await _workspaceStorage.read();
       if (!_resolutionIsCurrent(generation)) return;
       if (memberships.isEmpty) {
