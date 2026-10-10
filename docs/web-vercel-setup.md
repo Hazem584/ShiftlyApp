@@ -101,3 +101,4 @@ flutter build web --release --dart-define-from-file=config/web.local.json
 3. ينبغي أن يظهر `Verified Flutter 3.47.6 stable / Dart 3.13.5` قبل بناء التطبيق. لا تحتاج لتغيير إعدادات Supabase أو CORS بسبب هذا الخطأ.
 
 مراجع: [أرشيف Flutter الرسمي](https://docs.flutter.dev/install/archive)، [إعادة النشر بدون كاش Vercel](https://vercel.com/docs/deployments/troubleshoot-a-build#managing-build-cache).
+لو يظهر `fatal: detected dubious ownership` ثم يفشل التحقق من نسخة SDK، فـ Git لم يتمكن من قراءة بيانات Flutter بسبب ملكية الملفات المستخرجة. السكربت يستخدم الآن `tar --no-same-owner` ويحدد `safe.directory` لمجلد SDK المتحقق منه فقط، عبر إعدادات Git الخاصة بعملية البناء؛ لا تحتاج لإضافة متغير في Vercel أو تعطيل فحص النسخة. ارفع إصلاح السكربت وأعد النشر من آخر commit.

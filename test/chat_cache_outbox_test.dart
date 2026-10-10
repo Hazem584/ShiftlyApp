@@ -755,7 +755,11 @@ void main() {
     expect(find.text('Image'), findsOneWidget);
     expect(find.text('Voice message'), findsOneWidget);
     expect(find.text('Shared location'), findsOneWidget);
-    expect(find.text('Queued'), findsNWidgets(4));
+    expect(find.byIcon(Icons.schedule_rounded), findsNWidgets(4));
+    expect(find.byTooltip('Sending'), findsNWidgets(4));
+    expect(find.byIcon(Icons.check_rounded), findsNothing);
+    expect(find.byIcon(Icons.done_all_rounded), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
 
