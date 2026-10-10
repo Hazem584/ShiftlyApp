@@ -72,6 +72,11 @@ import 'package:shiftly/features/profile/data/mock_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:shiftly/features/reports/data/api_attendance_report_repository.dart';
+import 'package:shiftly/features/reports/data/attendance_report_exporter.dart';
+import 'package:shiftly/features/reports/data/native_report_file_delivery.dart';
+import 'package:shiftly/features/reports/domain/report_export.dart';
+import 'package:shiftly/features/reports/presentation/attendance_reports_cubit.dart';
 import 'package:shiftly/features/shifts/data/mock_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit.dart';
@@ -226,6 +231,7 @@ class _AppProvidersState extends State<AppProviders> {
   late final EmployeeShiftsCubit _employeeShiftsCubit;
   late final ManagerAttendanceCubit _managerAttendanceCubit;
   late final AttendanceCalendarCubit _attendanceCalendarCubit;
+  late final AttendanceReportsCubit _attendanceReportsCubit;
   late final EmployeeAttendanceCubit _employeeAttendanceCubit;
   late final NotificationRepository _notifications;
   late final NotificationsCubit _notificationsCubit;
@@ -358,6 +364,9 @@ class _AppProvidersState extends State<AppProviders> {
       _registered<AttendanceCalendarRepository>() ??
           ApiAttendanceCalendarRepository(_shifts, _attendance, _leaveRequests),
     );
+    _attendanceReportsCubit = AttendanceReportsCubit(
+      ApiAttendanceReportRepository(_attendance, _employees),
+    );
     _employeesCubit = EmployeesCubit(
       _employees,
       invitations: _invitations,
@@ -454,6 +463,7 @@ class _AppProvidersState extends State<AppProviders> {
       );
       _managerShiftsCubit.bindSession(previewScope);
       _managerAttendanceCubit.bindSession(previewScope);
+      _attendanceReportsCubit.bindSession(previewScope);
       _leaveRequestsCubit.bindSession(previewScope);
       _notificationsCubit.bindSession(previewScope);
       _dashboardCubit.bindSession(previewScope);
@@ -483,6 +493,7 @@ class _AppProvidersState extends State<AppProviders> {
     _employeeShiftsCubit.close();
     _managerAttendanceCubit.close();
     _attendanceCalendarCubit.close();
+    _attendanceReportsCubit.close();
     _employeeAttendanceCubit.close();
     _notificationsCubit.close();
     _chatGroupsCubit.close();
@@ -509,6 +520,12 @@ class _AppProvidersState extends State<AppProviders> {
         RepositoryProvider.value(value: _profileImagePicker),
         RepositoryProvider.value(value: _shifts),
         RepositoryProvider.value(value: _attendance),
+        RepositoryProvider<ReportExporter>(
+          create: (_) => AttendanceReportExporter(),
+        ),
+        RepositoryProvider<ReportFileDelivery>(
+          create: (_) => NativeReportFileDelivery(),
+        ),
         RepositoryProvider.value(value: _notifications),
         RepositoryProvider<ChatRepository>.value(value: _chat),
         RepositoryProvider<ChatRealtime>.value(value: _chatRealtime),
@@ -531,6 +548,7 @@ class _AppProvidersState extends State<AppProviders> {
           BlocProvider.value(value: _employeeShiftsCubit),
           BlocProvider.value(value: _managerAttendanceCubit),
           BlocProvider.value(value: _attendanceCalendarCubit),
+          BlocProvider.value(value: _attendanceReportsCubit),
           BlocProvider.value(value: _employeeAttendanceCubit),
           BlocProvider.value(value: _notificationsCubit),
           BlocProvider.value(value: _chatGroupsCubit),
@@ -590,6 +608,7 @@ class _AppProvidersState extends State<AppProviders> {
     _employeeShiftsCubit.bindSession(featureScope);
     _managerAttendanceCubit.bindSession(featureScope);
     _attendanceCalendarCubit.bindSession(featureScope);
+    _attendanceReportsCubit.bindSession(featureScope);
     _employeeAttendanceCubit.bindSession(featureScope);
     _leaveRequestsCubit.bindSession(featureScope);
     _employeeLeaveRequestsCubit.bindSession(featureScope);
@@ -610,6 +629,7 @@ class _AppProvidersState extends State<AppProviders> {
   void _invalidateDashboardAndCalendar() {
     _dashboardCubit.invalidate();
     _attendanceCalendarCubit.invalidate();
+    _attendanceReportsCubit.invalidate();
     unawaited(_pointsCubit.load(refresh: true));
     _managerPerformanceCubit.invalidate();
   }

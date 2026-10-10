@@ -23,6 +23,7 @@ import 'package:shiftly/features/manager_performance/presentation/screens/manage
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:shiftly/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
+import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
 
@@ -176,6 +177,12 @@ GoRouter createAppRouter({
                       ? 2
                       : 0,
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'reports',
+                    builder: (_, _) => const AttendanceReportsScreen(),
+                  ),
+                ],
               ),
             ],
           ),

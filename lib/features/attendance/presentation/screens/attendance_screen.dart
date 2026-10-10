@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
@@ -70,6 +71,16 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 title: context.tr('Attendance & Leave'),
                 subtitle: context.tr(
                   'Check who is in, review leave, and open the calendar',
+                ),
+              ),
+              const SizedBox(height: AppSpacing.m),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OutlinedButton.icon(
+                  key: const Key('attendance-open-reports'),
+                  onPressed: () => context.push('/attendance/reports'),
+                  icon: const Icon(Icons.assessment_outlined),
+                  label: Text(context.tr('Attendance reports')),
                 ),
               ),
               const SizedBox(height: AppSpacing.m),

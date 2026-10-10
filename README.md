@@ -2,6 +2,8 @@
 
 Mobile push notification implementation and deployment prerequisites are documented in [Push notifications setup](docs/push-notifications-setup.md).
 
+Manager attendance reports, calculation rules, and Excel/PDF exports are documented in [Attendance reports](docs/attendance-reports.md).
+
 Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authenticated startup uses production repositories for every feature; preview and test repositories are selected only by explicit composition.
 
 ## Code architecture
