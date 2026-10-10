@@ -5,6 +5,7 @@ import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/ease_hint.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
+import 'package:shiftly/core/widgets/responsive_columns.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/current_shift_card.dart';
@@ -82,15 +83,22 @@ class DashboardScreen extends StatelessWidget {
           pendingRequests: data.summary.pendingLeaveRequests,
         ),
         const SizedBox(height: AppSpacing.l),
-        DashboardDayStatusCard(data: data),
-        const SizedBox(height: AppSpacing.l),
-        DashboardActivitySection(
-          shifts: data.todayShifts,
-          timezone: data.timezone,
-        ),
-        const SizedBox(height: AppSpacing.l),
-        DashboardApprovalsCard(
-          pendingRequests: data.summary.pendingLeaveRequests,
+        ResponsiveColumns(
+          children: [
+            Column(
+              children: [
+                DashboardDayStatusCard(data: data),
+                const SizedBox(height: AppSpacing.l),
+                DashboardApprovalsCard(
+                  pendingRequests: data.summary.pendingLeaveRequests,
+                ),
+              ],
+            ),
+            DashboardActivitySection(
+              shifts: data.todayShifts,
+              timezone: data.timezone,
+            ),
+          ],
         ),
       ],
     ),

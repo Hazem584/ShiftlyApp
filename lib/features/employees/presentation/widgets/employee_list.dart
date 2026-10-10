@@ -23,27 +23,57 @@ class EmployeeList extends StatelessWidget {
   Widget build(BuildContext context) => RefreshIndicator(
     color: AppColors.ink,
     onRefresh: onRefresh,
-    child: ListView.separated(
-      key: const Key('employee-list'),
-      padding: const EdgeInsets.fromLTRB(18, 2, 18, 30),
-      itemCount: employees.length + ((hasMore || loadingMore) ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (_, index) {
-        if (index < employees.length) {
-          return EmployeeListEmployeeCard(employee: employees[index]);
-        }
-        return Center(
-          child: loadingMore
-              ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: CircularProgressIndicator(),
-                )
-              : TextButton.icon(
-                  key: const Key('load-more-employees'),
-                  onPressed: onLoadMore,
-                  icon: const Icon(Icons.expand_more_rounded),
-                  label: Text(context.tr('Load more')),
-                ),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final columns =
+            constraints.maxWidth >= 1000 &&
+                MediaQuery.textScalerOf(context).scale(14) < 22
+            ? 2
+            : 1;
+        final rows = (employees.length / columns).ceil();
+        return ListView.separated(
+          key: const Key('employee-list'),
+          padding: const EdgeInsets.fromLTRB(18, 2, 18, 30),
+          itemCount: rows + ((hasMore || loadingMore) ? 1 : 0),
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          itemBuilder: (_, index) {
+            if (index < rows) {
+              if (columns == 1) {
+                return EmployeeListEmployeeCard(employee: employees[index]);
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: EmployeeListEmployeeCard(
+                      employee: employees[index * 2],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: index * 2 + 1 < employees.length
+                        ? EmployeeListEmployeeCard(
+                            employee: employees[index * 2 + 1],
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              );
+            }
+            return Center(
+              child: loadingMore
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: CircularProgressIndicator(),
+                    )
+                  : TextButton.icon(
+                      key: const Key('load-more-employees'),
+                      onPressed: onLoadMore,
+                      icon: const Icon(Icons.expand_more_rounded),
+                      label: Text(context.tr('Load more')),
+                    ),
+            );
+          },
         );
       },
     ),

@@ -1,20 +1,21 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
-import 'package:sembast/sembast_io.dart';
+import 'package:sembast/sembast.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
+import 'package:shiftly/core/storage/platform_file.dart';
+import 'package:shiftly/features/chat/data/cache/chat_database_factory.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_cache_access.dart';
 
 /// Private app-support storage. Grants are deliberately never persisted.
 class ChatCacheDatabase implements ChatCacheAccess {
   ChatCacheDatabase(this.database, this.directory);
-  static Future<ChatCacheDatabase> open(Directory directory) async {
+  static Future<ChatCacheDatabase> open(ChatStorageDirectory directory) async {
     await directory.create(recursive: true);
     final storage = ChatCacheDatabase(
-      await databaseFactoryIo.openDatabase('${directory.path}/chat.db'),
+      await openChatDatabase('${directory.path}/chat.db'),
       directory,
     );
     final records = await storage.records.find(storage.database);
@@ -24,7 +25,7 @@ class ChatCacheDatabase implements ChatCacheAccess {
         .toSet();
     await for (final entity in directory.list()) {
       final name = entity.uri.pathSegments.last;
-      if (entity is File &&
+      if (entity is ChatLocalFile &&
           RegExp(r'^[a-f0-9-]+\.(bin|part)$').hasMatch(name) &&
           !owned.contains(name)) {
         await entity.delete();
@@ -34,7 +35,7 @@ class ChatCacheDatabase implements ChatCacheAccess {
   }
 
   final Database database;
-  final Directory directory;
+  final ChatStorageDirectory directory;
   final records = stringMapStoreFactory.store('private_chat');
   FeatureSessionScope? _session;
   final Set<String> _grants = {};
@@ -50,16 +51,16 @@ class ChatCacheDatabase implements ChatCacheAccess {
   Future<void> ready = Future<void>.value();
   final Map<String, int> pins = {};
   final Set<String> _deferredDeletes = {};
-  File ownedFile(String name) {
+  ChatLocalFile ownedFile(String name) {
     if (!RegExp(r'^[a-f0-9-]+\.(bin|part)$').hasMatch(name)) {
       throw const FormatException('Invalid private media');
     }
-    return File('${directory.path}/$name');
+    return ChatLocalFile('${directory.path}/$name');
   }
 
-  void pin(File file) =>
+  void pin(ChatLocalFile file) =>
       pins.update(file.path, (n) => n + 1, ifAbsent: () => 1);
-  void unpin(File file) {
+  void unpin(ChatLocalFile file) {
     final count = (pins[file.path] ?? 0) - 1;
     if (count <= 0) {
       pins.remove(file.path);
@@ -71,7 +72,7 @@ class ChatCacheDatabase implements ChatCacheAccess {
     }
   }
 
-  Future<void> deleteFile(File file) async {
+  Future<void> deleteFile(ChatLocalFile file) async {
     if (pins.containsKey(file.path)) {
       _deferredDeletes.add(file.path);
       return;
@@ -160,7 +161,7 @@ class ChatCacheDatabase implements ChatCacheAccess {
       final filename = value.value['file'];
       if (filename is String &&
           RegExp(r'^[a-f0-9-]+\.(bin|part)$').hasMatch(filename)) {
-        final file = File('${directory.path}/$filename');
+        final file = ChatLocalFile('${directory.path}/$filename');
         if (await file.exists()) await file.delete();
       }
     }

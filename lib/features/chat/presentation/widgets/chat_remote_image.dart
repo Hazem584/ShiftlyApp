@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/storage/platform_file.dart';
+import 'package:shiftly/core/widgets/local_media_image.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
@@ -29,7 +30,7 @@ class ChatRemoteImage extends StatefulWidget {
 
 class _RemoteImageState extends State<ChatRemoteImage> {
   late Future<Object> _media;
-  File? _pinned;
+  ChatLocalFile? _pinned;
   ChatMediaStore? _cache;
 
   @override
@@ -92,7 +93,7 @@ class _RemoteImageState extends State<ChatRemoteImage> {
         );
       }
       final media = snapshot.data!;
-      final file = media is File ? media : null;
+      final file = media is ChatLocalFile ? media : null;
       final url = media is ChatMediaUrl ? media.url : null;
       final heroTag = 'chat-image-${widget.message.id}';
       return InkWell(
@@ -145,7 +146,7 @@ class _RemoteImageState extends State<ChatRemoteImage> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320, maxHeight: 360),
               child: file != null
-                  ? Image.file(
+                  ? LocalMediaImage(
                       file,
                       fit: BoxFit.cover,
                       cacheWidth: 960,

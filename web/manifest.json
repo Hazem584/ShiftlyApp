@@ -1,12 +1,12 @@
 {
-    "name": "shiftly",
-    "short_name": "shiftly",
+    "name": "Shiftly — Team workspace",
+    "short_name": "Shiftly",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#f6f5f8",
+    "theme_color": "#151326",
+    "description": "Manage shifts, attendance, reports and team conversations.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

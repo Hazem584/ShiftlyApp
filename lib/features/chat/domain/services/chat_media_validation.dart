@@ -5,6 +5,15 @@ abstract final class ChatMediaValidation {
   static const voiceMaxBytes = 10 * 1024 * 1024;
   static const voiceMaxDurationMs = 10 * 60 * 1000;
 
+  static String? voiceMime(Uint8List bytes) {
+    if (bytes.length >= 12 && _ascii(bytes, 4, 'ftyp')) return 'audio/mp4';
+    if (bytes.length >= 4 && _matches(bytes, const [0x1a, 0x45, 0xdf, 0xa3])) {
+      return 'audio/webm';
+    }
+    if (bytes.length >= 4 && _ascii(bytes, 0, 'OggS')) return 'audio/ogg';
+    return null;
+  }
+
   static String? imageMime(Uint8List bytes) {
     if (bytes.isEmpty || bytes.length > imageMaxBytes) return null;
     if (bytes.length >= 4 &&

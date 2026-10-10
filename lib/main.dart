@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/config/app_config.dart';
 import 'package:shiftly/core/config/configuration_error_app.dart';
@@ -10,6 +11,7 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  usePathUrlStrategy();
   try {
     await DependencyRegistration.configureProduction();
     runApp(ShiftlyApp(locator: getIt));

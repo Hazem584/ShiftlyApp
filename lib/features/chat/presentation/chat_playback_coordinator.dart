@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:just_audio/just_audio.dart';
+import 'package:shiftly/core/storage/platform_file.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
@@ -28,7 +28,11 @@ class ChatPlaybackCoordinator {
     await _load(scope, file, message.id, selection);
   }
 
-  Future<void> playPending(ChatCacheScope scope, File file, String id) async {
+  Future<void> playPending(
+    ChatCacheScope scope,
+    ChatLocalFile file,
+    String id,
+  ) async {
     final selection = ++_selection;
     _scope = scope;
     await _load(scope, file, id, selection);
@@ -36,7 +40,7 @@ class ChatPlaybackCoordinator {
 
   Future<void> _load(
     ChatCacheScope scope,
-    File file,
+    ChatLocalFile file,
     String id,
     int selection,
   ) async {
@@ -50,7 +54,7 @@ class ChatPlaybackCoordinator {
     bool handedToPlayer = false;
     try {
       await player.setAudioSource(
-        AudioSource.uri(Uri.file(file.path), tag: id),
+        AudioSource.uri(await chatFilePlaybackUri(file), tag: id),
       );
       if (selection != _selection || !cache.storage.authorized(scope)) return;
       if (position > Duration.zero) await player.seek(position);

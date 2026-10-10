@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/routing/route_not_found_screen.dart';
+import 'package:shiftly/core/routing/session_route_intent.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
@@ -33,13 +34,21 @@ GoRouter createAppRouter({
   Listenable? refreshListenable,
 }) {
   final rootNavigatorKey = GlobalKey<NavigatorState>();
+  final routeIntent = SessionRouteIntent();
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: sessionCoordinator == null ? '/dashboard' : '/session',
     refreshListenable: refreshListenable,
     redirect: sessionCoordinator == null
         ? null
-        : (context, state) => _redirect(sessionCoordinator, state, onboarding),
+        : (context, state) {
+            routeIntent.remember(state.uri, sessionCoordinator.state.status);
+            final redirect = _redirect(sessionCoordinator, state, onboarding);
+            return redirect == null
+                ? null
+                : routeIntent.takeFor(sessionCoordinator.state.status) ??
+                      redirect;
+          },
     errorBuilder: (context, state) =>
         RouteNotFoundScreen(routeName: state.uri.path),
     routes: [

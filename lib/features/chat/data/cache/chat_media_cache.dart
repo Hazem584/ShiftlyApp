@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:sembast/sembast.dart';
 import 'package:shiftly/core/error/api_exception.dart';
+import 'package:shiftly/core/storage/platform_file.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
@@ -38,7 +38,7 @@ class ChatMediaCache implements ChatMediaStore {
   final int byteLimit;
   final Duration retention;
   final int maxTransfers;
-  final Map<String, Future<File>> _inFlight = {};
+  final Map<String, Future<ChatLocalFile>> _inFlight = {};
   final Map<String, CancelToken> _tokens = {};
   final Map<String, ChatCacheScope> _scopes = {};
   final List<Completer<void>> _waiting = [];
@@ -46,11 +46,11 @@ class ChatMediaCache implements ChatMediaStore {
   String _key(ChatCacheScope scope, ChatMessage message) =>
       'media:${scope.key}:${message.id}:${message.attachment?.id}';
   @override
-  void pin(File file) => storage.pin(file);
+  void pin(ChatLocalFile file) => storage.pin(file);
   @override
-  void unpin(File file) => storage.unpin(file);
+  void unpin(ChatLocalFile file) => storage.unpin(file);
   @override
-  Future<File> resolve(
+  Future<ChatLocalFile> resolve(
     ChatCacheScope scope,
     ChatMessage message,
     ChatRepository repository,
@@ -68,7 +68,7 @@ class ChatMediaCache implements ChatMediaStore {
     });
   }
 
-  Future<File> _resolve(
+  Future<ChatLocalFile> _resolve(
     ChatCacheScope scope,
     ChatMessage message,
     ChatRepository repository,
@@ -127,8 +127,8 @@ class ChatMediaCache implements ChatMediaStore {
     _tokens[key] = token;
     _scopes[key] = scope;
     final name = '${const Uuid().v4()}.bin';
-    final target = File('${storage.directory.path}/$name');
-    final temporary = File(
+    final target = ChatLocalFile('${storage.directory.path}/$name');
+    final temporary = ChatLocalFile(
       '${storage.directory.path}/${const Uuid().v4()}.part',
     );
     try {
@@ -202,7 +202,7 @@ class ChatMediaCache implements ChatMediaStore {
 
   Future<void> _download(
     Uri uri,
-    File target,
+    ChatLocalFile target,
     int size,
     String mime,
     CancelToken token,
@@ -241,7 +241,7 @@ class ChatMediaCache implements ChatMediaStore {
     if (length != size) throw const FormatException('Invalid media size');
   }
 
-  Future<bool> _valid(File file, ChatMessage message) async {
+  Future<bool> _valid(ChatLocalFile file, ChatMessage message) async {
     final attachment = message.attachment!;
     if (!await file.exists() || await file.length() != attachment.sizeBytes) {
       return false;

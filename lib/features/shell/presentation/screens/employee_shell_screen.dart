@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_selector.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
+import 'package:shiftly/core/widgets/workspace_content_frame.dart';
 import 'package:shiftly/features/attendance/presentation/screens/employee_attendance_screen.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
@@ -82,6 +83,7 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
         children: [
           if (wide) ...[
             WorkspaceNavigationRail(
+              extended: size.width >= 1200,
               employee: true,
               selectedIndex: _selectedIndex,
               onSelected: (index) => setState(() => _selectedIndex = index),
@@ -89,22 +91,20 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
             const VerticalDivider(width: 1),
           ],
           Expanded(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1120),
-                child: SafeArea(
-                  child: IndexedStack(
-                    index: _selectedIndex,
-                    children: [
-                      const EmployeeDashboardScreen(),
-                      const EmployeeFixedShiftsScreen(),
-                      EmployeeAttendanceScreen(
-                        initialTab: widget.initialAttendanceTab,
-                      ),
-                      const ChatGroupsScreen(embedded: true),
-                      const MyPerformanceScreen(),
-                    ],
-                  ),
+            child: WorkspaceContentFrame(
+              framed: wide,
+              child: SafeArea(
+                child: IndexedStack(
+                  index: _selectedIndex,
+                  children: [
+                    const EmployeeDashboardScreen(),
+                    const EmployeeFixedShiftsScreen(),
+                    EmployeeAttendanceScreen(
+                      initialTab: widget.initialAttendanceTab,
+                    ),
+                    const ChatGroupsScreen(embedded: true),
+                    const MyPerformanceScreen(),
+                  ],
                 ),
               ),
             ),

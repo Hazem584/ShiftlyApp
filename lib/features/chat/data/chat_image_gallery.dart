@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
@@ -78,6 +80,13 @@ class ChatImageGallery implements ChatGallery {
       'image/png' => 'png',
       _ => 'webp',
     };
+    final name =
+        'shiftly_${DateTime.now().toUtc().microsecondsSinceEpoch}.$extension';
+    if (kIsWeb) {
+      checkAccess();
+      await XFile.fromData(bytes, mimeType: mime, name: name).saveTo(name);
+      return;
+    }
     final saved = await _channel.invokeMethod<bool>('saveImage', {
       'bytes': bytes,
       'mimeType': mime,

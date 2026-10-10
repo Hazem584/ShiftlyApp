@@ -24,6 +24,10 @@ class NativeReportFileDelivery implements ReportFileDelivery {
       mimeType: file.mimeType,
       name: file.name,
     );
+    if (kIsWeb) {
+      if (isCurrent()) await data.saveTo(file.name);
+      return;
+    }
     if (desktop) {
       final location = await getSaveLocation(
         suggestedName: file.name,

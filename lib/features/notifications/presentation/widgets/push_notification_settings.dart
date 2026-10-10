@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
@@ -9,6 +10,18 @@ class PushNotificationSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.notifications_outlined),
+        title: Text(context.tr('Notifications')),
+        subtitle: Text(
+          context.tr(
+            'Updates appear here while you use Shiftly. Background alerts are available in the mobile app.',
+          ),
+        ),
+      );
+    }
     // Isolated previews and existing feature tests do not initialize Firebase.
     final cubit = context.read<PushNotificationsCubit?>();
     if (cubit == null) return const SizedBox.shrink();

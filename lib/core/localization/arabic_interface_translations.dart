@@ -1,6 +1,13 @@
 /// Interface messages only. Employee names, chat content and free-text reasons
 /// are supplied as parameters and are never translated.
 const arabicInterfaceTranslations = <String, String>{
+  'Download image': 'تنزيل الصورة',
+  'Image downloaded.': 'تم تنزيل الصورة.',
+  'Your team. One workspace.': 'فريقك كله في مكان واحد.',
+  'Manage shifts, attendance and team conversations in one place.':
+      'نظّم الشيفتات والحضور وتواصل مع فريقك من مساحة عمل واحدة.',
+  'Manager workspace': 'مساحة عمل المدير',
+  'Updates appear here while you use Shiftly. Background alerts are available in the mobile app.': 'التحديثات بتظهر هنا أثناء استخدام Shiftly. إشعارات الخلفية متاحة في تطبيق الموبايل.',
   'Mobile notifications': 'إشعارات الموبايل',
   'Upcoming shift': 'شيفت قريب',
   'New chat message': 'رسالة شات جديدة',

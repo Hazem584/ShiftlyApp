@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/storage/platform_file.dart';
+import 'package:shiftly/core/widgets/local_media_image.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/presentation/chat_playback_coordinator.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
@@ -56,8 +57,8 @@ class PendingMediaBubble extends StatelessWidget {
                 fit: BoxFit.cover,
               )
             else if (pending.localPath != null)
-              Image.file(
-                File(pending.localPath!),
+              LocalMediaImage(
+                ChatLocalFile(pending.localPath!),
                 height: 160,
                 width: 260,
                 cacheWidth: 720,
@@ -86,7 +87,7 @@ class PendingMediaBubble extends StatelessWidget {
                             try {
                               await playback!.playPending(
                                 cacheScope!,
-                                File(pending.localPath!),
+                                ChatLocalFile(pending.localPath!),
                                 pending.clientMessageId,
                               );
                             } catch (_) {
@@ -97,12 +98,12 @@ class PendingMediaBubble extends StatelessWidget {
                           final cache = context
                               .read<ChatGroupsCubit?>()
                               ?.mediaCache;
-                          final file = File(pending.localPath!);
+                          final file = ChatLocalFile(pending.localPath!);
                           cache?.pin(file);
                           try {
                             await player!.setAudioSource(
                               AudioSource.uri(
-                                Uri.file(pending.localPath!),
+                                await chatFilePlaybackUri(file),
                                 tag: pending.clientMessageId,
                               ),
                             );

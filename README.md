@@ -783,3 +783,7 @@ The only remaining fixed-shift mock is `PreviewFixedShiftRepository`, an empty a
 8. Clock out, repeat clock-out, and verify both return the same completed attendance. Confirm server worked minutes, history, dashboard, eligibility, and notification counts refresh; then force one secondary refresh to fail and verify the successful mutation remains visible.
 9. Re-run legacy employee shift clock-in/out and mixed legacy/template attendance history. Verify template records never require `shiftId`, legacy records never fabricate a template, and manager review remains functional. In the manager Calendar tab, verify baseline/flexible/extra attendance uses the server operational date, including overnight and month-edge check-ins; mixed sources retain one outcome per employee with Late taking precedence. Template absence requires backend historical expected occurrences and is not inferred locally.
 10. Exercise HTTP 400, 401, 403, 404, 409, 429, 500, 502, malformed 2xx, timeout, cancellation, and offline responses. Verify friendly messages and support `requestId`, with no provider detail, token, personal data, request body, or idempotency UUID in logs.
+
+## Web and Vercel
+
+For local browser setup, backend CORS, Supabase email redirects, and automatic Vercel builds, follow [the web setup guide](docs/web-vercel-setup.md). The frontend uses a separate Vercel project; `vercel.json` and `scripts/build-vercel.sh` configure the release build and SPA routing.

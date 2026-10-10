@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/entities/authentication_exception.dart';
@@ -58,6 +59,7 @@ class SupabaseAuthenticationService implements AuthenticationService {
       final response = await _auth.signUp(
         email: email.trim().toLowerCase(),
         password: password,
+        emailRedirectTo: kIsWeb ? '${Uri.base.origin}/login' : null,
       );
       return AuthenticationResult(
         session: _mapSession(response.session),
@@ -89,6 +91,7 @@ class SupabaseAuthenticationService implements AuthenticationService {
       await _auth.resend(
         type: OtpType.signup,
         email: email.trim().toLowerCase(),
+        emailRedirectTo: kIsWeb ? '${Uri.base.origin}/login' : null,
       );
     } on AuthException catch (error) {
       throw AuthenticationException(_safeFailure(error));

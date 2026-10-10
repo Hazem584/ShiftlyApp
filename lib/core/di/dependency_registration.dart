@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/config/app_config.dart';
 import 'package:shiftly/core/di/dependency_disposal.dart';
@@ -24,6 +21,7 @@ import 'package:shiftly/features/auth/domain/repositories/authentication_reposit
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:shiftly/features/chat/data/api_chat_repository.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
+import 'package:shiftly/features/chat/data/cache/chat_database_factory.dart';
 import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
 import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
 import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
@@ -85,9 +83,8 @@ abstract final class DependencyRegistration {
       publishableKey: config.supabasePublishableKey,
     );
     final preferences = await SharedPreferences.getInstance();
-    final support = await getApplicationSupportDirectory();
     final chatStorage = await ChatCacheDatabase.open(
-      Directory('${support.path}/private-chat-v1'),
+      await chatStorageDirectory(),
     );
     target
       ..registerSingleton<ChatCacheDatabase>(

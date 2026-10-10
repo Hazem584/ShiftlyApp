@@ -1,15 +1,14 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/storage/platform_file.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
@@ -50,7 +49,11 @@ class ChatMediaCapture extends ChangeNotifier {
   void clearPreparedMedia() {
     _preparedImage = null;
     if (_preparedVoicePath case final path?) {
-      unawaited(File(path).delete().catchError((Object _) => File(path)));
+      unawaited(
+        ChatLocalFile(path)
+            .delete()
+            .catchError((Object _) => ChatLocalFile(path)),
+      );
     }
     _preparedVoicePath = null;
     _preparedVoiceDuration = null;
@@ -65,7 +68,11 @@ class ChatMediaCapture extends ChangeNotifier {
     _recorder.dispose();
     clearPreparedMedia();
     if (_recordPath case final path?) {
-      unawaited(File(path).delete().catchError((Object _) => File(path)));
+      unawaited(
+        ChatLocalFile(path)
+            .delete()
+            .catchError((Object _) => ChatLocalFile(path)),
+      );
     }
     super.dispose();
   }
@@ -119,12 +126,15 @@ class ChatMediaCapture extends ChangeNotifier {
         );
         return;
       }
-      final directory = await getTemporaryDirectory();
-      final path =
-          '${directory.path}${Platform.pathSeparator}shiftly-voice-${DateTime.now().microsecondsSinceEpoch}.m4a';
+      final path = await chatRecordingPath();
       _recordPath = path;
       await _recorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc),
+        RecordConfig(
+          encoder:
+              kIsWeb && await _recorder.isEncoderSupported(AudioEncoder.opus)
+              ? AudioEncoder.opus
+              : AudioEncoder.aacLc,
+        ),
         path: path,
       );
       _recordStarted = DateTime.now();
@@ -175,11 +185,11 @@ class ChatMediaCapture extends ChangeNotifier {
           ? 0
           : DateTime.now().difference(started).inMilliseconds;
       if (path == null) throw const FormatException('Missing recording');
-      final file = File(path);
+      final file = ChatLocalFile(path);
       final bytes = await file.readAsBytes();
       if (!ChatMediaValidation.validVoice(
         bytes: bytes,
-        mimeType: 'audio/mp4',
+        mimeType: ChatMediaValidation.voiceMime(bytes) ?? '',
         durationMs: duration,
       )) {
         if (!(context.mounted && !_disposed)) return;
@@ -192,7 +202,7 @@ class ChatMediaCapture extends ChangeNotifier {
         _preparedVoicePath = path;
         _preparedVoiceDuration = duration;
         final id = await context.read<ChatConversationCubit>().sendVoice(
-          mimeType: 'audio/mp4',
+          mimeType: ChatMediaValidation.voiceMime(bytes) ?? '',
           bytes: bytes,
           durationMs: duration,
         );
@@ -210,7 +220,7 @@ class ChatMediaCapture extends ChangeNotifier {
     } finally {
       if (path != null && (accepted || _preparedVoicePath != path)) {
         try {
-          await File(path).delete();
+          await ChatLocalFile(path).delete();
         } catch (_) {}
       }
       _recordPath = null;
@@ -231,7 +241,7 @@ class ChatMediaCapture extends ChangeNotifier {
     } catch (_) {}
     if (path != null) {
       try {
-        await File(path).delete();
+        await ChatLocalFile(path).delete();
       } catch (_) {}
     }
     if ((context.mounted && !_disposed)) {
@@ -249,14 +259,14 @@ class ChatMediaCapture extends ChangeNotifier {
         if (await conversation.sendImage(bytes) != null) _preparedImage = null;
       }
       if (_preparedVoicePath case final path?) {
-        final bytes = await File(path).readAsBytes();
+        final bytes = await ChatLocalFile(path).readAsBytes();
         if (await conversation.sendVoice(
               bytes: bytes,
-              mimeType: 'audio/mp4',
+              mimeType: ChatMediaValidation.voiceMime(bytes) ?? '',
               durationMs: _preparedVoiceDuration!,
             ) !=
             null) {
-          await File(path).delete();
+          await ChatLocalFile(path).delete();
           _preparedVoicePath = null;
           _preparedVoiceDuration = null;
         }

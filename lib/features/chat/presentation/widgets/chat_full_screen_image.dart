@@ -1,11 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart'
     show kIsWeb, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/storage/platform_file.dart';
+import 'package:shiftly/core/widgets/local_media_image.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
 
@@ -22,7 +23,7 @@ class ChatFullScreenImage extends StatefulWidget {
   final ChatMediaStore? cache;
   final ChatCacheScope? scope;
   final Uri? url;
-  final File? file;
+  final ChatLocalFile? file;
   final String heroTag;
   final Future<void> Function()? saveImage;
 
@@ -35,7 +36,7 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
   ChatMediaStore? get cache => widget.cache;
   ChatCacheScope? get scope => widget.scope;
   Uri? get url => widget.url;
-  File? get file => widget.file;
+  ChatLocalFile? get file => widget.file;
   String get heroTag => widget.heroTag;
 
   @override
@@ -46,15 +47,15 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
       backgroundColor: Colors.black,
       title: Text(context.tr('Image')),
       actions: [
-        if (!kIsWeb &&
-            const [
-              TargetPlatform.android,
-              TargetPlatform.iOS,
-            ].contains(defaultTargetPlatform) &&
+        if ((kIsWeb ||
+                const [
+                  TargetPlatform.android,
+                  TargetPlatform.iOS,
+                ].contains(defaultTargetPlatform)) &&
             widget.saveImage != null)
           IconButton(
             key: const Key('save-chat-image'),
-            tooltip: context.tr('Save to photos'),
+            tooltip: context.tr(kIsWeb ? 'Download image' : 'Save to photos'),
             onPressed: _saving ? null : _save,
             icon: _saving
                 ? const SizedBox.square(
@@ -91,7 +92,13 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
       await widget.saveImage!();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.tr('Image saved to photos.'))),
+          SnackBar(
+            content: Text(
+              context.tr(
+                kIsWeb ? 'Image downloaded.' : 'Image saved to photos.',
+              ),
+            ),
+          ),
         );
       }
     } catch (error) {
@@ -123,7 +130,7 @@ class _FullScreenImageState extends State<ChatFullScreenImage> {
         minScale: 0.8,
         maxScale: 5,
         child: file != null
-            ? Image.file(file!, fit: BoxFit.contain)
+            ? LocalMediaImage(file!, fit: BoxFit.contain)
             : Image.network(
                 url!.toString(),
                 fit: BoxFit.contain,

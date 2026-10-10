@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:sembast/sembast.dart';
+import 'package:shiftly/core/storage/platform_file.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_outbox_operation.dart';
@@ -25,10 +25,10 @@ class ChatOutboxStorage implements ChatOutboxStore {
     await storage.ready;
     if (!storage.writable(scope)) throw StateError('Chat access unavailable');
     final name = '${const Uuid().v4()}.bin';
-    final temporary = File(
+    final temporary = ChatLocalFile(
       '${storage.directory.path}/${const Uuid().v4()}.part',
     );
-    final target = File('${storage.directory.path}/$name');
+    final target = ChatLocalFile('${storage.directory.path}/$name');
     try {
       await temporary.writeAsBytes(bytes, flush: true);
       if (!storage.writable(scope)) throw StateError('Chat access unavailable');
@@ -83,11 +83,11 @@ class ChatOutboxStorage implements ChatOutboxStore {
   }
 
   @override
-  File mediaFile(String name) {
+  ChatLocalFile mediaFile(String name) {
     if (!RegExp(r'^[a-f0-9-]+\.bin$').hasMatch(name)) {
       throw const FormatException('Invalid media');
     }
-    return File('${storage.directory.path}/$name');
+    return ChatLocalFile('${storage.directory.path}/$name');
   }
 
   @override

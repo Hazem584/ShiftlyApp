@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/widgets/workspace_content_frame.dart';
 import 'package:shiftly/features/shell/presentation/widgets/app_bottom_navigation.dart';
 import 'package:shiftly/features/shell/presentation/widgets/workspace_navigation_rail.dart';
 
@@ -21,17 +22,16 @@ class ShellScreen extends StatelessWidget {
           children: [
             if (wide) ...[
               WorkspaceNavigationRail(
+                extended: constraints.maxWidth >= 1200,
                 selectedIndex: navigationShell.currentIndex,
                 onSelected: select,
               ),
               const VerticalDivider(width: 1),
             ],
             Expanded(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1120),
-                  child: navigationShell,
-                ),
+              child: WorkspaceContentFrame(
+                framed: wide,
+                child: navigationShell,
               ),
             ),
           ],
