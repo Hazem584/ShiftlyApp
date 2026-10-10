@@ -1,6 +1,27 @@
 /// Interface messages only. Employee names, chat content and free-text reasons
 /// are supplied as parameters and are never translated.
 const arabicInterfaceTranslations = <String, String>{
+  'Mobile notifications': 'إشعارات الموبايل',
+  'Upcoming shift': 'شيفت قريب',
+  'New chat message': 'رسالة شات جديدة',
+  'You have a new chat message.': 'لديك رسالة شات جديدة.',
+  'Your scheduled shift starts soon.': 'شيفتك المجدول يبدأ قريبًا.',
+  'Mobile notifications are available on Android and iOS.':
+      'إشعارات الموبايل متاحة على Android وiOS.',
+  'Mobile notifications are not configured on this device.':
+      'إشعارات الموبايل غير مجهّزة على هذا الجهاز.',
+  'Allow notifications in your phone settings, then try again.':
+      'اسمح بالإشعارات من إعدادات الموبايل، ثم حاول مرة أخرى.',
+  'Receive shift, attendance and leave updates on this phone.':
+      'استقبل تحديثات الشيفتات والحضور والإجازات على هذا الموبايل.',
+  'Enable alerts when Shiftly is in the background.':
+      'فعّل التنبيهات عندما يكون Shiftly في الخلفية.',
+  'Could not update mobile notifications. Try again.':
+      'تعذّر تحديث إعدادات الإشعارات. حاول مرة أخرى.',
+  'Mobile notifications are not ready yet. Try again.':
+      'إشعارات الموبايل ليست جاهزة بعد. حاول مرة أخرى.',
+  'You have a new Shiftly update.': 'لديك تحديث جديد في Shiftly.',
+  'View': 'عرض',
   'Dismiss': 'إغلاق',
   'Shiftly is not configured': 'إعدادات Shiftly غير مكتملة',
   'Page not found': 'الصفحة غير موجودة',

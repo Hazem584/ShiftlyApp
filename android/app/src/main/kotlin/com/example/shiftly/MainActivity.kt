@@ -1,6 +1,8 @@
 package com.example.shiftly
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
@@ -20,6 +22,11 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getSystemService(NotificationManager::class.java).createNotificationChannel(
+                NotificationChannel("shiftly_updates", "Shiftly updates", NotificationManager.IMPORTANCE_HIGH)
+            )
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "shiftly/chat_gallery")
             .setMethodCallHandler { call, result ->
                 if (call.method != "saveImage") {

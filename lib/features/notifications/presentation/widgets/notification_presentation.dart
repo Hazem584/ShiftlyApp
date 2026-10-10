@@ -50,4 +50,14 @@ import 'package:shiftly/features/notifications/domain/repositories/notification_
     icon: Icons.notifications_none_rounded,
     color: AppColors.textSecondary,
   ),
+  NotificationType.shiftReminder => (
+    label: 'Upcoming shift',
+    icon: Icons.alarm_rounded,
+    color: AppColors.orange,
+  ),
+  NotificationType.chatMessage => (
+    label: 'New chat message',
+    icon: Icons.chat_bubble_outline_rounded,
+    color: AppColors.info,
+  ),
 };

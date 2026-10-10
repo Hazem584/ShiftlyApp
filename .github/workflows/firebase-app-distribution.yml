@@ -131,6 +131,7 @@ jobs:
 
     - name: Restore private build inputs
       env:
+        SHIFTLY_FIREBASE_ANDROID_CONFIG_JSON: ${{ secrets.SHIFTLY_FIREBASE_ANDROID_CONFIG_JSON }}
         SHIFTLY_DART_DEFINES_JSON: ${{ secrets.SHIFTLY_DART_DEFINES_JSON }}
         FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -159,6 +160,23 @@ jobs:
             fail('ANDROID_KEY_ALIAS must be shiftly.')
         directory = pathlib.Path(os.environ['CI_PRIVATE_DIR'])
         directory.mkdir(mode=0o700)
+        # Client Firebase configuration is separate from the distribution
+        # service-account credential and never contains a private key.
+        client_config = os.environ.get('SHIFTLY_FIREBASE_ANDROID_CONFIG_JSON', '').strip()
+        if client_config:
+            try:
+                firebase_config = json.loads(client_config)
+                clients = firebase_config.get('client', [])
+                matches = [client for client in clients if client.get('client_info', {}).get(
+                    'android_client_info', {}).get('package_name') == 'com.example.shiftly']
+                if not matches or not firebase_config.get('project_info'):
+                    fail('Firebase Android configuration must match com.example.shiftly.')
+                if firebase_config.get('type') == 'service_account' or 'private_key' in firebase_config:
+                    fail('Firebase Android configuration must not be a service-account key.')
+            except (ValueError, AttributeError, TypeError):
+                fail('Firebase Android client configuration is invalid (contents withheld).')
+            pathlib.Path('android/app/google-services.json').write_text(
+                json.dumps(firebase_config), encoding='utf-8')
         for name, filename in (
             ('SHIFTLY_DART_DEFINES_JSON', 'dart-defines.json'),
             ('FIREBASE_SERVICE_ACCOUNT_JSON', 'service-account.json'),
@@ -342,4 +360,5 @@ jobs:
         expected="$RUNNER_TEMP/shiftly-distribution-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
         CI_PRIVATE_DIR="${CI_PRIVATE_DIR:-$expected}"
         [[ "$CI_PRIVATE_DIR" == "$expected" && "$CI_PRIVATE_DIR" == "$RUNNER_TEMP/"* ]]
+        rm -f -- "$GITHUB_WORKSPACE/android/app/google-services.json"
         rm -rf -- "$CI_PRIVATE_DIR"

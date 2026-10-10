@@ -84,6 +84,13 @@ GoRouter createAppRouter({
             _ => 0,
           },
         ),
+        routes: [
+          GoRoute(
+            path: 'chat/:groupId',
+            builder: (_, state) =>
+                ChatScreen(groupId: state.pathParameters['groupId']!),
+          ),
+        ],
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => ShellScreen(navigationShell: shell),
@@ -239,11 +246,14 @@ String? _redirect(
           : '/session-error',
     SessionStatus.authenticatedManager => _managerRedirect(location),
     SessionStatus.authenticatedEmployee =>
-      location == '/employee' ? null : '/employee',
+      location == '/employee' || location.startsWith('/employee/chat/')
+          ? null
+          : '/employee',
   };
 }
 
 String? _managerRedirect(String location) {
+  if (location.startsWith('/employee/')) return '/dashboard';
   const public = {
     '/session',
     '/onboarding',

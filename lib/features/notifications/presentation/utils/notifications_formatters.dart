@@ -5,6 +5,7 @@ import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
@@ -35,6 +36,7 @@ abstract final class NotificationsScreenNotificationNavigator {
         NotificationType.shiftAssigned,
         NotificationType.shiftUpdated,
         NotificationType.shiftCancelled,
+        NotificationType.shiftReminder,
       }.contains(notification.type)) {
         _unavailable(context);
       }
@@ -89,7 +91,8 @@ abstract final class NotificationsScreenNotificationNavigator {
         ),
       NotificationType.shiftAssigned ||
       NotificationType.shiftUpdated ||
-      NotificationType.shiftCancelled
+      NotificationType.shiftCancelled ||
+      NotificationType.shiftReminder
           when scope.isEmployee &&
               _id(data, 'employeeMembershipId') == scope.membershipId =>
         _NotificationDestination(
@@ -104,6 +107,13 @@ abstract final class NotificationsScreenNotificationNavigator {
           location: '/employee?tab=leave',
           kind: _DestinationKind.employeeLeave,
         ),
+      NotificationType.chatMessage => _NotificationDestination(
+        id: _id(data, 'groupId'),
+        location: scope.isManager
+            ? '/chat/${_id(data, 'groupId')}'
+            : '/employee/chat/${_id(data, 'groupId')}',
+        kind: _DestinationKind.chatGroup,
+      ),
       _ => null,
     };
   }
@@ -113,6 +123,15 @@ abstract final class NotificationsScreenNotificationNavigator {
     FeatureSessionScope scope,
     _NotificationDestination destination,
   ) async => switch (destination.kind) {
+    _DestinationKind.chatGroup => () async {
+      final group = await context.read<ChatRepository>().getGroup(
+        scope.workspaceId,
+        destination.id,
+      );
+      return group.id == destination.id &&
+          group.workspaceId == scope.workspaceId &&
+          !group.isArchived;
+    }(),
     _DestinationKind.managerAttendance => () async {
       final record = await context
           .read<AttendanceRepository>()
@@ -156,6 +175,7 @@ abstract final class NotificationsScreenNotificationNavigator {
 }
 
 enum _DestinationKind {
+  chatGroup,
   managerAttendance,
   managerLeave,
   employeeShift,

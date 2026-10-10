@@ -51,7 +51,13 @@ import 'package:shiftly/features/manager_performance/data/unavailable_manager_po
 import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
 import 'package:shiftly/features/manager_performance/domain/repositories/manager_points_repository.dart';
 import 'package:shiftly/features/notifications/data/api_notification_repository.dart';
+import 'package:shiftly/features/notifications/data/api_push_device_repository.dart';
+import 'package:shiftly/features/notifications/data/firebase_push_messaging.dart';
+import 'package:shiftly/features/notifications/data/preferences_push_store.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:shiftly/features/notifications/domain/repositories/push_device_repository.dart';
+import 'package:shiftly/features/notifications/domain/repositories/push_messaging.dart';
+import 'package:shiftly/features/notifications/domain/repositories/push_preference_store.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/data/preferences_onboarding_storage.dart';
@@ -156,6 +162,13 @@ abstract final class DependencyRegistration {
       )
       ..registerLazySingleton<NotificationRepository>(
         () => ApiNotificationRepository(target()),
+      )
+      ..registerLazySingleton<PushDeviceRepository>(
+        () => ApiPushDeviceRepository(target()),
+      )
+      ..registerLazySingleton<PushMessaging>(FirebasePushMessaging.new)
+      ..registerLazySingleton<PushPreferenceStore>(
+        () => PreferencesPushStore(target()),
       )
       ..registerLazySingleton<DashboardRepository>(
         () => ApiDashboardRepository(target()),

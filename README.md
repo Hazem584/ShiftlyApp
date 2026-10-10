@@ -1,5 +1,7 @@
 # Shiftly
 
+Mobile push notification implementation and deployment prerequisites are documented in [Push notifications setup](docs/push-notifications-setup.md).
+
 Shiftly is a Flutter workforce app backed by Supabase Auth and the Shiftly NestJS API. Authenticated startup uses production repositories for every feature; preview and test repositories are selected only by explicit composition.
 
 ## Code architecture
@@ -156,14 +158,16 @@ Repository **Settings → Secrets and variables → Actions** must contain:
 | Variable | `FIREBASE_TESTER_GROUPS` | Comma-separated Firebase tester **group aliases**, with testers added |
 | Secret | `FIREBASE_SERVICE_ACCOUNT_JSON` | Complete service-account key JSON; account has Firebase App Distribution Admin (`roles/firebaseappdistro.admin`) on the testing project |
 | Secret | `SHIFTLY_DART_DEFINES_JSON` | JSON object with `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SHIFTLY_API_BASE_URL`; use the testing environment and a client-safe Supabase key |
+| Secret (optional) | `SHIFTLY_FIREBASE_ANDROID_CONFIG_JSON` | Complete Android Firebase client configuration JSON to enable mobile push; see [push setup](docs/push-notifications-setup.md) |
 | Secret | `ANDROID_KEYSTORE_BASE64` | Base64 of the existing release keystore; wrapped base64 is supported |
 | Secret | `ANDROID_KEYSTORE_PASSWORD` | Keystore password |
 | Secret | `ANDROID_KEY_ALIAS` | `shiftly` |
 | Secret | `ANDROID_KEY_PASSWORD` | Password for the `shiftly` key |
 
 For the first run, confirm App Distribution is enabled for the Firebase testing
-Android app and that the configured groups have testers. Registering that app is
-sufficient: no Firebase runtime SDK or `google-services.json` is required. Keep the
+Android app and that the configured groups have testers. Distribution can build
+without `google-services.json`; mobile push requires the client configuration and
+backend setup described in [push setup](docs/push-notifications-setup.md). Keep the
 same signing key for all updates.
 
 Review and commit the workflow, Gradle signing change, README, and `.gitignore` to

@@ -9,6 +9,7 @@ import 'package:shiftly/features/notifications/domain/repositories/notification_
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/notifications/presentation/utils/notifications_formatters.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_card.dart';
+import 'package:shiftly/features/notifications/presentation/widgets/push_notification_settings.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -74,6 +75,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
+              const PushNotificationSettings(),
               if (state.failure != null) ...[
                 Text(
                   state.failure!.message,

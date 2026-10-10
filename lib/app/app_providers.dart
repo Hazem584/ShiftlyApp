@@ -52,8 +52,15 @@ import 'package:shiftly/features/manager_performance/domain/repositories/manager
 import 'package:shiftly/features/manager_performance/domain/repositories/manager_points_repository.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
+import 'package:shiftly/features/notifications/domain/entities/push_notice.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:shiftly/features/notifications/domain/repositories/push_device_repository.dart';
+import 'package:shiftly/features/notifications/domain/repositories/push_messaging.dart';
+import 'package:shiftly/features/notifications/domain/repositories/push_preference_store.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
+import 'package:shiftly/features/notifications/presentation/cubit/push_notifications_cubit.dart';
+import 'package:shiftly/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:shiftly/features/notifications/presentation/utils/notifications_formatters.dart';
 import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
@@ -235,6 +242,9 @@ class _AppProvidersState extends State<AppProviders> {
   StreamSubscription<Object?>? _sessionSubscription;
   _SessionRouterRefresh? _sessionRefresh;
   late final SessionFeatureCoordinator _featureCoordinator;
+  PushNotificationsCubit? _pushNotifications;
+  PushDeviceRepository? _pushDevices;
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
@@ -403,6 +413,22 @@ class _AppProvidersState extends State<AppProviders> {
     );
     _notificationsCubit =
         _registered<NotificationsCubit>() ?? NotificationsCubit(_notifications);
+    final locator = widget.locator;
+    if (locator?.isRegistered<PushMessaging>() == true) {
+      _pushDevices = locator!<PushDeviceRepository>();
+      _pushNotifications = PushNotificationsCubit(
+        locator<PushMessaging>(),
+        _pushDevices!,
+        locator<PushPreferenceStore>(),
+        onOpened: (notice) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) unawaited(_openPushNotice(notice));
+          });
+          WidgetsBinding.instance.scheduleFrame();
+        },
+        onForeground: _showPushNotice,
+      );
+    }
     _chat =
         widget.chatRepository ??
         _registered<ChatRepository>() ??
@@ -444,6 +470,7 @@ class _AppProvidersState extends State<AppProviders> {
 
   @override
   void dispose() {
+    unawaited(_pushNotifications?.close());
     _onboardingCubit.close();
     _languageCubit.close();
     _dashboardCubit.close();
@@ -490,6 +517,8 @@ class _AppProvidersState extends State<AppProviders> {
       ],
       child: MultiBlocProvider(
         providers: [
+          if (_pushNotifications != null)
+            BlocProvider.value(value: _pushNotifications!),
           BlocProvider.value(value: _languageCubit),
           BlocProvider.value(value: _onboardingCubit),
           BlocProvider.value(value: _dashboardCubit),
@@ -525,6 +554,7 @@ class _AppProvidersState extends State<AppProviders> {
               GlobalCupertinoLocalizations.delegate,
             ],
             title: AppStrings.appName,
+            scaffoldMessengerKey: _messengerKey,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme(),
             routerConfig: _router,
@@ -541,6 +571,7 @@ class _AppProvidersState extends State<AppProviders> {
           );
     return ShiftlyAppLifecycleListener(
       onResumed: () {
+        unawaited(_pushNotifications?.refresh());
         unawaited(_flexibleAttendanceCubit.load(refresh: true));
         unawaited(_notificationsCubit.refreshUnreadCount());
         unawaited(_chatGroupsCubit.refreshUnread());
@@ -563,6 +594,11 @@ class _AppProvidersState extends State<AppProviders> {
     _leaveRequestsCubit.bindSession(featureScope);
     _employeeLeaveRequestsCubit.bindSession(featureScope);
     _notificationsCubit.bindSession(featureScope);
+    _pushNotifications?.bindSession(featureScope);
+    if (state.status == SessionStatus.unauthenticated ||
+        state.status == SessionStatus.sessionExpired) {
+      _pushNotifications?.signedOut();
+    }
     _dashboardCubit.bindSession(featureScope);
     _chatGroupsCubit.bindSession(featureScope);
     _managerTemplatesCubit.bindSession(featureScope);
@@ -576,6 +612,81 @@ class _AppProvidersState extends State<AppProviders> {
     _attendanceCalendarCubit.invalidate();
     unawaited(_pointsCubit.load(refresh: true));
     _managerPerformanceCubit.invalidate();
+  }
+
+  void _showPushNotice(PushNotice notice) {
+    unawaited(_notificationsCubit.load(refresh: true));
+    _dashboardCubit.invalidate();
+    final context =
+        _router.routerDelegate.navigatorKey.currentState?.overlay?.context;
+    if (!mounted || context == null) return;
+    _messengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(context.tr('You have a new Shiftly update.')),
+        action: SnackBarAction(
+          label: context.tr('View'),
+          onPressed: () => unawaited(_openPushNotice(notice)),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openPushNotice(PushNotice notice) async {
+    final scope = _notificationsCubit.scope;
+    if (!mounted ||
+        scope == null ||
+        notice.recipientProfileId != scope.userId ||
+        notice.workspaceId != scope.workspaceId) {
+      return;
+    }
+    try {
+      // Trust only the authenticated API record, never a route from FCM data.
+      final record = await _pushDevices!.getNotification(notice.notificationId);
+      if (!mounted ||
+          _notificationsCubit.scope != scope ||
+          record.id != notice.notificationId ||
+          record.workspaceId != scope.workspaceId) {
+        return;
+      }
+      if (record.isUnread) {
+        final result = await _notificationsCubit.markRead(record.id);
+        if (result != NotificationMutationResult.success) return;
+      }
+      final context =
+          _router.routerDelegate.navigatorKey.currentState?.overlay?.context;
+      if (!mounted ||
+          context == null ||
+          !context.mounted ||
+          _notificationsCubit.scope != scope) {
+        return;
+      }
+      if (record.type == NotificationType.unknown) {
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
+        return;
+      }
+      await NotificationsScreenNotificationNavigator.open(
+        context,
+        scope,
+        record,
+      );
+    } catch (_) {
+      if (!mounted || _notificationsCubit.scope != scope) return;
+      final context =
+          _router.routerDelegate.navigatorKey.currentState?.overlay?.context;
+      if (context != null && context.mounted) {
+        _messengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text(
+              context.tr(
+                'This notification destination is no longer available.',
+              ),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   T? _registered<T extends Object>() {

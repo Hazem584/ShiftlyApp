@@ -4,6 +4,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Keep previews/builds without Firebase configuration usable.
+if (file("google-services.json").isFile) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 // Passwords stay in the process environment; no key.properties is generated in CI.
 val releaseSigningValues = listOf(
     "ANDROID_KEYSTORE_PATH", "ANDROID_KEYSTORE_PASSWORD",

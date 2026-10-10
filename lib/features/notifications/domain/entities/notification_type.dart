@@ -7,6 +7,8 @@ enum NotificationType {
   shiftAssigned,
   shiftUpdated,
   shiftCancelled,
+  shiftReminder,
+  chatMessage,
   unknown;
 
   static NotificationType parse(Object? value) => switch (value) {
@@ -18,6 +20,8 @@ enum NotificationType {
     'SHIFT_ASSIGNED' => shiftAssigned,
     'SHIFT_UPDATED' => shiftUpdated,
     'SHIFT_CANCELLED' => shiftCancelled,
+    'SHIFT_REMINDER' => shiftReminder,
+    'CHAT_MESSAGE' => chatMessage,
     _ => unknown,
   };
 
@@ -30,6 +34,8 @@ enum NotificationType {
     shiftAssigned => 'SHIFT_ASSIGNED',
     shiftUpdated => 'SHIFT_UPDATED',
     shiftCancelled => 'SHIFT_CANCELLED',
+    shiftReminder => 'SHIFT_REMINDER',
+    chatMessage => 'CHAT_MESSAGE',
     unknown => null,
   };
 }
