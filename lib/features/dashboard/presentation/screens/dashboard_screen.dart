@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
@@ -82,6 +83,24 @@ class DashboardScreen extends StatelessWidget {
         DashboardQuickActions(
           pendingRequests: data.summary.pendingLeaveRequests,
         ),
+        const SizedBox(height: AppSpacing.l),
+        Wrap(
+          spacing: 10,
+          runSpacing: 8,
+          children: [
+            FilledButton.icon(
+              onPressed: () => context.push('/team-work?tab=tasks'),
+              icon: const Icon(Icons.task_alt_outlined),
+              label: Text(context.tr('Manager tasks')),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/team-work?tab=announcements'),
+              icon: const Icon(Icons.campaign_outlined),
+              label: Text(context.tr('Team announcements')),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.m),
         const SizedBox(height: AppSpacing.l),
         ResponsiveColumns(
           children: [

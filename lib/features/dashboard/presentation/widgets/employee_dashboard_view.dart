@@ -37,6 +37,23 @@ class EmployeeDashboardView extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
       children: [
+        Wrap(
+          spacing: 10,
+          runSpacing: 8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: () => context.push('/team-work?tab=announcements'),
+              icon: const Icon(Icons.campaign_outlined),
+              label: Text(context.tr('Team announcements')),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => context.push('/team-work?tab=corrections'),
+              icon: const Icon(Icons.edit_calendar_outlined),
+              label: Text(context.tr('Attendance corrections')),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         Text(
           context.tr('Hello, {name}', {'name': data.employee.fullName}),
           maxLines: 2,

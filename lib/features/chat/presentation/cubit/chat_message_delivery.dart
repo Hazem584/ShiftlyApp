@@ -62,6 +62,7 @@ class ChatMessageDelivery {
                   scope.workspaceId,
                   group,
                   text: operation.text!,
+                  replyToMessageId: operation.replyToMessageId,
                   clientMessageId: operation.id,
                 ),
                 current,

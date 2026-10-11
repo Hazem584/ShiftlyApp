@@ -12,6 +12,41 @@ class ApiChatRepository extends ChatRepository {
   final Dio _dio;
   final SignedChatUploadClient _signedUploader;
 
+  @override
+  Future<ChatMessagePage> searchMessages(
+    String workspaceId,
+    String groupId, {
+    String? query,
+    bool pinned = false,
+    String? cursor,
+  }) => _request(() async {
+    final response = await _dio.get<Object?>(
+      '${_group(workspaceId, groupId)}/search',
+      queryParameters: {'q': ?query, 'pinned': pinned, 'cursor': ?cursor},
+    );
+    final json = chatMap(response.data);
+    return ChatMessagePage(
+      messages: chatList(json['data'])
+          .map((row) => ChatMessage.fromJson(chatMap(row)))
+          .toList(),
+      nextCursor: json['nextCursor'] as String?,
+    );
+  });
+
+  @override
+  Future<ChatMessage> pinMessage(
+    String workspaceId,
+    String groupId,
+    String messageId, {
+    required bool pinned,
+  }) => _request(() async {
+    final response = await _dio.patch<Object?>(
+      '${_group(workspaceId, groupId)}/messages/$messageId/pin',
+      data: {'pinned': pinned},
+    );
+    return ChatMessage.fromJson(chatMap(response.data));
+  });
+
   String _groups(String workspaceId) => '/workspaces/$workspaceId/chat/groups';
   String _group(String workspaceId, String groupId) =>
       '${_groups(workspaceId)}/$groupId';

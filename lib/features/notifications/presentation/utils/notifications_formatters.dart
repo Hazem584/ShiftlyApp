@@ -76,6 +76,17 @@ abstract final class NotificationsScreenNotificationNavigator {
       return null;
     }
     return switch (notification.type) {
+      NotificationType.teamAnnouncement => _NotificationDestination(
+        id: _id(data, 'announcementId'),
+        location: '/team-work?tab=announcements',
+        kind: _DestinationKind.teamWork,
+      ),
+      NotificationType.attendanceCorrectionCreated ||
+      NotificationType.attendanceCorrectionReviewed => _NotificationDestination(
+        id: _id(data, 'correctionId'),
+        location: '/team-work?tab=corrections',
+        kind: _DestinationKind.teamWork,
+      ),
       NotificationType.attendanceClockedIn ||
       NotificationType.attendanceClockedOut when scope.isManager =>
         _NotificationDestination(
@@ -123,6 +134,7 @@ abstract final class NotificationsScreenNotificationNavigator {
     FeatureSessionScope scope,
     _NotificationDestination destination,
   ) async => switch (destination.kind) {
+    _DestinationKind.teamWork => true,
     _DestinationKind.chatGroup => () async {
       final group = await context.read<ChatRepository>().getGroup(
         scope.workspaceId,
@@ -175,6 +187,7 @@ abstract final class NotificationsScreenNotificationNavigator {
 }
 
 enum _DestinationKind {
+  teamWork,
   chatGroup,
   managerAttendance,
   managerLeave,

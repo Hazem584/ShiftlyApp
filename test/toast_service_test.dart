@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/services/toast_service.dart';
+import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/app_toast_widget.dart';
 
-Future<BuildContext> _pumpToastHost(WidgetTester tester) async {
+Future<BuildContext> _pumpToastHost(
+  WidgetTester tester, {
+  bool dark = false,
+}) async {
   late BuildContext toastContext;
   await tester.pumpWidget(
     MaterialApp(
+      theme: AppTheme.lightTheme(),
+      darkTheme: AppTheme.darkTheme(),
+      themeMode: dark ? ThemeMode.dark : ThemeMode.light,
       home: Scaffold(
         body: Builder(
           builder: (context) {
@@ -22,6 +29,46 @@ Future<BuildContext> _pumpToastHost(WidgetTester tester) async {
 
 void main() {
   tearDown(ToastService.dismissAll);
+
+  for (final dark in [false, true]) {
+    for (final type in ToastType.values) {
+      testWidgets(
+        '${type.name} overlay has readable text and icons in ${dark ? 'dark' : 'light'} mode',
+        (tester) async {
+          final context = await _pumpToastHost(tester, dark: dark);
+          ToastService.show(context, message: 'Account update', type: type);
+          await tester.pump();
+          final toast = find.byType(AppToastWidget);
+          final box = tester.widget<DecoratedBox>(
+            find
+                .descendant(of: toast, matching: find.byType(DecoratedBox))
+                .first,
+          );
+          final background = (box.decoration as BoxDecoration).color!;
+          final foreground = tester
+              .widget<Text>(find.text('Account update'))
+              .style!
+              .color!;
+          expect(_contrast(foreground, background), greaterThanOrEqualTo(4.5));
+          final icon = tester.widget<Icon>(
+            find.descendant(of: toast, matching: find.byType(Icon)).first,
+          );
+          expect(_contrast(icon.color!, background), greaterThanOrEqualTo(3));
+          final close = tester.widget<IconButton>(
+            find.descendant(of: toast, matching: find.byType(IconButton)),
+          );
+          expect(_contrast(close.color!, background), greaterThanOrEqualTo(3));
+          expect(
+            background.computeLuminance(),
+            dark ? lessThan(.1) : greaterThan(.8),
+          );
+          await tester.tap(find.byIcon(Icons.close_rounded));
+          await tester.pumpAndSettle();
+          expect(find.byType(AppToastWidget), findsNothing);
+        },
+      );
+    }
+  }
 
   for (final type in ToastType.values) {
     testWidgets('${type.name} toast uses branded custom content', (
@@ -91,4 +138,10 @@ void main() {
     );
     expect(find.byType(AppToastWidget), findsNothing);
   });
+}
+
+double _contrast(Color foreground, Color background) {
+  final a = foreground.computeLuminance();
+  final b = background.computeLuminance();
+  return a > b ? (a + .05) / (b + .05) : (b + .05) / (a + .05);
 }

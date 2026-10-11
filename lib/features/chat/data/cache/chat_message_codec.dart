@@ -7,6 +7,8 @@ abstract final class ChatMessageCodec {
     'createdAt': message.createdAt.toUtc().toIso8601String(),
     'clientMessageId': message.clientMessageId,
     'replyToMessageId': message.replyToMessageId,
+    'replyToMessage': message.replyPreview,
+    'pinnedAt': message.pinnedAt?.toIso8601String(),
     'sender': {
       'membershipId': message.sender.membershipId,
       'profileId': message.sender.profileId,

@@ -16,6 +16,8 @@ class ChatMessage extends Equatable {
     this.location,
     this.clientMessageId,
     this.replyToMessageId,
+    this.replyPreview,
+    this.pinnedAt,
   });
 
   final String id;
@@ -27,6 +29,8 @@ class ChatMessage extends Equatable {
   final ChatLocation? location;
   final String? clientMessageId;
   final String? replyToMessageId;
+  final Map<String, Object?>? replyPreview;
+  final DateTime? pinnedAt;
   final DateTime createdAt;
 
   factory ChatMessage.fromJson(Map<String, Object?> json) {
@@ -59,6 +63,12 @@ class ChatMessage extends Equatable {
           : ChatLocation.fromJson(chatMap(rawLocation, 'location')),
       clientMessageId: chatOptionalUuid(json['clientMessageId']),
       replyToMessageId: chatOptionalUuid(json['replyToMessageId']),
+      replyPreview: json['replyToMessage'] == null
+          ? null
+          : chatMap(json['replyToMessage'], 'reply preview'),
+      pinnedAt: json['pinnedAt'] == null
+          ? null
+          : DateTime.parse(json['pinnedAt'] as String),
       createdAt: chatModelsDate(json, 'createdAt'),
     );
   }
@@ -74,6 +84,8 @@ class ChatMessage extends Equatable {
     location,
     clientMessageId,
     replyToMessageId,
+    replyPreview,
+    pinnedAt,
     createdAt,
   ];
 }

@@ -19,7 +19,7 @@ class ChatOutboxController {
   late final _delivery = ChatMessageDelivery(host, queue, _showOperation);
   bool _outgoingRunning = false;
   bool _accepting = false;
-  Future<bool> send(String value) async {
+  Future<bool> send(String value, {String? replyToMessageId}) async {
     final text = value.trim();
     if (text.isEmpty || text.length > 4000) return false;
     return _accept(
@@ -27,6 +27,7 @@ class ChatOutboxController {
         id: chatMessageUuid(),
         type: 'TEXT',
         text: text,
+        replyToMessageId: replyToMessageId,
         createdAt: DateTime.now().toUtc(),
       ),
     );

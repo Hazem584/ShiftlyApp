@@ -6,6 +6,7 @@ class ChatOutboxOperation {
     required this.type,
     required this.createdAt,
     this.text,
+    this.replyToMessageId,
     this.location,
     this.file,
     this.mimeType,
@@ -19,6 +20,7 @@ class ChatOutboxOperation {
   final String type;
   final DateTime createdAt;
   final String? text;
+  final String? replyToMessageId;
   final ChatLocation? location;
   final String? file;
   final String? mimeType;
@@ -32,6 +34,7 @@ class ChatOutboxOperation {
     'type': type,
     'created': createdAt.toIso8601String(),
     'text': text,
+    'replyToMessageId': replyToMessageId,
     'location': location?.toJson(),
     'file': file,
     'mime': mimeType,
@@ -47,6 +50,7 @@ class ChatOutboxOperation {
         type: value['type'] as String,
         createdAt: DateTime.parse(value['created'] as String),
         text: value['text'] as String?,
+        replyToMessageId: value['replyToMessageId'] as String?,
         location: value['location'] == null
             ? null
             : ChatLocation.fromJson(chatMap(value['location'])),

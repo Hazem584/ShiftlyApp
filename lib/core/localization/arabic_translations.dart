@@ -2,6 +2,7 @@ import 'package:shiftly/core/localization/arabic_error_translations.dart';
 import 'package:shiftly/core/localization/arabic_interface_translations.dart';
 import 'package:shiftly/core/localization/arabic_points_translations.dart';
 import 'package:shiftly/core/localization/arabic_report_translations.dart';
+import 'package:shiftly/core/localization/arabic_team_work_translations.dart';
 import 'package:shiftly/core/localization/arabic_workflow_translations.dart';
 
 const arabicTranslations = <String, String>{
@@ -304,4 +305,5 @@ const arabicTranslations = <String, String>{
   ...arabicErrorTranslations,
   ...arabicWorkflowTranslations,
   ...arabicReportTranslations,
+  ...arabicTeamWorkTranslations,
 };

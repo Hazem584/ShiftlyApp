@@ -11,6 +11,8 @@ import 'package:shiftly/features/chat/presentation/widgets/chat_remote_image.dar
 import 'package:shiftly/features/chat/presentation/widgets/chat_voice_message.dart';
 import 'package:shiftly/features/chat/presentation/widgets/message_delivery_status.dart';
 
+import 'chat_reply_preview.dart';
+
 class ChatMessageBubble extends StatelessWidget {
   const ChatMessageBubble({
     super.key,
@@ -23,6 +25,8 @@ class ChatMessageBubble extends StatelessWidget {
     required this.player,
     this.playback,
     this.readByAll = false,
+    this.onReply,
+    this.onPin,
   });
   final ChatMessage message;
   final bool mine;
@@ -33,6 +37,7 @@ class ChatMessageBubble extends StatelessWidget {
   final AudioPlayer player;
   final ChatPlaybackCoordinator? playback;
   final bool readByAll;
+  final VoidCallback? onReply, onPin;
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -64,7 +69,31 @@ class ChatMessageBubble extends StatelessWidget {
                   style: Theme.of(context).textTheme.labelSmall
                       ?.copyWith(color: foreground),
                 ),
+              if (message.replyToMessageId != null)
+                ChatReplyPreview(
+                  name:
+                      message.replyPreview?['senderName'] as String? ??
+                      context.tr('Reply'),
+                  text:
+                      message.replyPreview?['text'] as String? ??
+                      context.tr('Message'),
+                ),
               _content(context),
+              if (message.pinnedAt != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.push_pin, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        context.tr('Pinned'),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
+                ),
               Align(
                 alignment: Alignment.centerRight,
                 child: Row(
@@ -79,6 +108,38 @@ class ChatMessageBubble extends StatelessWidget {
                       style: Theme.of(context).textTheme.labelSmall
                           ?.copyWith(color: foreground.withValues(alpha: .72)),
                     ),
+                    if (onReply != null || onPin != null)
+                      PopupMenuButton<String>(
+                        tooltip: context.tr('Message actions'),
+                        onSelected: (action) =>
+                            action == 'reply' ? onReply?.call() : onPin?.call(),
+                        itemBuilder: (_) => [
+                          if (onReply != null)
+                            PopupMenuItem(
+                              value: 'reply',
+                              child: Text(context.tr('Reply')),
+                            ),
+                          if (onPin != null)
+                            PopupMenuItem(
+                              value: 'pin',
+                              child: Text(
+                                context.tr(
+                                  message.pinnedAt == null
+                                      ? 'Pin message'
+                                      : 'Unpin message',
+                                ),
+                              ),
+                            ),
+                        ],
+                        child: Padding(
+                          padding: const EdgeInsets.all(5),
+                          child: Icon(
+                            Icons.more_horiz,
+                            size: 18,
+                            color: foreground,
+                          ),
+                        ),
+                      ),
                     if (mine) ...[
                       const SizedBox(width: 5),
                       MessageDeliveryStatus(readByAll: readByAll),

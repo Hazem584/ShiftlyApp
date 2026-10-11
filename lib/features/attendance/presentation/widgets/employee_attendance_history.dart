@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/offline/read_sync_banner.dart';
 import 'package:shiftly/core/offline/read_sync_state.dart';
@@ -10,6 +11,8 @@ import 'package:shiftly/features/attendance/presentation/cubit/employee_attendan
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_records_list.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/flexible_attendance_panel.dart';
+import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
+import 'package:shiftly/features/team_work/presentation/dialogs/correction_request_dialog.dart';
 
 class EmployeeAttendanceHistory extends StatelessWidget {
   const EmployeeAttendanceHistory({super.key, required this.timezone});
@@ -95,6 +98,24 @@ class EmployeeAttendanceHistory extends StatelessWidget {
               records: state.records,
               timezone: timezone,
               title: context.tr('Attendance history'),
+              trailing: (record) =>
+                  record.clockOutAt != null &&
+                      record.reviewStatus != AttendanceReviewStatus.rejected
+                  ? IconButton(
+                      tooltip: context.tr('Request attendance correction'),
+                      icon: const Icon(Icons.edit_calendar_outlined),
+                      onPressed: () async {
+                        final sent = await showCorrectionRequest(
+                          context,
+                          record,
+                          record.workspaceTimezone ?? timezone,
+                        );
+                        if (sent == true && context.mounted) {
+                          context.push('/team-work?tab=corrections');
+                        }
+                      },
+                    )
+                  : const SizedBox.shrink(),
             ),
             if (state.hasMore)
               OutlinedButton(

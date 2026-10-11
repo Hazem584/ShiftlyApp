@@ -139,6 +139,11 @@ abstract final class ApiErrorParser {
       'LEAVE_REQUEST_NOT_PENDING' =>
         'Only pending leave requests can be changed.',
       'NOTIFICATION_NOT_FOUND' => 'That notification is no longer available.',
+      'CORRECTION_PENDING' =>
+        'This attendance already has a request waiting for review.',
+      'CORRECTION_STALE' => 'Attendance changed after this request. Decline it and ask for a new request.',
+      'CORRECTION_TIME_INVALID' =>
+        'Choose a completed period of up to 24 hours, ending before now.',
       'REJECTION_REASON_REQUIRED' => 'Enter a reason for rejection.',
       'REJECTION_REASON_NOT_ALLOWED' =>
         'A rejection reason is only allowed when rejecting.',

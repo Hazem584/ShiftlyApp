@@ -786,6 +786,8 @@ The only remaining fixed-shift mock is `PreviewFixedShiftRepository`, an empty a
 
 ## Web and Vercel
 
+Manager tasks, attendance corrections, chat replies/search/pins, and team announcements are described in [the team work guide](docs/team-work-features.md), including the backend migration and deployment order.
+
 Appearance can be set to light, dark, or the device theme from Profile or the appearance button. The choice is saved on this device and works on mobile and web.
 
 Schedule and attendance lists keep bounded snapshots for up to seven days. After a connection failure, previously loaded data can be shown with its last update time and a refresh action. Snapshots are separated by account, workspace, membership, and role; signing out removes that account’s snapshots. Authorization errors never fall back to saved data. Clock-in eligibility, current attendance, and recovery lookups require a fresh server response. Attendance is not added to an offline sending queue; an uncertain submitted clock-in retains its existing recovery identifier to prevent duplicates.

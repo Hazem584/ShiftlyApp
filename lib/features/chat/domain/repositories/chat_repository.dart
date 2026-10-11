@@ -86,4 +86,17 @@ abstract class ChatRepository {
   ) => throw UnsupportedError('Chat media is unavailable');
   Future<void> markRead(String workspaceId, String groupId, String messageId);
   Future<int> unreadCount(String workspaceId);
+  Future<ChatMessagePage> searchMessages(
+    String workspaceId,
+    String groupId, {
+    String? query,
+    bool pinned = false,
+    String? cursor,
+  }) => throw UnsupportedError('Chat search is unavailable');
+  Future<ChatMessage> pinMessage(
+    String workspaceId,
+    String groupId,
+    String messageId, {
+    required bool pinned,
+  }) => throw UnsupportedError('Message pinning is unavailable');
 }

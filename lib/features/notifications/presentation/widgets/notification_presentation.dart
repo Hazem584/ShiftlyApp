@@ -5,6 +5,17 @@ import 'package:shiftly/features/notifications/domain/repositories/notification_
 ({String label, IconData icon, Color color}) notificationPresentation(
   NotificationType type,
 ) => switch (type) {
+  NotificationType.teamAnnouncement => (
+    label: 'Team announcement',
+    icon: Icons.campaign_outlined,
+    color: AppColors.info,
+  ),
+  NotificationType.attendanceCorrectionCreated ||
+  NotificationType.attendanceCorrectionReviewed => (
+    label: 'Attendance correction',
+    icon: Icons.edit_calendar_outlined,
+    color: AppColors.orange,
+  ),
   NotificationType.attendanceClockedIn => (
     label: 'Clock-in',
     icon: Icons.login_rounded,

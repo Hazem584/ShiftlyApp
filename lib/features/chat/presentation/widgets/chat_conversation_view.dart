@@ -21,7 +21,9 @@ import 'package:shiftly/features/chat/presentation/widgets/chat_message_bubble.d
 import 'package:shiftly/features/chat/presentation/widgets/messages/shiftly_chat_message_list.dart';
 import 'package:shiftly/features/chat/presentation/widgets/pending_media_bubble.dart';
 
+import '../controllers/chat_conversation_tools.dart';
 import 'chat_message_composer.dart';
+import 'chat_reply_preview.dart';
 
 class ChatConversationView extends StatefulWidget {
   const ChatConversationView({super.key, required this.groupId});
@@ -45,6 +47,7 @@ class _ChatViewState extends State<ChatConversationView>
   Timer? _accessTimer;
 
   bool _savingText = false;
+  ChatMessage? _reply;
 
   @override
   void initState() {
@@ -101,6 +104,7 @@ class _ChatViewState extends State<ChatConversationView>
             !previous.accessLost && current.accessLost,
         listener: (_, _) {
           _text.clear();
+          _reply = null;
           _media.clearPreparedMedia();
           unawaited(_player.stop());
           unawaited(_player.setAudioSources([]));
@@ -162,6 +166,16 @@ class _ChatViewState extends State<ChatConversationView>
                 ),
                 actions: [
                   IconButton(
+                    tooltip: context.tr('Search conversation'),
+                    onPressed: () => _search(false),
+                    icon: const Icon(Icons.search),
+                  ),
+                  IconButton(
+                    tooltip: context.tr('Pinned messages'),
+                    onPressed: () => _search(true),
+                    icon: const Icon(Icons.push_pin_outlined),
+                  ),
+                  IconButton(
                     tooltip: context.tr('Group members'),
                     onPressed: group == null ? null : () => _showMembers(group),
                     icon: const Icon(Icons.group_outlined),
@@ -216,6 +230,15 @@ class _ChatViewState extends State<ChatConversationView>
                       ),
                     ),
                   Expanded(child: _messages()),
+                  if (_reply != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: ChatReplyPreview(
+                        name: _reply!.sender.displayName,
+                        text: replyMessageText(_reply!),
+                        onCancel: () => setState(() => _reply = null),
+                      ),
+                    ),
                   ChatMessageComposer(
                     disabled: group?.isArchived == true,
                     loadingAccess: group == null,
@@ -320,6 +343,25 @@ class _ChatViewState extends State<ChatConversationView>
                             message,
                             context.read<ChatGroupDetailsCubit>().state.group,
                           ),
+                          onReply:
+                              context
+                                      .read<ChatGroupDetailsCubit>()
+                                      .state
+                                      .group
+                                      ?.isArchived ==
+                                  true
+                              ? null
+                              : () => setState(() => _reply = message),
+                          onPin:
+                              scope.isManager &&
+                                  context
+                                          .read<ChatGroupDetailsCubit>()
+                                          .state
+                                          .group
+                                          ?.isArchived !=
+                                      true
+                              ? () => _pin(message)
+                              : null,
                         ),
                   ),
                 ),
@@ -355,9 +397,14 @@ class _ChatViewState extends State<ChatConversationView>
       return;
     }
     setState(() => _savingText = true);
-    final accepted = await context.read<ChatConversationCubit>().send(text);
+    final replyId = _reply?.id;
+    final accepted = await context.read<ChatConversationCubit>().send(
+      text,
+      replyToMessageId: replyId,
+    );
     if (mounted) {
       if (accepted && _text.text == input) _text.clear();
+      if (accepted && _reply?.id == replyId) _reply = null;
       setState(() => _savingText = false);
       if (!accepted) {
         if (!mounted) return;
@@ -367,6 +414,22 @@ class _ChatViewState extends State<ChatConversationView>
       }
     }
   }
+
+  Future<void> _search(bool pinned) async {
+    final message = await ChatConversationTools.search(
+      context,
+      widget.groupId,
+      pinned,
+    );
+    if (mounted &&
+        message != null &&
+        context.read<ChatGroupDetailsCubit>().state.group?.isArchived != true) {
+      setState(() => _reply = message);
+    }
+  }
+
+  Future<void> _pin(ChatMessage message) =>
+      ChatConversationTools.pin(context, widget.groupId, message);
 
   Future<void> _edit(ChatGroup group) async {
     final groups = context.read<ChatGroupsCubit>();

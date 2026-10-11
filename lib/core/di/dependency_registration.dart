@@ -75,6 +75,8 @@ import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
+import 'package:shiftly/features/team_work/data/api_team_work_repository.dart';
+import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -144,6 +146,9 @@ abstract final class DependencyRegistration {
         dispose: (client) => client.dio.close(force: true),
       )
       ..registerLazySingleton<Dio>(() => target<ApiClient>().dio)
+      ..registerLazySingleton<TeamWorkRepository>(
+        () => ApiTeamWorkRepository(target<Dio>()),
+      )
       ..registerLazySingleton<AuthenticationRepository>(
         () => AuthenticationApiRepository(target()),
       )

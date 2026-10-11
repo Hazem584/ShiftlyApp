@@ -269,6 +269,79 @@ void main() {
     verifyMessages((await racingCache.read(scope))!.messages);
   });
 
+  test('a quoted text keeps its reply target in the durable outbox and API submission', () async {
+    final gate = Completer<ChatMessage>();
+    final repository = FixtureRepository()..sendGate = gate;
+    final cubit = ChatConversationCubit(
+      repository,
+      const NoopChatRealtime(),
+      messageCache: cache,
+      outbox: outbox,
+    );
+    addTearDown(cubit.close);
+    final loaded = cubit.stream.firstWhere((state) => !state.loading);
+    cubit.bind(session, group);
+    await loaded;
+    final target = message(1).id;
+    expect(await cubit.send('Quoted answer', replyToMessageId: target), isTrue);
+    await repository.firstSendStarted.future;
+    expect(repository.replyIds, [target]);
+    final stored = await outbox.restore(scope);
+    expect(stored.single.replyToMessageId, target);
+    gate.complete(message(20, clientId: stored.single.id));
+    await until(() => cubit.state.pending.isEmpty);
+  });
+
+  test(
+    'pinning an older loaded message stays visible after a latest-page refresh',
+    () async {
+      final old = message(1), latest = message(3);
+      final repository = FixtureRepository()
+        ..page = ChatMessagePage(messages: [latest], nextCursor: 'older')
+        ..olderPage = ChatMessagePage(messages: [old]);
+      final cubit = ChatConversationCubit(repository, const NoopChatRealtime());
+      addTearDown(cubit.close);
+      final loaded = cubit.stream.firstWhere((state) => !state.loading);
+      cubit.bind(session, group);
+      await loaded;
+      await cubit.loadOlder();
+      cubit.applyMessageUpdate(
+        ChatMessage(
+          id: old.id,
+          groupId: old.groupId,
+          type: old.type,
+          text: old.text,
+          sender: old.sender,
+          createdAt: old.createdAt,
+          pinnedAt: DateTime.utc(2026, 10, 11),
+        ),
+      );
+      await cubit.load(refresh: true);
+      expect(
+        cubit.state.messages
+            .firstWhere((message) => message.id == old.id)
+            .pinnedAt,
+        isNotNull,
+      );
+      cubit.applyMessageUpdate(
+        ChatMessage(
+          id: old.id,
+          groupId: old.groupId,
+          type: old.type,
+          text: old.text,
+          sender: old.sender,
+          createdAt: old.createdAt,
+        ),
+      );
+      expect(
+        cubit.state.messages
+            .firstWhere((message) => message.id == old.id)
+            .pinnedAt,
+        isNull,
+      );
+    },
+  );
+
   test(
     'outbox full fails acceptance without losing input or starting a request',
     () async {
@@ -771,6 +844,7 @@ class FixtureRepository extends ChatRepository {
   Completer<ChatMessage>? sendGate;
   bool loseResponse = false;
   final List<String> sendIds = [];
+  final List<String?> replyIds = [];
   final firstSendStarted = Completer<void>();
   final Map<String, ChatMessage> committed = {};
   int olderCalls = 0,
@@ -805,6 +879,7 @@ class FixtureRepository extends ChatRepository {
     String? replyToMessageId,
   }) async {
     sendIds.add(clientMessageId);
+    replyIds.add(replyToMessageId);
     if (!firstSendStarted.isCompleted) firstSendStarted.complete();
     if (sendGate != null) {
       final result = await sendGate!.future;

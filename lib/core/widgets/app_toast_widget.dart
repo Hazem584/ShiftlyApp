@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 
 enum ToastType { success, error, warning, info }
@@ -19,7 +18,8 @@ class AppToastWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = _ToastStyle.forType(type);
+    final colors = AppPalette.of(context);
+    final style = _ToastStyle.forType(type, colors);
     return SafeArea(
       minimum: const EdgeInsets.symmetric(horizontal: 4),
       child: DecoratedBox(
@@ -46,7 +46,7 @@ class AppToastWidget extends StatelessWidget {
                 child: Text(
                   message,
                   style: TextStyle(
-                    color: AppPalette.of(context).ink,
+                    color: colors.ink,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     height: 1.35,
@@ -58,6 +58,7 @@ class AppToastWidget extends StatelessWidget {
                 IconButton(
                   onPressed: onClose,
                   tooltip: context.tr('Dismiss'),
+                  color: colors.textSecondary,
                   visualDensity: VisualDensity.compact,
                   icon: const Icon(Icons.close_rounded, size: 18),
                 ),
@@ -81,26 +82,36 @@ class _ToastStyle {
   final Color accent;
   final Color background;
 
-  factory _ToastStyle.forType(ToastType type) => switch (type) {
-    ToastType.success => const _ToastStyle(
-      icon: Icons.check_circle_rounded,
-      accent: AppColors.success,
-      background: Color(0xFFF0FFF6),
-    ),
-    ToastType.error => const _ToastStyle(
-      icon: Icons.error_rounded,
-      accent: AppColors.error,
-      background: Color(0xFFFFF3F2),
-    ),
-    ToastType.warning => const _ToastStyle(
-      icon: Icons.warning_amber_rounded,
-      accent: AppColors.warning,
-      background: Color(0xFFFFFAE8),
-    ),
-    ToastType.info => const _ToastStyle(
-      icon: Icons.info_rounded,
-      accent: AppColors.info,
-      background: Color(0xFFF0F9FF),
-    ),
-  };
+  factory _ToastStyle.forType(ToastType type, AppPalette colors) {
+    final dark = colors.brightness == Brightness.dark;
+    final (icon, accent, lightBackground) = switch (type) {
+      ToastType.success => (
+        Icons.check_circle_rounded,
+        colors.success,
+        const Color(0xFFF0FFF6),
+      ),
+      ToastType.error => (
+        Icons.error_rounded,
+        colors.error,
+        const Color(0xFFFFF3F2),
+      ),
+      ToastType.warning => (
+        Icons.warning_amber_rounded,
+        dark ? colors.warning : const Color(0xFF946800),
+        const Color(0xFFFFFAE8),
+      ),
+      ToastType.info => (
+        Icons.info_rounded,
+        dark ? colors.info : const Color(0xFF087AB0),
+        const Color(0xFFF0F9FF),
+      ),
+    };
+    return _ToastStyle(
+      icon: icon,
+      accent: accent,
+      background: dark
+          ? Color.alphaBlend(accent.withValues(alpha: .12), colors.surface)
+          : lightBackground,
+    );
+  }
 }

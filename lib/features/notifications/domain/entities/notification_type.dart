@@ -9,6 +9,9 @@ enum NotificationType {
   shiftCancelled,
   shiftReminder,
   chatMessage,
+  teamAnnouncement,
+  attendanceCorrectionCreated,
+  attendanceCorrectionReviewed,
   unknown;
 
   static NotificationType parse(Object? value) => switch (value) {
@@ -22,6 +25,9 @@ enum NotificationType {
     'SHIFT_CANCELLED' => shiftCancelled,
     'SHIFT_REMINDER' => shiftReminder,
     'CHAT_MESSAGE' => chatMessage,
+    'TEAM_ANNOUNCEMENT' => teamAnnouncement,
+    'ATTENDANCE_CORRECTION_CREATED' => attendanceCorrectionCreated,
+    'ATTENDANCE_CORRECTION_REVIEWED' => attendanceCorrectionReviewed,
     _ => unknown,
   };
 
@@ -36,6 +42,9 @@ enum NotificationType {
     shiftCancelled => 'SHIFT_CANCELLED',
     shiftReminder => 'SHIFT_REMINDER',
     chatMessage => 'CHAT_MESSAGE',
+    teamAnnouncement => 'TEAM_ANNOUNCEMENT',
+    attendanceCorrectionCreated => 'ATTENDANCE_CORRECTION_CREATED',
+    attendanceCorrectionReviewed => 'ATTENDANCE_CORRECTION_REVIEWED',
     unknown => null,
   };
 }

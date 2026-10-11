@@ -411,10 +411,16 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
     List<ChatMessage> incoming,
     List<ChatMessage> current,
   ) => _merge(incoming, current);
+  void applyMessageUpdate(ChatMessage message) {
+    if (isClosed || state.accessLost || message.groupId != _groupId) return;
+    emit(state.copyWith(messages: _merge([message], state.messages)));
+  }
+
   @override
   void markNewestRead(List<ChatMessage> messages) =>
       _reads.markNewestRead(messages);
-  Future<bool> send(String value) => _outgoing.send(value);
+  Future<bool> send(String value, {String? replyToMessageId}) =>
+      _outgoing.send(value, replyToMessageId: replyToMessageId);
   Future<bool> retrySend() => _outgoing.retrySend();
   Future<String?> sendImage(Uint8List bytes) => _outgoing.sendImage(bytes);
   Future<String?> sendVoice({
