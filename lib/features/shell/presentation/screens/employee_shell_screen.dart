@@ -10,7 +10,6 @@ import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.da
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
 import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/employee_fixed_shifts_screen.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:shiftly/features/points/presentation/screens/my_performance_screen.dart';
 import 'package:shiftly/features/shell/presentation/widgets/workspace_navigation_rail.dart';
@@ -100,7 +99,6 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                   index: _selectedIndex,
                   children: [
                     const EmployeeDashboardScreen(),
-                    const EmployeeFixedShiftsScreen(),
                     EmployeeAttendanceScreen(
                       initialTab: widget.initialAttendanceTab,
                     ),
@@ -134,11 +132,6 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                     icon: const Icon(Icons.calendar_month_outlined),
                     selectedIcon: const Icon(Icons.calendar_month_rounded),
                     label: context.tr('My Shifts'),
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.fact_check_outlined),
-                    selectedIcon: const Icon(Icons.fact_check_rounded),
-                    label: context.tr('Attendance'),
                   ),
                   NavigationDestination(
                     icon: Badge(

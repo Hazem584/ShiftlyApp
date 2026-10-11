@@ -52,7 +52,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ScreenHeader(
-                  title: context.tr('Attendance & Leave'),
+                  title: context.tr('My Shifts'),
                   subtitle: context.tr(
                     'Your workspace attendance and leave requests',
                   ),

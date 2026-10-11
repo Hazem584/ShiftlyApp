@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
@@ -146,10 +147,10 @@ class ManagerTasksView extends StatelessWidget {
                     ),
                   ] else
                     OutlinedButton(
-                      onPressed: () => context.push(
+                      onPressed: () => context.go(
                         task.kind == 'SHIFT'
-                            ? '/dashboard/shifts'
-                            : '/attendance',
+                            ? AppRoutes.managerShifts
+                            : AppRoutes.attendance,
                       ),
                       child: Text(context.tr('View attendance and shifts')),
                     ),

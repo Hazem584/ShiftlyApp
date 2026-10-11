@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/core/widgets/ease_hint.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/responsive_columns.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -75,34 +73,11 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.m),
         DashboardHeroSection(data: data),
         const SizedBox(height: AppSpacing.m),
-        const EaseHint(
-          icon: Icons.touch_app_outlined,
-          message: 'Tap a card or Quick action to jump to employees, shifts, or leave reviews.',
-        ),
-        const SizedBox(height: AppSpacing.m),
         DashboardMetricsGrid(data: data),
         const SizedBox(height: AppSpacing.l),
         DashboardQuickActions(
           pendingRequests: data.summary.pendingLeaveRequests,
         ),
-        const SizedBox(height: AppSpacing.l),
-        Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          children: [
-            FilledButton.icon(
-              onPressed: () => context.push('/team-work?tab=tasks'),
-              icon: const Icon(Icons.task_alt_outlined),
-              label: Text(context.tr('Manager tasks')),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/team-work?tab=announcements'),
-              icon: const Icon(Icons.campaign_outlined),
-              label: Text(context.tr('Team announcements')),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.m),
         const SizedBox(height: AppSpacing.l),
         ResponsiveColumns(
           children: [

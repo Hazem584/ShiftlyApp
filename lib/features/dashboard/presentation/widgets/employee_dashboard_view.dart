@@ -38,24 +38,6 @@ class EmployeeDashboardView extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
       children: [
-        DashboardAnnouncements(refreshToken: data),
-        Wrap(
-          spacing: 10,
-          runSpacing: 8,
-          children: [
-            OutlinedButton.icon(
-              onPressed: () => context.push('/team-work?tab=announcements'),
-              icon: const Icon(Icons.campaign_outlined),
-              label: Text(context.tr('Team announcements')),
-            ),
-            OutlinedButton.icon(
-              onPressed: () => context.push('/team-work?tab=corrections'),
-              icon: const Icon(Icons.edit_calendar_outlined),
-              label: Text(context.tr('Attendance corrections')),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
         Text(
           context.tr('Hello, {name}', {'name': data.employee.fullName}),
           maxLines: 2,
@@ -78,7 +60,7 @@ class EmployeeDashboardView extends StatelessWidget {
         ],
         const SizedBox(height: AppSpacing.m),
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -93,12 +75,6 @@ class EmployeeDashboardView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.wb_sunny_outlined,
-                color: AppPalette.of(context).selected,
-                size: 28,
-              ),
-              const SizedBox(height: 12),
               Text(
                 context.tr('Ready for your workday?'),
                 style: Theme.of(context).textTheme.titleLarge
@@ -141,8 +117,6 @@ class EmployeeDashboardView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.m),
-        const PerformanceThumbnail(),
-        const SizedBox(height: AppSpacing.m),
         BlocBuilder<FlexibleAttendanceCubit, FlexibleAttendanceState>(
           builder: (context, state) => AttendanceStatusCard(
             state: state,
@@ -150,20 +124,26 @@ class EmployeeDashboardView extends StatelessWidget {
             onOpenShifts: () => context.go('/employee?tab=shifts'),
           ),
         ),
-        if (data.todayShift != null)
+        if (data.todayShift != null) ...[
+          const SizedBox(height: AppSpacing.m),
           EmployeeDashboardShiftCard(
             title: context.tr('Scheduled shift'),
             shift: data.todayShift,
             timezone: data.timezone,
             attendance: data.attendance,
           ),
-        const SizedBox(height: AppSpacing.m),
-        if (data.nextShift != null)
+        ],
+        if (data.nextShift != null) ...[
+          const SizedBox(height: AppSpacing.m),
           EmployeeDashboardShiftCard(
             title: context.tr('Next scheduled shift'),
             shift: data.nextShift,
             timezone: data.timezone,
           ),
+        ],
+        const SizedBox(height: AppSpacing.m),
+        const PerformanceThumbnail(),
+        DashboardAnnouncements(refreshToken: data),
         const SizedBox(height: AppSpacing.m),
         Row(
           children: [
@@ -224,6 +204,27 @@ class EmployeeDashboardView extends StatelessWidget {
                       ),
                   ],
                 ),
+        ),
+        const SizedBox(height: AppSpacing.m),
+        SurfaceCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.campaign_outlined),
+                title: Text(context.tr('Team announcements')),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.push('/team-work?tab=announcements'),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.edit_calendar_outlined),
+                title: Text(context.tr('Attendance corrections')),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.push('/team-work?tab=corrections'),
+              ),
+            ],
+          ),
         ),
       ],
     ),

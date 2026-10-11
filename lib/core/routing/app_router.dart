@@ -94,10 +94,9 @@ GoRouter createAppRouter({
               ? 1
               : 0,
           initialTab: switch (state.uri.queryParameters['tab']) {
-            'shifts' => 1,
-            'attendance' || 'leave' => 2,
-            'chat' => 3,
-            'performance' || 'points' => 4,
+            'shifts' || 'attendance' || 'leave' => 1,
+            'chat' => 2,
+            'performance' || 'points' => 3,
             _ => 0,
           },
         ),

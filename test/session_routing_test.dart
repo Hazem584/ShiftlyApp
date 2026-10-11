@@ -5,9 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/app.dart';
+import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
+import 'package:shiftly/core/widgets/app_tab_selector.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/employee_leave_requests_panel.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
@@ -17,9 +20,43 @@ import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/flexible_attendance_panel.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
+import 'package:shiftly/features/team_work/domain/team_work_models.dart';
+import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
+
+class _RoutingTeamWork implements TeamWorkRepository {
+  String kind = 'SHIFT';
+
+  @override
+  Future<WorkPage<WorkTask>> tasks(String workspaceId) async => WorkPage([
+    WorkTask.fromJson({
+      'id': 'task',
+      'kind': kind,
+      'name': 'Sam',
+      'createdAt': '2026-10-11T08:00:00Z',
+    }),
+  ], 1);
+
+  @override
+  Future<WorkPage<CorrectionRequest>> corrections(
+    String workspaceId, {
+    int page = 1,
+    String? status,
+  }) async => const WorkPage([], 0);
+
+  @override
+  Future<WorkPage<TeamAnnouncement>> announcements(
+    String workspaceId, {
+    int page = 1,
+    bool pendingOnly = false,
+  }) async => const WorkPage([], 0);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 class _RoutingAuth implements AuthenticationService {
   _RoutingAuth() : session = const AuthSession(accessToken: 'token');
@@ -305,6 +342,45 @@ void main() {
     );
   });
 
+  testWidgets(
+    'manager task links open visible shifts and attendance branches',
+    (tester) async {
+      final repository = _RoutingTeamWork();
+      getIt.registerSingleton<TeamWorkRepository>(repository);
+      addTearDown(() => getIt.unregister<TeamWorkRepository>());
+      await _pumpRole(tester, WorkspaceRole.manager);
+      final router = GoRouter.of(
+        tester.element(find.byKey(const Key('manager-bottom-navigation'))),
+      );
+      for (final kind in ['SHIFT', 'OPEN', 'LATE']) {
+        repository.kind = kind;
+        router.push('/team-work?tab=tasks');
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('View attendance and shifts'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text(
+            kind == 'SHIFT' ? 'Fixed shift templates' : 'Attendance & Leave',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          router.routeInformationProvider.value.uri.path,
+          kind == 'SHIFT' ? '/dashboard/shifts' : '/attendance',
+        );
+        expect(tester.takeException(), isNull);
+      }
+    },
+  );
+
+  testWidgets('dashboard avatar opens the manager profile', (tester) async {
+    await _pumpRole(tester, WorkspaceRole.manager);
+    await tester.tap(find.byKey(const Key('dashboard-open-profile')));
+    await tester.pumpAndSettle();
+    expect(find.text('Manager Profile'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('backend employee role opens only the employee shell', (
     tester,
   ) async {
@@ -330,6 +406,16 @@ void main() {
 
     await tester.tap(find.text('Overview'));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('performance-thumbnail')),
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('employee-dashboard-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.tap(find.byKey(const Key('performance-thumbnail')));
     await tester.pumpAndSettle();
     expect(find.text('My Performance'), findsWidgets);
@@ -340,6 +426,79 @@ void main() {
     GoRouter.of(shellContext).go('/employee?tab=performance');
     await tester.pumpAndSettle();
     expect(find.text('My Performance'), findsWidgets);
+  });
+
+  testWidgets('employee routes share one shifts destination and retain leave', (
+    tester,
+  ) async {
+    await _pumpRole(tester, WorkspaceRole.employee);
+    final router = GoRouter.of(
+      tester.element(find.byKey(const Key('employee-bottom-navigation'))),
+    );
+    for (final tab in [
+      'shifts',
+      'attendance',
+      'leave',
+      'chat',
+      'performance',
+      'points',
+    ]) {
+      router.go('/employee?tab=$tab');
+      await tester.pumpAndSettle();
+      final navigation = tester.widget<NavigationBar>(
+        find.byKey(const Key('employee-bottom-navigation')),
+      );
+      expect(navigation.destinations, hasLength(4));
+      expect(navigation.selectedIndex, switch (tab) {
+        'chat' => 2,
+        'performance' || 'points' => 3,
+        _ => 1,
+      });
+      if (tab == 'shifts' || tab == 'attendance') {
+        expect(find.byType(FlexibleAttendancePanel), findsOneWidget);
+        expect(
+          tester
+              .widget<AppTabSelector>(find.byType(AppTabSelector))
+              .selectedIndex,
+          0,
+        );
+      } else if (tab == 'leave') {
+        expect(find.byType(EmployeeLeaveRequestsPanel), findsOneWidget);
+        expect(
+          tester
+              .widget<AppTabSelector>(find.byType(AppTabSelector))
+              .selectedIndex,
+          1,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('employee desktop navigation has the same four destinations', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await _pumpRole(tester, WorkspaceRole.employee);
+    final rail = tester.widget<NavigationRail>(
+      find.byKey(const Key('employee-navigation-rail')),
+    );
+    expect(rail.destinations, hasLength(4));
+    await tester.tap(find.text('My Shifts').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(FlexibleAttendancePanel), findsOneWidget);
+    expect(
+      tester
+          .widget<NavigationRail>(
+            find.byKey(const Key('employee-navigation-rail')),
+          )
+          .selectedIndex,
+      1,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('logout replaces protected manager navigation with login', (

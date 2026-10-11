@@ -36,21 +36,27 @@ class DashboardQuickActions extends StatelessWidget {
         ),
       ),
       const SizedBox(height: AppSpacing.s),
-      SurfaceCard(
+      _DashboardActionLink(
+        icon: Icons.insights_outlined,
+        title: 'Performance',
+        subtitle: 'Employee points, policies, disputes and warnings',
         onTap: () => context.push(AppRoutes.managerPerformance),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(
-            Icons.insights_outlined,
-            color: AppPalette.of(context).orange,
-          ),
-          title: Text(context.tr('Performance')),
-          subtitle: Text(
-            context.tr('Employee points, policies, disputes and warnings'),
-          ),
-          trailing: const Icon(Icons.chevron_right_rounded),
-        ),
+      ),
+      const SizedBox(height: 10),
+      _DashboardActionLink(
+        key: const Key('dashboard-manager-tasks'),
+        subtitle: 'View all tasks',
+        icon: Icons.task_alt_outlined,
+        title: 'Manager tasks',
+        onTap: () => context.push('/team-work?tab=tasks'),
+      ),
+      const SizedBox(height: 10),
+      _DashboardActionLink(
+        key: const Key('dashboard-team-announcements'),
+        subtitle: 'View all announcements',
+        icon: Icons.campaign_outlined,
+        title: 'Team announcements',
+        onTap: () => context.push('/team-work?tab=announcements'),
       ),
       const SizedBox(height: 10),
       Row(
@@ -87,5 +93,33 @@ class DashboardQuickActions extends StatelessWidget {
         ],
       ),
     ],
+  );
+}
+
+class _DashboardActionLink extends StatelessWidget {
+  const _DashboardActionLink({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+    super.key,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => SurfaceCard(
+    onTap: onTap,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    child: ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: AppPalette.of(context).orange),
+      title: Text(context.tr(title)),
+      subtitle: subtitle == null ? null : Text(context.tr(subtitle!)),
+      trailing: const Icon(Icons.chevron_right_rounded),
+    ),
   );
 }

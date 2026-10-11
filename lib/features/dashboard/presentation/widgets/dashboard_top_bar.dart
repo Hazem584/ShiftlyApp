@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
@@ -50,15 +53,20 @@ class DashboardTopBar extends StatelessWidget {
       ),
       const NotificationBell(),
       const SizedBox(width: 6),
-      BlocBuilder<ProfileCubit, ProfileState>(
-        builder: (context, state) => state is ProfileLoaded
-            ? ProfileAvatar(profile: state.profile, radius: 20)
-            : CircleAvatar(
-                radius: 20,
-                backgroundColor: AppPalette.of(context).brandBackground,
-                foregroundColor: Colors.white,
-                child: Text('M'),
-              ),
+      IconButton(
+        key: const Key('dashboard-open-profile'),
+        tooltip: context.tr('Profile'),
+        onPressed: () => context.go(AppRoutes.profile),
+        icon: BlocBuilder<ProfileCubit, ProfileState>(
+          builder: (context, state) => state is ProfileLoaded
+              ? ProfileAvatar(profile: state.profile, radius: 20)
+              : CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppPalette.of(context).brandBackground,
+                  foregroundColor: Colors.white,
+                  child: Text('M'),
+                ),
+        ),
       ),
     ],
   );
