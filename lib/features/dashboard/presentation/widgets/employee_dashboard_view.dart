@@ -14,6 +14,7 @@ import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboa
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_status_card.dart';
 import 'package:shiftly/features/points/presentation/widgets/performance_thumbnail.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/dashboard_announcements.dart';
 
 class EmployeeDashboardView extends StatelessWidget {
   const EmployeeDashboardView({
@@ -37,6 +38,7 @@ class EmployeeDashboardView extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
       children: [
+        DashboardAnnouncements(refreshToken: data),
         Wrap(
           spacing: 10,
           runSpacing: 8,

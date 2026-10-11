@@ -17,6 +17,7 @@ import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_loadin
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_metrics_grid.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_quick_actions.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_top_bar.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/dashboard_announcements.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -63,6 +64,7 @@ class DashboardScreen extends StatelessWidget {
               'Workspace',
           timezone: data.timezone,
         ),
+        DashboardAnnouncements(refreshToken: data),
         if (state.failure != null) ...[
           const SizedBox(height: AppSpacing.s),
           Text(

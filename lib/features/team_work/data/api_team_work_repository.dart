@@ -91,11 +91,12 @@ class ApiTeamWorkRepository implements TeamWorkRepository {
   Future<WorkPage<TeamAnnouncement>> announcements(
     String workspaceId, {
     int page = 1,
+    bool pendingOnly = false,
   }) => _request(
     () async => WorkPage.fromJson(
       (await _dio.get<Object?>(
         '${_base(workspaceId)}/announcements',
-        queryParameters: {'page': page},
+        queryParameters: {'page': page, if (pendingOnly) 'pendingOnly': true},
       )).data,
       TeamAnnouncement.fromJson,
     ),

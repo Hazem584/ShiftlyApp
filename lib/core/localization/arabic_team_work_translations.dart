@@ -1,4 +1,10 @@
 const arabicTeamWorkTranslations = <String, String>{
+  'I have read this': 'قرأت الإعلان',
+  'Confirm I have read this': 'أؤكد أنني قرأت الإعلان',
+  'Your manager needs confirmation that you read this.':
+      'يرجى تأكيد اطلاعك على هذا الإعلان.',
+  'More announcements': 'إعلانات أخرى',
+  'Could not update team announcements.': 'تعذر تحديث إعلانات الفريق.',
   'This attendance already has a request waiting for review.':
       'يوجد طلب لتصحيح هذا الحضور ينتظر المراجعة بالفعل.',
   'Attendance changed after this request. Decline it and ask for a new request.':

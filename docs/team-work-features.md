@@ -62,6 +62,16 @@ The backend changes are in `E:\MY APPS\shiftly-backend`. Do not deploy this fron
 
 ## API
 
+### Announcements on the home screen
+
+Pending announcements appear above the home screen content for employees and managers who received them. Each card shows the author, workspace-local publication time, and full announcement text. Rendering a card does not mark it as read. **I have read this** saves reading and hides a normal announcement; **Confirm I have read this** also saves acknowledgment for announcements requiring confirmation. A failed request keeps the card visible so the user can retry. The announcement remains available in the announcements archive.
+
+The home screen requests `GET /team-work/announcements?pendingOnly=true`. The server filters the current membership's pending receipts before pagination, including previously read announcements awaiting acknowledgment. It uses the same filter for the total count. Refreshing the dashboard or returning the app to the foreground reloads the cards. Deploy the backend update before the app/web update; this change needs no additional migration.
+
+- Verify both ordinary and acknowledgment-required announcements with two accounts.
+- Verify a card stays visible after a failed read request and disappears after a successful retry, including after reopening the home screen.
+- Verify changing workspaces shows only that membership's pending announcements, and archived/read items cannot hide older pending ones through pagination.
+
 All paths below are relative to `/api/v1/workspaces/:workspaceId` and require an active authorized membership.
 
 | Method | Path | Access |

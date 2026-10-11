@@ -24,6 +24,7 @@ abstract interface class TeamWorkRepository {
   Future<WorkPage<TeamAnnouncement>> announcements(
     String workspaceId, {
     int page = 1,
+    bool pendingOnly = false,
   });
   Future<void> publish(
     String workspaceId, {

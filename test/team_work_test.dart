@@ -17,6 +17,7 @@ import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/announcements_view.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/correction_request_card.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/pending_announcements.dart';
 
 final correctionJson = <String, Object?>{
   'id': 'correction',
@@ -71,12 +72,42 @@ class _Announcements implements TeamWorkRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   int reads = 0, confirms = 0;
+  bool failRead = false;
+  bool failRefreshAfterRead = false;
+  bool requiresAcknowledgment = true;
+  final dismissed = <String>{};
+  final pendingQueries = <bool>[];
+  @override
+  Future<WorkPage<TeamAnnouncement>> announcements(
+    String workspaceId, {
+    int page = 1,
+    bool pendingOnly = false,
+  }) async {
+    pendingQueries.add(pendingOnly);
+    if (failRefreshAfterRead && dismissed.contains(workspaceId)) {
+      throw const ApiException(message: 'Try again');
+    }
+    return WorkPage(
+      dismissed.contains(workspaceId)
+          ? []
+          : [
+              TeamAnnouncement.fromJson({
+                ...announcementJson,
+                'requiresAcknowledgment': requiresAcknowledgment,
+              }),
+            ],
+      dismissed.contains(workspaceId) ? 0 : 1,
+    );
+  }
+
   @override
   Future<void> markAnnouncement(
     String workspaceId,
     String id, {
     bool acknowledge = false,
   }) async {
+    if (failRead) throw const ApiException(message: 'Try again');
+    dismissed.add(workspaceId);
     if (acknowledge) {
       confirms++;
     } else {
@@ -115,6 +146,73 @@ class _Search extends ChatRepository {
 }
 
 void main() {
+  test(
+    'dashboard announcements request server filtering before pagination',
+    () async {
+      final adapter = _Adapter()..response = {'data': [], 'total': 0};
+      final dio = Dio()..httpClientAdapter = adapter;
+      await ApiTeamWorkRepository(dio)
+          .announcements('workspace', pendingOnly: true, page: 2);
+      expect(adapter.requests.single.queryParameters, {
+        'page': 2,
+        'pendingOnly': true,
+      });
+    },
+  );
+
+  for (final dark in [false, true]) {
+    testWidgets(
+      'dashboard announcement hides only after explicit confirmation (dark: $dark)',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 750);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final repository = _Announcements()..requiresAcknowledgment = dark;
+        final button = dark ? 'Confirm I have read this' : 'I have read this';
+        Widget screen(String workspaceId) => MaterialApp(
+          theme: dark ? AppTheme.darkTheme() : AppTheme.lightTheme(),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: PendingAnnouncements(
+                key: const ValueKey('pending'),
+                repository: repository,
+                workspaceId: workspaceId,
+                timezone: 'Africa/Cairo',
+              ),
+            ),
+          ),
+        );
+        await tester.pumpWidget(screen('one'));
+        await tester.pumpAndSettle();
+        expect(find.text(announcementJson['body'] as String), findsOneWidget);
+        expect(repository.reads + repository.confirms, 0);
+        expect(repository.pendingQueries, [true]);
+        repository.failRead = true;
+        await tester.tap(find.text(button));
+        await tester.pumpAndSettle();
+        expect(find.text(announcementJson['body'] as String), findsOneWidget);
+        expect(
+          find.text('Could not update team announcements.'),
+          findsOneWidget,
+        );
+        repository.failRead = false;
+      repository.failRefreshAfterRead = dark;
+        await tester.tap(find.text(button));
+        await tester.pumpAndSettle();
+        expect(repository.confirms, dark ? 1 : 0);
+        expect(repository.reads, dark ? 0 : 1);
+        expect(find.text(announcementJson['body'] as String), findsNothing);
+        await tester.pumpWidget(screen('one'));
+        await tester.pumpAndSettle();
+        expect(find.text(announcementJson['body'] as String), findsNothing);
+        await tester.pumpWidget(screen('two'));
+        await tester.pumpAndSettle();
+        expect(find.text(announcementJson['body'] as String), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   test('correction times remain UTC and requester/reviewer are parsed', () {
     final request = CorrectionRequest.fromJson(correctionJson);
     expect(request.name, 'Sam');
