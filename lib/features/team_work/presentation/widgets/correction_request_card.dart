@@ -30,6 +30,18 @@ class CorrectionRequestCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(request.name, style: Theme.of(context).textTheme.titleMedium),
+            if (request.isMissingAttendance) ...[
+              Text(context.tr('Review missing attendance')),
+              Text('${request.shiftName} · ${request.operationalDate}'),
+              Text(
+                context.tr(switch (request.reasonKind) {
+                  'FORGOT_TO_RECORD' =>
+                    'I attended but forgot to record attendance',
+                  'EXCEPTION' => 'I have an exception or special circumstance',
+                  _ => 'Other reason',
+                }),
+              ),
+            ],
             Text(
               context.tr(switch (request.status) {
                 'PENDING' => 'Pending review',
@@ -42,13 +54,43 @@ class CorrectionRequestCard extends StatelessWidget {
               context.tr('Original times'),
               style: Theme.of(context).textTheme.labelLarge,
             ),
-            Text('${time(request.originalIn)}\n${time(request.originalOut)}'),
+            Text(
+              request.originalIn == null || request.originalOut == null
+                  ? context.tr('No attendance recorded')
+                  : '${time(request.originalIn!)}\n${time(request.originalOut!)}',
+            ),
             const SizedBox(height: 10),
             Text(
               context.tr('Requested times'),
               style: Theme.of(context).textTheme.labelLarge,
             ),
             Text('${time(request.requestedIn)}\n${time(request.requestedOut)}'),
+            Text(
+              context.tr('Requested period: {hours}h {minutes}m', {
+                'hours':
+                    '${request.requestedOut.difference(request.requestedIn).inHours}',
+                'minutes':
+                    '${request.requestedOut.difference(request.requestedIn).inMinutes % 60}',
+              }),
+            ),
+            if (request.approvedIn != null && request.approvedOut != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                context.tr('Approved times'),
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              Text(
+                '${time(request.approvedIn!)}\n${time(request.approvedOut!)}',
+              ),
+              Text(
+                context.tr('Approved period: {hours}h {minutes}m', {
+                  'hours':
+                      '${request.approvedOut!.difference(request.approvedIn!).inHours}',
+                  'minutes':
+                      '${request.approvedOut!.difference(request.approvedIn!).inMinutes % 60}',
+                }),
+              ),
+            ],
             const Divider(),
             Text(request.reason),
             if (request.reviewNote != null) Text(request.reviewNote!),

@@ -3,6 +3,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
+import 'package:shiftly/features/team_work/presentation/dialogs/correction_approval_dialog.dart';
 import 'package:shiftly/features/team_work/presentation/dialogs/review_note_dialog.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/announcements_view.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/correction_request_card.dart';
@@ -89,6 +90,22 @@ class TeamWorkBodyState extends State<TeamWorkBody>
   }
 
   Future<void> _review(CorrectionRequest request, bool approve) async {
+    if (approve) {
+      final saved = await showDialog<bool>(
+        context: context,
+        builder: (_) => CorrectionApprovalDialog(
+          request: request,
+          repository: widget.repository,
+          workspaceId: widget.workspaceId,
+          timezone: widget.timezone,
+        ),
+      );
+      if (saved == true && mounted) {
+        _corrections.load();
+        _tasks.load();
+      }
+      return;
+    }
     final note = approve ? null : await requestReviewNote(context);
     if (!approve && note == null) return;
     final saved = await _corrections.mutate(

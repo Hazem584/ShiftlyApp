@@ -197,7 +197,7 @@ void main() {
           findsOneWidget,
         );
         repository.failRead = false;
-      repository.failRefreshAfterRead = dark;
+        repository.failRefreshAfterRead = dark;
         await tester.tap(find.text(button));
         await tester.pumpAndSettle();
         expect(repository.confirms, dark ? 1 : 0);
@@ -216,9 +216,9 @@ void main() {
   test('correction times remain UTC and requester/reviewer are parsed', () {
     final request = CorrectionRequest.fromJson(correctionJson);
     expect(request.name, 'Sam');
-    expect(request.originalIn.isUtc, isTrue);
+    expect(request.originalIn!.isUtc, isTrue);
     expect(
-      request.requestedOut.difference(request.originalOut),
+      request.requestedOut.difference(request.originalOut!),
       const Duration(hours: 1),
     );
   });

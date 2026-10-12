@@ -1,4 +1,59 @@
 const arabicTeamWorkTranslations = <String, String>{
+  'No attendance recorded': 'لا يوجد تسجيل حضور',
+  'Check-in has not opened yet': 'لم يبدأ وقت تسجيل الحضور بعد',
+  'No attendance was recorded for {shift} on {date}. Did you attend without recording, or have an exception?': 'لا يوجد تسجيل حضور لشيفت {shift} يوم {date}. هل حضرت ونسيت التسجيل، أم لديك استثناء أو سبب للغياب؟',
+  'Explain absence / request review': 'توضيح السبب / طلب مراجعة',
+  'Review missing attendance': 'مراجعة شيفت بدون تسجيل حضور',
+  'No attendance was recorded for this shift. Explain what happened and the period you want counted. Your manager may approve all or part of it, or decline.': 'لا يوجد تسجيل حضور لهذا الشيفت. وضّح ما حدث وحدد الفترة التي تطلب احتسابها. يمكن للمدير اعتمادها كاملة أو جزئيًا أو رفض الطلب.',
+  'Why was attendance not recorded?': 'ما سبب عدم تسجيل الحضور؟',
+  'I attended but forgot to record attendance': 'حضرت ونسيت تسجيل الحضور',
+  'I have an exception or special circumstance': 'لدي استثناء أو ظرف خاص',
+  'Other reason': 'سبب آخر',
+  'Explain what happened': 'وضّح ما حدث وسبب الطلب',
+  'Choose a completed period within this shift.':
+      'اختر فترة مكتملة داخل مواعيد هذا الشيفت.',
+  'Period to count: {hours}h {minutes}m':
+      'الفترة المطلوب احتسابها: {hours} ساعة و{minutes} دقيقة',
+  'Requested period: {hours}h {minutes}m':
+      'الفترة المطلوبة: {hours} ساعة و{minutes} دقيقة',
+  'Approved period: {hours}h {minutes}m':
+      'الفترة المعتمدة: {hours} ساعة و{minutes} دقيقة',
+  'Approved times': 'الأوقات المعتمدة',
+  'Approve attendance and hours': 'اعتماد الحضور والساعات',
+  'Choose the period to count. Only the approved hours will be recorded.':
+      'حدد الفترة التي توافق على احتسابها. سيتم تسجيل الساعات المعتمدة فقط.',
+  'Review note': 'ملاحظة المراجعة',
+  'Required when changing the requested times.':
+      'مطلوبة عند تغيير الأوقات التي طلبها الموظف.',
+  'Explain why the approved times differ from the request.':
+      'وضّح سبب اعتماد أوقات مختلفة عن طلب الموظف.',
+  'This local time is unavailable. Choose another time.':
+      'هذا الوقت المحلي غير متاح. اختر وقتًا آخر.',
+  'This time occurs twice. Choose the intended time.':
+      'هذا الوقت يتكرر بسبب التوقيت الصيفي. اختر الوقت المقصود.',
+  'Request sent to your manager. Track it in Attendance corrections.':
+      'تم إرسال الطلب إلى المدير. تابع حالته من تصحيح الحضور.',
+  'Your request is waiting for your manager’s review.':
+      'طلبك قيد مراجعة المدير. لم يتم احتساب الساعات بعد.',
+  'View my requests': 'عرض طلباتي',
+  'This shift already has a request waiting for review.':
+      'يوجد طلب لهذا الشيفت قيد المراجعة بالفعل.',
+  'This shift already has attendance. Refresh and review its record.':
+      'يوجد سجل حضور لهذا الشيفت بالفعل. حدّث الصفحة وراجع السجل.',
+  'Requested times must be within this shift.':
+      'يجب أن تكون الأوقات المطلوبة داخل مواعيد الشيفت.',
+  'Approved times must be within this shift.':
+      'يجب أن تكون الأوقات المعتمدة داخل مواعيد الشيفت.',
+  'Wait until this shift ends before requesting a review.':
+      'انتظر حتى ينتهي الشيفت قبل إرسال طلب المراجعة.',
+  'Assigned or authorized shift not found.':
+      'لم يتم العثور على الشيفت المعيّن أو المصرّح به.',
+  'The shift changed after this request. Decline it and ask for a new request.':
+      'تغير الشيفت بعد إرسال الطلب. ارفضه واطلب إرسال طلب جديد.',
+  'The approved times overlap another attendance record.':
+      'الأوقات المعتمدة تتداخل مع سجل حضور آخر.',
+  'Attendance changed concurrently. Refresh the request before trying again.':
+      'تغير الحضور أثناء المراجعة. حدّث الطلب قبل المحاولة مرة أخرى.',
   'I have read this': 'قرأت الإعلان',
   'Confirm I have read this': 'أؤكد أنني قرأت الإعلان',
   'Your manager needs confirmation that you read this.':

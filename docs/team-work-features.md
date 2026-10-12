@@ -10,6 +10,8 @@ Follow-up includes today's late clock-ins, attendance past its scheduled end wit
 
 ## Attendance corrections
 
+Completed fixed shifts without recorded attendance also support employee review requests and manager-selected approved hours. See [Missing attendance reviews](missed-attendance-reviews.md) for the API changes and required migration.
+
 Employees use the edit-calendar action on a completed, non-rejected attendance record. They select the proposed start/end in the workspace timezone and give a reason. Requested times must form a completed period of up to 24 hours, ending before now. Submitting does not change attendance.
 
 Only one request can be pending for each attendance record. A manager's approval atomically updates canonical times, late/worked minutes and classification, then synchronizes attendance points. Overlapping attendance and records changed since submission are blocked. Declining leaves attendance unchanged. Every request keeps the original/requested times, reason, reviewer, decision, review note and review time. The history can be filtered by status.

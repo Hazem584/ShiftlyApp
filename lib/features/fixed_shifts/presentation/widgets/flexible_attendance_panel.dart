@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
@@ -14,6 +15,8 @@ import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_st
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/eligibility_tile.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/legacy_clock_in_review_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/saved_schedule_list.dart';
+import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
+import 'package:shiftly/features/team_work/presentation/dialogs/missed_attendance_request_dialog.dart';
 
 class FlexibleAttendancePanel extends StatelessWidget {
   const FlexibleAttendancePanel({required this.timezone, super.key});
@@ -259,6 +262,29 @@ class FlexibleAttendancePanel extends StatelessWidget {
                 entry: entry,
                 timezone: timezone,
                 busy: state.submittingTemplateId != null,
+                evaluatedAt: state.eligibility!.evaluatedAt,
+                onReview:
+                    !entry.alreadyUsed &&
+                        !entry.pendingReview &&
+                        !entry.scheduledEndAt.isAfter(
+                          state.eligibility!.evaluatedAt,
+                        ) &&
+                        ((entry.occurrenceKind == 'BASELINE' &&
+                                entry.assignmentId != null &&
+                                entry.extraAuthorizationId == null) ||
+                            (entry.occurrenceKind == 'EXTRA' &&
+                                entry.extraAuthorizationId != null &&
+                                entry.assignmentId == null)) &&
+                        !state.recoveryBlocked &&
+                        !state.refreshing &&
+                        state.failure == null &&
+                        state.eligibility?.openAttendanceId == null
+                    ? () => _requestReview(
+                        context,
+                        entry,
+                        state.eligibility!.workspaceId,
+                      )
+                    : null,
                 onTap:
                     entry.canClockIn &&
                         !state.recoveryBlocked &&
@@ -274,6 +300,30 @@ class FlexibleAttendancePanel extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _requestReview(
+    BuildContext context,
+    EligibleShiftOccurrence entry,
+    String workspaceId,
+  ) async {
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => MissedAttendanceRequestDialog(
+        entry: entry,
+        workspaceId: workspaceId,
+        timezone: entry.timezone ?? timezone,
+        repository: getIt<TeamWorkRepository>(),
+      ),
+    );
+    if (saved == true && context.mounted) {
+      ToastService.success(
+        context,
+        message:
+            'Request sent to your manager. Track it in Attendance corrections.',
+      );
+      context.read<FlexibleAttendanceCubit>().load(refresh: true);
+    }
   }
 
   Future<void> _clockIn(

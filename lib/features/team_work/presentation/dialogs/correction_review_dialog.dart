@@ -3,6 +3,7 @@ import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
+import 'package:shiftly/features/team_work/presentation/dialogs/correction_approval_dialog.dart';
 import 'package:shiftly/features/team_work/presentation/dialogs/review_note_dialog.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/correction_request_card.dart';
 
@@ -29,6 +30,21 @@ class _CorrectionReviewDialogState extends State<CorrectionReviewDialog> {
   String? _error;
   Future<void> _review(bool approve) async {
     if (_busy) return;
+    if (approve) {
+      final request = await _request;
+      if (!mounted) return;
+      final saved = await showDialog<bool>(
+        context: context,
+        builder: (_) => CorrectionApprovalDialog(
+          request: request,
+          repository: widget.repository,
+          workspaceId: widget.workspaceId,
+          timezone: widget.timezone,
+        ),
+      );
+      if (saved == true && mounted) Navigator.pop(context, true);
+      return;
+    }
     final note = approve ? null : await requestReviewNote(context);
     if (!approve && note == null || !mounted) return;
     setState(() {

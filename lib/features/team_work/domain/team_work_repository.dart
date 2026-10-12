@@ -20,6 +20,18 @@ abstract interface class TeamWorkRepository {
     String id, {
     required bool approve,
     String? note,
+    DateTime? clockIn,
+    DateTime? clockOut,
+  });
+  Future<void> requestMissedAttendance(
+    String workspaceId, {
+    String? assignmentId,
+    String? extraAuthorizationId,
+    required String operationalDate,
+    required String reasonKind,
+    required DateTime clockIn,
+    required DateTime clockOut,
+    required String reason,
   });
   Future<WorkPage<TeamAnnouncement>> announcements(
     String workspaceId, {

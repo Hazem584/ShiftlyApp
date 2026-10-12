@@ -81,10 +81,41 @@ class ApiTeamWorkRepository implements TeamWorkRepository {
     String id, {
     required bool approve,
     String? note,
+    DateTime? clockIn,
+    DateTime? clockOut,
   }) => _request(() async {
     await _dio.post<Object?>(
       '${_base(workspaceId)}/corrections/$id/review',
-      data: {'decision': approve ? 'APPROVED' : 'REJECTED', 'note': ?note},
+      data: {
+        'decision': approve ? 'APPROVED' : 'REJECTED',
+        'note': ?note,
+        if (clockIn != null) 'clockInAt': clockIn.toUtc().toIso8601String(),
+        if (clockOut != null) 'clockOutAt': clockOut.toUtc().toIso8601String(),
+      },
+    );
+  });
+  @override
+  Future<void> requestMissedAttendance(
+    String workspaceId, {
+    String? assignmentId,
+    String? extraAuthorizationId,
+    required String operationalDate,
+    required String reasonKind,
+    required DateTime clockIn,
+    required DateTime clockOut,
+    required String reason,
+  }) => _request(() async {
+    await _dio.post<Object?>(
+      '${_base(workspaceId)}/corrections/missed',
+      data: {
+        'assignmentId': ?assignmentId,
+        'extraAuthorizationId': ?extraAuthorizationId,
+        'operationalDate': operationalDate,
+        'reasonKind': reasonKind,
+        'clockInAt': clockIn.toUtc().toIso8601String(),
+        'clockOutAt': clockOut.toUtc().toIso8601String(),
+        'reason': reason.trim(),
+      },
     );
   });
   @override

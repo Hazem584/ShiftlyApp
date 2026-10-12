@@ -13,6 +13,7 @@ class EligibleShiftOccurrence extends Equatable {
     this.conversionPolicy,
     this.eligible = false,
     this.alreadyUsed = false,
+    this.pendingReview = false,
     required this.template,
     required this.operationalDate,
     required this.scheduledStartAt,
@@ -30,6 +31,7 @@ class EligibleShiftOccurrence extends Equatable {
       timezone,
       conversionPolicy;
   final bool eligible, alreadyUsed;
+  final bool pendingReview;
   String get identity =>
       '$occurrenceKind|${template.id}|$assignmentId|$extraAuthorizationId|$operationalDate';
   final ShiftTemplate template;
@@ -79,6 +81,7 @@ class EligibleShiftOccurrence extends Equatable {
       ),
       eligible: json['eligible'] == true,
       alreadyUsed: json['alreadyUsed'] != false,
+      pendingReview: json['pendingReview'] == true,
       template: ShiftTemplate.fromJson(
         ApiModelParser.map(json['template'], 'template'),
       ),
@@ -104,6 +107,7 @@ class EligibleShiftOccurrence extends Equatable {
     conversionPolicy,
     eligible,
     alreadyUsed,
+    pendingReview,
     template,
     operationalDate,
     scheduledStartAt,
