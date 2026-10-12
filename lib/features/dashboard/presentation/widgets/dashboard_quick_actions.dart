@@ -5,7 +5,7 @@ import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/section_heading.dart';
-import 'package:shiftly/core/widgets/surface_card.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_action_link.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_quick_action.dart';
 
 class DashboardQuickActions extends StatelessWidget {
@@ -36,14 +36,14 @@ class DashboardQuickActions extends StatelessWidget {
         ),
       ),
       const SizedBox(height: AppSpacing.s),
-      _DashboardActionLink(
+      DashboardActionLink(
         icon: Icons.insights_outlined,
         title: 'Performance',
         subtitle: 'Employee points, policies, disputes and warnings',
         onTap: () => context.push(AppRoutes.managerPerformance),
       ),
       const SizedBox(height: 10),
-      _DashboardActionLink(
+      DashboardActionLink(
         key: const Key('dashboard-manager-tasks'),
         subtitle: 'View all tasks',
         icon: Icons.task_alt_outlined,
@@ -51,7 +51,7 @@ class DashboardQuickActions extends StatelessWidget {
         onTap: () => context.push('/team-work?tab=tasks'),
       ),
       const SizedBox(height: 10),
-      _DashboardActionLink(
+      DashboardActionLink(
         key: const Key('dashboard-team-announcements'),
         subtitle: 'View all announcements',
         icon: Icons.campaign_outlined,
@@ -93,33 +93,5 @@ class DashboardQuickActions extends StatelessWidget {
         ],
       ),
     ],
-  );
-}
-
-class _DashboardActionLink extends StatelessWidget {
-  const _DashboardActionLink({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.subtitle,
-    super.key,
-  });
-
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => SurfaceCard(
-    onTap: onTap,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-    child: ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: AppPalette.of(context).orange),
-      title: Text(context.tr(title)),
-      subtitle: subtitle == null ? null : Text(context.tr(subtitle!)),
-      trailing: const Icon(Icons.chevron_right_rounded),
-    ),
   );
 }
