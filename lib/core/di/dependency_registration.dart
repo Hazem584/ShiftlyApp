@@ -43,8 +43,10 @@ import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employee_details_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/data/api_fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/data/api_schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:shiftly/features/manager_performance/data/api_manager_points_repository.dart';
@@ -210,6 +212,9 @@ abstract final class DependencyRegistration {
       )
       ..registerLazySingleton<ExtraShiftRepository>(
         () => target<FixedShiftRepository>() as ExtraShiftRepository,
+      )
+      ..registerLazySingleton<ScheduleExceptionRepository>(
+        () => ApiScheduleExceptionRepository(target()),
       )
       ..registerLazySingleton<ProfileRepository>(
         () => ApiProfileRepository(

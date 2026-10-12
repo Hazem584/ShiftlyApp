@@ -12,6 +12,7 @@ class ManagerTemplatesCubit extends Cubit<ManagerTemplatesState> {
     : super(const ManagerTemplatesState());
   final FixedShiftRepository _repository;
   FeatureSessionScope? _scope;
+  FeatureSessionScope? get scope => _scope;
   var _generation = 0;
   Future<void>? _loadInFlight;
 

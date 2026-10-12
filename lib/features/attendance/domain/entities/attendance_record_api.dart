@@ -17,6 +17,8 @@ class AttendanceRecordApi extends Equatable {
     required this.updatedAt,
     this.occurrenceKind,
     this.assignmentId,
+    this.scheduleExceptionId,
+    this.scheduleExceptionReason,
     this.extraAuthorizationId,
     this.enteredByMembershipId,
     this.clientAttendanceId,
@@ -40,6 +42,8 @@ class AttendanceRecordApi extends Equatable {
   });
 
   final String? occurrenceKind,
+      scheduleExceptionId,
+      scheduleExceptionReason,
       assignmentId,
       extraAuthorizationId,
       enteredByMembershipId,
@@ -82,6 +86,12 @@ class AttendanceRecordApi extends Equatable {
   ) => AttendanceRecordApi(
     occurrenceKind: ApiModelParser.optionalString(json['occurrenceKind']),
     assignmentId: ApiModelParser.optionalString(json['assignmentId']),
+    scheduleExceptionId: ApiModelParser.optionalString(
+      json['scheduleExceptionId'],
+    ),
+    scheduleExceptionReason: ApiModelParser.optionalString(
+      ApiModelParser.optionalMap(json['scheduleException'])?['reason'],
+    ),
     extraAuthorizationId: ApiModelParser.optionalString(
       json['extraAuthorizationId'],
     ),
@@ -135,6 +145,8 @@ class AttendanceRecordApi extends Equatable {
   List<Object?> get props => [
     occurrenceKind,
     assignmentId,
+    scheduleExceptionId,
+    scheduleExceptionReason,
     extraAuthorizationId,
     enteredByMembershipId,
     clientAttendanceId,

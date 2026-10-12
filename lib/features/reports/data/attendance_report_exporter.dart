@@ -63,6 +63,8 @@ class AttendanceReportExporter implements ReportExporter {
       'Shift kind',
       'Late minutes',
       'Recorded work minutes',
+      'Saved schedule',
+      'Schedule exception reason',
     ];
     final details = report
         .recordsFor(employeeId)
@@ -85,6 +87,10 @@ class AttendanceReportExporter implements ReportExporter {
             ),
             r.minutesLate,
             r.workedMinutes ?? '',
+            '${r.templateName ?? ''} · ${r.operationalDate ?? ''}\n'
+                '${r.scheduledStartAt == null ? '' : WorkspaceTime.dateTime(r.scheduledStartAt!, r.workspaceTimezone ?? report.timezone)} - '
+                '${r.scheduledEndAt == null ? '' : WorkspaceTime.dateTime(r.scheduledEndAt!, r.workspaceTimezone ?? report.timezone)}',
+            r.scheduleExceptionReason ?? '',
           ],
         )
         .toList();

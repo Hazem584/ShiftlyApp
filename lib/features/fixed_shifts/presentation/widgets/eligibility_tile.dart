@@ -88,11 +88,15 @@ class EligibilityTile extends StatelessWidget {
                   label: Text(context.tr('Recommended')),
                   visualDensity: VisualDensity.compact,
                 ),
+              if (entry.scheduleExceptionId != null)
+                Text(context.tr('One-day shift change')),
             ],
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (entry.scheduleExceptionReason != null)
+                Text(entry.scheduleExceptionReason!),
               Text(
                 context.tr('{value1} – {value2}\n{value3} • {value4}{value5}', {
                   'value1': (WorkspaceTime.time(

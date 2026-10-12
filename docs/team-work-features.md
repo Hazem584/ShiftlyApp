@@ -8,6 +8,24 @@ Pending correction, leave, and completed attendance reviews appear before follow
 
 Follow-up includes today's late clock-ins, attendance past its scheduled end without clock-out, and missed starts for legacy shifts and assigned fixed shifts. Fixed shifts use the saved assignment schedule, workspace dates, overnight occurrences, and approved leave. Each category returns up to 50 items; the screen indicates when there are more items or schedules need review. Pull down to refresh.
 
+## Schedule exceptions and holidays
+
+Managers can use **Employee details → Schedule exceptions and holidays → Add day exception** to change the employee's fixed shift for one operational date or give an employee day off. **Fixed shift templates → Workspace holidays → Add workspace holiday** applies a holiday to all baseline assignments on that date. Both forms require a reason; changing one date does not create a recurring assignment version. A specific employee instruction takes priority over a workspace holiday, including an explicit shift on an otherwise non-working weekday.
+
+Employee eligibility and manager missed-start follow-up use the effective schedule for that date. Employees see the replacement shift and reason, or a dated rest/holiday explanation. Rest and holiday dates produce no baseline work opportunities for absence points. Separately authorized extras still follow the existing extra-shift and points rules. Attendance saves the effective UTC interval, timezone, assignment and exception ID. Points evidence saves the applied exception. Excel/PDF attendance details include the saved schedule and exception reason.
+
+Exceptions are prospective. Workspace holidays must be for a future workspace date. Employee exceptions today are allowed only before both original and replacement check-in windows open, and before attendance or any points evidence is captured. Provisional points evidence also locks the day. Overlapping baseline days, extra reservations and attendance are rejected. Cancel an unused exception with a reason; the original record stays in history with its creator, creation time, canceller, cancellation time and cancellation reason. Cancel future employee exceptions before replacing their recurring assignment.
+
+Manager-only API routes, relative to `/api/v1/workspaces/:workspaceId`:
+
+- `GET /schedule-exceptions?page=1&limit=20`: workspace holiday history. Add `employeeMembershipId` to include an employee's exceptions plus workspace holidays.
+- `POST /schedule-exceptions`: `clientExceptionId` (UUID), `operationalDate` (`YYYY-MM-DD`), `kind` (`SHIFT`, `DAY_OFF`, `HOLIDAY`) and `reason` (5–1000 characters). `SHIFT` requires employee membership and shift template IDs; `DAY_OFF` requires employee membership only; `HOLIDAY` accepts neither. Identical retries use the same submission ID.
+- `POST /schedule-exceptions/:id/cancel`: `reason` (5–1000 characters).
+
+Deploy migrations **`20261012210000_schedule_exceptions`** and **`20261012230000_allow_reviewed_missing_attendance`**, regenerate Prisma, and deploy the backend before the Flutter update. No migration has been applied to the application's database by this implementation. Existing migration preflight requirements still apply. Source tests cover scheduling, employee scope, retries, clock-in, manager missing-attendance approval, points evidence and extra conflicts. All migrations and 22 trigger behavior checks were also exercised on disposable PostgreSQL. The repeatable backend script `scripts/schedule-exceptions-postgres-smoke.mjs` requires `SHIFTLY_TEST_DATABASE_URL` pointing to an empty disposable database, refuses existing tables, and rolls back its schema and test data.
+
+Acceptance: assign Morning, change one future date to Night, and check employee eligibility at the two check-in windows. Add a holiday and a specific employee override on the same date; verify the precedence. Check rest-day points, manager follow-up, exception history, report exports, cancellation blocked after attendance/points capture, and workspace/account switching with two accounts.
+
 ## Attendance corrections
 
 Completed fixed shifts without recorded attendance also support employee review requests and manager-selected approved hours. See [Missing attendance reviews](missed-attendance-reviews.md) for the API changes and required migration.

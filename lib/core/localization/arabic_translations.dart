@@ -2,10 +2,12 @@ import 'package:shiftly/core/localization/arabic_error_translations.dart';
 import 'package:shiftly/core/localization/arabic_interface_translations.dart';
 import 'package:shiftly/core/localization/arabic_points_translations.dart';
 import 'package:shiftly/core/localization/arabic_report_translations.dart';
+import 'package:shiftly/core/localization/arabic_schedule_exception_translations.dart';
 import 'package:shiftly/core/localization/arabic_team_work_translations.dart';
 import 'package:shiftly/core/localization/arabic_workflow_translations.dart';
 
 const arabicTranslations = <String, String>{
+  ...arabicScheduleExceptionTranslations,
   'Error code: {code}': 'رمز الخطأ: {code}',
   'This reversal would subtract points that are no longer available. Reverse the related deduction adjustment first, then reverse the original award.': 'هذا الإلغاء سيخصم نقاطًا لم تعد متاحة. اعكس تعديل السحب المرتبط أولًا، ثم ألغِ المنحة الأصلية.',
   'Workspace groups appear here once a manager creates one.':

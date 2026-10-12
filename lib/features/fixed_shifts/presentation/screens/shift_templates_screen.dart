@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/offline/read_sync_banner.dart';
 import 'package:shiftly/core/offline/read_sync_state.dart';
@@ -9,9 +10,11 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/dialogs/shift_template_editor_dialog.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/utils/shift_templates_formatters.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/schedule_exceptions_section.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/shift_template_card.dart';
 
 class ShiftTemplatesScreen extends StatelessWidget {
@@ -159,6 +162,10 @@ class ShiftTemplatesScreen extends StatelessWidget {
                       child: Text(context.tr('Retry')),
                     ),
             ),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: _holidays(context),
+            ),
           ],
         ),
       );
@@ -182,6 +189,8 @@ class ShiftTemplatesScreen extends StatelessWidget {
               160 + MediaQuery.viewPaddingOf(context).bottom,
             ),
             children: [
+              _holidays(context),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -216,6 +225,22 @@ class ShiftTemplatesScreen extends StatelessWidget {
         value: context.read<ManagerTemplatesCubit>(),
         child: ShiftTemplateEditorDialog(template: template),
       ),
+    );
+  }
+
+  Widget _holidays(BuildContext context) {
+    final cubit = context.read<ManagerTemplatesCubit>();
+    final scope = cubit.scope;
+    if (scope == null || !getIt.isRegistered<ScheduleExceptionRepository>()) {
+      return const SizedBox.shrink();
+    }
+    return ScheduleExceptionsSection(
+      key: ValueKey(('holidays', scope)),
+      scope: scope,
+      repository: getIt<ScheduleExceptionRepository>(),
+      fixedShifts: getIt<FixedShiftRepository>(),
+      isCurrent: () => cubit.scope == scope,
+      onChanged: () => cubit.load(refresh: true),
     );
   }
 

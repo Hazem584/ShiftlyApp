@@ -8,6 +8,8 @@ class EligibleShiftOccurrence extends Equatable {
   const EligibleShiftOccurrence({
     this.occurrenceKind,
     this.assignmentId,
+    this.scheduleExceptionId,
+    this.scheduleExceptionReason,
     this.extraAuthorizationId,
     this.timezone,
     this.conversionPolicy,
@@ -26,6 +28,8 @@ class EligibleShiftOccurrence extends Equatable {
   });
 
   final String? occurrenceKind,
+      scheduleExceptionId,
+      scheduleExceptionReason,
       assignmentId,
       extraAuthorizationId,
       timezone,
@@ -72,6 +76,12 @@ class EligibleShiftOccurrence extends Equatable {
     return EligibleShiftOccurrence(
       occurrenceKind: ApiModelParser.optionalString(json['occurrenceKind']),
       assignmentId: ApiModelParser.optionalString(json['assignmentId']),
+      scheduleExceptionId: ApiModelParser.optionalString(
+        json['scheduleExceptionId'],
+      ),
+      scheduleExceptionReason: ApiModelParser.optionalString(
+        json['scheduleExceptionReason'],
+      ),
       extraAuthorizationId: ApiModelParser.optionalString(
         json['extraAuthorizationId'],
       ),
@@ -102,6 +112,8 @@ class EligibleShiftOccurrence extends Equatable {
   List<Object?> get props => [
     occurrenceKind,
     assignmentId,
+    scheduleExceptionId,
+    scheduleExceptionReason,
     extraAuthorizationId,
     timezone,
     conversionPolicy,

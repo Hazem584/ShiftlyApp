@@ -6,6 +6,7 @@ import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization_page.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/legacy_clock_in_review.dart';
+import 'package:shiftly/features/fixed_shifts/domain/entities/schedule_exception.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/legacy_clock_in_repository.dart';
@@ -163,6 +164,14 @@ class ApiFixedShiftRepository
       'recommended',
     );
     return TemplateEligibility(
+      dayExceptions:
+          (json['dayExceptions'] == null
+                  ? <Object?>[]
+                  : ApiModelParser.list(json['dayExceptions']))
+              .map(
+                (e) => ScheduleExceptionNotice.fromJson(ApiModelParser.map(e)),
+              )
+              .toList(),
       status: ApiModelParser.optionalString(json['status']) ?? 'UNKNOWN',
       openAttendanceId: json['openAttendance'] == null
           ? null

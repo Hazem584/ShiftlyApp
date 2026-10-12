@@ -162,6 +162,13 @@ abstract final class ApiErrorParser {
       'SHIFT_TEMPLATE_UNAVAILABLE' =>
         'This shift template is unavailable. Refresh or contact your manager.',
       'ASSIGNMENT_OCCURRENCE_CAPTURED' => 'Captured attendance protects this assignment. Choose a later effective date.',
+      'SCHEDULE_DAY_LOCKED' => 'This day has started or its attendance or points evidence is already saved. Choose an unused future day.',
+      'SCHEDULE_EXCEPTION_EXISTS' =>
+        'Cancel the existing day exception before changing this schedule.',
+      'SCHEDULE_EXCEPTION_OVERLAP' =>
+        'This change overlaps another assigned day or authorized extra shift.',
+      'SCHEDULE_EXCEPTION_CONFLICT' ||
+      'SCHEDULE_EXCEPTION_IDEMPOTENCY_CONFLICT' => 'The schedule changed. Refresh its exceptions and check your last submission before trying again.',
       'ASSIGNMENT_EXTRA_OCCURRENCE_CONFLICT' => 'This assignment overlaps an authorized extra. Review the employee schedule.',
       'ATTENDANCE_OCCURRENCE_ALREADY_USED' =>
         'This occurrence has already been used and cannot be reopened.',

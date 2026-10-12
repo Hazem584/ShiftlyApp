@@ -12,6 +12,7 @@ import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cu
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/active_attendance_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_presentation.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_status_card.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/day_exception_notices.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/eligibility_tile.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/legacy_clock_in_review_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/saved_schedule_list.dart';
@@ -28,6 +29,8 @@ class FlexibleAttendancePanel extends StatelessWidget {
         builder: (context, state) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (state.eligibility != null)
+              DayExceptionNotices(notices: state.eligibility!.dayExceptions),
             if (!state.loading) ...[
               AttendanceStatusCard(state: state, timezone: timezone),
               const SizedBox(height: 12),
