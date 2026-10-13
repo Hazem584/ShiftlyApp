@@ -237,14 +237,14 @@ void main() {
         await tester.pumpAndSettle();
         expect(
           find.textContaining(
-            arabic ? 'لا يوجد تسجيل حضور' : 'No attendance recorded',
+            arabic ? 'مفيش حضور متسجّل' : 'No attendance recorded',
           ),
           findsWidgets,
         );
         expect(
           find.textContaining(
             arabic
-                ? 'هل حضرت ونسيت التسجيل'
+                ? 'حضرت ونسيت تسجّل'
                 : 'Did you attend without recording',
           ),
           findsOneWidget,

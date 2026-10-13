@@ -35,7 +35,7 @@ class LanguageSelector extends StatelessWidget {
               child: Text(switch (language) {
                 AppLanguage.system => context.tr('Device language'),
                 AppLanguage.english => 'English',
-                AppLanguage.arabic => 'العربية',
+                AppLanguage.arabic => 'العربي المصري',
               }),
             ),
         ],

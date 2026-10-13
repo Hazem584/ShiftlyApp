@@ -327,6 +327,6 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.text('بانتظار اعتماد المدير'), findsOneWidget);
+    expect(find.text('مستنيين موافقة المدير'), findsOneWidget);
   });
 }

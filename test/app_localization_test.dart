@@ -39,7 +39,7 @@ void main() {
       expect(find.text('إجمالي الموظفين'), findsOneWidget);
       await tester.tap(find.byKey(const Key('nav-4')));
       await tester.pumpAndSettle();
-      expect(find.text('الملف الشخصي للمدير'), findsOneWidget);
+      expect(find.text('بروفايل المدير'), findsOneWidget);
       await tester.scrollUntilVisible(
         find.byKey(const Key('language-selector')),
         200,
@@ -76,7 +76,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(
         find.ancestor(
-          of: find.text('العربية'),
+          of: find.text('العربي المصري'),
           matching: find.byType(CheckedPopupMenuItem<AppLanguage>),
         ),
       );
@@ -167,8 +167,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('حالة حضورك تحتاج إلى مراجعة'), findsOneWidget);
-      expect(find.text('تحديث الحالة'), findsOneWidget);
+      expect(find.text('حضورك محتاج مراجعة'), findsOneWidget);
+      expect(find.text('حدّث الحالة'), findsOneWidget);
       expect(find.textContaining('request-123'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -181,9 +181,12 @@ void main() {
         'name': 'Morning {location}',
         'location': 'بالأسفل',
       }),
-      'اختر Morning {location} بالأسفل لتسجيل حضورك.',
+      'اختار Morning {location} بالأسفل عشان تسجّل حضورك.',
     );
-    expect(ar.text('Hello, {name}', {'name': 'Dashboard'}), 'أهلًا، Dashboard');
+    expect(
+      ar.text('Hello, {name}', {'name': 'Dashboard'}),
+      'أهلًا يا Dashboard',
+    );
     for (final entry in arabicTranslations.entries) {
       Set<String> placeholders(String value) =>
           RegExp(r'\{\w+\}').allMatches(value).map((m) => m.group(0)!).toSet();

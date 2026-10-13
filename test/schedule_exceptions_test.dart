@@ -226,7 +226,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('2026-10-20'), findsOneWidget);
       expect(
-        find.text('لا يُطلب منك تسجيل حضور الشيفت الأساسي في هذا اليوم.'),
+        find.text('مش مطلوب منك تسجّل حضور الشيفت الأساسي في اليوم ده.'),
         findsOneWidget,
       );
       expect(find.byType(FilledButton), findsNothing);
@@ -307,7 +307,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('عطلة مساحة العمل'), findsOneWidget);
+    expect(find.text('إجازة مكان الشغل'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

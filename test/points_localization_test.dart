@@ -84,8 +84,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('سجّل Dashboard الحضور.'), findsOneWidget);
-      expect(find.text('قدّم Basel {name} طلب إجازة.'), findsOneWidget);
+      expect(find.text('Dashboard سجّل حضوره.'), findsOneWidget);
+      expect(find.text('Basel {name} بعت طلب إجازة.'), findsOneWidget);
       expect(find.text('Custom untouched content'), findsOneWidget);
       expect(find.textContaining('COVERED_EMPLOYEE'), findsOneWidget);
     },
@@ -123,7 +123,7 @@ void main() {
       expect(find.text('رصيد النقاط'), findsOneWidget);
       expect(find.text('النقاط الخضراء المتاحة'), findsOneWidget);
       expect(find.text('النقاط الحمراء النشطة'), findsOneWidget);
-      expect(find.text('ستظهر شاراتك الذهبية النشطة هنا.'), findsOneWidget);
+      expect(find.text('هتظهر شاراتك الذهبية النشطة هنا.'), findsOneWidget);
       expect(find.text('GREEN available'), findsNothing);
       expect(tester.takeException(), isNull);
     },
@@ -151,7 +151,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('أداء الموظف'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('تعديل النقاط'), 200);
+      await tester.scrollUntilVisible(find.text('عدّل النقاط'), 200);
       expect(find.text('منح نقاط زرقاء'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('المجهود الإضافي'), 150);
       expect(find.text('المجهود الإضافي'), findsOneWidget);

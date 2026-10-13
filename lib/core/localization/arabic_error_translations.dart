@@ -1,200 +1,196 @@
 const arabicErrorTranslations = <String, String>{
   'This email is linked to another account. Contact support to complete setup.':
-      'هذا البريد مرتبط بحساب آخر. تواصل مع الدعم لإكمال إعداد حسابك.',
+      'الإيميل ده مرتبط بحساب تاني. كلّم الدعم عشان تكمّل إعداد حسابك.',
   'An account with this email already exists. Try signing in.':
-      'يوجد حساب بهذا البريد الإلكتروني بالفعل. جرّب تسجيل الدخول.',
-  'That employee could not be found.': 'الموظف غير موجود.',
+      'فيه حساب بالإيميل ده بالفعل. جرّب تسجيل الدخول.',
+  'That employee could not be found.': 'الموظف ده مش موجود.',
   'Choose a change before saving.': 'حدّد تغييرًا قبل الحفظ.',
   'This person is already a workspace member.':
-      'هذا الشخص عضو بالفعل في مساحة العمل.',
+      'الشخص ده عضو في مكان الشغل بالفعل.',
   'A pending invitation already exists for this email.':
-      'توجد دعوة قيد الانتظار لهذا البريد الإلكتروني.',
-  'This invitation is not valid.': 'هذه الدعوة غير صالحة.',
-  'This invitation has already been used.': 'تم استخدام هذه الدعوة بالفعل.',
+      'فيه دعوة للإيميل ده لسه مستنية الرد.',
+  'This invitation is not valid.': 'الدعوة دي مش صالحة.',
+  'This invitation has already been used.': 'الدعوة دي اتستخدمت بالفعل.',
   'This invitation belongs to a different email address.':
-      'هذه الدعوة تخص بريدًا إلكترونيًا آخر.',
-  'This invitation has expired.': 'انتهت صلاحية الدعوة.',
+      'الدعوة دي لإيميل تاني.',
+  'This invitation has expired.': 'صلاحية الدعوة خلصت.',
   'Choose an active employee from this workspace.':
-      'اختر موظفًا نشطًا من مساحة العمل الحالية.',
-  'The selected employee is not active.': 'الموظف المحدّد غير نشط.',
+      'اختار موظف نشط من مكان الشغل الحالي.',
+  'The selected employee is not active.': 'الموظف المحدّد مش نشط.',
   'Shift end must be after its start and the break must be shorter.':
-      'يجب أن تنتهي فترة العمل بعد بدايتها، وأن تكون الاستراحة أقصر من مدتها.',
+      'الشيفت لازم يخلص بعد ما يبدأ، والبريك لازم يكون أقصر من مدته.',
   'A shift cannot be longer than 24 hours.':
-      'لا يمكن أن تتجاوز مدة الشيفت 24 ساعة.',
-  'This shift has been cancelled.': 'تم إلغاء هذا الشيفت.',
-  'That shift could not be found.': 'الشيفت غير موجود.',
+      'مدة الشيفت مينفعش تزيد عن 24 ساعة.',
+  'This shift has been cancelled.': 'اتلغى الشيفت ده.',
+  'That shift could not be found.': 'الشيفت ده مش موجود.',
   'Rejected attendance cannot be clocked out.':
-      'لا يمكن تسجيل الانصراف لحضور مرفوض.',
+      'مينفعش تسجيل الخروج لحضور مرفوض.',
   'This attendance request has already been reviewed.':
-      'تمت مراجعة طلب الحضور بالفعل.',
-  'That attendance record could not be found.': 'سجل الحضور غير موجود.',
+      'طلب الحضور ده اتراجع بالفعل.',
+  'That attendance record could not be found.': 'سجل الحضور ده مش موجود.',
   'Only active employees can manage leave requests.':
-      'إدارة طلبات الإجازة متاحة للموظفين النشطين فقط.',
-  'Leave end must be after its start.': 'يجب أن تنتهي الإجازة بعد وقت بدايتها.',
+      'إدارة طلبات الإجازة متاحة للموظفين النشطين بس.',
+  'Leave end must be after its start.': 'الإجازة لازم تخلص بعد وقت بدايتها.',
   'A leave request cannot be longer than 365 days.':
-      'لا يمكن أن تتجاوز مدة الإجازة 365 يومًا.',
+      'مدة الإجازة مينفعش تزيد عن 365 يوم.',
   'This leave overlaps another pending or approved request.':
-      'هذه الإجازة تتداخل مع طلب آخر قيد المراجعة أو مقبول.',
-  'That leave request could not be found.': 'طلب الإجازة غير موجود.',
+      'الإجازة دي بتتداخل مع طلب تاني مستني المراجعة أو متوافق عليه.',
+  'That leave request could not be found.': 'طلب الإجازة ده مش موجود.',
   'This leave request has already been reviewed.':
-      'تمت مراجعة طلب الإجازة بالفعل.',
-  'This leave request has already been cancelled.':
-      'تم إلغاء طلب الإجازة بالفعل.',
+      'طلب الإجازة ده اتراجع بالفعل.',
+  'This leave request has already been cancelled.': 'اتلغى طلب الإجازة بالفعل.',
   'Only pending leave requests can be changed.':
-      'يمكن تعديل طلبات الإجازة قيد المراجعة فقط.',
-  'That notification is no longer available.': 'هذا الإشعار لم يعد متاحًا.',
-  'Enter a reason for rejection.': 'أدخل سبب الرفض.',
+      'تقدر تعدّل طلبات الإجازة اللي لسه مستنية المراجعة بس.',
+  'That notification is no longer available.': 'التنبيه ده مبقاش متاح.',
+  'Enter a reason for rejection.': 'اكتب سبب الرفض.',
   'A rejection reason is only allowed when rejecting.':
-      'يمكن إدخال سبب رفض عند رفض الطلب فقط.',
+      'تقدر تكتب سبب الرفض بس لو هترفض الطلب.',
   'Your workspace membership does not allow this action.':
-      'صلاحيات عضويتك لا تسمح بهذه العملية.',
+      'صلاحياتك في مكان الشغل مش بتسمح بالعملية دي.',
   'Minimum work time cannot exceed the shift duration.':
-      'الحد الأدنى لمدة العمل لا يمكن أن يتجاوز مدة الشيفت.',
+      'الحد الأدنى لمدة الشغل مينفعش يزيد عن مدة الشيفت.',
   'An active template already uses this name.':
-      'يوجد قالب نشط بهذا الاسم بالفعل.',
-  'That shift template could not be found.': 'قالب الشيفت غير موجود.',
+      'فيه قالب نشط بالاسم ده بالفعل.',
+  'That shift template could not be found.': 'قالب الشيفت ده مش موجود.',
   'This shift template is archived and read only.':
-      'قالب الشيفت مؤرشف وللعرض فقط.',
+      'قالب الشيفت مؤرشف وللعرض بس.',
   'Ask your manager to assign a baseline fixed shift.':
       'اطلب من المدير تعيين شيفت أساسي ثابت لك.',
   'This template is not your assigned baseline. Ask your manager for an extra authorization.':
-      'هذا القالب ليس شيفتك الأساسي المعيّن. اطلب تصريح شيفت إضافي من المدير.',
+      'القالب ده مش شيفتك الأساسي المعيّن. اطلب تصريح شيفت إضافي من المدير.',
   'This shift template is unavailable. Refresh or contact your manager.':
-      'قالب الشيفت غير متاح. حدّث البيانات أو تواصل مع المدير.',
-  'Captured attendance protects this assignment. Choose a later effective date.': 'لا يمكن تعديل التعيين بسبب سجلات الحضور المحفوظة. اختر تاريخ سريان لاحقًا.',
+      'قالب الشيفت مش متاح. حدّث البيانات أو كلّم المدير.',
+  'Captured attendance protects this assignment. Choose a later effective date.':
+      'مينفعش تعدّل التعيين عشان ليه حضور محفوظ. اختار تاريخ سريان بعده.',
   'This assignment overlaps an authorized extra. Review the employee schedule.':
-      'هذا التعيين يتداخل مع شيفت إضافي مصرّح به. راجع جدول الموظف.',
+      'التعيين ده بيتداخل مع شيفت إضافي مصرّح بيه. راجع جدول الموظف.',
   'This occurrence has already been used and cannot be reopened.':
-      'تم استخدام هذا الشيفت بالفعل ولا يمكن فتحه مجددًا.',
+      'الشيفت ده اتستخدم بالفعل ومينفعش تفتحه تاني.',
   'This extra authorization is unavailable. Refresh and ask your manager.':
-      'تصريح الشيفت الإضافي غير متاح. حدّث البيانات وراجع المدير.',
+      'تصريح الشيفت الإضافي مش متاح. حدّث البيانات وراجع المدير.',
   'This extra occurrence is already reserved or attended. Review history.':
-      'تم حجز هذا الشيفت الإضافي أو تسجيل حضوره بالفعل. راجع السجل.',
+      'الشيفت الإضافي ده اتحجز أو اتسجّل حضوره بالفعل. راجع السجل.',
   'This occurrence is the assigned baseline. An extra must be a separate occurrence.':
-      'هذا هو الشيفت الأساسي المعيّن. يجب اختيار شيفت منفصل للعمل الإضافي.',
+      'ده الشيفت الأساسي المتعيّن. الشيفت الإضافي لازم يكون شيفت منفصل عنه.',
   'This extra has been consumed and cannot be revoked.':
-      'تم استخدام تصريح الشيفت الإضافي ولا يمكن إلغاؤه.',
-  'The saved extra request conflicts with an earlier operation. Keep its evidence and contact support.': 'الطلب الإضافي المحفوظ يتعارض مع عملية سابقة. احتفظ بتفاصيله وتواصل مع الدعم.',
-  'This extra overlaps a baseline or another reserved extra. Choose a different occurrence.':
-      'الشيفت الإضافي يتداخل مع شيفت أساسي أو إضافي محجوز. اختر موعدًا آخر.',
-  'The check-in window has expired. Record actual attendance for already-worked extras.': 'انتهى وقت تسجيل الحضور. سجّل الحضور الفعلي للشيفتات الإضافية التي انتهى العمل بها.',
-  'Choose a valid operational date.': 'اختر تاريخ يوم عمل صحيحًا.',
+      'تصريح الشيفت الإضافي اتستخدم بالفعل ومينفعش تلغيه.',
+  'The saved extra request conflicts with an earlier operation. Keep its evidence and contact support.': 'الطلب الإضافي المحفوظ متعارض مع عملية قبل كده. احتفظ بتفاصيله وكلّم الدعم.',
+  'This extra overlaps a baseline or another reserved extra. Choose a different occurrence.': 'الشيفت الإضافي ده بيتداخل مع شيفت أساسي أو إضافي محجوز. اختار معاد تاني.',
+  'The check-in window has expired. Record actual attendance for already-worked extras.': 'وقت تسجيل الحضور خلص. لو اشتغلت الشيفت الإضافي بالفعل، سجّل الحضور الفعلي.',
+  'Choose a valid operational date.': 'اختار تاريخ يوم شغل صحيح.',
   'Actual clock-out must follow clock-in and both times must be in the past.':
-      'يجب أن يكون الانصراف الفعلي بعد الحضور، وأن يكون الوقتان في الماضي.',
+      'الخروج الفعلي لازم يكون بعد الحضور، والوقتين لازم يكونوا قبل دلوقتي.',
   'Actual clock-in must fall within the occurrence check-in window.':
-      'وقت الحضور الفعلي يجب أن يكون ضمن فترة التسجيل المسموح بها للشيفت.',
+      'وقت الحضور الفعلي لازم يكون جوه فترة التسجيل المسموحة للشيفت.',
   'The employee membership was not established at that clock-in time.':
-      'لم تكن عضوية الموظف موجودة في وقت الحضور المحدّد.',
+      'الموظف مكنش عضو في مكان الشغل وقت الحضور المحدد.',
   'This extra authorization is unavailable. Refresh history.':
-      'تصريح الشيفت الإضافي غير متاح. حدّث السجل.',
-  'This historical schedule needs daylight saving policy review. Contact your manager.': 'هذا الجدول السابق يحتاج إلى مراجعة إعدادات التوقيت الصيفي. تواصل مع المدير.',
+      'تصريح الشيفت الإضافي مش متاح. حدّث السجل.',
+  'This historical schedule needs daylight saving policy review. Contact your manager.':
+      'الجدول القديم ده محتاج مراجعة إعدادات التوقيت الصيفي. كلّم مديرك.',
   'This schedule produces an invalid time interval. Review its daylight saving boundaries.':
-      'مواعيد هذا الجدول غير صحيحة. راجع تغييرات التوقيت الصيفي.',
+      'مواعيد الجدول ده مش صحيحة. راجع تغييرات التوقيت الصيفي.',
   'This schedule policy is unsupported. Update the app or contact support.':
-      'إعدادات هذا الجدول غير مدعومة. حدّث التطبيق أو تواصل مع الدعم.',
-  'Legacy clock-in is disabled. Use your assigned fixed shift or an authorized extra.': 'تسجيل الحضور في الجداول السابقة غير متاح. استخدم شيفتك الثابت أو شيفتًا إضافيًا مصرّحًا به.',
+      'إعدادات الجدول ده مش مدعومة. حدّث التطبيق أو كلّم الدعم.',
+  'Legacy clock-in is disabled. Use your assigned fixed shift or an authorized extra.': 'تسجيل الحضور في الجداول السابقة مش متاح. استخدم شيفتك الثابت أو شيفت إضافي مصرّح بيه.',
   'Choose today or a future date in the workspace timezone.':
-      'اختر اليوم أو تاريخًا مستقبليًا حسب توقيت مساحة العمل.',
-  'Select one or more unique weekdays.':
-      'اختر يوم عمل واحدًا أو أكثر دون تكرار.',
-  'Choose a valid effective date.': 'اختر تاريخ سريان صحيحًا.',
+      'اختار النهارده أو تاريخ بعده، حسب توقيت مكان الشغل.',
+  'Select one or more unique weekdays.': 'اختار يوم شغل أو أكتر من غير تكرار.',
+  'Choose a valid effective date.': 'اختار تاريخ سريان صحيح.',
   'Only active employees can receive a new work pattern.':
-      'يمكن تعيين جدول عمل جديد للموظفين النشطين فقط.',
-  'That employee work pattern is unavailable.': 'جدول عمل الموظف غير متاح.',
+      'تقدر تعيّن جدول شغل جديد للموظفين النشطين بس.',
+  'That employee work pattern is unavailable.': 'جدول شغل الموظف ده مش متاح.',
   'The work pattern changed. Refresh before trying again.':
-      'تغيّر جدول العمل. حدّث البيانات قبل المحاولة مجددًا.',
+      'تغيّر جدول الشغل. حدّث البيانات قبل ما تجرّب تاني.',
   'The workspace timezone is invalid. Ask a manager to correct it.':
-      'المنطقة الزمنية لمساحة العمل غير صحيحة. اطلب من المدير تصحيحها.',
+      'المنطقة الزمنية لمكان الشغل مش صحيحة. اطلب من المدير تصحيحها.',
   'You are not scheduled to work on this operational date.':
-      'لا يوجد عمل مجدول لك في هذا اليوم.',
+      'مفيش عمل مجدول لك في اليوم ده.',
   'This template is outside its current check-in window.':
-      'وقت تسجيل الحضور لهذا القالب غير متاح حاليًا.',
+      'وقت تسجيل الحضور للقالب ده مش متاح دلوقتي.',
   'You already have an open attendance. Refresh to view it.':
-      'لديك حضور مفتوح بالفعل. حدّث البيانات لعرضه.',
+      'عندك حضور مفتوح بالفعل. حدّث البيانات لعرضه.',
   'This attendance would overlap another attendance record.':
-      'هذا الحضور سيتداخل مع سجل حضور آخر.',
+      'الحضور ده هيتداخل مع سجل حضور تاني.',
   'This clock-in retry no longer matches the original request.':
-      'محاولة تسجيل الحضور لا تطابق الطلب الأصلي.',
+      'محاولة تسجيل الحضور دي مش مطابقة للطلب الأصلي.',
   'Attendance changed at the same time. Refresh and retry.':
-      'تغيّر الحضور أثناء تنفيذ العملية. حدّث البيانات وحاول مجددًا.',
+      'تغيّر الحضور وقت تنفيذ العملية. حدّث البيانات وجرّب تاني.',
   'The start date must not be after the end date.':
-      'تاريخ البداية يجب ألا يكون بعد تاريخ النهاية.',
+      'مينفعش تاريخ البداية يكون بعد تاريخ النهاية.',
   'This chat group is archived and read only.':
-      'مجموعة المحادثة مؤرشفة وللعرض فقط.',
-  'That chat group could not be found.': 'مجموعة المحادثة غير موجودة.',
+      'جروب الشات ده متأرشف وللقراءة بس.',
+  'That chat group could not be found.': 'جروب الشات ده مش موجود.',
   'Choose active members from the current workspace.':
-      'اختر أعضاء نشطين من مساحة العمل الحالية.',
-  'Messages changed. Refresh the conversation.':
-      'تغيّرت الرسائل. حدّث المحادثة.',
+      'اختار أعضاء نشطين من مكان الشغل الحالي.',
+  'Messages changed. Refresh the conversation.': 'تغيّرت الرسايل. حدّث الشات.',
   'This message conflicts with an earlier send attempt.':
-      'هذه الرسالة تتعارض مع محاولة إرسال سابقة.',
+      'الرسالة دي متعارضة مع محاولة إرسال قبل كده.',
   'Your read position is already ahead of that message.':
-      'تم تسجيل قراءتك لرسائل أحدث من هذه الرسالة بالفعل.',
+      'إنت متسجّل إنك قريت رسايل أحدث من الرسالة دي بالفعل.',
   'The read position changed. Refreshing will synchronize it.':
-      'تغيّر موضع القراءة. حدّث المحادثة لمزامنته.',
+      'آخر مكان قريت لحده اتغيّر. حدّث الشات عشان يتزامن.',
   'The message being replied to is no longer available.':
-      'الرسالة التي ترد عليها لم تعد متاحة.',
-  'This media format is not supported.': 'صيغة الوسائط غير مدعومة.',
+      'الرسالة اللي بترد عليها مبقتش متاحة.',
+  'This media format is not supported.': 'صيغة الوسائط مش مدعومة.',
   'The selected media is too large.': 'حجم الوسائط المحدّدة كبير جدًا.',
-  'The media details are invalid.': 'تفاصيل الوسائط غير صحيحة.',
+  'The media details are invalid.': 'تفاصيل الوسائط مش صحيحة.',
   'Media authorization is no longer available.':
-      'تصريح الوصول إلى الوسائط لم يعد متاحًا.',
+      'تصريح الوصول إلى الوسائط مبقاش متاح.',
   'The upload service is temporarily unavailable.':
-      'خدمة رفع الملفات غير متاحة مؤقتًا.',
+      'خدمة رفع الملفات مش متاحة مؤقتًا.',
   'The uploaded media could not be verified.':
-      'تعذّر التحقّق من الوسائط المرفوعة.',
+      'معرفناش نتأكد من الملفات اللي اترفعت.',
   'The uploaded media could not be found. Please retry.':
-      'الوسائط المرفوعة غير موجودة. حاول مجددًا.',
+      'الملفات اللي اترفعت مش موجودة. جرّب تاني.',
   'The uploaded media did not pass verification.':
-      'الوسائط المرفوعة لم تجتز التحقّق.',
+      'الملفات اللي اترفعت معدّتش التحقق.',
   'The upload destination is invalid. Please retry.':
-      'وجهة رفع الملفات غير صحيحة. حاول مجددًا.',
+      'وجهة رفع الملفات مش صحيحة. جرّب تاني.',
   'The media changed after it was prepared. Please retry.':
-      'تغيّرت الوسائط بعد تجهيزها. حاول مجددًا.',
-  'The media upload failed. Please retry.': 'تعذّر رفع الوسائط. حاول مجددًا.',
+      'تغيّرت الوسائط بعد تجهيزها. جرّب تاني.',
+  'The media upload failed. Please retry.': 'معرفناش نرفع الملفات. جرّب تاني.',
   'The media upload timed out. Please retry.':
-      'انتهت مهلة رفع الوسائط. حاول مجددًا.',
-  'The media upload was cancelled.': 'تم إلغاء رفع الوسائط.',
-  'That upload is no longer available.': 'الملف المرفوع لم يعد متاحًا.',
+      'وقت رفع الملفات خلص. جرّب تاني.',
+  'The media upload was cancelled.': 'اتلغى رفع الوسائط.',
+  'That upload is no longer available.': 'الملف المرفوع مبقاش متاح.',
   'The upload does not match this message.':
-      'الملف المرفوع لا يطابق هذه الرسالة.',
-  'The upload expired. Please try again.': 'انتهت صلاحية الرفع. حاول مجددًا.',
-  'This upload has already been sent.': 'تم إرسال هذا الملف بالفعل.',
-  'This upload is no longer pending.': 'هذا الملف لم يعد قيد الإرسال.',
-  'This message has no available media.': 'لا توجد وسائط متاحة لهذه الرسالة.',
+      'الملف اللي اترفع مش مطابق للرسالة دي.',
+  'The upload expired. Please try again.': 'انتهت صلاحية الرفع. جرّب تاني.',
+  'This upload has already been sent.': 'الملف ده اتبعت بالفعل.',
+  'This upload is no longer pending.': 'الملف ده مبقاش مستني الإرسال.',
+  'This message has no available media.': 'مفيش وسائط متاحة للرسالة دي.',
   'The selected message cannot be used as a read position.':
-      'لا يمكن استخدام هذه الرسالة لتحديد موضع القراءة.',
+      'مينفعش استخدام الرسالة دي لتحديد موضع القراءة.',
   'You do not have enough GREEN points for this redemption.':
-      'ليس لديك نقاط خضراء كافية لهذا التعويض.',
+      'معندكش نقاط خضراء كافية للتعويض ده.',
   'You do not have an active RED point to compensate.':
-      'لا توجد لديك نقطة حمراء نشطة لتعويضها.',
+      'معندكش نقطة حمراء نشطة تعوّضها.',
   'This redemption conflicts with an earlier request. Refresh and retry.':
-      'هذا التعويض يتعارض مع طلب سابق. حدّث البيانات وحاول مجددًا.',
+      'التعويض ده متعارض مع طلب قبل كده. حدّث البيانات وجرّب تاني.',
   'Points or compensation are currently disabled for this workspace.':
-      'النقاط أو التعويض غير مفعّل حاليًا في مساحة العمل.',
+      'النقاط أو التعويض مقفولين دلوقتي في مكان الشغل.',
   'Choose a future workspace-local policy date.':
-      'اختر تاريخًا مستقبليًا للسياسة حسب توقيت مساحة العمل.',
+      'اختار تاريخ بعد النهارده للسياسة، بتوقيت مكان الشغل.',
   'A policy already covers that date. Refresh the version history.':
-      'توجد سياسة سارية في هذا التاريخ بالفعل. حدّث سجل النسخ.',
+      'فيه سياسة سارية في التاريخ ده بالفعل. حدّث سجل النسخ.',
   'Another review already resolved this dispute. Refresh its canonical status.':
-      'تم حسم الاعتراض في مراجعة أخرى. حدّث حالته المؤكّدة.',
+      'الاعتراض ده اتحسم في مراجعة تانية بالفعل. حدّث وشوف حالته المؤكّدة.',
   'This record has already been reversed. Refresh its audit history.':
-      'تم عكس هذه العملية بالفعل. حدّث سجلها.',
-  'The saved operation conflicts with an existing UUID. Its outcome needs review before another change.': 'العملية المحفوظة تتعارض مع معرّف طلب موجود. راجع نتيجتها قبل إجراء تغيير آخر.',
+      'العملية دي اتعملها عكس بالفعل. حدّث سجلها.',
+  'The saved operation conflicts with an existing UUID. Its outcome needs review before another change.': 'العملية المحفوظة متعارضة مع رقم طلب موجود. راجع نتيجتها قبل ما تغيّر حاجة تانية.',
   'Check the quantity, reason and employee evidence.':
       'راجع العدد والسبب وبيانات الموظف المرتبطة.',
   'This date is unresolved because historical work context is unavailable.':
-      'لم تُحسم حالة هذا التاريخ لعدم توفر بيانات العمل السابقة.',
-  'Your points balance needs support review.':
-      'رصيد نقاطك يحتاج إلى مراجعة الدعم.',
-  'Please check the information you entered.': 'راجع البيانات التي أدخلتها.',
+      'لسه مش متأكدين من حالة التاريخ ده عشان بيانات الشغل القديمة مش متاحة.',
+  'Your points balance needs support review.': 'رصيد نقاطك محتاج الدعم يراجعه.',
+  'Please check the information you entered.': 'راجع البيانات اللي كتبتها.',
   'Your session has expired. Please sign in again.':
-      'انتهت جلستك. سجّل الدخول مجددًا.',
-  'You do not have permission to do that.':
-      'ليس لديك صلاحية لتنفيذ هذه العملية.',
-  'The requested item could not be found.': 'العنصر المطلوب غير موجود.',
+      'جلسة حسابك خلصت. ادخل تاني.',
+  'You do not have permission to do that.': 'معندكش صلاحية تعمل العملية دي.',
+  'The requested item could not be found.': 'الحاجة اللي طلبتها مش موجودة.',
   'The selected file is too large.': 'حجم الملف المحدّد كبير جدًا.',
-  'This file type is not supported.': 'نوع الملف غير مدعوم.',
+  'This file type is not supported.': 'نوع الملف مش مدعوم.',
   'The service is temporarily unavailable. Please retry.':
-      'الخدمة غير متاحة مؤقتًا. حاول مجددًا.',
+      'الخدمة مش متاحة مؤقتًا. جرّب تاني.',
 };

@@ -135,7 +135,7 @@ void main() {
           Failure(message: 'The email or password is incorrect.'),
         );
       await _pump(tester, auth, locale: const Locale('ar'));
-      expect(find.text('أهلًا بك في Shiftly'), findsOneWidget);
+      expect(find.text('نوّرت Shiftly يا صاحبي'), findsOneWidget);
       expect(
         tester
             .widget<TextField>(
@@ -149,15 +149,12 @@ void main() {
       );
       await tester.tap(find.byKey(const Key('login-submit')));
       await tester.pump();
-      expect(find.text('أدخل بريدًا إلكترونيًا صحيحًا'), findsOneWidget);
-      expect(find.text('أدخل كلمة المرور'), findsOneWidget);
+      expect(find.text('اكتب إيميل صحيح'), findsOneWidget);
+      expect(find.text('اكتب الباسورد'), findsOneWidget);
       expect(auth.calls, 0);
       await _fillAndSubmit(tester);
       await tester.pump();
-      expect(
-        find.text('البريد الإلكتروني أو كلمة المرور غير صحيحة.'),
-        findsOneWidget,
-      );
+      expect(find.text('الإيميل أو الباسورد مش صح.'), findsOneWidget);
       await tester.pump(const Duration(seconds: 4));
     },
   );
