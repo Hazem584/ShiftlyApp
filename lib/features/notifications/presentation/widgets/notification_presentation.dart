@@ -5,6 +5,22 @@ import 'package:shiftly/features/notifications/domain/repositories/notification_
 ({String label, IconData icon, Color color}) notificationPresentation(
   NotificationType type,
 ) => switch (type) {
+  NotificationType.shiftExchangeRequested ||
+  NotificationType.shiftExchangeUpdated => (
+    label: 'Shift swaps and coverage',
+    icon: Icons.swap_horiz,
+    color: AppColors.info,
+  ),
+  NotificationType.fixedShiftReminder => (
+    label: 'Upcoming fixed shift',
+    icon: Icons.alarm,
+    color: AppColors.orange,
+  ),
+  NotificationType.clockOutReminder => (
+    label: 'Remember to clock out',
+    icon: Icons.logout,
+    color: AppColors.orange,
+  ),
   NotificationType.teamAnnouncement => (
     label: 'Team announcement',
     icon: Icons.campaign_outlined,

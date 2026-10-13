@@ -26,6 +26,32 @@ Deploy migrations **`20261012210000_schedule_exceptions`** and **`20261012230000
 
 Acceptance: assign Morning, change one future date to Night, and check employee eligibility at the two check-in windows. Add a holiday and a specific employee override on the same date; verify the precedence. Check rest-day points, manager follow-up, exception history, report exports, cancellation blocked after attendance/points capture, and workspace/account switching with two accounts.
 
+## Shift swaps and coverage
+
+Employees open **Shift swaps and coverage** from their Overview or the swap action in Team work. They choose a colleague, their operational date, and (for swaps) the colleague's date; **Preview agreed schedules** shows the saved schedules and UTC-backed local times before submission. A stable submission UUID survives an identical failed retry. Requests expire at the earliest original or replacement check-in opening.
+
+Only the selected colleague can accept or decline. Acceptance moves the request to manager review and notifies active managers; it does not change either schedule. Only an independent active manager can approve or reject. Approval atomically creates two audited day exceptions using the agreed saved schedules. A swap exchanges the two required baseline schedules, including across two dates. Coverage is for one date: the requester receives a day off and the colleague takes the requester's shift. Coverage needs a colleague with a fixed assignment but no required baseline shift that day. Separate extra authorizations remain separate.
+
+Changed assignment evidence, existing employee exceptions, recorded attendance, captured points evidence, approved leave on the replacement interval, and overlaps with another baseline day or an extra reservation block approval. A request already reserving either employee/date blocks another pending request. Requests can be cancelled by the requester while awaiting either decision; decline/reject requires a reason. History preserves both snapshots, employee consent, reviewer, times, notes and applied exception IDs. Expired requests are closed by the notification worker. The employee's fixed eligibility, points evidence, reports and existing reminders subsequently use the applied one-day exceptions.
+
+Authenticated routes relative to `/api/v1/workspaces/:workspaceId/shift-exchanges`:
+
+- `GET /?page=1&limit=20`: managers see workspace requests; employees see only their own outgoing/incoming requests.
+- Employee `GET /colleagues?page=1&limit=100`: active employee IDs/names in the same workspace.
+- Employee `GET /occurrence?employeeMembershipId=...&operationalDate=YYYY-MM-DD`: validated prospective baseline evidence.
+- Employee `POST /`: `clientRequestId`, `targetMembershipId`, `kind` (`SWAP` or `COVER`), `requesterDate`, `targetDate`, `reason` (5–1000 characters), and the two exact preview objects as `requesterSnapshot`/`targetSnapshot`.
+- `POST /:id/decision`: `decision` (`ACCEPT`, `DECLINE`, `APPROVE`, `REJECT`, `CANCEL`) and optional `note`; declines/rejections require a 5–1000 character note. The server checks ownership and role for each transition.
+
+## Fixed-shift and clock-out reminders
+
+The existing protected push worker creates a reminder within the 15 minutes before the effective baseline start. Discovery uses the saved assignment and applicable day exception; holidays/rest, used or open attendance, inactive membership, archived templates and approved leave suppress it. Durable receipts prevent repeating reminders even after the user deletes their notification. A changed schedule gets a new occurrence key; delivery rechecks the saved start, exception and current eligibility before sending, discarding stale reminders.
+
+Open template attendance receives one reminder after its saved scheduled end plus 15 minutes. This uses canonical attendance (including overnight UTC intervals), not a client's clock. Clock-out/rejection before processing or delivery suppresses the alert. The alert opens My shifts and never records an automatic clock-out, changes hours, or creates a correction; the employee records their actual departure or submits the existing correction request afterwards.
+
+Deploy migration **`20261013120000_shift_exchanges_and_reminders`**, regenerate Prisma and deploy the backend before updating Flutter. Keep the existing authenticated POST to `/api/v1/internal/push-processing` running every minute with `x-shiftly-processor-secret`; no new secret or worker endpoint is needed. In-app events are created even when Firebase sending is unconfigured, provided this worker runs. Push still requires configured devices/Firebase and sufficient worker batch capacity; delivery timing remains subject to device/network conditions. Source changes do not schedule a live worker or deploy/apply migrations.
+
+Tests cover consent before approval, swaps/coverage, stale previews, expiry, workspace isolation, extra/leave/captured-day conflicts, retry identity, Arabic compact layouts and deduplicated/revalidated reminders. The repeatable backend `scripts/schedule-exchanges-postgres-smoke.mjs` exercises all migrations and 32 database behavior checks on an empty disposable database and rolls back its schema/test data. Two-account acceptance and real device delivery remain release checks.
+
 ## Attendance corrections
 
 Completed fixed shifts without recorded attendance also support employee review requests and manager-selected approved hours. See [Missing attendance reviews](missed-attendance-reviews.md) for the API changes and required migration.

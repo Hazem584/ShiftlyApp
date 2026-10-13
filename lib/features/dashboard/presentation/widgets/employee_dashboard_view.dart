@@ -223,6 +223,13 @@ class EmployeeDashboardView extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => context.push('/team-work?tab=corrections'),
               ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.swap_horiz),
+                title: Text(context.tr('Shift swaps and coverage')),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => context.push('/shift-exchanges'),
+              ),
             ],
           ),
         ),

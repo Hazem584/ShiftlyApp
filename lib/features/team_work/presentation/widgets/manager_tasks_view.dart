@@ -65,6 +65,7 @@ class ManagerTasksView extends StatelessWidget {
     itemBuilder: (context, task, busy) {
       final (label, icon) = switch (task.kind) {
         'CORRECTION' => ('Attendance correction', Icons.edit_calendar_outlined),
+        'EXCHANGE' => ('Shift swaps and coverage', Icons.swap_horiz),
         'LEAVE' => ('Leave request', Icons.event_busy_outlined),
         'ATTENDANCE' => ('Attendance review', Icons.fact_check_outlined),
         'LATE' => ('Late arrival', Icons.schedule_outlined),
@@ -113,7 +114,12 @@ class ManagerTasksView extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  if (task.kind == 'CORRECTION')
+                  if (task.kind == 'EXCHANGE')
+                    FilledButton(
+                      onPressed: () => context.push('/shift-exchanges'),
+                      child: Text(context.tr('Review shift exchanges')),
+                    )
+                  else if (task.kind == 'CORRECTION')
                     FilledButton(
                       onPressed: () async {
                         final saved = await showDialog<bool>(

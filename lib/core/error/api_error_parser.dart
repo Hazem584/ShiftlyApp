@@ -163,6 +163,14 @@ abstract final class ApiErrorParser {
         'This shift template is unavailable. Refresh or contact your manager.',
       'ASSIGNMENT_OCCURRENCE_CAPTURED' => 'Captured attendance protects this assignment. Choose a later effective date.',
       'SCHEDULE_DAY_LOCKED' => 'This day has started or its attendance or points evidence is already saved. Choose an unused future day.',
+      'EXCHANGE_PENDING' =>
+        'An active request already reserves one of these dates.',
+      'EXCHANGE_LEAVE_CONFLICT' =>
+        'The replacement shift overlaps approved leave.',
+      'EXCHANGE_EXPIRED' =>
+        'This request expired or a check-in window has already opened.',
+      'EXCHANGE_NOT_AVAILABLE' => 'A swap needs two working occurrences. Coverage needs a colleague with no baseline shift that day.',
+      'EXCHANGE_SCHEDULE_CHANGED' => 'The agreed schedule changed. Refresh its preview and submit a new request.',
       'SCHEDULE_EXCEPTION_EXISTS' =>
         'Cancel the existing day exception before changing this schedule.',
       'SCHEDULE_EXCEPTION_OVERLAP' =>

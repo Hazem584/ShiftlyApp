@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
@@ -123,6 +124,13 @@ class TeamWorkBodyState extends State<TeamWorkBody>
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
+      actions: [
+        IconButton(
+          tooltip: context.tr('Shift swaps and coverage'),
+          onPressed: () => context.push('/shift-exchanges'),
+          icon: const Icon(Icons.swap_horiz),
+        ),
+      ],
       title: Text(
         context.tr(widget.manager ? 'Team work center' : 'Team updates'),
       ),

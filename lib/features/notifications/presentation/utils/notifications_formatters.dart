@@ -76,6 +76,24 @@ abstract final class NotificationsScreenNotificationNavigator {
       return null;
     }
     return switch (notification.type) {
+      NotificationType.shiftExchangeRequested ||
+      NotificationType.shiftExchangeUpdated => _NotificationDestination(
+        id: _id(data, 'exchangeId'),
+        location: '/shift-exchanges',
+        kind: _DestinationKind.teamWork,
+      ),
+      NotificationType.fixedShiftReminder when scope.isEmployee =>
+        _NotificationDestination(
+          id: _id(data, 'assignmentId'),
+          location: '/employee?tab=shifts',
+          kind: _DestinationKind.teamWork,
+        ),
+      NotificationType.clockOutReminder when scope.isEmployee =>
+        _NotificationDestination(
+          id: _id(data, 'attendanceId'),
+          location: '/employee?tab=shifts',
+          kind: _DestinationKind.teamWork,
+        ),
       NotificationType.teamAnnouncement => _NotificationDestination(
         id: _id(data, 'announcementId'),
         location: '/team-work?tab=announcements',

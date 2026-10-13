@@ -12,6 +12,10 @@ enum NotificationType {
   teamAnnouncement,
   attendanceCorrectionCreated,
   attendanceCorrectionReviewed,
+  shiftExchangeRequested,
+  shiftExchangeUpdated,
+  fixedShiftReminder,
+  clockOutReminder,
   unknown;
 
   static NotificationType parse(Object? value) => switch (value) {
@@ -28,6 +32,10 @@ enum NotificationType {
     'TEAM_ANNOUNCEMENT' => teamAnnouncement,
     'ATTENDANCE_CORRECTION_CREATED' => attendanceCorrectionCreated,
     'ATTENDANCE_CORRECTION_REVIEWED' => attendanceCorrectionReviewed,
+    'SHIFT_EXCHANGE_REQUESTED' => shiftExchangeRequested,
+    'SHIFT_EXCHANGE_UPDATED' => shiftExchangeUpdated,
+    'FIXED_SHIFT_REMINDER' => fixedShiftReminder,
+    'CLOCK_OUT_REMINDER' => clockOutReminder,
     _ => unknown,
   };
 
@@ -45,6 +53,10 @@ enum NotificationType {
     teamAnnouncement => 'TEAM_ANNOUNCEMENT',
     attendanceCorrectionCreated => 'ATTENDANCE_CORRECTION_CREATED',
     attendanceCorrectionReviewed => 'ATTENDANCE_CORRECTION_REVIEWED',
+    shiftExchangeRequested => 'SHIFT_EXCHANGE_REQUESTED',
+    shiftExchangeUpdated => 'SHIFT_EXCHANGE_UPDATED',
+    fixedShiftReminder => 'FIXED_SHIFT_REMINDER',
+    clockOutReminder => 'CLOCK_OUT_REMINDER',
     unknown => null,
   };
 }

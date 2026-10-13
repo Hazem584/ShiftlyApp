@@ -27,6 +27,7 @@ import 'package:shiftly/features/profile/presentation/screens/profile_screen.dar
 import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
+import 'package:shiftly/features/team_work/presentation/shift_exchanges_screen.dart';
 import 'package:shiftly/features/team_work/presentation/team_work_screen.dart';
 
 GoRouter createAppRouter({
@@ -58,6 +59,10 @@ GoRouter createAppRouter({
         builder: (_, state) => TeamWorkScreen(
           initialTab: state.uri.queryParameters['tab'] ?? 'announcements',
         ),
+      ),
+      GoRoute(
+        path: '/shift-exchanges',
+        builder: (_, _) => const ShiftExchangesScreen(),
       ),
       GoRoute(
         path: '/session',
@@ -269,6 +274,7 @@ String? _redirect(
     SessionStatus.authenticatedManager => _managerRedirect(location),
     SessionStatus.authenticatedEmployee =>
       location == '/team-work' ||
+              location == '/shift-exchanges' ||
               location == '/workspaces' ||
               location == '/employee' ||
               location.startsWith('/employee/chat/')
