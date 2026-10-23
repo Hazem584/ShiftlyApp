@@ -77,6 +77,10 @@ import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
+import 'package:shiftly/features/tasks/data/api_task_repository.dart';
+import 'package:shiftly/features/tasks/data/device_task_reminders.dart';
+import 'package:shiftly/features/tasks/domain/task_reminders.dart';
+import 'package:shiftly/features/tasks/domain/task_repository.dart';
 import 'package:shiftly/features/team_work/data/api_shift_exchange_repository.dart';
 import 'package:shiftly/features/team_work/data/api_team_work_repository.dart';
 import 'package:shiftly/features/team_work/domain/shift_exchange_repository.dart';
@@ -150,6 +154,15 @@ abstract final class DependencyRegistration {
         dispose: (client) => client.dio.close(force: true),
       )
       ..registerLazySingleton<Dio>(() => target<ApiClient>().dio)
+      ..registerLazySingleton<TaskRepository>(
+        () => ApiTaskRepository(target<Dio>()),
+      )
+      ..registerLazySingleton<TaskReminders>(
+        () => DeviceTaskReminders(
+          target<SharedPreferences>(),
+          target<PushPreferenceStore>(),
+        ),
+      )
       ..registerLazySingleton<TeamWorkRepository>(
         () => ApiTeamWorkRepository(target<Dio>()),
       )

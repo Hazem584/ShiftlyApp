@@ -27,6 +27,7 @@ import 'package:shiftly/features/profile/presentation/screens/profile_screen.dar
 import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
+import 'package:shiftly/features/tasks/presentation/tasks_screen.dart';
 import 'package:shiftly/features/team_work/presentation/shift_exchanges_screen.dart';
 import 'package:shiftly/features/team_work/presentation/team_work_screen.dart';
 
@@ -54,6 +55,11 @@ GoRouter createAppRouter({
     errorBuilder: (context, state) =>
         RouteNotFoundScreen(routeName: state.uri.path),
     routes: [
+      GoRoute(
+        path: '/tasks',
+        builder: (_, state) =>
+            TasksScreen(taskId: state.uri.queryParameters['taskId']),
+      ),
       GoRoute(
         path: '/team-work',
         builder: (_, state) => TeamWorkScreen(
@@ -273,7 +279,8 @@ String? _redirect(
           : '/session-error',
     SessionStatus.authenticatedManager => _managerRedirect(location),
     SessionStatus.authenticatedEmployee =>
-      location == '/team-work' ||
+      location == '/tasks' ||
+              location == '/team-work' ||
               location == '/shift-exchanges' ||
               location == '/workspaces' ||
               location == '/employee' ||

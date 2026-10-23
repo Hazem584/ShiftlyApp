@@ -5,6 +5,11 @@ import 'package:shiftly/features/notifications/domain/repositories/notification_
 ({String label, IconData icon, Color color}) notificationPresentation(
   NotificationType type,
 ) => switch (type) {
+  NotificationType.taskReminder => (
+    label: 'Task reminder',
+    icon: Icons.checklist_rounded,
+    color: AppColors.info,
+  ),
   NotificationType.shiftExchangeRequested ||
   NotificationType.shiftExchangeUpdated => (
     label: 'Shift swaps and coverage',

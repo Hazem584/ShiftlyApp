@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/app/app_task_coordinator.dart';
 import 'package:shiftly/app/session_feature_coordinator.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
 import 'package:shiftly/core/localization/language_preference_store.dart';
@@ -73,6 +74,10 @@ import 'package:shiftly/features/shifts/data/mock_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/manager_shifts_cubit.dart';
+import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
+import 'package:shiftly/features/tasks/data/memory_task_repository.dart';
+import 'package:shiftly/features/tasks/domain/task_reminders.dart';
+import 'package:shiftly/features/tasks/domain/task_repository.dart';
 import 'package:shiftly/features/workspaces/data/mock_workspace_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
@@ -124,6 +129,8 @@ class AppComposition {
   late final SessionFeatureCoordinator featureCoordinator;
   PushNotificationsCubit? pushNotifications;
   PushDeviceRepository? pushDevices;
+  late final TasksCubit tasksCubit;
+  late final AppTaskCoordinator taskCoordinator;
 
   AppComposition(
     this.dependencies, {
@@ -329,6 +336,12 @@ class AppComposition {
     chatGroupsCubit =
         registered<ChatGroupsCubit>() ??
         ChatGroupsCubit(chat, gallery: ChatImageGallery());
+    tasksCubit = TasksCubit(
+      registered<TaskRepository>() ?? MemoryTaskRepository(),
+      registered<TaskReminders>() ?? const NoTaskReminders(),
+      enableRemoteReminders: () async => pushNotifications?.setEnabled(true),
+    );
+    taskCoordinator = AppTaskCoordinator(tasksCubit, router, isMounted);
     final coordinator = sessionCoordinator;
     if (coordinator == null) {
       profileCubit.load();
@@ -341,6 +354,7 @@ class AppComposition {
         role: WorkspaceRole.manager,
         workspaceName: 'Shift Lab Preview Workspace',
       );
+      unawaited(taskCoordinator.bindSession(previewScope));
       managerShiftsCubit.bindSession(previewScope);
       managerAttendanceCubit.bindSession(previewScope);
       attendanceReportsCubit.bindSession(previewScope);
@@ -361,6 +375,7 @@ class AppComposition {
   final Future<void> Function(PushNotice) onForeground;
 
   void dispose() {
+    taskCoordinator.dispose();
     unawaited(pushNotifications?.close());
     onboardingCubit.close();
     languageCubit.close();
@@ -398,6 +413,7 @@ class AppComposition {
     employeesCubit.bindSession(employeeScopeForSession(state));
     workspacesCubit.bindUser(state.currentUser?.id);
     final featureScope = featureScopeForSession(state, generation);
+    unawaited(taskCoordinator.bindSession(featureScope));
     managerShiftsCubit.bindSession(featureScope);
     employeeShiftsCubit.bindSession(featureScope);
     managerAttendanceCubit.bindSession(featureScope);
@@ -419,6 +435,8 @@ class AppComposition {
     pointsCubit.bindSession(featureScope);
     managerPerformanceCubit.bindSession(featureScope);
   }
+
+  Future<void> openTaskTap() => taskCoordinator.openPending();
 
   void invalidateDashboardAndCalendar() {
     dashboardCubit.invalidate();

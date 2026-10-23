@@ -5,8 +5,10 @@ class PushNotice extends Equatable {
     required this.notificationId,
     required this.workspaceId,
     required this.recipientProfileId,
+    this.taskId,
   });
 
+  final String? taskId;
   final String notificationId;
   final String workspaceId;
   final String recipientProfileId;
@@ -31,9 +33,18 @@ class PushNotice extends Equatable {
       notificationId: notification,
       workspaceId: workspace,
       recipientProfileId: recipient,
+      taskId:
+          data['taskId'] is String && uuid.hasMatch(data['taskId']! as String)
+          ? data['taskId']! as String
+          : null,
     );
   }
 
   @override
-  List<Object?> get props => [notificationId, workspaceId, recipientProfileId];
+  List<Object?> get props => [
+    notificationId,
+    workspaceId,
+    recipientProfileId,
+    taskId,
+  ];
 }

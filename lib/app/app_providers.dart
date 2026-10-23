@@ -175,6 +175,7 @@ class _AppProvidersState extends State<AppProviders> {
         providers: [
           if (_composition.pushNotifications != null)
             BlocProvider.value(value: _composition.pushNotifications!),
+          BlocProvider.value(value: _composition.tasksCubit),
           BlocProvider.value(value: _composition.languageCubit),
           BlocProvider.value(value: _composition.themeCubit),
           BlocProvider<ReadSyncCubit>.value(value: _composition.readSyncCubit),
@@ -252,6 +253,11 @@ class _AppProvidersState extends State<AppProviders> {
           );
     return ShiftlyAppLifecycleListener(
       onResumed: () {
+        unawaited(
+          _composition.tasksCubit.refresh().then(
+            (_) => _composition.openTaskTap(),
+          ),
+        );
         unawaited(_composition.pushNotifications?.refresh());
         unawaited(_composition.flexibleAttendanceCubit.load(refresh: true));
         unawaited(_composition.notificationsCubit.refreshUnreadCount());
@@ -274,7 +280,9 @@ class _AppProvidersState extends State<AppProviders> {
       );
       if (!mounted ||
           _composition.notificationsCubit.scope != scope ||
-          record.workspaceId != scope.workspaceId ||
+          (record.workspaceId != scope.workspaceId &&
+              !(record.type == NotificationType.taskReminder &&
+                  record.data?['taskId'] == notice.taskId)) ||
           record.id != notice.notificationId) {
         return;
       }
@@ -302,6 +310,34 @@ class _AppProvidersState extends State<AppProviders> {
   }
 
   Future<void> _openPushNotice(PushNotice notice) async {
+    if (notice.taskId != null) {
+      final scope = _composition.tasksCubit.scope;
+      if (scope == null ||
+          scope.userId != notice.recipientProfileId ||
+          _composition.pushDevices == null) {
+        return;
+      }
+      try {
+        final record = await _composition.pushDevices!.getNotification(
+          notice.notificationId,
+        );
+        if (record.type != NotificationType.taskReminder ||
+            record.data?['taskId'] != notice.taskId ||
+            record.workspaceId != notice.workspaceId) {
+          return;
+        }
+        final task = await _composition.tasksCubit.resolveTap(
+          scope.userId,
+          notice.taskId!,
+        );
+        if (task != null && mounted && _composition.tasksCubit.scope == scope) {
+          _composition.router.push('/tasks?taskId=${task.id}');
+        }
+      } catch (_) {
+        /* Deleted or inaccessible tasks never navigate. */
+      }
+      return;
+    }
     final scope = _composition.notificationsCubit.scope;
     if (!mounted ||
         scope == null ||

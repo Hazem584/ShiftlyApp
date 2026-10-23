@@ -39,6 +39,7 @@ class SessionRouteIntent {
         destination.path == '/employee' ||
         destination.path.startsWith('/employee/chat/');
     final sharedRoute =
+        destination.path == '/tasks' ||
         destination.path == '/workspaces' ||
         destination.path == '/team-work' ||
         destination.path == '/shift-exchanges';

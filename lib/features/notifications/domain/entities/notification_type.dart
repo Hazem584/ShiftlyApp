@@ -1,4 +1,5 @@
 enum NotificationType {
+  taskReminder,
   attendanceClockedIn,
   attendanceClockedOut,
   leaveRequestCreated,
@@ -35,6 +36,7 @@ enum NotificationType {
     'SHIFT_EXCHANGE_REQUESTED' => shiftExchangeRequested,
     'SHIFT_EXCHANGE_UPDATED' => shiftExchangeUpdated,
     'FIXED_SHIFT_REMINDER' => fixedShiftReminder,
+    'TASK_REMINDER' => taskReminder,
     'CLOCK_OUT_REMINDER' => clockOutReminder,
     _ => unknown,
   };
@@ -56,6 +58,7 @@ enum NotificationType {
     shiftExchangeRequested => 'SHIFT_EXCHANGE_REQUESTED',
     shiftExchangeUpdated => 'SHIFT_EXCHANGE_UPDATED',
     fixedShiftReminder => 'FIXED_SHIFT_REMINDER',
+    taskReminder => 'TASK_REMINDER',
     clockOutReminder => 'CLOCK_OUT_REMINDER',
     unknown => null,
   };

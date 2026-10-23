@@ -117,7 +117,7 @@ class PushNotificationsCubit extends Cubit<PushNotificationsState> {
   bool _matches(PushNotice notice) =>
       _scope != null &&
       notice.recipientProfileId == _scope!.userId &&
-      notice.workspaceId == _scope!.workspaceId;
+      (notice.taskId != null || notice.workspaceId == _scope!.workspaceId);
 
   void _opened(PushNotice notice) {
     if (_scope == null) {

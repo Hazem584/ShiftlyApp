@@ -9,6 +9,7 @@ import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
+import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
 
 abstract final class NotificationsScreenNotificationNavigator {
   static final _uuid = RegExp(
@@ -21,6 +22,22 @@ abstract final class NotificationsScreenNotificationNavigator {
     FeatureSessionScope? scope,
     NotificationRecord notification,
   ) async {
+    if (notification.type == NotificationType.taskReminder && scope != null) {
+      final id = notification.data?['taskId'];
+      if (id is! String || !_uuid.hasMatch(id)) {
+        _unavailable(context);
+        return;
+      }
+      final cubit = context.read<TasksCubit>();
+      final task = await cubit.resolveTap(scope.userId, id);
+      if (!context.mounted) return;
+      if (task == null || cubit.scope != scope) {
+        _unavailable(context);
+        return;
+      }
+      GoRouter.of(context).push('/tasks?taskId=${task.id}');
+      return;
+    }
     if (scope == null || notification.workspaceId != scope.workspaceId) {
       _unavailable(context);
       return;
