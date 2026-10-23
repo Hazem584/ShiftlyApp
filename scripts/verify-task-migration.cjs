@@ -17,6 +17,10 @@ const { PGlite } = require(require.resolve('@electric-sql/pglite', { paths: [bac
     `);
     await db.exec(fs.readFileSync(path.join(backend,
       'prisma/migrations/20261024090000_personal_tasks/migration.sql'), 'utf8'));
+    await db.exec(fs.readFileSync(path.join(backend,
+      'prisma/migrations/20261024100000_task_duration_and_advance_reminders/migration.sql'), 'utf8'));
+    await db.exec(fs.readFileSync(path.join(backend,
+      'prisma/migrations/20261024110000_task_hour_reminders/migration.sql'), 'utf8'));
     const owner = '00000000-0000-4000-8000-000000000001';
     const workspace = '00000000-0000-4000-8000-000000000002';
     const task = '00000000-0000-4000-8000-000000000003';
@@ -30,9 +34,22 @@ const { PGlite } = require(require.resolve('@electric-sql/pglite', { paths: [bac
     assert.equal(saved.due_at.toISOString(), '2090-01-01T10:00:00.000Z');
     assert.equal(saved.status, 'OPEN');
     assert.equal(saved.revision, 1);
+    assert.equal(saved.duration_minutes, null);
+    assert.equal(saved.remind_day_before, false);
+    assert.equal(saved.remind_hour_before, false);
+    await db.query("UPDATE personal_tasks SET remind_hour_before=true,hour_at=due_at-interval '1 hour'");
+    assert.equal((await db.query('SELECT hour_at FROM personal_tasks')).rows[0].hour_at.toISOString(), '2090-01-01T09:00:00.000Z');
+    await assert.rejects(db.query('UPDATE personal_tasks SET remind_hour_before=false'));
+    await assert.rejects(db.query('UPDATE personal_tasks SET duration_minutes=0'));
+    await assert.rejects(db.query('UPDATE personal_tasks SET duration_minutes=5'));
+    await db.query("UPDATE personal_tasks SET duration_minutes=5, ends_at=due_at+interval '5 minutes'");
+    assert.equal((await db.query('SELECT ends_at FROM personal_tasks')).rows[0].ends_at.toISOString(), '2090-01-01T10:05:00.000Z');
+    await assert.rejects(db.query("UPDATE personal_tasks SET ends_at=due_at+interval '4 minutes'"));
     await assert.rejects(db.query('UPDATE personal_tasks SET title=$1', ['   ']));
     await assert.rejects(db.query('UPDATE personal_tasks SET revision=0'));
     await db.query('INSERT INTO task_reminder_registrations VALUES ($1,$2,1)', [task,installation]);
+    await db.query('UPDATE task_reminder_registrations SET coverage_version=3');
+    await assert.rejects(db.query('UPDATE task_reminder_registrations SET coverage_version=4'));
     await assert.rejects(db.query('INSERT INTO task_reminder_registrations VALUES ($1,$2,1)', [task,installation]));
     const security = (await db.query(`SELECT relname,relrowsecurity FROM pg_class
       WHERE relname IN ('personal_tasks','task_reminder_registrations')`)).rows;

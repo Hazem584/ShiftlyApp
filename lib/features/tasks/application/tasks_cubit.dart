@@ -5,6 +5,7 @@ import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 
 import '../domain/personal_task.dart';
+import '../domain/task_alarm.dart';
 import '../domain/task_reminders.dart';
 import '../domain/task_repository.dart';
 import 'tasks_state.dart';
@@ -12,8 +13,14 @@ import 'tasks_state.dart';
 export 'tasks_state.dart';
 
 class TasksCubit extends Cubit<TasksState> {
-  TasksCubit(this.repository, this.reminders, {this.enableRemoteReminders})
-    : super(const TasksState());
+  TasksCubit(
+    this.repository,
+    this.reminders, {
+    this.enableRemoteReminders,
+    DateTime Function()? clock,
+  }) : _clock = clock ?? DateTime.now,
+       super(const TasksState());
+  final DateTime Function() _clock;
   final TaskRepository repository;
   final TaskReminders reminders;
   final Future<void> Function()? enableRemoteReminders;
@@ -106,8 +113,10 @@ class TasksCubit extends Cubit<TasksState> {
         emit(state.copy(reminderPermission: permission, reminderError: false));
         final tasks = await repository.upcoming();
         if (!_valid(generation)) return;
+        final now = _clock();
         final signature =
-            '$user:$permission:${tasks.map((t) => '${t.id}:${t.revision}').join(',')}';
+            '$user:$permission:${tasks.map((t) => '${t.id}:${t.revision}:'
+                '${TaskAlarm.upcoming(t, now).map((a) => a.wireKind).join('+')}').join(',')}';
         if (signature == _lastReminderSignature) return;
         final installation = await reminders.installationId();
         // Withdraw acknowledgements first: partial native scheduling must leave
@@ -192,6 +201,9 @@ class TasksCubit extends Cubit<TasksState> {
     required String title,
     required String description,
     required DateTime dueAt,
+    int? durationMinutes,
+    bool remindDayBefore = false,
+    bool remindHourBefore = false,
   }) => _mutate(
     (s) => task == null
         ? repository.create(
@@ -199,12 +211,18 @@ class TasksCubit extends Cubit<TasksState> {
             title: title.trim(),
             description: description.trim(),
             dueAt: dueAt,
+            durationMinutes: durationMinutes,
+            remindDayBefore: remindDayBefore,
+            remindHourBefore: remindHourBefore,
           )
         : repository.update(
             task,
             title: title.trim(),
             description: description.trim(),
             dueAt: dueAt.isAtSameMomentAs(task.dueAt) ? null : dueAt,
+            durationMinutes: durationMinutes,
+            remindDayBefore: remindDayBefore,
+            remindHourBefore: remindHourBefore,
           ),
     changedTask: task,
   );

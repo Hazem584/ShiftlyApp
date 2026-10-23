@@ -82,6 +82,9 @@ class CapturingTaskRepository extends MemoryTaskRepository {
     String? description,
     DateTime? dueAt,
     bool? completed,
+    int? durationMinutes,
+    bool? remindDayBefore,
+    bool? remindHourBefore,
   }) async {
     updated = true;
     updatedDueAt = dueAt;
@@ -89,6 +92,76 @@ class CapturingTaskRepository extends MemoryTaskRepository {
 }
 
 void main() {
+  for (final day in [false, true]) {
+    for (final hour in [false, true]) {
+      testWidgets('task dialog saves day=$day and hour=$hour independently', (
+        tester,
+      ) async {
+        final tasks = TasksCubit(
+          MemoryTaskRepository(),
+          const NoTaskReminders(),
+        );
+        await tasks.bindSession(scope);
+        await tester.pumpWidget(
+          BlocProvider.value(
+            value: tasks,
+            child: MaterialApp(
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              home: const TasksScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byType(FloatingActionButton));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextFormField).first, 'Options');
+        for (final entry in {
+          'task-remind-day': day,
+          'task-remind-hour': hour,
+        }.entries) {
+          final finder = find.byKey(Key(entry.key));
+          await tester.ensureVisible(finder);
+          if (tester.widget<SwitchListTile>(finder).value != entry.value) {
+            await tester.tap(finder);
+            await tester.pumpAndSettle();
+          }
+        }
+        await tester.ensureVisible(find.text('Save task'));
+        await tester.tap(find.text('Save task'));
+        await tester.pumpAndSettle();
+        expect(tasks.state.items.single.remindDayBefore, day);
+        expect(tasks.state.items.single.remindHourBefore, hour);
+        await tester.pumpWidget(const SizedBox());
+        await tasks.close();
+      });
+    }
+  }
+  test('replenishes the alarm window when an event passes without a task revision change', () async {
+    final repo = RecordingRepository(), reminders = RecordingReminders();
+    await repo.create(
+      workspaceId: 'workspace',
+      title: 'Report',
+      description: '',
+      dueAt: DateTime.utc(2090, 1, 3, 10),
+      durationMinutes: 5,
+      remindDayBefore: true,
+    );
+    var now = DateTime.utc(2090, 1, 1);
+    final cubit = TasksCubit(repo, reminders, clock: () => now);
+    await cubit.bindSession(scope);
+    final first = reminders.calls.where((c) => c == 'schedule').length;
+    await cubit.syncReminders();
+    expect(reminders.calls.where((c) => c == 'schedule'), hasLength(first));
+    now = DateTime.utc(2090, 1, 2, 10, 1);
+    await cubit.syncReminders();
+    expect(reminders.calls.where((c) => c == 'schedule'), hasLength(first + 1));
+    await cubit.close();
+  });
   test(
     'server registration failure still schedules native alarms and retries',
     () async {
@@ -285,6 +358,20 @@ void main() {
           locale == 'ar' ? 'مهمة تجريبية' : 'Test task',
         );
         await tester.enterText(find.byType(TextFormField).last, 'Task details');
+        final timePicker = find.byKey(const Key('task-time-picker'));
+        await tester.ensureVisible(timePicker);
+        await tester.tap(timePicker);
+        await tester.pumpAndSettle();
+        final confirmTime = find.text(
+          locale == 'ar' ? 'تأكيد الوقت' : 'Confirm time',
+        );
+        expect(confirmTime, findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.tap(confirmTime);
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(
+          find.text(locale == 'ar' ? 'حفظ المهمة' : 'Save task'),
+        );
         await tester.tap(
           find.text(locale == 'ar' ? 'حفظ المهمة' : 'Save task'),
         );

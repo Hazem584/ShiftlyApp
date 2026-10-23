@@ -270,7 +270,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: columns,
                         mainAxisExtent:
-                            244 *
+                            330 *
                             MediaQuery.textScalerOf(context).scale(14) /
                             14,
                         crossAxisSpacing: 12,

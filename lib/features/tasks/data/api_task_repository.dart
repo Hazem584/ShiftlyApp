@@ -55,6 +55,9 @@ class ApiTaskRepository implements TaskRepository {
     required String title,
     required String description,
     required DateTime dueAt,
+    int? durationMinutes,
+    bool remindDayBefore = false,
+    bool remindHourBefore = false,
   }) => _request(() async {
     await _dio.post<Object?>(
       _path,
@@ -63,6 +66,9 @@ class ApiTaskRepository implements TaskRepository {
         'title': title,
         'description': description,
         'dueAt': dueAt.toUtc().toIso8601String(),
+        'durationMinutes': ?durationMinutes,
+        'remindDayBefore': remindDayBefore,
+        'remindHourBefore': remindHourBefore,
       },
     );
   });
@@ -73,6 +79,9 @@ class ApiTaskRepository implements TaskRepository {
     String? description,
     DateTime? dueAt,
     bool? completed,
+    int? durationMinutes,
+    bool? remindDayBefore,
+    bool? remindHourBefore,
   }) => _request(() async {
     await _dio.patch<Object?>(
       '$_path/${task.id}',
@@ -80,6 +89,9 @@ class ApiTaskRepository implements TaskRepository {
         'revision': task.revision,
         'title': ?title,
         'description': ?description,
+        'durationMinutes': ?durationMinutes,
+        'remindDayBefore': ?remindDayBefore,
+        'remindHourBefore': ?remindHourBefore,
         if (dueAt != null) 'dueAt': dueAt.toUtc().toIso8601String(),
         if (completed != null) 'status': completed ? 'COMPLETED' : 'OPEN',
       },
@@ -100,7 +112,13 @@ class ApiTaskRepository implements TaskRepository {
           data: {
             'installationId': installationId,
             'tasks': scheduled
-                .map((t) => {'id': t.id, 'revision': t.revision})
+                .map(
+                  (t) => {
+                    'id': t.id,
+                    'revision': t.revision,
+                    'coverageVersion': 3,
+                  },
+                )
                 .toList(),
           },
         );

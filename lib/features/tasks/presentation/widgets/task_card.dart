@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 
 import '../../domain/personal_task.dart';
+import 'task_countdown.dart';
 
 class TaskCard extends StatelessWidget {
   const TaskCard({
@@ -99,6 +100,8 @@ class TaskCard extends StatelessWidget {
                   ),
                 ),
               const Spacer(),
+              TaskCountdown(task: task),
+              const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -117,6 +120,16 @@ class TaskCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (task.durationMinutes != null)
+                    Text(
+                      context.tr('{minutes} min', {
+                        'minutes': '${task.durationMinutes}',
+                      }),
+                      style: TextStyle(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                    ),
                   if (task.overdue)
                     Text(
                       context.tr('Overdue'),

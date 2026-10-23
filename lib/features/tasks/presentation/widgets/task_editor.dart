@@ -1,6 +1,9 @@
+import 'package:day_night_time_picker/day_night_time_picker.dart'
+    as clock_picker;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 
@@ -27,7 +30,9 @@ class TaskEditor extends StatefulWidget {
 class _TaskEditorState extends State<TaskEditor> {
   final _form = GlobalKey<FormState>();
   late final FeatureSessionScope? _scope;
-  late final TextEditingController _title, _description;
+  late final TextEditingController _title, _description, _duration;
+  late bool _remindDayBefore;
+  late bool _remindHourBefore;
   late DateTime _dueAt;
   bool _saving = false;
   String? _error;
@@ -37,6 +42,11 @@ class _TaskEditorState extends State<TaskEditor> {
     _scope = context.read<TasksCubit>().scope;
     _title = TextEditingController(text: widget.task?.title ?? '');
     _description = TextEditingController(text: widget.task?.description ?? '');
+    _duration = TextEditingController(
+      text: (widget.task?.durationMinutes ?? 25).toString(),
+    );
+    _remindDayBefore = widget.task?.remindDayBefore ?? true;
+    _remindHourBefore = widget.task?.remindHourBefore ?? true;
     final initial =
         widget.task?.dueAt.toLocal() ??
         DateTime.now().add(const Duration(hours: 1));
@@ -57,10 +67,11 @@ class _TaskEditorState extends State<TaskEditor> {
   void dispose() {
     _title.dispose();
     _description.dispose();
+    _duration.dispose();
     super.dispose();
   }
 
-  Future<void> _pick() async {
+  Future<void> _pickDate() async {
     final now = DateTime.now();
     final date = await showDatePicker(
       context: context,
@@ -69,16 +80,49 @@ class _TaskEditorState extends State<TaskEditor> {
       lastDate: DateTime(now.year + 100, 12, 31),
     );
     if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_dueAt),
-    );
-    if (time == null || !mounted) return;
     setState(() {
       _dueAt = DateTime(
         date.year,
         date.month,
         date.day,
+        _dueAt.hour,
+        _dueAt.minute,
+      );
+      _error = null;
+    });
+  }
+
+  Future<void> _pickTime() async {
+    FocusScope.of(context).unfocus();
+    clock_picker.Time? chosen;
+    await Navigator.of(context).push(
+      clock_picker.showPicker(
+        context: context,
+        value: clock_picker.Time(hour: _dueAt.hour, minute: _dueAt.minute),
+        onChange: (time) => chosen = time,
+        is24HrFormat: MediaQuery.alwaysUse24HourFormatOf(context),
+        accentColor: Theme.of(context).colorScheme.primary,
+        themeData: Theme.of(context),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        ltrMode: Directionality.of(context) == TextDirection.ltr,
+        amLabel: MaterialLocalizations.of(context).anteMeridiemAbbreviation,
+        pmLabel: MaterialLocalizations.of(context).postMeridiemAbbreviation,
+        width: (MediaQuery.sizeOf(context).width - 48).clamp(240.0, 380.0),
+        borderRadius: 24,
+        dialogInsetPadding: const EdgeInsets.all(16),
+        cancelText: context.tr('Cancel'),
+        okText: context.tr('Confirm time'),
+        hourLabel: context.tr('Hours'),
+        minuteLabel: context.tr('Minutes'),
+      ),
+    );
+    final time = chosen;
+    if (!mounted || time == null) return;
+    setState(() {
+      _dueAt = DateTime(
+        _dueAt.year,
+        _dueAt.month,
+        _dueAt.day,
         time.hour,
         time.minute,
       );
@@ -104,6 +148,9 @@ class _TaskEditorState extends State<TaskEditor> {
       title: _title.text,
       description: _description.text,
       dueAt: _dueAt,
+      durationMinutes: int.parse(_duration.text),
+      remindDayBefore: _remindDayBefore,
+      remindHourBefore: _remindHourBefore,
     );
     if (!mounted) return;
     if (success) {
@@ -179,6 +226,44 @@ class _TaskEditorState extends State<TaskEditor> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
+                      key: const Key('task-duration'),
+                      controller: _duration,
+                      enabled: !_saving,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: InputDecoration(
+                        labelText: context.tr('Task duration in minutes'),
+                        prefixIcon: const Icon(Icons.timer_outlined),
+                      ),
+                      validator: (text) {
+                        final minutes = int.tryParse(text ?? '');
+                        return minutes == null || minutes < 1 || minutes > 10080
+                            ? context.tr(
+                                'Choose a duration from 1 to 10080 minutes.',
+                              )
+                            : null;
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [5, 15, 25, 45, 60]
+                          .map(
+                            (minutes) => ActionChip(
+                              label: Text(
+                                context.tr('{minutes} min', {
+                                  'minutes': '$minutes',
+                                }),
+                              ),
+                              onPressed: _saving
+                                  ? null
+                                  : () => _duration.text = '$minutes',
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
                       controller: _description,
                       enabled: !_saving,
                       minLines: 4,
@@ -190,19 +275,68 @@ class _TaskEditorState extends State<TaskEditor> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: _saving ? null : _pick,
-                      icon: const Icon(Icons.event_outlined),
-                      label: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: Text(
-                          DateFormat.yMMMd(locale).add_jm().format(_dueAt),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: _saving ? null : _pickDate,
+                          icon: const Icon(Icons.event_outlined),
+                          label: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Text(
+                              DateFormat.yMMMd(locale).format(_dueAt),
+                            ),
+                          ),
                         ),
-                      ),
+                        OutlinedButton.icon(
+                          key: const Key('task-time-picker'),
+                          onPressed: _saving ? null : _pickTime,
+                          icon: const Icon(Icons.schedule_rounded),
+                          label: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Text(DateFormat.jm(locale).format(_dueAt)),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(
                       context.tr('Time is shown in your device timezone.'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      key: const Key('task-remind-day'),
+                      value: _remindDayBefore,
+                      onChanged: _saving
+                          ? null
+                          : (value) => setState(() => _remindDayBefore = value),
+                      title: Text(context.tr('Remind me one day before')),
+                      subtitle: Text(
+                        context.tr('A notification 24 hours before the task.'),
+                      ),
+                    ),
+                    SwitchListTile.adaptive(
+                      key: const Key('task-remind-hour'),
+                      contentPadding: EdgeInsets.zero,
+                      value: _remindHourBefore,
+                      onChanged: _saving
+                          ? null
+                          : (value) =>
+                                setState(() => _remindHourBefore = value),
+                      title: Text(context.tr('Remind me one hour before')),
+                      subtitle: Text(
+                        context.tr(
+                          'A notification 60 minutes before the task.',
+                        ),
+                      ),
+                    ),
+                    Text(
+                      context.tr(
+                        'An alarm at the task time and when its duration ends.',
+                      ),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     if (_error != null)

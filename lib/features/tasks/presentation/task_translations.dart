@@ -1,4 +1,25 @@
 const taskTranslations = <String, String>{
+  'Remind me one hour before': 'فكّرني قبلها بساعة',
+  'A notification 60 minutes before the task.':
+      'إشعار قبل موعد المهمة بـ٦٠ دقيقة.',
+  'Task duration in minutes': 'مدة المهمة بالدقائق',
+  'Choose a duration from 1 to 10080 minutes.':
+      'اختار مدة من دقيقة لحد ١٠٠٨٠ دقيقة.',
+  '{minutes} min': '{minutes} دقيقة',
+  'Remind me one day before': 'فكّرني قبلها بيوم',
+  'A notification 24 hours before the task.':
+      'إشعار قبل موعد المهمة بـ٢٤ ساعة.',
+  'An alarm at the task time and when its duration ends.':
+      'تنبيه عند موعد المهمة وعند انتهاء مدتها.',
+  'Starts in': 'فاضل على المهمة',
+  'Time remaining': 'باقي من وقت المهمة',
+  'Task time ended': 'وقت المهمة انتهى',
+  'Task is due': 'حان موعد المهمة',
+  'Task completed': 'المهمة مكتملة',
+  '{days} days': '{days} يوم',
+  'Confirm time': 'تأكيد الوقت',
+  'Hours': 'ساعات',
+  'Minutes': 'دقائق',
   'Task reminder': 'تذكير بمهمة',
   'Task manager': 'مدير المهام',
   'New task': 'مهمة جديدة',

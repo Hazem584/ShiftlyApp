@@ -17,7 +17,12 @@ class MemoryTaskRepository implements TaskRepository {
 
   @override
   Future<List<PersonalTask>> upcoming() async => _items.values
-      .where((t) => !t.completed && t.dueAt.isAfter(DateTime.now()))
+      .where(
+        (t) =>
+            !t.completed &&
+            (t.dueAt.isAfter(DateTime.now()) ||
+                (t.endsAt?.isAfter(DateTime.now()) ?? false)),
+      )
       .toList();
   @override
   Future<PersonalTask> get(String id) async => _items[id]!;
@@ -27,6 +32,9 @@ class MemoryTaskRepository implements TaskRepository {
     required String title,
     required String description,
     required DateTime dueAt,
+    int? durationMinutes,
+    bool remindDayBefore = false,
+    bool remindHourBefore = false,
   }) async {
     final id = const Uuid().v4();
     _items[id] = PersonalTask(
@@ -38,6 +46,9 @@ class MemoryTaskRepository implements TaskRepository {
       dueAt: dueAt,
       revision: 1,
       completed: false,
+      durationMinutes: durationMinutes,
+      remindDayBefore: remindDayBefore,
+      remindHourBefore: remindHourBefore,
     );
   }
 
@@ -48,6 +59,9 @@ class MemoryTaskRepository implements TaskRepository {
     String? description,
     DateTime? dueAt,
     bool? completed,
+    int? durationMinutes,
+    bool? remindDayBefore,
+    bool? remindHourBefore,
   }) async {
     _items[task.id] = PersonalTask(
       id: task.id,
@@ -58,6 +72,9 @@ class MemoryTaskRepository implements TaskRepository {
       dueAt: dueAt ?? task.dueAt,
       revision: task.revision + 1,
       completed: completed ?? task.completed,
+      durationMinutes: durationMinutes ?? task.durationMinutes,
+      remindDayBefore: remindDayBefore ?? task.remindDayBefore,
+      remindHourBefore: remindHourBefore ?? task.remindHourBefore,
     );
   }
 

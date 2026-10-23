@@ -9,6 +9,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../domain/personal_task.dart';
+import '../domain/task_alarm.dart';
 import '../domain/task_reminders.dart';
 
 /// Native pending alarms survive process death and Android reboot. UTC preserves
@@ -122,47 +123,65 @@ class DeviceTaskReminders implements TaskReminders {
     for (final notification in pending) {
       final tap = _decode(notification.payload);
       if (tap?['ownerId'] == userId) {
-        existing[tap!['taskId']! as String] = notification.id;
+        existing["${tap!['taskId']}:${tap['reminderKind'] ?? 'DUE'}"] =
+            notification.id;
       }
     }
     var nextId = 1700000000;
     final scheduled = <PersonalTask>[];
-    final sorted =
+    final now = DateTime.now();
+    final alarms =
         tasks
-            .where(
-              (t) =>
-                  t.ownerId == userId &&
-                  !t.completed &&
-                  t.dueAt.isAfter(DateTime.now()),
-            )
+            .where((task) => task.ownerId == userId)
+            .expand((task) => TaskAlarm.upcoming(task, now))
             .toList()
-          ..sort((a, b) => a.dueAt.compareTo(b.dueAt));
-    final desiredIds = sorted.take(60).map((t) => t.id).toSet();
+          ..sort((a, b) {
+            final time = a.at.compareTo(b.at);
+            return time == 0 ? a.key.compareTo(b.key) : time;
+          });
+    final desiredIds = alarms.take(60).map((alarm) => alarm.key).toSet();
     if (!preserveExisting) {
       // Free obsolete slots first so reconciliation never exceeds iOS's cap.
       for (final notification in pending) {
         final tap = _decode(notification.payload);
         if (tap != null &&
-            (tap['ownerId'] != userId || !desiredIds.contains(tap['taskId']))) {
+            (tap['ownerId'] != userId ||
+                !desiredIds.contains(
+                  "${tap['taskId']}:${tap['reminderKind'] ?? 'DUE'}",
+                ))) {
           await _plugin.cancel(id: notification.id);
-          existing.remove(tap['taskId']);
+          existing.remove("${tap['taskId']}:${tap['reminderKind'] ?? 'DUE'}");
         }
       }
     }
     var occupied = existing.length;
     // Reserve four iOS slots for other app reminders (system limit is 64).
-    for (final task in sorted.take(60)) {
-      if (!existing.containsKey(task.id) && occupied >= 60) continue;
+    final installed = <String>{};
+    final arabic =
+        (_preferences.getString('app.language') ??
+            PlatformDispatcher.instance.locale.languageCode) ==
+        'ar';
+    for (final alarm in alarms.take(60)) {
+      final task = alarm.task;
+      if (!existing.containsKey(alarm.key) && occupied >= 60) continue;
       while (usedIds.contains(nextId)) {
         nextId++;
       }
-      final id = existing[task.id] ?? nextId;
+      final id = existing[alarm.key] ?? nextId;
       usedIds.add(id);
       await _plugin.zonedSchedule(
         id: id,
-        title: task.title,
+        title: switch (alarm.kind) {
+          TaskAlarmKind.due => task.title,
+          TaskAlarmKind.advance =>
+            (arabic ? 'مهمة بكرة: ' : 'Task tomorrow: ') + task.title,
+          TaskAlarmKind.hour =>
+            (arabic ? 'مهمة بعد ساعة: ' : 'Task in one hour: ') + task.title,
+          TaskAlarmKind.end =>
+            (arabic ? 'انتهى وقت المهمة: ' : 'Time is up: ') + task.title,
+        },
         body: task.description.isEmpty ? task.title : task.description,
-        scheduledDate: tz.TZDateTime.from(task.dueAt, tz.UTC),
+        scheduledDate: tz.TZDateTime.from(alarm.at, tz.UTC),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'shiftly_tasks',
@@ -185,11 +204,20 @@ class DeviceTaskReminders implements TaskReminders {
           'ownerId': userId,
           'taskId': task.id,
           'revision': task.revision,
+          'reminderKind': alarm.wireKind,
         }),
       );
-      if (!existing.containsKey(task.id)) occupied++;
-      scheduled.add(task);
+      if (!existing.containsKey(alarm.key)) occupied++;
+      installed.add(alarm.key);
     }
+    // A partial native window must keep server fallback for that revision.
+    for (final task in tasks.where((t) => t.ownerId == userId)) {
+      final events = TaskAlarm.upcoming(task, now);
+      if (events.isNotEmpty && events.every((e) => installed.contains(e.key))) {
+        scheduled.add(task);
+      }
+    }
+    scheduled.sort((a, b) => a.dueAt.compareTo(b.dueAt));
     // Approximate native alarms still get server fallback.
     return state == TaskReminderPermission.exact ? scheduled : [];
   }
