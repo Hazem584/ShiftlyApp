@@ -1,23 +1,27 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/app/app_lifecycle_listener.dart';
+import 'package:shiftly/core/config/app_config.dart';
 import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
 import 'package:shiftly/core/localization/language_preference_store.dart';
 import 'package:shiftly/core/localization/language_settings.dart';
 import 'package:shiftly/core/offline/read_sync_cubit.dart';
+import 'package:shiftly/core/platform/platform_gate.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/theme/theme_cubit.dart';
 import 'package:shiftly/core/theme/theme_settings.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
+import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -119,6 +123,7 @@ class AppProviders extends StatefulWidget {
 }
 
 class _AppProvidersState extends State<AppProviders> {
+  Dio? _platformStatusClient;
   late final AppComposition _composition;
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
   @override
@@ -217,6 +222,22 @@ class _AppProvidersState extends State<AppProviders> {
                   darkTheme: AppTheme.darkTheme(),
                   themeMode: appearance.mode,
                   routerConfig: _composition.router,
+                  builder: (context, child) {
+                    final locator = widget.locator;
+                    if (locator == null) return child!;
+                    return PlatformGate(
+                      statusClient: _platformStatusClient ??= Dio(
+                        BaseOptions(
+                          baseUrl: locator<AppConfig>().apiBaseUrl.toString(),
+                          connectTimeout: const Duration(seconds: 10),
+                          receiveTimeout: const Duration(seconds: 10),
+                        ),
+                      ),
+                      apiClient: locator<Dio>(),
+                      authentication: locator<AuthenticationService>(),
+                      child: child!,
+                    );
+                  },
                 ),
               ),
         ),
