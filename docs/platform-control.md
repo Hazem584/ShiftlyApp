@@ -10,4 +10,6 @@ The application tree remains mounted while hidden, preserving navigation. Initia
 
 Release the backend endpoints before shipping this Flutter change. The migration is additive and defaults to OPERATIONAL. Set the server-side `PLATFORM_ADMIN_IDS` allowlist separately in each hosting environment. No administrative secrets are added to Flutter.
 
-Validated with `flutter test test/platform_gate_test.dart test/authentication_api_repository_test.dart` (7 passing) and targeted Flutter analysis. Widget tests cover normal operation with an announcement, maintenance/recovery, and account suspension/recovery.
+Validated with `flutter test test/platform_gate_test.dart test/authentication_api_repository_test.dart` (8 passing) and targeted Flutter analysis. Widget tests cover normal operation with an announcement, maintenance/recovery, account suspension/recovery, and clearing authentication after permanent account deletion.
+
+Permanent account deletion now returns `ACCOUNT_DELETED` from the protected API while an old JWT remains unexpired. `PlatformGate` clears local authentication on that response, allowing the existing session coordinator to clear its session scopes. Backend deletion details and release requirements are in `shiftly-backend/docs/account-deletion.md`; the new migration must precede backend deployment. No administrative key belongs in Flutter. Already downloaded data on offline devices cannot be recalled remotely.

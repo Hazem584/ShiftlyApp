@@ -33,6 +33,30 @@ class _Adapter implements HttpClientAdapter {
 }
 
 void main() {
+  testWidgets('deleted accounts clear their local authentication', (
+    tester,
+  ) async {
+    final adapter = _Adapter()
+      ..accessError = {'code': 'ACCOUNT_DELETED', 'message': 'Deleted'};
+    final auth = OnboardingTestAuth()
+      ..session = const AuthSession(accessToken: 'deleted-token');
+    final public = Dio()..httpClientAdapter = adapter;
+    final api = Dio()..httpClientAdapter = adapter;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlatformGate(
+          statusClient: public,
+          apiClient: api,
+          authentication: auth,
+          child: const Scaffold(body: Text('Application content')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(auth.currentSession, isNull);
+    await tester.pumpWidget(const SizedBox());
+    await auth.events.close();
+  });
   Future<void> mount(
     WidgetTester tester,
     _Adapter adapter,

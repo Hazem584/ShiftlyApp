@@ -63,6 +63,10 @@ class _PlatformGateState extends State<PlatformGate>
   void _inspectError(DioException error) {
     final body = error.response?.data;
     if (!mounted || body is! Map) return;
+    if (body['code'] == 'ACCOUNT_DELETED') {
+      unawaited(widget.authentication.signOut());
+      return;
+    }
     if (body['code'] == 'ACCOUNT_SUSPENDED') {
       setState(
         () => _suspension = body['message']?.toString() ?? 'Account suspended',
