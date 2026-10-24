@@ -26,6 +26,7 @@ import 'package:shiftly/features/auth/domain/repositories/authentication_service
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:shiftly/features/device_sessions/application/device_sessions_scope.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
@@ -227,20 +228,25 @@ class _AppProvidersState extends State<AppProviders> {
                   builder: (context, child) {
                     final locator = widget.locator;
                     if (locator == null) return child!;
-                    return MonitoringGate(
-                      apiClient: locator<Dio>(),
+                    return DeviceSessionsScope(
+                      api: locator<Dio>(),
                       authentication: locator<AuthenticationService>(),
-                      child: PlatformGate(
-                        statusClient: _platformStatusClient ??= Dio(
-                          BaseOptions(
-                            baseUrl: locator<AppConfig>().apiBaseUrl.toString(),
-                            connectTimeout: const Duration(seconds: 10),
-                            receiveTimeout: const Duration(seconds: 10),
-                          ),
-                        ),
+                      child: MonitoringGate(
                         apiClient: locator<Dio>(),
                         authentication: locator<AuthenticationService>(),
-                        child: child!,
+                        child: PlatformGate(
+                          statusClient: _platformStatusClient ??= Dio(
+                            BaseOptions(
+                              baseUrl: locator<AppConfig>().apiBaseUrl
+                                  .toString(),
+                              connectTimeout: const Duration(seconds: 10),
+                              receiveTimeout: const Duration(seconds: 10),
+                            ),
+                          ),
+                          apiClient: locator<Dio>(),
+                          authentication: locator<AuthenticationService>(),
+                          child: child!,
+                        ),
                       ),
                     );
                   },

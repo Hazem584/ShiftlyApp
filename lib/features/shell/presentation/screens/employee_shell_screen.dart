@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_selector.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
@@ -57,6 +58,12 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
           const LanguageSelector(),
           const ThemeSelector(),
           const NotificationBell(),
+          IconButton(
+            key: const Key('employee-devices'),
+            tooltip: context.tr('Devices and sessions'),
+            onPressed: () => context.push('/devices'),
+            icon: const Icon(Icons.devices),
+          ),
           IconButton(
             key: const Key('employee-switch-workspace'),
             onPressed: _switchingWorkspace

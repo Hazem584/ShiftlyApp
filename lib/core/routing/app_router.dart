@@ -15,6 +15,7 @@ import 'package:shiftly/features/auth/presentation/screens/workspace_selection_s
 import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_screen.dart';
 import 'package:shiftly/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:shiftly/features/device_sessions/presentation/device_sessions_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employees_screen.dart';
@@ -55,6 +56,14 @@ GoRouter createAppRouter({
     errorBuilder: (context, state) =>
         RouteNotFoundScreen(routeName: state.uri.path),
     routes: [
+      GoRoute(
+        path: '/devices',
+        builder: (_, _) => DeviceSessionsScreen(
+          onCurrentSessionRevoked: () async {
+            await sessionCoordinator?.signOut();
+          },
+        ),
+      ),
       GoRoute(
         path: '/tasks',
         builder: (_, state) =>
@@ -266,9 +275,13 @@ String? _redirect(
     SessionStatus.emailVerificationRequired =>
       location == '/verify-email' ? null : '/verify-email',
     SessionStatus.profileSetupRequired =>
-      location == '/profile-setup' ? null : '/profile-setup',
+      location == '/profile-setup' || location == '/devices'
+          ? null
+          : '/profile-setup',
     SessionStatus.workspaceSelectionRequired =>
-      location == '/workspaces' ? null : '/workspaces',
+      location == '/workspaces' || location == '/devices'
+          ? null
+          : '/workspaces',
     SessionStatus.offlineWithSession =>
       location == '/offline' ? null : '/offline',
     SessionStatus.failure =>
@@ -279,7 +292,8 @@ String? _redirect(
           : '/session-error',
     SessionStatus.authenticatedManager => _managerRedirect(location),
     SessionStatus.authenticatedEmployee =>
-      location == '/tasks' ||
+      location == '/devices' ||
+              location == '/tasks' ||
               location == '/team-work' ||
               location == '/shift-exchanges' ||
               location == '/workspaces' ||

@@ -140,7 +140,46 @@ class SupabaseAuthenticationService implements AuthenticationService {
       final response = await _auth.refreshSession();
       return _mapSession(response.session);
     } on AuthException catch (error) {
-      throw AuthenticationException(_safeFailure(error));
+      final status = int.tryParse(error.statusCode ?? '');
+      if (error is AuthRetryableFetchException ||
+          status == null ||
+          status == 429 ||
+          status >= 500) {
+        throw AuthenticationException(
+          Failure(
+            message: 'Could not refresh your session. Check your connection and retry.',
+            kind: status != null && status >= 500
+                ? FailureKind.server
+                : FailureKind.network,
+            code: 'SESSION_REFRESH_UNAVAILABLE',
+            statusCode: status,
+          ),
+        );
+      }
+      throw AuthenticationException(
+        Failure(
+          message: 'Your session has expired. Please sign in again.',
+          kind: FailureKind.authentication,
+          code: error.code,
+          statusCode: status,
+        ),
+      );
+    } on TimeoutException {
+      throw const AuthenticationException(
+        Failure(
+          message: 'Could not refresh your session. Check your connection and retry.',
+          kind: FailureKind.timeout,
+          code: 'SESSION_REFRESH_UNAVAILABLE',
+        ),
+      );
+    } catch (_) {
+      throw const AuthenticationException(
+        Failure(
+          message: 'Could not refresh your session. Check your connection and retry.',
+          kind: FailureKind.network,
+          code: 'SESSION_REFRESH_UNAVAILABLE',
+        ),
+      );
     }
   }
 

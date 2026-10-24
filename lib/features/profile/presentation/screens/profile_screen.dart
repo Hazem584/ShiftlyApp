@@ -8,6 +8,7 @@ import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_cache_settings_tile.dart';
+import 'package:shiftly/features/device_sessions/presentation/device_sessions_tile.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_edit_form.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_header.dart';
@@ -88,6 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const ChatCacheSettingsTile(),
                       const LanguageSettingsTile(),
                       const ThemeSettingsTile(),
+                      const DeviceSessionsTile(),
                       if (widget.onLogout != null) ...[
                         const SizedBox(height: AppSpacing.l),
                         OutlinedButton.icon(

@@ -4,11 +4,13 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/network/auth_interceptor.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
+import 'package:shiftly/features/auth/domain/entities/authentication_exception.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
@@ -18,6 +20,7 @@ class _Auth implements AuthenticationService {
   int refreshCalls = 0;
   int signOutCalls = 0;
   bool refreshFails = false;
+  Object? refreshError;
   bool refreshReturnsNull = false;
   Duration refreshDelay = Duration.zero;
   void Function()? onRefresh;
@@ -32,7 +35,15 @@ class _Auth implements AuthenticationService {
     refreshCalls++;
     await Future<void>.delayed(refreshDelay);
     onRefresh?.call();
-    if (refreshFails) throw Exception('refresh failed');
+    if (refreshError != null) throw refreshError!;
+    if (refreshFails) {
+      throw const AuthenticationException(
+        Failure(
+          message: 'Invalid refresh token',
+          kind: FailureKind.authentication,
+        ),
+      );
+    }
     if (refreshReturnsNull) return null;
     session = const AuthSession(accessToken: 'new-token');
     return session;
@@ -141,6 +152,128 @@ class _NeverRepository implements AuthenticationRepository {
 }
 
 void main() {
+  String token(String user, String session, int version) =>
+      'header.${base64Url.encode(utf8.encode(jsonEncode({'sub': user, 'session_id': session, 'version': version}))).replaceAll('=', '')}.signature';
+
+  test(
+    'temporary refresh failure preserves login and workspace, then recovers',
+    () async {
+      final auth = _Auth()
+        ..session = const AuthSession(accessToken: 'old-token')
+        ..refreshError = const AuthenticationException(
+          Failure(message: 'offline', kind: FailureKind.network),
+        );
+      final storage = _Storage();
+      final client = _client(
+        auth,
+        storage,
+        (options, _) => options.headers['Authorization'] == 'Bearer new-token'
+            ? _json(200)
+            : _json(401),
+      );
+      await expectLater(
+        client.dio.get<Object?>('/protected'),
+        throwsA(
+          isA<DioException>().having(
+            (e) => e.response?.statusCode,
+            'retryable status',
+            503,
+          ),
+        ),
+      );
+      expect(auth.currentSession, isNotNull);
+      expect(auth.signOutCalls, 0);
+      expect(storage.clearCalls, 0);
+      auth.refreshError = null;
+      expect((await client.dio.get<Object?>('/protected')).statusCode, 200);
+    },
+  );
+
+  test('backend session-check outage does not refresh or sign out', () async {
+    final auth = _Auth()..session = const AuthSession(accessToken: 'old-token');
+    final storage = _Storage();
+    final client = _client(
+      auth,
+      storage,
+      (_, _) => _json(503, {'code': 'SESSION_CHECK_UNAVAILABLE'}),
+    );
+    await expectLater(
+      client.dio.get<Object?>('/protected'),
+      throwsA(isA<DioException>()),
+    );
+    expect(auth.refreshCalls, 0);
+    expect(auth.signOutCalls, 0);
+    expect(storage.clearCalls, 0);
+  });
+
+  test(
+    'revoked device logs out locally without refreshing another session',
+    () async {
+      final auth = _Auth()
+        ..session = const AuthSession(accessToken: 'old-token');
+      final storage = _Storage();
+      final client = _client(
+        auth,
+        storage,
+        (_, _) => _json(401, {'code': 'SESSION_REVOKED'}),
+      );
+      await expectLater(
+        client.dio.get<Object?>('/protected'),
+        throwsA(isA<DioException>()),
+      );
+      expect(auth.refreshCalls, 0);
+      expect(auth.signOutCalls, 1);
+      expect(storage.clearCalls, 1);
+    },
+  );
+
+  test('late 401 replays the latest token from the same login without another refresh', () async {
+    final old = token('user', 'session-a', 1);
+    final latest = token('user', 'session-a', 2);
+    final auth = _Auth()..session = AuthSession(accessToken: old);
+    final client = _client(auth, _Storage(), (options, count) {
+      if (count == 1) {
+        auth.session = AuthSession(accessToken: latest);
+        return _json(401);
+      }
+      return _json(200);
+    });
+    expect((await client.dio.get<Object?>('/protected')).statusCode, 200);
+    expect(auth.refreshCalls, 0);
+    expect(
+      client.adapter.requests.last.headers['Authorization'],
+      'Bearer $latest',
+    );
+  });
+
+  test(
+    'late 401 from a previous login cannot log out the newly signed-in account',
+    () async {
+      final auth = _Auth()
+        ..session = AuthSession(accessToken: token('user-a', 'session-a', 1));
+      final next = token('user-b', 'session-b', 1);
+      final storage = _Storage();
+      final client = _client(auth, storage, (_, _) {
+        auth.session = AuthSession(accessToken: next);
+        return _json(401, {'code': 'SESSION_REVOKED'});
+      });
+      await expectLater(
+        client.dio.get<Object?>('/protected'),
+        throwsA(
+          isA<DioException>().having(
+            (e) => e.type,
+            'cancelled stale call',
+            DioExceptionType.cancel,
+          ),
+        ),
+      );
+      expect(auth.currentSession?.accessToken, next);
+      expect(auth.refreshCalls, 0);
+      expect(auth.signOutCalls, 0);
+      expect(storage.clearCalls, 0);
+      expect(client.adapter.requests, hasLength(1));
+    },
+  );
   test('successful refresh replays the complete request once', () async {
     final auth = _Auth()..session = const AuthSession(accessToken: 'old-token');
     final client = _client(

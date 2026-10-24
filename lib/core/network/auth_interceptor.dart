@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
+import 'package:shiftly/features/auth/domain/entities/authentication_exception.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 
 abstract final class RequestOptionsKeys {
@@ -67,12 +69,48 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
-    final AuthSession? session;
-    try {
-      session = await _refreshSession();
-    } catch (_) {
+    final initial = _authentication.currentSession;
+    final authorization = request.headers['Authorization']?.toString();
+    final sent = authorization?.startsWith('Bearer ') == true
+        ? AuthSession(accessToken: authorization!.substring(7))
+        : null;
+    if (sent == null) {
+      handler.next(err);
+      return;
+    }
+    if (initial != null && !initial.sameLoginAs(sent)) {
+      handler.next(_sessionChanged(err));
+      return;
+    }
+    final body = err.response?.data;
+    if (body is Map && body['code'] == 'SESSION_REVOKED') {
       await _expireSession();
       handler.next(_authenticationError(err));
+      return;
+    }
+
+    final AuthSession? session;
+    try {
+      // A delayed 401 may refer to a token already refreshed by another request.
+      session = initial != null && initial.accessToken != sent.accessToken
+          ? initial
+          : await _refreshSession();
+    } catch (error) {
+      if (!_stillCurrent(initial)) {
+        handler.next(_sessionChanged(err));
+      } else if (error is AuthenticationException &&
+          error.failure.kind == FailureKind.authentication) {
+        await _expireSession();
+        handler.next(_authenticationError(err));
+      } else {
+        handler.next(_refreshUnavailable(err, error));
+      }
+      return;
+    }
+
+    if ((session != null && _authentication.currentSession == null) ||
+        !_stillCurrent(initial, refreshed: session)) {
+      handler.next(_sessionChanged(err));
       return;
     }
 
@@ -88,7 +126,7 @@ class AuthInterceptor extends Interceptor {
       handler.resolve(response);
     } on DioException catch (retryError) {
       if (retryError.response?.statusCode == 401) {
-        await _expireSession();
+        if (_stillCurrent(session)) await _expireSession();
       }
       handler.next(retryError);
     } catch (error, stackTrace) {
@@ -102,6 +140,42 @@ class AuthInterceptor extends Interceptor {
         ),
       );
     }
+  }
+
+  bool _stillCurrent(AuthSession? initial, {AuthSession? refreshed}) {
+    final current = _authentication.currentSession;
+    if (current == null) return true;
+    return (initial != null && current.sameLoginAs(initial)) ||
+        (refreshed != null &&
+            current.sameLoginAs(refreshed) &&
+            (initial?.sessionId == null || initial!.sameLoginAs(refreshed)));
+  }
+
+  DioException _sessionChanged(DioException source) => DioException(
+    requestOptions: source.requestOptions,
+    type: DioExceptionType.cancel,
+    message: 'The signed-in account changed while this request was running.',
+  );
+
+  DioException _refreshUnavailable(DioException source, Object error) {
+    final failure = error is AuthenticationException ? error.failure : null;
+    return DioException(
+      requestOptions: source.requestOptions,
+      response: Response<Object?>(
+        requestOptions: source.requestOptions,
+        statusCode: 503,
+        data: const {
+          'code': 'SESSION_REFRESH_UNAVAILABLE',
+          'message': 'Could not refresh your session. Check your connection and retry.',
+        },
+      ),
+      type: failure?.kind == FailureKind.timeout
+          ? DioExceptionType.connectionTimeout
+          : failure?.kind == FailureKind.server
+          ? DioExceptionType.badResponse
+          : DioExceptionType.connectionError,
+      message: 'Session refresh temporarily unavailable.',
+    );
   }
 
   Future<AuthSession?> _refreshSession() async {
@@ -175,12 +249,18 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<void> _performExpiry() async {
+    final expiring = _authentication.currentSession;
     try {
       await _authentication.signOut();
     } catch (_) {
       // Continue clearing app-owned authorization state even if the SDK fails.
     }
     try {
+      final current = _authentication.currentSession;
+      if (current != null &&
+          (expiring == null || !current.sameLoginAs(expiring))) {
+        return;
+      }
       await _workspaceStorage.clear();
     } catch (_) {
       // The authentication error must still reach the caller safely.
