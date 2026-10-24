@@ -21,6 +21,8 @@ const { PGlite } = require(require.resolve('@electric-sql/pglite', { paths: [bac
       'prisma/migrations/20261024100000_task_duration_and_advance_reminders/migration.sql'), 'utf8'));
     await db.exec(fs.readFileSync(path.join(backend,
       'prisma/migrations/20261024110000_task_hour_reminders/migration.sql'), 'utf8'));
+    await db.exec(fs.readFileSync(path.join(backend,
+      'prisma/migrations/20261024120000_task_multiple_times/migration.sql'), 'utf8'));
     const owner = '00000000-0000-4000-8000-000000000001';
     const workspace = '00000000-0000-4000-8000-000000000002';
     const task = '00000000-0000-4000-8000-000000000003';
@@ -49,7 +51,8 @@ const { PGlite } = require(require.resolve('@electric-sql/pglite', { paths: [bac
     await assert.rejects(db.query('UPDATE personal_tasks SET revision=0'));
     await db.query('INSERT INTO task_reminder_registrations VALUES ($1,$2,1)', [task,installation]);
     await db.query('UPDATE task_reminder_registrations SET coverage_version=3');
-    await assert.rejects(db.query('UPDATE task_reminder_registrations SET coverage_version=4'));
+    await db.query('UPDATE task_reminder_registrations SET coverage_version=4');
+    await assert.rejects(db.query('UPDATE task_reminder_registrations SET coverage_version=5'));
     await assert.rejects(db.query('INSERT INTO task_reminder_registrations VALUES ($1,$2,1)', [task,installation]));
     const security = (await db.query(`SELECT relname,relrowsecurity FROM pg_class
       WHERE relname IN ('personal_tasks','task_reminder_registrations')`)).rows;
@@ -58,8 +61,17 @@ const { PGlite } = require(require.resolve('@electric-sql/pglite', { paths: [bac
     const grants = (await db.query(`SELECT has_table_privilege('authenticated',
       'personal_tasks','SELECT') AS allowed`)).rows[0];
     assert.equal(grants.allowed, false);
+    const occurrence='00000000-0000-4000-8000-000000000005';
+    await db.query("INSERT INTO personal_task_occurrences(id,task_id,due_at) VALUES($1,$2,'2090-01-08T10:00:00Z')",[occurrence,task]);
+    await assert.rejects(db.query("INSERT INTO personal_task_occurrences(id,task_id,due_at) VALUES('00000000-0000-4000-8000-000000000006',$1,'2090-01-08T10:00:00Z')",[task]));
+    const claim="UPDATE personal_task_occurrences SET reminder_sent_at=now() WHERE id=$1 AND reminder_sent_at IS NULL RETURNING id";
+    assert.equal((await db.query(claim,[occurrence])).rows.length,1);
+    assert.equal((await db.query(claim,[occurrence])).rows.length,0);
+    assert.equal((await db.query("SELECT relrowsecurity FROM pg_class WHERE relname='personal_task_occurrences'")).rows[0].relrowsecurity,true);
+    assert.equal((await db.query("SELECT has_table_privilege('authenticated','personal_task_occurrences','SELECT') AS allowed")).rows[0].allowed,false);
     await db.query('DELETE FROM workspaces WHERE id=$1', [workspace]);
     assert.equal((await db.query('SELECT * FROM personal_tasks')).rows.length, 0);
+    assert.equal((await db.query('SELECT * FROM personal_task_occurrences')).rows.length, 0);
     assert.equal((await db.query('SELECT * FROM task_reminder_registrations')).rows.length, 0);
     console.log('Task migration passed: UTC deadlines, defaults, constraints, RLS, grants and cascading deletion.');
   } finally {

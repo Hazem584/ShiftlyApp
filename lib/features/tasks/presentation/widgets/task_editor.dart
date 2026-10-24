@@ -9,6 +9,7 @@ import 'package:shiftly/core/session/feature_scope.dart';
 
 import '../../application/tasks_cubit.dart';
 import '../../domain/personal_task.dart';
+import 'task_additional_times.dart';
 
 Future<void> showTaskEditor(BuildContext context, {PersonalTask? task}) =>
     showDialog<void>(
@@ -34,12 +35,14 @@ class _TaskEditorState extends State<TaskEditor> {
   late bool _remindDayBefore;
   late bool _remindHourBefore;
   late DateTime _dueAt;
+  late List<DateTime> _additionalDueAts;
   bool _saving = false;
   String? _error;
   @override
   void initState() {
     super.initState();
     _scope = context.read<TasksCubit>().scope;
+    _additionalDueAts = [...?widget.task?.additionalDueAts];
     _title = TextEditingController(text: widget.task?.title ?? '');
     _description = TextEditingController(text: widget.task?.description ?? '');
     _duration = TextEditingController(
@@ -132,6 +135,12 @@ class _TaskEditorState extends State<TaskEditor> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
+    if (_additionalDueAts.any((date) => date.isAtSameMomentAs(_dueAt))) {
+      setState(
+        () => _error = context.tr('Choose a different future alarm time.'),
+      );
+      return;
+    }
     final unchanged =
         widget.task != null && _dueAt.isAtSameMomentAs(widget.task!.dueAt);
     if (!_dueAt.isAfter(DateTime.now()) && !unchanged) {
@@ -151,6 +160,7 @@ class _TaskEditorState extends State<TaskEditor> {
       durationMinutes: int.parse(_duration.text),
       remindDayBefore: _remindDayBefore,
       remindHourBefore: _remindHourBefore,
+      additionalDueAts: _additionalDueAts,
     );
     if (!mounted) return;
     if (success) {
@@ -333,6 +343,15 @@ class _TaskEditorState extends State<TaskEditor> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    TaskAdditionalTimes(
+                      primary: _dueAt,
+                      dates: _additionalDueAts,
+                      enabled: !_saving,
+                      onChanged: (dates) =>
+                          setState(() => _additionalDueAts = dates),
+                    ),
+                    const SizedBox(height: 12),
                     Text(
                       context.tr(
                         'An alarm at the task time and when its duration ends.',

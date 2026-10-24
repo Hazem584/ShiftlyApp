@@ -7,6 +7,48 @@ import 'package:shiftly/features/tasks/domain/task_alarm.dart';
 import 'package:shiftly/features/tasks/presentation/widgets/task_countdown.dart';
 
 void main() {
+  test('one task has independent alarm keys for three chosen times', () {
+    final first = DateTime.utc(2090, 1, 3, 7);
+    final dates = [DateTime.utc(2090, 1, 10, 7), DateTime.utc(2090, 1, 17, 7)];
+    final task = PersonalTask(
+      id: 'series',
+      ownerId: 'owner',
+      workspaceId: 'workspace',
+      title: 'Same title',
+      description: 'Same details',
+      dueAt: first,
+      additionalDueAts: dates,
+      revision: 1,
+      completed: false,
+      durationMinutes: 5,
+      remindDayBefore: true,
+      remindHourBefore: true,
+    );
+    final alarms = TaskAlarm.upcoming(task, DateTime.utc(2090, 1, 1));
+    expect(alarms, hasLength(12));
+    expect(alarms.map((alarm) => alarm.key).toSet(), hasLength(12));
+    expect(alarms.where((a) => a.kind == TaskAlarmKind.due).map((a) => a.at), [
+      first,
+      ...dates,
+    ]);
+    final after = first.add(const Duration(hours: 1));
+    expect(task.nextDueAt(after), dates.first);
+    expect(TaskAlarm.upcoming(task, after), hasLength(8));
+  });
+  test('additional alarm dates preserve API UTC offsets', () {
+    final task = PersonalTask.fromJson({
+      'id': 'task',
+      'ownerId': 'owner',
+      'workspaceId': 'workspace',
+      'title': 'Report',
+      'description': '',
+      'revision': 1,
+      'status': 'OPEN',
+      'dueAt': '2090-01-03T07:00:00Z',
+      'additionalDueAts': ['2090-01-10T09:00:00+02:00'],
+    });
+    expect(task.additionalDueAts.single, DateTime.utc(2090, 1, 10, 7));
+  });
   for (final day in [false, true]) {
     for (final hour in [false, true]) {
       test('day=$day and hour=$hour reminders are independent', () {

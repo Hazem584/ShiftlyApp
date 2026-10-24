@@ -61,6 +61,66 @@ void main() {
     return DeviceTaskReminders(preferences, PreferencesPushStore(preferences));
   }
 
+  test(
+    'three times retain twelve independent alarms and cancel together',
+    () async {
+      final task = PersonalTask(
+        id: 'series',
+        ownerId: 'owner',
+        workspaceId: 'workspace',
+        title: 'Same title',
+        description: 'Same details',
+        dueAt: DateTime.utc(2090, 1, 3, 7),
+        additionalDueAts: [
+          DateTime.utc(2090, 1, 10, 7),
+          DateTime.utc(2090, 1, 17, 7),
+        ],
+        revision: 1,
+        completed: false,
+        durationMinutes: 5,
+        remindDayBefore: true,
+        remindHourBefore: true,
+      );
+      final reminders = await service();
+      expect(await reminders.replace('owner', [task]), [task]);
+      final alarms = calls
+          .where((c) => c.method == 'zonedSchedule')
+          .map((c) => Map<String, Object?>.from(c.arguments as Map))
+          .toList();
+      expect(alarms, hasLength(12));
+      expect(alarms.map((a) => a['id']).toSet(), hasLength(12));
+      expect(
+        alarms.where(
+          (a) => jsonDecode(a['payload']! as String)['occurrenceDueAt'] != null,
+        ),
+        hasLength(8),
+      );
+      pending = alarms
+          .map(
+            (a) => {
+              'id': a['id'],
+              'title': a['title'],
+              'body': a['body'],
+              'payload': a['payload'],
+            },
+          )
+          .toList();
+      calls.clear();
+      await reminders.replace('owner', [task]);
+      expect(calls.where((c) => c.method == 'cancel'), isEmpty);
+      expect(
+        calls
+            .where((c) => c.method == 'zonedSchedule')
+            .map((c) => (c.arguments as Map)['id'])
+            .toSet(),
+        alarms.map((a) => a['id']).toSet(),
+      );
+      await reminders.cancel('series');
+      expect(calls.where((c) => c.method == 'cancel'), hasLength(12));
+      await reminders.close();
+    },
+  );
+
   test('schedules all four task events at distinct instants and cancels them together', () async {
     final due = DateTime.utc(2090, 1, 3, 10);
     final detailed = PersonalTask(

@@ -47,8 +47,12 @@ class _TaskCountdownState extends State<TaskCountdown> {
   Widget build(BuildContext context) {
     final task = widget.task;
     final now = widget.now?.call() ?? DateTime.now();
-    final waiting = task.dueAt.isAfter(now);
-    final target = waiting ? task.dueAt : task.endsAt;
+    final due = task.nextDueAt(now);
+    final end = task.durationMinutes == null
+        ? null
+        : due.add(Duration(minutes: task.durationMinutes!));
+    final waiting = due.isAfter(now);
+    final target = waiting ? due : end;
     final running = !waiting && (target?.isAfter(now) ?? false);
     final label = task.completed
         ? 'Task completed'

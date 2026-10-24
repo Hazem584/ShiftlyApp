@@ -12,6 +12,7 @@ import 'package:shiftly/features/tasks/data/memory_task_repository.dart';
 import 'package:shiftly/features/tasks/domain/personal_task.dart';
 import 'package:shiftly/features/tasks/domain/task_reminders.dart';
 import 'package:shiftly/features/tasks/presentation/tasks_screen.dart';
+import 'package:shiftly/features/tasks/presentation/widgets/task_additional_times.dart';
 import 'package:shiftly/features/tasks/presentation/widgets/task_editor.dart';
 
 const scope = FeatureSessionScope(
@@ -85,6 +86,7 @@ class CapturingTaskRepository extends MemoryTaskRepository {
     int? durationMinutes,
     bool? remindDayBefore,
     bool? remindHourBefore,
+    List<DateTime>? additionalDueAts,
   }) async {
     updated = true;
     updatedDueAt = dueAt;
@@ -369,6 +371,18 @@ void main() {
         expect(tester.takeException(), isNull);
         await tester.tap(confirmTime);
         await tester.pumpAndSettle();
+        for (var i = 0; i < 2; i++) {
+          final addWeek = find.byKey(const Key('add-task-week'));
+          await tester.ensureVisible(addWeek);
+          await tester.tap(addWeek);
+          await tester.pumpAndSettle();
+        }
+        expect(
+          tester
+              .widget<TaskAdditionalTimes>(find.byType(TaskAdditionalTimes))
+              .dates,
+          hasLength(2),
+        );
         await tester.ensureVisible(
           find.text(locale == 'ar' ? 'حفظ المهمة' : 'Save task'),
         );
@@ -381,6 +395,20 @@ void main() {
           findsOneWidget,
         );
         expect(tester.takeException(), isNull);
+        final saved = tasks.state.items.single;
+        expect(saved.additionalDueAts, hasLength(2));
+        expect(saved.additionalDueAts.first.hour, saved.dueAt.hour);
+        expect(saved.additionalDueAts.first.minute, saved.dueAt.minute);
+        expect(
+          saved.additionalDueAts.last,
+          DateTime(
+            saved.dueAt.year,
+            saved.dueAt.month,
+            saved.dueAt.day + 14,
+            saved.dueAt.hour,
+            saved.dueAt.minute,
+          ),
+        );
         await tester.tap(find.byType(Checkbox));
         await tester.pumpAndSettle();
         expect(tasks.state.items, isEmpty);

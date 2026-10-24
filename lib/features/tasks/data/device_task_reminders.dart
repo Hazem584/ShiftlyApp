@@ -104,6 +104,10 @@ class DeviceTaskReminders implements TaskReminders {
         : TaskReminderPermission.disabled;
   }
 
+  String _alarmKey(Map<String, Object?> tap) =>
+      "${tap['taskId']}:${tap['reminderKind'] ?? 'DUE'}"
+      "${tap['occurrenceDueAt'] is String ? ':${tap['occurrenceDueAt']}' : ''}";
+
   @override
   Future<List<PersonalTask>> replace(
     String userId,
@@ -123,8 +127,7 @@ class DeviceTaskReminders implements TaskReminders {
     for (final notification in pending) {
       final tap = _decode(notification.payload);
       if (tap?['ownerId'] == userId) {
-        existing["${tap!['taskId']}:${tap['reminderKind'] ?? 'DUE'}"] =
-            notification.id;
+        existing[_alarmKey(tap!)] = notification.id;
       }
     }
     var nextId = 1700000000;
@@ -146,11 +149,9 @@ class DeviceTaskReminders implements TaskReminders {
         final tap = _decode(notification.payload);
         if (tap != null &&
             (tap['ownerId'] != userId ||
-                !desiredIds.contains(
-                  "${tap['taskId']}:${tap['reminderKind'] ?? 'DUE'}",
-                ))) {
+                !desiredIds.contains(_alarmKey(tap)))) {
           await _plugin.cancel(id: notification.id);
-          existing.remove("${tap['taskId']}:${tap['reminderKind'] ?? 'DUE'}");
+          existing.remove(_alarmKey(tap));
         }
       }
     }
@@ -205,6 +206,8 @@ class DeviceTaskReminders implements TaskReminders {
           'taskId': task.id,
           'revision': task.revision,
           'reminderKind': alarm.wireKind,
+          if (alarm.occurrenceDueAt != null)
+            'occurrenceDueAt': alarm.occurrenceDueAt!.toUtc().toIso8601String(),
         }),
       );
       if (!existing.containsKey(alarm.key)) occupied++;

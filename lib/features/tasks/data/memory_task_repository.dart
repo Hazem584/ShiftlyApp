@@ -20,7 +20,11 @@ class MemoryTaskRepository implements TaskRepository {
       .where(
         (t) =>
             !t.completed &&
-            (t.dueAt.isAfter(DateTime.now()) ||
+            (t.scheduledDates.any(
+                  (date) => date
+                      .add(Duration(minutes: t.durationMinutes ?? 0))
+                      .isAfter(DateTime.now()),
+                ) ||
                 (t.endsAt?.isAfter(DateTime.now()) ?? false)),
       )
       .toList();
@@ -35,6 +39,7 @@ class MemoryTaskRepository implements TaskRepository {
     int? durationMinutes,
     bool remindDayBefore = false,
     bool remindHourBefore = false,
+    List<DateTime> additionalDueAts = const [],
   }) async {
     final id = const Uuid().v4();
     _items[id] = PersonalTask(
@@ -49,6 +54,7 @@ class MemoryTaskRepository implements TaskRepository {
       durationMinutes: durationMinutes,
       remindDayBefore: remindDayBefore,
       remindHourBefore: remindHourBefore,
+      additionalDueAts: List.unmodifiable(additionalDueAts),
     );
   }
 
@@ -62,6 +68,7 @@ class MemoryTaskRepository implements TaskRepository {
     int? durationMinutes,
     bool? remindDayBefore,
     bool? remindHourBefore,
+    List<DateTime>? additionalDueAts,
   }) async {
     _items[task.id] = PersonalTask(
       id: task.id,
@@ -75,6 +82,9 @@ class MemoryTaskRepository implements TaskRepository {
       durationMinutes: durationMinutes ?? task.durationMinutes,
       remindDayBefore: remindDayBefore ?? task.remindDayBefore,
       remindHourBefore: remindHourBefore ?? task.remindHourBefore,
+      additionalDueAts: List.unmodifiable(
+        additionalDueAts ?? task.additionalDueAts,
+      ),
     );
   }
 

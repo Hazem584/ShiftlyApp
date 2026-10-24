@@ -12,6 +12,7 @@ abstract interface class TaskRepository {
     int? durationMinutes,
     bool remindDayBefore = false,
     bool remindHourBefore = false,
+    List<DateTime> additionalDueAts = const [],
   });
   Future<void> update(
     PersonalTask task, {
@@ -22,6 +23,7 @@ abstract interface class TaskRepository {
     int? durationMinutes,
     bool? remindDayBefore,
     bool? remindHourBefore,
+    List<DateTime>? additionalDueAts,
   });
   Future<void> remove(PersonalTask task);
   Future<void> register(String installationId, List<PersonalTask> scheduled);

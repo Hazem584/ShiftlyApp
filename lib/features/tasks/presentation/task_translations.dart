@@ -1,4 +1,13 @@
 const taskTranslations = <String, String>{
+  'More alarm times': 'مواعيد إضافية للتنبيه',
+  'One task, the same title and details at every time.':
+      'نفس المهمة ونفس العنوان والتفاصيل في كل موعد.',
+  'Add alarm time': 'إضافة موعد تنبيه',
+  'Add next week': 'إضافة الأسبوع الجاي',
+  'Remove alarm time': 'حذف موعد التنبيه',
+  'Choose a different future alarm time.':
+      'اختار موعد في المستقبل غير المواعيد الموجودة.',
+  '{count} alarm times': '{count} مواعيد للتنبيه',
   'Remind me one hour before': 'فكّرني قبلها بساعة',
   'A notification 60 minutes before the task.':
       'إشعار قبل موعد المهمة بـ٦٠ دقيقة.',

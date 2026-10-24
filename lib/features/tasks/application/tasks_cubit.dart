@@ -116,7 +116,7 @@ class TasksCubit extends Cubit<TasksState> {
         final now = _clock();
         final signature =
             '$user:$permission:${tasks.map((t) => '${t.id}:${t.revision}:'
-                '${TaskAlarm.upcoming(t, now).map((a) => a.wireKind).join('+')}').join(',')}';
+                '${TaskAlarm.upcoming(t, now).map((a) => a.key).join('+')}').join(',')}';
         if (signature == _lastReminderSignature) return;
         final installation = await reminders.installationId();
         // Withdraw acknowledgements first: partial native scheduling must leave
@@ -204,6 +204,7 @@ class TasksCubit extends Cubit<TasksState> {
     int? durationMinutes,
     bool remindDayBefore = false,
     bool remindHourBefore = false,
+    List<DateTime> additionalDueAts = const [],
   }) => _mutate(
     (s) => task == null
         ? repository.create(
@@ -214,6 +215,7 @@ class TasksCubit extends Cubit<TasksState> {
             durationMinutes: durationMinutes,
             remindDayBefore: remindDayBefore,
             remindHourBefore: remindHourBefore,
+            additionalDueAts: additionalDueAts,
           )
         : repository.update(
             task,
@@ -223,6 +225,7 @@ class TasksCubit extends Cubit<TasksState> {
             durationMinutes: durationMinutes,
             remindDayBefore: remindDayBefore,
             remindHourBefore: remindHourBefore,
+            additionalDueAts: additionalDueAts,
           ),
     changedTask: task,
   );

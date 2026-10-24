@@ -26,7 +26,9 @@ class TaskCard extends StatelessWidget {
         ? colors.error
         : colors.tertiary;
     final locale = Localizations.localeOf(context).languageCode;
-    final date = DateFormat.yMMMd(locale).add_jm().format(task.dueAt.toLocal());
+    final date = DateFormat.yMMMd(locale)
+        .add_jm()
+        .format(task.nextDueAt(DateTime.now()).toLocal());
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -129,6 +131,13 @@ class TaskCard extends StatelessWidget {
                         color: colors.onSurfaceVariant,
                         fontSize: 12,
                       ),
+                    ),
+                  if (task.additionalDueAts.isNotEmpty)
+                    Text(
+                      context.tr('{count} alarm times', {
+                        'count': '${task.scheduledDates.length}',
+                      }),
+                      style: TextStyle(color: colors.primary, fontSize: 12),
                     ),
                   if (task.overdue)
                     Text(
