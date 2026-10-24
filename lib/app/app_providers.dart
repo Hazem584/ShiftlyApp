@@ -13,6 +13,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
 import 'package:shiftly/core/localization/language_preference_store.dart';
 import 'package:shiftly/core/localization/language_settings.dart';
+import 'package:shiftly/core/monitoring/monitoring_gate.dart';
 import 'package:shiftly/core/offline/read_sync_cubit.dart';
 import 'package:shiftly/core/platform/platform_gate.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
@@ -226,17 +227,21 @@ class _AppProvidersState extends State<AppProviders> {
                   builder: (context, child) {
                     final locator = widget.locator;
                     if (locator == null) return child!;
-                    return PlatformGate(
-                      statusClient: _platformStatusClient ??= Dio(
-                        BaseOptions(
-                          baseUrl: locator<AppConfig>().apiBaseUrl.toString(),
-                          connectTimeout: const Duration(seconds: 10),
-                          receiveTimeout: const Duration(seconds: 10),
-                        ),
-                      ),
+                    return MonitoringGate(
                       apiClient: locator<Dio>(),
                       authentication: locator<AuthenticationService>(),
-                      child: child!,
+                      child: PlatformGate(
+                        statusClient: _platformStatusClient ??= Dio(
+                          BaseOptions(
+                            baseUrl: locator<AppConfig>().apiBaseUrl.toString(),
+                            connectTimeout: const Duration(seconds: 10),
+                            receiveTimeout: const Duration(seconds: 10),
+                          ),
+                        ),
+                        apiClient: locator<Dio>(),
+                        authentication: locator<AuthenticationService>(),
+                        child: child!,
+                      ),
                     );
                   },
                 ),
