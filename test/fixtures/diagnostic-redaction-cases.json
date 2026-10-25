@@ -1,0 +1,297 @@
+[
+  {
+    "name": "plain assignment",
+    "input": "password=demo-secret",
+    "secrets": [
+      "demo-secret"
+    ]
+  },
+  {
+    "name": "JSON password",
+    "input": "{\"password\":\"demo-secret\"}",
+    "secrets": [
+      "demo-secret"
+    ],
+    "expected": {
+      "password": "[redacted]"
+    }
+  },
+  {
+    "name": "JSON opaque access token",
+    "input": "{\"access_token\":\"opaque-demo-secret\"}",
+    "secrets": [
+      "opaque-demo-secret"
+    ],
+    "expected": {
+      "access_token": "[redacted]"
+    }
+  },
+  {
+    "name": "JSON refresh token",
+    "input": "{\"refresh_token\":\"refresh-demo-secret\"}",
+    "secrets": [
+      "refresh-demo-secret"
+    ],
+    "expected": {
+      "refresh_token": "[redacted]"
+    }
+  },
+  {
+    "name": "JSON API key",
+    "input": "{\"api_key\":\"demo-key\"}",
+    "secrets": [
+      "demo-key"
+    ],
+    "expected": {
+      "api_key": "[redacted]"
+    }
+  },
+  {
+    "name": "mixed case and camel case",
+    "input": "{\"AccessToken\":\"camel-token-value\",\"REFRESH_TOKEN\":\"upper-refresh-value\",\"clientSecret\":\"client-secret-value\",\"status\":500}",
+    "secrets": [
+      "camel-token-value",
+      "upper-refresh-value",
+      "client-secret-value"
+    ],
+    "expected": {
+      "AccessToken": "[redacted]",
+      "REFRESH_TOKEN": "[redacted]",
+      "clientSecret": "[redacted]",
+      "status": 500
+    }
+  },
+  {
+    "name": "nested objects and arrays",
+    "input": "{\"status\":400,\"payload\":[{\"password\":\"nested-password-value\"},{\"tokens\":[\"token-one-value\",\"token-two-value\"]}]}",
+    "secrets": [
+      "nested-password-value",
+      "token-one-value",
+      "token-two-value"
+    ],
+    "expected": {
+      "status": 400,
+      "payload": [
+        {
+          "password": "[redacted]"
+        },
+        {
+          "tokens": "[redacted]"
+        }
+      ]
+    }
+  },
+  {
+    "name": "sensitive object value",
+    "input": "{\"credentials\":{\"username\":\"private-user-value\",\"password\":\"object-password-value\"},\"status\":401}",
+    "secrets": [
+      "private-user-value",
+      "object-password-value"
+    ],
+    "expected": {
+      "credentials": "[redacted]",
+      "status": 401
+    }
+  },
+  {
+    "name": "root array",
+    "input": "[{\"apiKey\":\"array-key-value\"},{\"screen\":\"profile\"}]",
+    "secrets": [
+      "array-key-value"
+    ],
+    "expected": [
+      {
+        "apiKey": "[redacted]"
+      },
+      {
+        "screen": "profile"
+      }
+    ]
+  },
+  {
+    "name": "escaped quotes in secret",
+    "input": "{\"password\":\"quoted-\\\"secret-value\",\"message\":\"keep\"}",
+    "secrets": [
+      "secret-value"
+    ],
+    "expected": {
+      "password": "[redacted]",
+      "message": "keep"
+    }
+  },
+  {
+    "name": "multiline JSON",
+    "input": "{\n  \"password\": \"line-one-value\\nline-two-value\",\n  \"status\": 401\n}",
+    "secrets": [
+      "line-one-value",
+      "line-two-value"
+    ],
+    "expected": {
+      "password": "[redacted]",
+      "status": 401
+    }
+  },
+  {
+    "name": "JSON encoded in a message",
+    "input": "{\"message\":\"{\\\"access_token\\\":\\\"encoded-token-value\\\",\\\"code\\\":\\\"FAILED\\\"}\"}",
+    "secrets": [
+      "encoded-token-value"
+    ],
+    "expected": {
+      "message": "{\"access_token\":\"[redacted]\",\"code\":\"FAILED\"}"
+    }
+  },
+  {
+    "name": "double encoded root string",
+    "input": "\"{\\\"refresh_token\\\":\\\"double-encoded-value\\\"}\"",
+    "secrets": [
+      "double-encoded-value"
+    ]
+  },
+  {
+    "name": "unicode key",
+    "input": "{\"pa\\u0073sword\":\"unicode-password-value\"}",
+    "secrets": [
+      "unicode-password-value"
+    ],
+    "expected": {
+      "password": "[redacted]"
+    }
+  },
+  {
+    "name": "single quoted Dart map",
+    "input": "Failure: {'password': 'single-quoted-value', 'status': 500}",
+    "secrets": [
+      "single-quoted-value"
+    ]
+  },
+  {
+    "name": "embedded JSON",
+    "input": "Request failed: {\"password\":\"embedded-password-value\",\"status\":401}",
+    "secrets": [
+      "embedded-password-value"
+    ]
+  },
+  {
+    "name": "escaped embedded JSON",
+    "input": "Request failed: {\\\"access_token\\\":\\\"escaped-inline-value\\\"}",
+    "secrets": [
+      "escaped-inline-value"
+    ]
+  },
+  {
+    "name": "unterminated JSON",
+    "input": "{\"password\":\"unterminated-password-value",
+    "secrets": [
+      "unterminated-password-value"
+    ]
+  },
+  {
+    "name": "malformed multiline text",
+    "input": "error: password=\"first-line-value\nsecond-line-value and more",
+    "secrets": [
+      "first-line-value",
+      "second-line-value"
+    ]
+  },
+  {
+    "name": "Dart object-style nested secret",
+    "input": "Error(data: {api_key: {nested: container-secret-value}, status: 401})",
+    "secrets": [
+      "container-secret-value"
+    ]
+  },
+  {
+    "name": "plaintext token key",
+    "input": "refresh_token = plain-refresh-value trailing details",
+    "secrets": [
+      "plain-refresh-value"
+    ]
+  },
+  {
+    "name": "Bearer credential",
+    "input": "Failed with Bearer bearer-token-value",
+    "secrets": [
+      "bearer-token-value"
+    ]
+  },
+  {
+    "name": "Basic credential",
+    "input": "Failed with Basic dXNlcjpkZW1vLXNlY3JldA==",
+    "secrets": [
+      "dXNlcjpkZW1vLXNlY3JldA=="
+    ]
+  },
+  {
+    "name": "authorization header",
+    "input": "Authorization: Bearer header-token-value",
+    "secrets": [
+      "header-token-value"
+    ]
+  },
+  {
+    "name": "JSON authorization",
+    "input": "{\"headers\":{\"Authorization\":\"Basic basic-json-secret-value\",\"X-Request-ID\":\"request-42\"}}",
+    "secrets": [
+      "basic-json-secret-value"
+    ],
+    "expected": {
+      "headers": {
+        "Authorization": "[redacted]",
+        "X-Request-ID": "request-42"
+      }
+    }
+  },
+  {
+    "name": "cookies",
+    "input": "{\"cookie\":\"sid=cookie-secret-value\",\"set_cookie\":\"cookie-two-value\"}",
+    "secrets": [
+      "cookie-secret-value",
+      "cookie-two-value"
+    ]
+  },
+  {
+    "name": "private key",
+    "input": "{\"private_key\":\"-----BEGIN PRIVATE KEY-----\\nprivate-key-value\\n-----END PRIVATE KEY-----\"}",
+    "secrets": [
+      "private-key-value"
+    ]
+  },
+  {
+    "name": "URL and email",
+    "input": "Open https://example.test?token=url-secret-value for person@example.test",
+    "secrets": [
+      "url-secret-value",
+      "person@example.test"
+    ]
+  },
+  {
+    "name": "prototype property",
+    "input": "{\"__proto__\":{\"password\":\"prototype-secret-value\"},\"status\":500}",
+    "secrets": [
+      "prototype-secret-value"
+    ],
+    "expected": {
+      "__proto__": {
+        "password": "[redacted]"
+      },
+      "status": 500
+    }
+  },
+  {
+    "name": "safe fields stay useful",
+    "input": "{\"status\":500,\"screen\":\"profile\",\"requestId\":\"req-42\",\"tokenCount\":3}",
+    "secrets": [],
+    "expected": {
+      "status": 500,
+      "screen": "profile",
+      "requestId": "req-42",
+      "tokenCount": 3
+    }
+  },
+  {
+    "name": "plain safe diagnostics",
+    "input": "StateError: invalid transition on profile screen",
+    "secrets": []
+  }
+]

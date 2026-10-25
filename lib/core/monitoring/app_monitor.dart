@@ -6,33 +6,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shiftly/core/monitoring/diagnostic_redaction.dart';
+import 'package:shiftly/core/monitoring/safe_exception_summary.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:uuid/uuid.dart';
 
-String redactDiagnostic(String value, int limit) {
-  final safe = value
-      .replaceAll(
-        RegExp(r'Bearer\s+\S+', caseSensitive: false),
-        'Bearer [redacted]',
-      )
-      .replaceAll(
-        RegExp(r'\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'),
-        '[token]',
-      )
-      .replaceAllMapped(
-        RegExp(
-          r'\b(password|token|secret|authorization|api[_-]?key)\b\s*[:=]\s*[^\s,;]+',
-          caseSensitive: false,
-        ),
-        (m) => '${m[1]}=[redacted]',
-      )
-      .replaceAll(RegExp(r'https?://[^\s)]+'), '[url]')
-      .replaceAll(
-        RegExp(r'[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}', caseSensitive: false),
-        '[email]',
-      );
-  return safe.length > limit ? safe.substring(0, limit) : safe;
-}
+export 'package:shiftly/core/monitoring/diagnostic_redaction.dart'
+    show redactDiagnostic;
 
 /// Best-effort authenticated diagnostics. Never retain or replay another user's errors.
 class AppMonitor with WidgetsBindingObserver {
@@ -84,7 +64,7 @@ class AppMonitor with WidgetsBindingObserver {
       unawaited(
         report(
           'flutter',
-          details.exceptionAsString(),
+          diagnosticExceptionSummary(details.exception),
           details.stack ?? StackTrace.current,
         ),
       );
@@ -93,7 +73,7 @@ class AppMonitor with WidgetsBindingObserver {
     FlutterError.onError = _flutterHandler;
     _previousUnhandled = PlatformDispatcher.instance.onError;
     _unhandledHandler = (error, stack) {
-      unawaited(report('unhandled', error.toString(), stack));
+      unawaited(report('unhandled', diagnosticExceptionSummary(error), stack));
       return _previousUnhandled?.call(error, stack) ?? false;
     };
     PlatformDispatcher.instance.onError = _unhandledHandler;

@@ -42,7 +42,11 @@ void main() {
       buildSignature: 'test',
     );
   });
-  Future<void> mount(WidgetTester tester, _ReleaseAdapter adapter) async {
+  Future<void> mount(
+    WidgetTester tester,
+    _ReleaseAdapter adapter, {
+    Future<bool> Function(Uri)? openRelease,
+  }) async {
     final auth = OnboardingTestAuth();
     addTearDown(() => auth.events.close());
     final public = Dio()..httpClientAdapter = adapter;
@@ -51,6 +55,7 @@ void main() {
         home: MonitoringGate(
           apiClient: Dio(),
           releaseClient: public,
+          openRelease: openRelease,
           authentication: auth,
           child: const Scaffold(body: Text('Application content')),
         ),
@@ -89,6 +94,53 @@ void main() {
     tester,
   ) async {
     await mount(tester, _ReleaseAdapter()..fail = true);
+    expect(find.text('Application content'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  }, variant: TargetPlatformVariant({TargetPlatform.android}));
+  for (final opened in [false, true]) {
+    testWidgets(
+      'required tester release can recover after launch result $opened',
+      (tester) async {
+        await mount(
+          tester,
+          _ReleaseAdapter()..release = release(required: true),
+          openRelease: (_) async => opened,
+        );
+        await tester.tap(find.text('Update now'));
+        await tester.pumpAndSettle();
+        expect(find.text('Continue temporarily'), findsOneWidget);
+        await tester.ensureVisible(find.text('Continue temporarily'));
+        await tester.tap(find.text('Continue temporarily'));
+        await tester.pumpAndSettle();
+        expect(find.text('Application content'), findsOneWidget);
+        await tester.pumpWidget(const SizedBox());
+      },
+      variant: TargetPlatformVariant({TargetPlatform.android}),
+    );
+  }
+  testWidgets('a disabled release clears an existing required update', (
+    tester,
+  ) async {
+    final adapter = _ReleaseAdapter()..release = release(required: true);
+    await mount(tester, adapter);
+    adapter.release = null;
+    await tester.tap(find.text('Check update again'));
+    await tester.pumpAndSettle();
+    expect(find.text('Application content'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  }, variant: TargetPlatformVariant({TargetPlatform.android}));
+  testWidgets('rejects a release for another channel or platform', (
+    tester,
+  ) async {
+    await mount(
+      tester,
+      _ReleaseAdapter()
+        ..release = {
+          ...release(required: true),
+          'channel': 'production',
+          'platform': 'ios',
+        },
+    );
     expect(find.text('Application content'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   }, variant: TargetPlatformVariant({TargetPlatform.android}));
