@@ -67,6 +67,8 @@ import 'package:shiftly/features/notifications/presentation/cubit/notifications_
 import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/data/preferences_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
+import 'package:shiftly/features/operations/data/api_operations_repository.dart';
+import 'package:shiftly/features/operations/domain/operations_repository.dart';
 import 'package:shiftly/features/points/data/api_points_repository.dart';
 import 'package:shiftly/features/points/data/mock_points_repository.dart';
 import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
@@ -162,6 +164,9 @@ abstract final class DependencyRegistration {
           target<SharedPreferences>(),
           target<PushPreferenceStore>(),
         ),
+      )
+      ..registerLazySingleton<OperationsRepository>(
+        () => ApiOperationsRepository(target<Dio>()),
       )
       ..registerLazySingleton<TeamWorkRepository>(
         () => ApiTeamWorkRepository(target<Dio>()),

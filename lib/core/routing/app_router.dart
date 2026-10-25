@@ -24,6 +24,7 @@ import 'package:shiftly/features/manager_performance/presentation/screens/employ
 import 'package:shiftly/features/manager_performance/presentation/screens/manager_performance_screen.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:shiftly/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:shiftly/features/operations/presentation/operations_screen.dart';
 import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
@@ -75,6 +76,7 @@ GoRouter createAppRouter({
           initialTab: state.uri.queryParameters['tab'] ?? 'announcements',
         ),
       ),
+      GoRoute(path: '/operations', builder: (_, _) => const OperationsScreen()),
       GoRoute(
         path: '/shift-exchanges',
         builder: (_, _) => const ShiftExchangesScreen(),
@@ -295,6 +297,7 @@ String? _redirect(
       location == '/devices' ||
               location == '/tasks' ||
               location == '/team-work' ||
+              location == '/operations' ||
               location == '/shift-exchanges' ||
               location == '/workspaces' ||
               location == '/employee' ||

@@ -126,6 +126,11 @@ class TeamWorkBodyState extends State<TeamWorkBody>
     appBar: AppBar(
       actions: [
         IconButton(
+          tooltip: context.tr('Shift planning and handovers'),
+          onPressed: () => context.push('/operations'),
+          icon: const Icon(Icons.assignment_turned_in_outlined),
+        ),
+        IconButton(
           tooltip: context.tr('Shift swaps and coverage'),
           onPressed: () => context.push('/shift-exchanges'),
           icon: const Icon(Icons.swap_horiz),

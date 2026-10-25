@@ -7,12 +7,14 @@ import 'package:shiftly/core/localization/arabic_schedule_exception_translations
 import 'package:shiftly/core/localization/arabic_team_work_translations.dart';
 import 'package:shiftly/core/localization/arabic_workflow_translations.dart';
 import 'package:shiftly/features/device_sessions/device_sessions_translations.dart';
+import 'package:shiftly/features/operations/operations_translations.dart';
 import 'package:shiftly/features/tasks/presentation/task_translations.dart';
 
 // Egyptian Arabic: friendly everyday copy, with precise review and hours rules.
 // Keep source keys and placeholders stable; employee-written content stays as is.
 const arabicTranslations = <String, String>{
   ...deviceSessionsTranslations,
+  ...operationsTranslations,
   ...taskTranslations,
   ...arabicExchangeTranslations,
   ...arabicScheduleExceptionTranslations,

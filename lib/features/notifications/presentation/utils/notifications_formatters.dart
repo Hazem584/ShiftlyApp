@@ -111,6 +111,12 @@ abstract final class NotificationsScreenNotificationNavigator {
           location: '/employee?tab=shifts',
           kind: _DestinationKind.teamWork,
         ),
+      NotificationType.teamAnnouncement when data['kind'] == 'HANDOVER' =>
+        _NotificationDestination(
+          id: _id(data, 'handoverId'),
+          location: '/operations',
+          kind: _DestinationKind.teamWork,
+        ),
       NotificationType.teamAnnouncement => _NotificationDestination(
         id: _id(data, 'announcementId'),
         location: '/team-work?tab=announcements',

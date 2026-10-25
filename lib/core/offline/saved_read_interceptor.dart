@@ -66,8 +66,9 @@ class SavedReadInterceptor extends Interceptor {
       );
       if (_current(context)) sync.finish(context.category, updatedAt: now);
     } else if (response.requestOptions.method != 'GET' &&
-        RegExp(r'/(attendance|shifts|shift-templates|leave-requests)(/|$)')
-            .hasMatch(response.requestOptions.path) &&
+        RegExp(
+          r'/(attendance|shifts|shift-templates|leave-requests|operations)(/|$)',
+        ).hasMatch(response.requestOptions.path) &&
         sync.owner != null &&
         (response.statusCode ?? 500) < 300) {
       // A mutation invalidates prior snapshots instead of presenting obsolete data.

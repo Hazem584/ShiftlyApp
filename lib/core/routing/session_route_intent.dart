@@ -42,6 +42,7 @@ class SessionRouteIntent {
         destination.path == '/tasks' ||
         destination.path == '/workspaces' ||
         destination.path == '/team-work' ||
+        destination.path == '/operations' ||
         destination.path == '/shift-exchanges';
     if (status == SessionStatus.authenticatedEmployee &&
         !employeeRoute &&
