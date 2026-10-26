@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shiftly/core/app_icons/app_icon_sync.dart';
 import 'package:shiftly/core/monitoring/app_monitor.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,6 +50,7 @@ class _MonitoringGateState extends State<MonitoringGate>
     with WidgetsBindingObserver {
   late final Dio _public;
   AppMonitor? _monitor;
+  AppIconSync? _icons;
   PackageInfo? _info;
   Map<String, dynamic>? _release;
   final Set<int> _deferred = {};
@@ -72,6 +74,15 @@ class _MonitoringGateState extends State<MonitoringGate>
             receiveTimeout: const Duration(seconds: 10),
           ),
         );
+    _icons = AppIconSync(
+      Dio(
+        BaseOptions(
+          baseUrl: widget.apiClient.options.baseUrl,
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      ),
+    )..start();
     _timer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
         unawaited(_check());
@@ -159,6 +170,7 @@ class _MonitoringGateState extends State<MonitoringGate>
     WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _monitor?.dispose();
+    _icons?.dispose();
     _public.close(force: true);
     super.dispose();
   }

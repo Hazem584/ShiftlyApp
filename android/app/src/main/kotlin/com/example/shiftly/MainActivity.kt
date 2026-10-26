@@ -22,6 +22,7 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        LauncherIcons(this).register(flutterEngine.dartExecutor.binaryMessenger)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getSystemService(NotificationManager::class.java).createNotificationChannel(
                 NotificationChannel("shiftly_updates", "Shiftly updates", NotificationManager.IMPORTANCE_HIGH)

@@ -236,6 +236,13 @@ jobs:
             output.write(f'GRADLE_USER_HOME={gradle_home}\n')
         PY
 
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Include uploaded alternate launcher icons
+      run: node scripts/prepare-app-icons.mjs --defines "$CI_PRIVATE_DIR/dart-defines.json"
+
     - name: Build one signed release APK
       env:
         SHIFTLY_CI_RELEASE: 'true'
