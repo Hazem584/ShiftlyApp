@@ -13,16 +13,19 @@ class TeamWorkScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final membership = context
-        .watch<SessionCoordinator>()
-        .state
+        .watch<SessionCoordinator?>()
+        ?.state
         .activeMembership;
     if (membership == null) return const SizedBox.shrink();
     return TeamWorkBody(
-      key: ValueKey('${membership.id}:${membership.role}'),
+      key: ValueKey('${membership.id}:${membership.role}:$initialTab'),
       workspaceId: membership.workspace.id,
       timezone: membership.workspace.timezone,
       manager: membership.role == WorkspaceRole.manager,
-      initialTab: initialTab,
+      initialTab:
+          membership.role != WorkspaceRole.manager && initialTab == 'tasks'
+          ? 'announcements'
+          : initialTab,
       repository: getIt<TeamWorkRepository>(),
     );
   }

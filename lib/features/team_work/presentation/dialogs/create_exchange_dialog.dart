@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/team_work/domain/shift_exchange.dart';
 import 'package:shiftly/features/team_work/domain/shift_exchange_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -231,7 +232,7 @@ class _CreateExchangeDialogState extends State<CreateExchangeDialog> {
                   'Your colleague must accept, then a manager must approve. Your schedule stays the same until approval.',
                 ),
               ),
-              if (_loading) const LinearProgressIndicator(),
+              if (_loading) const AppContentLoading(rows: 1),
               DropdownButtonFormField<String>(
                 initialValue: _kind,
                 isExpanded: true,

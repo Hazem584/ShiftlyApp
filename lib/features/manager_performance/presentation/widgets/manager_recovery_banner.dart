@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/failure_notice.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
@@ -18,7 +19,7 @@ class ManagerRecoveryBanner extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      if (state.busy || state.restoring) const LinearProgressIndicator(),
+      if (state.busy || state.restoring) const AppContentLoading(rows: 1),
       if (state.failure != null) ...[
         FailureNotice(failure: state.failure!),
         if (state.failure!.code != null)

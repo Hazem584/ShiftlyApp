@@ -11,7 +11,8 @@ import 'package:shiftly/features/employees/presentation/widgets/employee_form_ac
 import 'package:shiftly/features/employees/presentation/widgets/employee_form_header.dart';
 
 class AddEmployeeScreen extends StatefulWidget {
-  const AddEmployeeScreen({super.key});
+  const AddEmployeeScreen({this.onDone, super.key});
+  final VoidCallback? onDone;
   @override
   State<AddEmployeeScreen> createState() => _AddEmployeeScreenState();
 }
@@ -46,7 +47,17 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
       if (!mounted || invitation == null) return;
       final token = invitation.inviteToken;
       if (token != null) await _showToken(token);
-      if (mounted) context.pop(true);
+      if (mounted) {
+        if (widget.onDone != null) {
+          ToastService.success(
+            context,
+            message: 'Invitation created successfully',
+          );
+          widget.onDone!();
+        } else {
+          context.pop(true);
+        }
+      }
     } on ApiException catch (error) {
       if (!mounted) return;
       ToastService.error(context, message: error.toFailure().message);
@@ -146,7 +157,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
             EmployeeFormActions(
               submitting: _submitting,
               canSubmit: _valid,
-              onCancel: context.pop,
+              onCancel: widget.onDone ?? context.pop,
               onSubmit: _submit,
             ),
           ],

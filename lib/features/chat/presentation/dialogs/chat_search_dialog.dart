@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_reply_preview.dart';
@@ -100,7 +101,7 @@ class _ChatSearchDialogState extends State<ChatSearchDialog> {
               ),
             ),
           ),
-          if (_loading) const LinearProgressIndicator(),
+          if (_loading) const AppContentLoading(rows: 1),
           if (_error != null)
             Text(
               context.tr(_error!),

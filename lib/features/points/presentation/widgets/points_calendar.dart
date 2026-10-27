@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/points/domain/entities/points_models.dart';
 import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/points/presentation/widgets/points_empty.dart';
@@ -50,7 +51,7 @@ class PointsCalendar extends StatelessWidget {
         const SizedBox(height: 8),
         _legend(context),
         const SizedBox(height: 10),
-        if (state.loadingCalendar) const LinearProgressIndicator(),
+        if (state.loadingCalendar) const AppContentLoading(rows: 1),
         if (state.calendarFailure != null && !state.calendarMatchesVisibleMonth)
           PointsEmpty(
             icon: Icons.event_busy_outlined,

@@ -51,7 +51,7 @@ class ChatMembersSheet extends StatelessWidget {
                           ),
                       ],
                     ),
-                    if (state.mutating) const LinearProgressIndicator(),
+                    if (state.mutating) const AppContentLoading(rows: 1),
                     Expanded(
                       child: group == null
                           ? const AppContentLoading()
@@ -145,7 +145,7 @@ class ChatMembersSheet extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (submitting) const LinearProgressIndicator(),
+                if (submitting) const AppContentLoading(rows: 1),
                 if (failure != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),

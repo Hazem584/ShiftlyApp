@@ -71,9 +71,9 @@ class WorkspaceNavigationRail extends StatelessWidget {
           ),
           if (!employee)
             NavigationRailDestination(
-              icon: const Icon(Icons.fact_check_outlined),
-              selectedIcon: const Icon(Icons.fact_check_rounded),
-              label: Text(context.tr('Attendance')),
+              icon: const Icon(Icons.work_outline_rounded),
+              selectedIcon: const Icon(Icons.work_rounded),
+              label: Text(context.tr('Work management')),
             ),
           NavigationRailDestination(
             icon: Badge(

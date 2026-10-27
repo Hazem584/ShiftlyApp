@@ -12,13 +12,12 @@ class AttendanceTabSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AppTabSelector(
-    labels: const ['Attendance', 'Leave Requests', 'Calendar'],
+    labels: const ['Attendance', 'Calendar'],
     labelKeys: const [
       Key('attendance-tab-records'),
-      Key('attendance-tab-requests'),
       Key('attendance-tab-calendar'),
     ],
-    selectedIndex: selectedTab,
-    onSelected: onSelected,
+    selectedIndex: selectedTab == 2 ? 1 : 0,
+    onSelected: (index) => onSelected(index == 1 ? 2 : 0),
   );
 }

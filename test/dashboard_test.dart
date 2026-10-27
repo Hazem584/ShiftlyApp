@@ -75,7 +75,7 @@ void main() {
     expect(find.byKey(const Key('notification-badge')), findsOneWidget);
     expect(find.byType(CircleAvatar), findsWidgets);
     await tester.scrollUntilVisible(
-      find.text('Quick actions'),
+      find.text('Workspace sections'),
       300,
       scrollable: find
           .descendant(
@@ -84,7 +84,9 @@ void main() {
           )
           .first,
     );
-    expect(find.text('Quick actions'), findsOneWidget);
+    expect(find.text('Workspace sections'), findsOneWidget);
+    expect(find.text('Quick actions'), findsNothing);
+    expect(find.byKey(const Key('today-at-a-glance-card')), findsNothing);
   });
 
   testWidgets('shows loading then error and retries safely', (tester) async {
@@ -127,7 +129,7 @@ void main() {
       expect(find.textContaining('Preview Workspace'), findsOneWidget);
       expect(find.text('Etc/UTC'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.byKey(const Key('today-at-a-glance-card')),
+        find.byKey(const Key('dashboard-section-tasks')),
         250,
         scrollable: find
             .descendant(
@@ -137,7 +139,7 @@ void main() {
             .first,
       );
       expect(
-        tester.getSize(find.byKey(const Key('today-at-a-glance-card'))).width,
+        tester.getSize(find.byKey(const Key('dashboard-section-tasks'))).width,
         284,
       );
       expect(tester.takeException(), isNull);

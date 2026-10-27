@@ -4,18 +4,13 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
-import 'package:shiftly/core/widgets/responsive_columns.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:shiftly/features/dashboard/presentation/widgets/current_shift_card.dart';
-import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_activity_section.dart';
-import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_approvals_card.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_hero_section.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_loading.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_metrics_grid.dart';
-import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_quick_actions.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_sections.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_top_bar.dart';
-import 'package:shiftly/features/team_work/presentation/widgets/dashboard_announcements.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -62,7 +57,6 @@ class DashboardScreen extends StatelessWidget {
               'Workspace',
           timezone: data.timezone,
         ),
-        DashboardAnnouncements(refreshToken: data),
         if (state.failure != null) ...[
           const SizedBox(height: AppSpacing.s),
           Text(
@@ -75,27 +69,7 @@ class DashboardScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.m),
         DashboardMetricsGrid(data: data),
         const SizedBox(height: AppSpacing.l),
-        DashboardQuickActions(
-          pendingRequests: data.summary.pendingLeaveRequests,
-        ),
-        const SizedBox(height: AppSpacing.l),
-        ResponsiveColumns(
-          children: [
-            Column(
-              children: [
-                DashboardDayStatusCard(data: data),
-                const SizedBox(height: AppSpacing.l),
-                DashboardApprovalsCard(
-                  pendingRequests: data.summary.pendingLeaveRequests,
-                ),
-              ],
-            ),
-            DashboardActivitySection(
-              shifts: data.todayShifts,
-              timezone: data.timezone,
-            ),
-          ],
-        ),
+        const DashboardSections(),
       ],
     ),
   );

@@ -75,9 +75,7 @@ class AttendanceCalendarStateView extends StatelessWidget {
                       const AttendanceCalendarLegend(),
                       if (state.refreshing) ...[
                         const SizedBox(height: AppSpacing.s),
-                        const LinearProgressIndicator(
-                          key: Key('calendar-refreshing'),
-                        ),
+                        const AppContentLoading(key: Key('calendar-refreshing'), rows: 1),
                       ],
                     ],
                   ),

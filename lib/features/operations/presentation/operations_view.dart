@@ -9,6 +9,7 @@ import 'profiles_view.dart';
 class OperationsView extends StatelessWidget {
   const OperationsView({
     super.key,
+    this.section,
     required this.repository,
     required this.workspaceId,
     required this.membershipId,
@@ -16,53 +17,84 @@ class OperationsView extends StatelessWidget {
     required this.manager,
     required this.isCurrent,
   });
+  final String? section;
   final OperationsRepository repository;
   final String workspaceId, membershipId, timezone;
   final bool manager;
   final bool Function() isCurrent;
   @override
-  Widget build(BuildContext context) => DefaultTabController(
-    length: manager ? 3 : 1,
-    child: Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('Shift planning and handovers')),
-        bottom: TabBar(
-          isScrollable: true,
-          tabs: [
-            if (manager) ...[
-              Tab(text: context.tr('Weekly planning')),
-              Tab(text: context.tr('Availability and skills')),
+  Widget build(BuildContext context) {
+    if (section != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            context.tr(
+              section == 'planning' && manager
+                  ? 'Weekly planning'
+                  : 'Shift handovers',
+            ),
+          ),
+        ),
+        body: section == 'planning' && manager
+            ? PlanningView(
+                repository: repository,
+                workspaceId: workspaceId,
+                timezone: timezone,
+                isCurrent: isCurrent,
+              )
+            : HandoversView(
+                repository: repository,
+                workspaceId: workspaceId,
+                membershipId: membershipId,
+                timezone: timezone,
+                manager: manager,
+                isCurrent: isCurrent,
+              ),
+      );
+    }
+    return DefaultTabController(
+      length: manager ? 3 : 1,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(context.tr('Shift planning and handovers')),
+          bottom: TabBar(
+            isScrollable: true,
+            tabs: [
+              if (manager) ...[
+                Tab(text: context.tr('Weekly planning')),
+                Tab(text: context.tr('Availability and skills')),
+              ],
+              Tab(text: context.tr('Shift handovers')),
             ],
-            Tab(text: context.tr('Shift handovers')),
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            if (manager) ...[
+              PlanningView(
+                repository: repository,
+                workspaceId: workspaceId,
+                timezone: timezone,
+                isCurrent: isCurrent,
+              ),
+              ProfilesView(
+                repository: repository,
+                workspaceId: workspaceId,
+                timezone: timezone,
+                isCurrent: isCurrent,
+              ),
+            ],
+            HandoversView(
+              repository: repository,
+              workspaceId: workspaceId,
+              membershipId: membershipId,
+              timezone: timezone,
+              manager: manager,
+              isCurrent: isCurrent,
+            ),
           ],
         ),
       ),
-      body: TabBarView(
-        children: [
-          if (manager) ...[
-            PlanningView(
-              repository: repository,
-              workspaceId: workspaceId,
-              timezone: timezone,
-              isCurrent: isCurrent,
-            ),
-            ProfilesView(
-              repository: repository,
-              workspaceId: workspaceId,
-              timezone: timezone,
-              isCurrent: isCurrent,
-            ),
-          ],
-          HandoversView(
-            repository: repository,
-            workspaceId: workspaceId,
-            membershipId: membershipId,
-            timezone: timezone,
-            manager: manager,
-            isCurrent: isCurrent,
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }

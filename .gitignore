@@ -61,3 +61,6 @@ config/*.json
 /android/app/shiftly-testing-*.json
 **/firebase-service-account*.json
 **/firebase-debug.log
+
+# Generated review artifacts
+/.artifacts/

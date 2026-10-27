@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/services/toast_service.dart';
@@ -25,14 +26,28 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Attendance').last);
+    GoRouter.of(
+      tester.element(find.byKey(const Key('manager-bottom-navigation'))),
+    ).go('/attendance');
     await tester.pumpAndSettle();
-    expect(find.text('Attendance & Leave'), findsOneWidget);
+    expect(find.text('Team & attendance'), findsOneWidget);
     expect(find.text('Attendance records'), findsOneWidget);
     expect(find.text('94.2%'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Recent Attendance'),
+      160,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('attendance-content')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     expect(find.text('Recent Attendance'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('attendance-tab-requests')));
+    GoRouter.of(
+      tester.element(find.byKey(const Key('manager-bottom-navigation'))),
+    ).go('/attendance?tab=leaveRequests');
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Mariam Hassan'),
@@ -185,7 +200,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Employees').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Add').last);
+      await tester.tap(find.byKey(const Key('section-invite')));
       await tester.pumpAndSettle();
       expect(find.text('Invite Employee'), findsWidgets);
       expect(tester.takeException(), isNull, reason: 'Top failed at $size');

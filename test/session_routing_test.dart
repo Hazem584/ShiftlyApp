@@ -360,13 +360,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(
           find.text(
-            kind == 'SHIFT' ? 'Fixed shift templates' : 'Attendance & Leave',
+            kind == 'SHIFT' ? 'Fixed shift templates' : 'Team & attendance',
           ),
           findsOneWidget,
         );
         expect(
           router.routeInformationProvider.value.uri.path,
-          kind == 'SHIFT' ? '/dashboard/shifts' : '/attendance',
+          kind == 'SHIFT' ? '/dashboard/shifts' : '/employees',
         );
         expect(tester.takeException(), isNull);
       }

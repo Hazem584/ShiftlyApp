@@ -5,8 +5,6 @@ import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/core/widgets/brand_logo.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_avatar.dart';
@@ -24,11 +22,6 @@ class DashboardTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadii.s),
-        child: const BrandLogo(size: 42),
-      ),
-      const SizedBox(width: 12),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

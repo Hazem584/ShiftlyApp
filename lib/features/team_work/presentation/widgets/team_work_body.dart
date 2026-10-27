@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
@@ -27,9 +26,7 @@ class TeamWorkBody extends StatefulWidget {
   State<TeamWorkBody> createState() => TeamWorkBodyState();
 }
 
-class TeamWorkBodyState extends State<TeamWorkBody>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
+class TeamWorkBodyState extends State<TeamWorkBody> {
   late final WorkFeedCubit<WorkTask> _tasks;
   late final WorkFeedCubit<CorrectionRequest> _corrections;
   late final WorkFeedCubit<TeamAnnouncement> _announcements;
@@ -37,16 +34,6 @@ class TeamWorkBodyState extends State<TeamWorkBody>
   @override
   void initState() {
     super.initState();
-    final index = widget.initialTab == 'tasks' && widget.manager
-        ? 0
-        : widget.initialTab == 'corrections'
-        ? (widget.manager ? 1 : 0)
-        : (widget.manager ? 2 : 1);
-    _tabs = TabController(
-      length: widget.manager ? 3 : 2,
-      initialIndex: index,
-      vsync: this,
-    );
     _tasks = WorkFeedCubit((_) => widget.repository.tasks(widget.workspaceId));
     _corrections = WorkFeedCubit(
       (page) => widget.repository.corrections(
@@ -54,36 +41,27 @@ class TeamWorkBodyState extends State<TeamWorkBody>
         page: page,
         status: _status,
       ),
-    )..load();
+    );
     _announcements = WorkFeedCubit(
       (page) => widget.repository.announcements(widget.workspaceId, page: page),
-    )..load();
-    if (widget.manager) _tasks.load();
+    );
+    if (widget.initialTab == 'tasks' && widget.manager) _tasks.load();
+    if (widget.initialTab == 'corrections') _corrections.load();
+    if (widget.initialTab == 'announcements') _announcements.load();
   }
 
   @override
   void didUpdateWidget(covariant TeamWorkBody oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialTab != widget.initialTab) {
-      final index = widget.initialTab == 'tasks' && widget.manager
-          ? 0
-          : widget.initialTab == 'corrections'
-          ? (widget.manager ? 1 : 0)
-          : (widget.manager ? 2 : 1);
-      _tabs.animateTo(index);
-      if (widget.initialTab == 'corrections') {
-        _corrections.load();
-      } else if (widget.initialTab == 'announcements') {
-        _announcements.load();
-      } else if (widget.manager) {
-        _tasks.load();
-      }
+      if (widget.initialTab == 'tasks' && widget.manager) _tasks.load();
+      if (widget.initialTab == 'corrections') _corrections.load();
+      if (widget.initialTab == 'announcements') _announcements.load();
     }
   }
 
   @override
   void dispose() {
-    _tabs.dispose();
     _tasks.close();
     _corrections.close();
     _announcements.close();
@@ -124,89 +102,67 @@ class TeamWorkBodyState extends State<TeamWorkBody>
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      actions: [
-        IconButton(
-          tooltip: context.tr('Shift planning and handovers'),
-          onPressed: () => context.push('/operations'),
-          icon: const Icon(Icons.assignment_turned_in_outlined),
-        ),
-        IconButton(
-          tooltip: context.tr('Shift swaps and coverage'),
-          onPressed: () => context.push('/shift-exchanges'),
-          icon: const Icon(Icons.swap_horiz),
-        ),
-      ],
       title: Text(
-        context.tr(widget.manager ? 'Team work center' : 'Team updates'),
-      ),
-      bottom: TabBar(
-        controller: _tabs,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        tabs: [
-          if (widget.manager) Tab(text: context.tr('Manager tasks')),
-          Tab(text: context.tr('Attendance corrections')),
-          Tab(text: context.tr('Team announcements')),
-        ],
+        context.tr(
+          widget.initialTab == 'corrections'
+              ? 'Attendance corrections'
+              : widget.initialTab == 'tasks' && widget.manager
+              ? 'Manager tasks'
+              : 'Team announcements',
+        ),
       ),
     ),
     body: Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1000),
-        child: TabBarView(
-          controller: _tabs,
-          children: [
-            if (widget.manager)
-              ManagerTasksView(
-                cubit: _tasks,
-                workspaceId: widget.workspaceId,
-                timezone: widget.timezone,
-                onReviewed: () => _corrections.load(),
-              ),
-            WorkFeedView(
-              cubit: _corrections,
-              header: Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final (value, label) in <(String?, String)>[
-                      (null, 'All'),
-                      ('PENDING', 'Pending review'),
-                      ('APPROVED', 'Approved'),
-                      ('REJECTED', 'Declined'),
-                    ])
-                      ChoiceChip(
-                        label: Text(context.tr(label)),
-                        selected: _status == value,
-                        onSelected: (_) {
-                          setState(() => _status = value);
-                          _corrections.load();
-                        },
-                      ),
-                  ],
-                ),
-              ),
-              itemBuilder: (_, request, busy) => CorrectionRequestCard(
-                request: request,
-                timezone: widget.timezone,
-                busy: busy,
-                onApprove: widget.manager ? () => _review(request, true) : null,
-                onDecline: widget.manager
-                    ? () => _review(request, false)
-                    : null,
+        child: switch (widget.initialTab) {
+          'tasks' when widget.manager => ManagerTasksView(
+            cubit: _tasks,
+            workspaceId: widget.workspaceId,
+            timezone: widget.timezone,
+            onReviewed: () => _tasks.load(),
+          ),
+          'corrections' => WorkFeedView(
+            cubit: _corrections,
+            header: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final (value, label) in <(String?, String)>[
+                    (null, 'All'),
+                    ('PENDING', 'Pending review'),
+                    ('APPROVED', 'Approved'),
+                    ('REJECTED', 'Declined'),
+                  ])
+                    ChoiceChip(
+                      label: Text(context.tr(label)),
+                      selected: _status == value,
+                      onSelected: (_) {
+                        setState(() => _status = value);
+                        _corrections.load();
+                      },
+                    ),
+                ],
               ),
             ),
-            AnnouncementsView(
-              repository: widget.repository,
-              cubit: _announcements,
-              workspaceId: widget.workspaceId,
+            itemBuilder: (_, request, busy) => CorrectionRequestCard(
+              request: request,
               timezone: widget.timezone,
-              manager: widget.manager,
+              busy: busy,
+              onApprove: widget.manager ? () => _review(request, true) : null,
+              onDecline: widget.manager ? () => _review(request, false) : null,
             ),
-          ],
-        ),
+          ),
+          _ => AnnouncementsView(
+            repository: widget.repository,
+            cubit: _announcements,
+            workspaceId: widget.workspaceId,
+            timezone: widget.timezone,
+            manager: widget.manager,
+          ),
+        },
       ),
     ),
   );

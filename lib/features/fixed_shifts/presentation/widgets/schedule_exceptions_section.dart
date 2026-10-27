@@ -3,6 +3,7 @@ import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/schedule_exception.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -246,7 +247,7 @@ class _ScheduleExceptionsSectionState extends State<ScheduleExceptionsSection> {
             context.tr(_error!),
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
-        if (_loading) const LinearProgressIndicator(),
+        if (_loading) const AppContentLoading(rows: 1),
         if (!_loading && _records.isEmpty && _error == null)
           Text(context.tr('No schedule exceptions yet.')),
         for (final entry in _records)

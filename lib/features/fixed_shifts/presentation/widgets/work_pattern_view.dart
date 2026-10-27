@@ -55,7 +55,7 @@ class WorkPatternView extends StatelessWidget {
                 ),
               ],
             ),
-            if (state.loading) const LinearProgressIndicator(),
+            if (state.loading) const AppContentLoading(rows: 1),
             const SizedBox(height: 8),
             if (state.failure != null) ...[
               Text(

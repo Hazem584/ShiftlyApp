@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 
 /// One dialog surface with a scrolling form and always-visible actions.
 class AppFormDialog extends StatelessWidget {
@@ -95,7 +96,7 @@ class AppFormDialog extends StatelessWidget {
                   ),
                 ),
               ),
-              if (busy) const LinearProgressIndicator(),
+              if (busy) const AppContentLoading(rows: 1),
               const Divider(),
               Padding(
                 padding: const EdgeInsets.all(16),

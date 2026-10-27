@@ -9,16 +9,20 @@ import '../domain/operations_repository.dart';
 import 'operations_view.dart';
 
 class OperationsScreen extends StatelessWidget {
-  const OperationsScreen({super.key});
+  const OperationsScreen({this.section, super.key});
+  final String? section;
   @override
   Widget build(BuildContext context) {
-    final session = context.watch<SessionCoordinator>(),
-        member = session.state.activeMembership,
-        user = session.state.currentUser;
-    if (member == null || user == null) return const SizedBox.shrink();
+    final session = context.watch<SessionCoordinator?>(),
+        member = session?.state.activeMembership,
+        user = session?.state.currentUser;
+    if (session == null || member == null || user == null) {
+      return const SizedBox.shrink();
+    }
     return OperationsView(
       key: ValueKey((user.id, member.id, member.role)),
       repository: getIt<OperationsRepository>(),
+      section: section,
       workspaceId: member.workspace.id,
       membershipId: member.id,
       timezone: member.workspace.timezone,

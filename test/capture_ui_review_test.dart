@@ -215,7 +215,7 @@ void main() {
     final icons = FontLoader('MaterialIcons')
       ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
     await icons.load();
-    final out = Directory('docs/ui-review/$stage');
+    final out = Directory('.artifacts/ui-review/$stage');
     out.createSync(recursive: true);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -263,6 +263,13 @@ void main() {
       final router = GoRouter.of(tester.element(find.byType(Navigator).last));
       for (final route in <String, String>{
         'employees': '/employees',
+        if (stage == 'navigation') ...{
+          'team-attendance': '/employees?tab=attendance',
+          'team-invite': '/employees?tab=invite',
+          'work-tasks': '/work?tab=personal',
+          'work-shifts': '/work?tab=shifts',
+          'work-performance': '/work?tab=performance',
+        },
         'chat': '/chat',
         'profile': '/profile',
         'shifts': '/dashboard/shifts',

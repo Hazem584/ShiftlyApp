@@ -39,9 +39,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('employee-search')), findsOneWidget);
     await tester.enterText(find.byKey(const Key('employee-search')), 'Mariam');
-    await tester.tap(find.text('Attendance').last);
+    await tester.tap(find.byKey(const Key('nav-2')));
     await tester.pumpAndSettle();
-    expect(find.text('Attendance & Leave'), findsOneWidget);
+    expect(find.text('Work management'), findsWidgets);
     await tester.tap(find.text('Employees').last);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('employee-search')), findsOneWidget);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
 
 class WorkFeedView<T> extends StatelessWidget {
@@ -29,7 +30,7 @@ class WorkFeedView<T> extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(context.tr(state.notice!)),
                 ),
-              if (state.loading) const LinearProgressIndicator(),
+              if (state.loading) const AppContentLoading(rows: 1),
               if (state.error != null)
                 MaterialBanner(
                   content: Text(context.tr(state.error!)),

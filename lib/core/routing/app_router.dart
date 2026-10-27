@@ -5,7 +5,6 @@ import 'package:shiftly/core/routing/route_not_found_screen.dart';
 import 'package:shiftly/core/routing/session_route_intent.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
-import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/login_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/profile_setup_screen.dart';
@@ -18,7 +17,6 @@ import 'package:shiftly/features/dashboard/presentation/screens/dashboard_screen
 import 'package:shiftly/features/device_sessions/presentation/device_sessions_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
-import 'package:shiftly/features/employees/presentation/screens/employees_screen.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/screens/shift_templates_screen.dart';
 import 'package:shiftly/features/manager_performance/presentation/screens/employee_performance_screen.dart';
 import 'package:shiftly/features/manager_performance/presentation/screens/manager_performance_screen.dart';
@@ -29,6 +27,8 @@ import 'package:shiftly/features/profile/presentation/screens/profile_screen.dar
 import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
+import 'package:shiftly/features/shell/presentation/screens/team_hub_screen.dart';
+import 'package:shiftly/features/shell/presentation/screens/work_hub_screen.dart';
 import 'package:shiftly/features/tasks/presentation/tasks_screen.dart';
 import 'package:shiftly/features/team_work/presentation/shift_exchanges_screen.dart';
 import 'package:shiftly/features/team_work/presentation/team_work_screen.dart';
@@ -57,6 +57,18 @@ GoRouter createAppRouter({
     errorBuilder: (context, state) =>
         RouteNotFoundScreen(routeName: state.uri.path),
     routes: [
+      GoRoute(
+        path: '/attendance',
+        redirect: (_, state) => state.uri.queryParameters['tab'] == 'calendar'
+            ? '/employees?tab=calendar'
+            : state.uri.queryParameters['tab'] == 'leaveRequests'
+            ? '/employees?tab=leaveRequests'
+            : '/employees?tab=attendance',
+      ),
+      GoRoute(
+        path: '/attendance/reports',
+        redirect: (_, _) => '/employees?tab=reports',
+      ),
       GoRoute(
         path: '/devices',
         builder: (_, _) => DeviceSessionsScreen(
@@ -178,7 +190,9 @@ GoRouter createAppRouter({
             routes: [
               GoRoute(
                 path: '/employees',
-                builder: (_, _) => const EmployeesScreen(),
+                builder: (_, state) => TeamHubScreen(
+                  section: state.uri.queryParameters['tab'] ?? 'employees',
+                ),
                 routes: [
                   GoRoute(
                     path: 'add',
@@ -197,22 +211,9 @@ GoRouter createAppRouter({
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/attendance',
-                builder: (_, state) => AttendanceScreen(
-                  key: ValueKey(state.uri.queryParameters['tab']),
-                  timezone:
-                      sessionCoordinator
-                          ?.state
-                          .activeMembership
-                          ?.workspace
-                          .timezone ??
-                      'Etc/UTC',
-                  initialTab:
-                      state.uri.queryParameters['tab'] == 'leaveRequests'
-                      ? 1
-                      : state.uri.queryParameters['tab'] == 'calendar'
-                      ? 2
-                      : 0,
+                path: '/work',
+                builder: (_, state) => WorkHubScreen(
+                  section: state.uri.queryParameters['tab'] ?? 'tasks',
                 ),
                 routes: [
                   GoRoute(

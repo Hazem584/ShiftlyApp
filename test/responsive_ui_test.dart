@@ -55,9 +55,9 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    await tester.tap(find.byKey(const Key('attendance-tab-requests')));
+    await tester.tap(find.byKey(const Key('attendance-tab-calendar')));
     await tester.pumpAndSettle();
-    expect(selected, 1);
+    expect(selected, 2);
     expect(tester.takeException(), isNull);
     final headerBottom = tester
         .getBottomLeft(find.text('Review your team attendance'))

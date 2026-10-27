@@ -13,7 +13,8 @@ import 'package:shiftly/features/employees/presentation/widgets/employee_search_
 import 'package:shiftly/features/employees/presentation/widgets/employees_loading.dart';
 
 class EmployeesScreen extends StatelessWidget {
-  const EmployeesScreen({super.key});
+  const EmployeesScreen({this.embedded = false, super.key});
+  final bool embedded;
 
   Future<void> _openAddEmployee(BuildContext context) async {
     final added = await context.push<bool>('/employees/add');
@@ -28,25 +29,26 @@ class EmployeesScreen extends StatelessWidget {
       child: BlocBuilder<EmployeesCubit, EmployeesState>(
         builder: (context, state) => Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-              child: ScreenHeader(
-                icon: Icons.groups_rounded,
-                title: context.tr('Employee Management'),
-                subtitle: context.tr(
-                  'Search, invite, and manage your team in one place',
-                ),
-                action: FilledButton.icon(
-                  onPressed: () => _openAddEmployee(context),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(context.tr('Add')),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(80, 44),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+            if (!embedded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+                child: ScreenHeader(
+                  icon: Icons.groups_rounded,
+                  title: context.tr('Employee Management'),
+                  subtitle: context.tr(
+                    'Search, invite, and manage your team in one place',
+                  ),
+                  action: FilledButton.icon(
+                    onPressed: () => _openAddEmployee(context),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: Text(context.tr('Add')),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(80, 44),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
                   ),
                 ),
               ),
-            ),
             if (state case EmployeesLoaded(:final employees, :final total))
               EmployeeMetricsSection(employees: employees, total: total),
             EmployeeSearchBar(

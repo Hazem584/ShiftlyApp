@@ -19,8 +19,8 @@ class AppBottomNavigation extends StatelessWidget {
 
   static const _destinations = [
     (Icons.home_outlined, Icons.home_rounded, AppStrings.dashboard),
-    (Icons.groups_outlined, Icons.groups_rounded, AppStrings.employees),
-    (Icons.schedule_outlined, Icons.schedule_rounded, AppStrings.attendance),
+    (Icons.groups_outlined, Icons.groups_rounded, 'Employees'),
+    (Icons.work_outline_rounded, Icons.work_rounded, 'Work management'),
     (Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded, 'Chat'),
     (Icons.person_outline_rounded, Icons.person_rounded, AppStrings.profile),
   ];

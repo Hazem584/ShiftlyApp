@@ -81,7 +81,7 @@ void main() {
     tester.view.physicalSize = const Size(430, 932);
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
-    final output = Directory('docs/ui-review/brand')
+    final output = Directory('.artifacts/ui-review/brand')
       ..createSync(recursive: true);
     for (final language in ['ar', 'en']) {
       for (final kind in ['splash', 'loading']) {

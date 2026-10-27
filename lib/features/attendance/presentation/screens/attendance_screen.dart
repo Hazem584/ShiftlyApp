@@ -82,9 +82,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ),
               ScreenHeader(
                 icon: Icons.fact_check_rounded,
-                title: context.tr('Attendance & Leave'),
+                title: context.tr('Attendance'),
                 subtitle: context.tr(
-                  'Check who is in, review leave, and open the calendar',
+                  'Check attendance records and the team calendar',
                 ),
               ),
               const SizedBox(height: AppSpacing.m),

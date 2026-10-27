@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
@@ -35,9 +36,9 @@ Finder _attendanceScroll() => find
     .first;
 
 Future<void> _openRequests(WidgetTester tester) async {
-  await tester.tap(find.text('Attendance').last);
-  await tester.pumpAndSettle();
-  await tester.tap(find.byKey(const Key('attendance-tab-requests')));
+  GoRouter.of(
+    tester.element(find.byKey(const Key('manager-bottom-navigation'))),
+  ).go('/attendance?tab=leaveRequests');
   await tester.pumpAndSettle();
   await tester.scrollUntilVisible(
     find.byKey(const Key('request-leave-1')),
@@ -49,23 +50,21 @@ Future<void> _openRequests(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('dashboard Review Requests opens Attendance leave requests', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_testApp());
-    await tester.pumpAndSettle();
-    await tester.drag(
-      find.byKey(const Key('dashboard-content')),
-      const Offset(0, -400),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Requests'));
-    await tester.pumpAndSettle();
-    await tester.drag(_attendanceScroll(), const Offset(0, -500));
-    await tester.pumpAndSettle();
-    expect(find.text('Employee requests'), findsOneWidget);
-    expect(find.byKey(const Key('leave-request-list')), findsOneWidget);
-  });
+  testWidgets(
+    'legacy leave-review link still opens the canonical request workflow',
+    (tester) async {
+      await tester.pumpWidget(_testApp());
+      await tester.pumpAndSettle();
+      GoRouter.of(
+        tester.element(find.byKey(const Key('manager-bottom-navigation'))),
+      ).go('/attendance?tab=leaveRequests');
+      await tester.pumpAndSettle();
+      await tester.drag(_attendanceScroll(), const Offset(0, -500));
+      await tester.pumpAndSettle();
+      expect(find.text('Employee requests'), findsOneWidget);
+      expect(find.byKey(const Key('leave-request-list')), findsOneWidget);
+    },
+  );
 
   testWidgets('manager approves a request and decision survives tab changes', (
     tester,
@@ -81,9 +80,13 @@ void main() {
 
     await tester.drag(_attendanceScroll(), const Offset(0, 1000));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('attendance-tab-calendar')));
+    GoRouter.of(
+      tester.element(find.byKey(const Key('manager-bottom-navigation'))),
+    ).go('/attendance?tab=calendar');
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('attendance-tab-requests')));
+    GoRouter.of(
+      tester.element(find.byKey(const Key('manager-bottom-navigation'))),
+    ).go('/attendance?tab=leaveRequests');
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('request-leave-1')),

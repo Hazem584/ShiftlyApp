@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/notifications/presentation/screens/notifications_screen.dart';
@@ -16,11 +15,6 @@ class NotificationBell extends StatelessWidget {
         builder: (context, count) => Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              onPressed: () => context.push('/tasks'),
-              tooltip: context.tr('Task manager'),
-              icon: Icon(Icons.checklist_rounded, color: color),
-            ),
             IconButton(
               key: const Key('notification-bell'),
               onPressed: () => Navigator.of(context).push<void>(

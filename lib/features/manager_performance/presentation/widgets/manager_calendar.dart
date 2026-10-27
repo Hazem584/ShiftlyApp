@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
 import 'package:shiftly/features/manager_performance/presentation/widgets/manager_scoped_details.dart';
@@ -57,7 +58,7 @@ class ManagerCalendar extends StatelessWidget {
             ),
           ],
         ),
-        if (state.loading) const LinearProgressIndicator(),
+        if (state.loading) const AppContentLoading(rows: 1),
         if (state.error != null) Text(context.tr(state.error!)),
         LayoutBuilder(
           builder: (context, constraints) {

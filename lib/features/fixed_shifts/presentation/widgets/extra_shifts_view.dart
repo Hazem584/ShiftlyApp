@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/failure_notice.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
@@ -52,7 +53,7 @@ class ExtraShiftsView extends StatelessWidget {
                     'Extras require explicit manager authorization. They do not replace baseline attendance or automatically award BLUE.',
                   ),
                 ),
-                if (state.loading) const LinearProgressIndicator(),
+                if (state.loading) const AppContentLoading(rows: 1),
                 if (state.failure != null)
                   FailureNotice(
                     failure: state.failure!,

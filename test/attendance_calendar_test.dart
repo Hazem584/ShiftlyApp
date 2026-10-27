@@ -659,16 +659,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(attendanceRepository.queries.length, attendanceCalls + 1);
 
-    await tester.tap(find.byKey(const Key('attendance-tab-requests')));
-    await tester.pumpAndSettle();
-    final leaveCalls = leaveRepository.queries.length;
-    await tester.drag(
-      find.byKey(const Key('attendance-content')),
-      const Offset(0, 400),
-    );
-    await tester.pumpAndSettle();
-    expect(leaveRepository.queries.length, leaveCalls + 1);
-
+    expect(find.byKey(const Key('attendance-tab-requests')), findsNothing);
     await tester.tap(find.byKey(const Key('attendance-tab-calendar')));
     await tester.pumpAndSettle();
     final calendarCalls = calendarRepository.calls;

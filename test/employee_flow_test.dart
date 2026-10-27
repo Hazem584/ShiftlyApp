@@ -37,7 +37,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _openEmployees(tester);
-    await tester.tap(find.text('Add').last);
+    await tester.tap(find.byKey(const Key('section-invite')));
     await tester.pumpAndSettle();
     expect(find.text('Invite Employee'), findsWidgets);
     await tester.enterText(find.byKey(const Key('email-field')), 'invalid');
@@ -61,7 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _openEmployees(tester);
-    await tester.tap(find.text('Add').last);
+    await tester.tap(find.byKey(const Key('section-invite')));
     await tester.pumpAndSettle();
     expect(find.text('Invite Employee'), findsWidgets);
     await tester.enterText(

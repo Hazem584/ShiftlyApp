@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/manager_performance/domain/entities/manager_points_record.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
@@ -201,7 +202,7 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
                         'value1': (widget.membershipId).toString(),
                       }),
                     ),
-                    if (walletResource.loading) const LinearProgressIndicator(),
+                    if (walletResource.loading) const AppContentLoading(rows: 1),
                     if (walletResource.error != null)
                       Text(context.tr(walletResource.error!)),
                     if (wallet != null) ...[
@@ -355,7 +356,7 @@ class _EmployeePerformanceScreenState extends State<EmployeePerformanceScreen> {
                         },
                       )
                     else if (_section == 'achievements') ...[
-                      if (resource.loading) const LinearProgressIndicator(),
+                      if (resource.loading) const AppContentLoading(rows: 1),
                       if (resource.error != null)
                         Text(context.tr(resource.error!)),
                       PointsAchievements(

@@ -11,10 +11,12 @@ class ShiftExchangesScreen extends StatelessWidget {
   const ShiftExchangesScreen({super.key});
   @override
   Widget build(BuildContext context) {
-    final session = context.watch<SessionCoordinator>(),
-        member = session.state.activeMembership,
-        user = session.state.currentUser;
-    if (member == null || user == null) return const SizedBox.shrink();
+    final session = context.watch<SessionCoordinator?>(),
+        member = session?.state.activeMembership,
+        user = session?.state.currentUser;
+    if (session == null || member == null || user == null) {
+      return const SizedBox.shrink();
+    }
     return ShiftExchangesView(
       key: ValueKey((user.id, member.id, member.role)),
       workspaceId: member.workspace.id,

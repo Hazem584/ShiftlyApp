@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
 import 'package:shiftly/features/manager_performance/presentation/widgets/manager_action_dialog.dart';
@@ -43,7 +44,7 @@ class _ManagerDisputeScreenState extends State<ManagerDisputeScreen> {
             ManagerRecoveryBanner(cubit: cubit, state: state),
             if (state.scope == null)
               Text(context.tr('Manager access required.')),
-            if (resource?.loading == true) const LinearProgressIndicator(),
+            if (resource?.loading == true) const AppContentLoading(rows: 1),
             if (resource?.error case final error?) Text(context.tr(error)),
             TextButton(
               onPressed: resource?.loading == true

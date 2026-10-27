@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_state.dart';
 import 'package:shiftly/features/manager_performance/presentation/cubit/manager_resource_state.dart';
@@ -77,6 +78,20 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   children: [
+                    Text(
+                      context.tr('Performance workspace guide'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      context.tr(
+                        'Review results first, then manage points rules, warnings and disputes.',
+                      ),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     ManagerRecoveryBanner(cubit: cubit, state: state),
                     Wrap(
                       spacing: 8,
@@ -140,7 +155,7 @@ class _ManagerPerformanceScreenState extends State<ManagerPerformanceScreen> {
                               .resources['workspace:policies/current']
                               ?.loading ==
                           true)
-                        const LinearProgressIndicator(),
+                        const AppContentLoading(rows: 1),
                       if (state.resources['workspace:policies/current']?.error
                           case final error?)
                         Text(context.tr(error)),

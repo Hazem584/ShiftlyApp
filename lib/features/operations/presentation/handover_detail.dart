@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:uuid/uuid.dart';
 
 import '../domain/operations_repository.dart';
@@ -206,7 +207,7 @@ class _HandoverDetailState extends State<HandoverDetail> {
                     ),
                   ),
                 if (_error != null) Text(_error!),
-                if (_busy) const LinearProgressIndicator(),
+                if (_busy) const AppContentLoading(rows: 1),
                 for (final i in opRows(h['items']))
                   Card(
                     child: Padding(

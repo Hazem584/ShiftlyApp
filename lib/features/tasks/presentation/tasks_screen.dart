@@ -196,7 +196,7 @@ class _TasksScreenState extends State<TasksScreen> {
                               if (state.loading)
                                 const Padding(
                                   padding: EdgeInsets.only(top: 16),
-                                  child: LinearProgressIndicator(),
+                                  child: AppContentLoading(rows: 1),
                                 ),
                               const SizedBox(height: 16),
                             ],
