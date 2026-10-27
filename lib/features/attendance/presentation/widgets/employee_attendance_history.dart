@@ -6,6 +6,7 @@ import 'package:shiftly/core/offline/read_sync_banner.dart';
 import 'package:shiftly/core/offline/read_sync_state.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_records_list.dart';
@@ -58,7 +59,7 @@ class EmployeeAttendanceHistory extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.l),
             if (state.initialLoading)
-              const Center(child: CircularProgressIndicator())
+              const AppContentLoading()
             else if (state.records.isEmpty)
               EmptyState(
                 icon: state.failure == null

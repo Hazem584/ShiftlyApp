@@ -8,6 +8,7 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
@@ -36,7 +37,7 @@ class EmployeeShiftsScreen extends StatelessWidget {
           ToastService.error(context, message: state.failure!.message),
       builder: (context, state) {
         if (state.initialLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppContentLoading();
         }
         if (state.records.isEmpty) {
           return RefreshIndicator(

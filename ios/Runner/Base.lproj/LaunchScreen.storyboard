@@ -19,8 +19,8 @@
                         <subviews>
                             <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleAspectFit" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="120" id="brand-width"/>
-                                    <constraint firstAttribute="height" constant="120" id="brand-height"/>
+                                    <constraint firstAttribute="width" constant="156" id="brand-width"/>
+                                    <constraint firstAttribute="height" constant="156" id="brand-height"/>
                                 </constraints>
                             </imageView>
                         </subviews>
@@ -37,9 +37,9 @@
         </scene>
     </scenes>
     <resources>
-        <image name="LaunchImage" width="120" height="120"/>
+        <image name="LaunchImage" width="156" height="156"/>
         <namedColor name="LaunchBackground">
-            <color red="0.980392" green="0.980392" blue="0.984314" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.043137" green="0.062745" blue="0.078431" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
     </resources>
 </document>

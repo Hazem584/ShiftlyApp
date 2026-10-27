@@ -33,12 +33,12 @@ class NavigationDestinationItem extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
           decoration: BoxDecoration(
             color: selected
                 ? AppPalette.of(context).selected
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -59,8 +59,8 @@ class NavigationDestinationItem extends StatelessWidget {
                     icon,
                     size: 22,
                     color: selected
-                        ? AppPalette.of(context).orange
-                        : AppPalette.of(context).lighterGray,
+                        ? AppPalette.of(context).primaryColor
+                        : AppPalette.of(context).textSecondary,
                   ),
                 ),
               ),
@@ -71,7 +71,7 @@ class NavigationDestinationItem extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: selected
-                      ? AppPalette.of(context).ink
+                      ? AppPalette.of(context).primaryColor
                       : AppPalette.of(context).textSecondary,
                   fontSize: 11,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,

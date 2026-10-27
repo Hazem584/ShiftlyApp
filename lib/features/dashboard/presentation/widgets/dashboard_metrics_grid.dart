@@ -30,7 +30,7 @@ class DashboardMetricsGrid extends StatelessWidget {
               label: context.tr('Total employees'),
               value: data.summary.totalEmployees,
               icon: Icons.groups_outlined,
-              color: AppPalette.of(context).ink,
+              color: AppPalette.of(context).primaryColor,
               caption: 'Active employees',
             ),
           ),
@@ -39,7 +39,7 @@ class DashboardMetricsGrid extends StatelessWidget {
             child: SummaryCard(
               label: context.tr('Scheduled today'),
               value: data.summary.scheduledToday,
-              icon: Icons.person_rounded,
+              icon: Icons.calendar_month_outlined,
               color: AppPalette.of(context).success,
               caption: 'Non-cancelled shifts',
             ),
@@ -49,7 +49,7 @@ class DashboardMetricsGrid extends StatelessWidget {
             child: SummaryCard(
               label: context.tr('Clocked in now'),
               value: data.summary.clockedInNow,
-              icon: Icons.login_rounded,
+              icon: Icons.fingerprint_rounded,
               color: AppPalette.of(context).success,
               caption: 'Open attendance',
             ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_record_api.dart';
 import 'package:shiftly/features/reports/domain/attendance_report.dart';
 import 'package:shiftly/features/reports/domain/report_export.dart';
@@ -107,7 +108,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
               if (state.loading)
                 const Padding(
                   padding: EdgeInsets.all(32),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: AppContentLoading(),
                 ),
               if (state.failure != null) ...[
                 const SizedBox(height: 16),

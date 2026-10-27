@@ -6,6 +6,7 @@ import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
@@ -31,7 +32,7 @@ class ManagerAttendancePanel extends StatelessWidget {
       if (state.initialLoading) {
         return const Padding(
           padding: EdgeInsets.symmetric(vertical: 64),
-          child: Center(child: CircularProgressIndicator()),
+          child: AppContentLoading(),
         );
       }
       if (state.records.isEmpty && state.pending.isEmpty) {

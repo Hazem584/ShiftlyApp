@@ -10,7 +10,7 @@ class ThemeCubit extends Cubit<ThemeSettings> {
         ThemeSettings(
           mode: switch (_store.mode) {
             'light' => ThemeMode.light,
-            'dark' => ThemeMode.dark,
+            'dark' || null => ThemeMode.dark,
             _ => ThemeMode.system,
           },
         ),

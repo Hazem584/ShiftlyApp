@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/app/app_task_coordinator.dart';
 import 'package:shiftly/app/session_feature_coordinator.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
@@ -28,6 +29,8 @@ import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_re
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
+import 'package:shiftly/features/breaks/application/shift_break_controller.dart';
+import 'package:shiftly/features/breaks/domain/break_notifier.dart';
 import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
@@ -130,6 +133,8 @@ class AppComposition {
   PushNotificationsCubit? pushNotifications;
   PushDeviceRepository? pushDevices;
   late final TasksCubit tasksCubit;
+  late final ShiftBreakController shiftBreaks;
+  StreamSubscription<FlexibleAttendanceState>? breakAttendanceSubscription;
   late final AppTaskCoordinator taskCoordinator;
 
   AppComposition(
@@ -336,6 +341,21 @@ class AppComposition {
     chatGroupsCubit =
         registered<ChatGroupsCubit>() ??
         ChatGroupsCubit(chat, gallery: ChatImageGallery());
+    final localReminders = registered<TaskReminders>();
+    shiftBreaks = ShiftBreakController(
+      preferences: registered<SharedPreferences>(),
+      notifier: localReminders is BreakNotifier
+          ? localReminders as BreakNotifier
+          : null,
+    );
+    breakAttendanceSubscription = flexibleAttendanceCubit.stream.listen((
+      state,
+    ) {
+      final closed = state.current;
+      if (closed?.clockOutAt != null) {
+        unawaited(shiftBreaks.finishFor(closed!.id));
+      }
+    });
     tasksCubit = TasksCubit(
       registered<TaskRepository>() ?? MemoryTaskRepository(),
       registered<TaskReminders>() ?? const NoTaskReminders(),
@@ -376,6 +396,8 @@ class AppComposition {
 
   void dispose() {
     taskCoordinator.dispose();
+    unawaited(breakAttendanceSubscription?.cancel());
+    shiftBreaks.dispose();
     unawaited(pushNotifications?.close());
     onboardingCubit.close();
     languageCubit.close();
@@ -413,6 +435,7 @@ class AppComposition {
     employeesCubit.bindSession(employeeScopeForSession(state));
     workspacesCubit.bindUser(state.currentUser?.id);
     final featureScope = featureScopeForSession(state, generation);
+    shiftBreaks.bind(featureScope?.userId);
     unawaited(taskCoordinator.bindSession(featureScope));
     managerShiftsCubit.bindSession(featureScope);
     employeeShiftsCubit.bindSession(featureScope);

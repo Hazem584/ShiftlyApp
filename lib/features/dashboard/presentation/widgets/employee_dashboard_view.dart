@@ -12,9 +12,11 @@ import 'package:shiftly/features/dashboard/presentation/utils/employee_dashboard
 import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_count_card.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_shift_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_status_card.dart';
 import 'package:shiftly/features/points/presentation/widgets/performance_thumbnail.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/dashboard_announcements.dart';
+
+import 'shift_session_card.dart';
+import 'work_week_strip.dart';
 
 class EmployeeDashboardView extends StatelessWidget {
   const EmployeeDashboardView({
@@ -59,71 +61,36 @@ class EmployeeDashboardView extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.m),
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppPalette.of(context).brandBackground,
-                AppPalette.of(context).brandGradientEnd,
-              ],
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
-            ),
-            borderRadius: BorderRadius.circular(AppRadii.xl),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.tr('Ready for your workday?'),
-                style: Theme.of(context).textTheme.titleLarge
-                    ?.copyWith(color: Colors.white),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                context.tr(
-                  'Your shifts, attendance and time off are a tap away.',
-                ),
-                style: const TextStyle(color: Color(0xFFE4DED6), height: 1.5),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  FilledButton.icon(
-                    key: const Key('employee-quick-shifts'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppPalette.of(context).orange,
-                    ),
-                    onPressed: () => context.go('/employee?tab=shifts'),
-                    icon: const Icon(Icons.fingerprint_rounded),
-                    label: Text(context.tr('My Shifts')),
-                  ),
-                  OutlinedButton.icon(
-                    key: const Key('employee-quick-leave'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xFF8E8E9C)),
-                    ),
-                    onPressed: () => context.go('/employee?tab=leave'),
-                    icon: const Icon(Icons.event_note_outlined),
-                    label: Text(context.tr('Request leave')),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.m),
         BlocBuilder<FlexibleAttendanceCubit, FlexibleAttendanceState>(
-          builder: (context, state) => AttendanceStatusCard(
-            state: state,
-            timezone: data.timezone,
-            onOpenShifts: () => context.go('/employee?tab=shifts'),
-          ),
+          builder: (context, attendance) =>
+              ShiftSessionCard(state: attendance, timezone: data.timezone),
         ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            TextButton.icon(
+              key: const Key('employee-quick-shifts'),
+              onPressed: () => context.go('/employee?tab=shifts'),
+              icon: const Icon(Icons.calendar_today_outlined, size: 16),
+              label: Text(context.tr('My Shifts')),
+            ),
+            TextButton.icon(
+              key: const Key('employee-quick-leave'),
+              onPressed: () => context.go('/employee?tab=leave'),
+              icon: const Icon(Icons.event_note_outlined, size: 16),
+              label: Text(context.tr('Request leave')),
+            ),
+            TextButton.icon(
+              key: const Key('employee-quick-tasks'),
+              onPressed: () => context.push('/tasks'),
+              icon: const Icon(Icons.checklist_rounded, size: 16),
+              label: Text(context.tr('Tasks')),
+            ),
+          ],
+        ),
+        WorkWeekStrip(date: data.date),
         if (data.todayShift != null) ...[
           const SizedBox(height: AppSpacing.m),
           EmployeeDashboardShiftCard(

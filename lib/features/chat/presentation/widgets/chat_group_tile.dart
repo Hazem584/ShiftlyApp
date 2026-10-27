@@ -23,11 +23,11 @@ class ChatGroupTile extends StatelessWidget {
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(
         horizontal: narrow ? 10 : 16,
-        vertical: 8,
+        vertical: 6,
       ),
       leading: CircleAvatar(
-        backgroundColor: AppPalette.of(context).orangeSoft,
-        foregroundColor: AppPalette.of(context).orange,
+        backgroundColor: AppPalette.of(context).selected,
+        foregroundColor: AppPalette.of(context).primaryColor,
         child: Text(group.name.characters.first.toUpperCase()),
       ),
       title: Row(

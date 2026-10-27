@@ -42,6 +42,10 @@ class ProfileInfoRow extends StatelessWidget {
               ),
               Text(
                 value,
+                textDirection:
+                    icon == Icons.email_outlined || icon == Icons.phone_outlined
+                    ? TextDirection.ltr
+                    : null,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),

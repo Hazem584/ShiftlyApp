@@ -4,7 +4,7 @@
 const arabic = navigator.language.toLowerCase().startsWith('ar');
 if (arabic) {
   document.documentElement.lang = 'ar';
-  document.getElementById('loading-message').textContent = 'بنجهّز مساحة العمل…';
+  document.getElementById('loading-message').textContent = 'فريقك وشيفتاتك… في مكان واحد';
   document.getElementById('retry').textContent = 'حاول مرة تانية';
 }
 _flutter.loader.load({

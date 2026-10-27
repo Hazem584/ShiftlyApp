@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shiftly/core/app_icons/app_icon_sync.dart';
 import 'package:shiftly/core/monitoring/app_monitor.dart';
+import 'package:shiftly/core/widgets/brand_session_loading.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -200,7 +201,7 @@ class _MonitoringGateState extends State<MonitoringGate>
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     if (_initial) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const BrandSessionLoading();
     }
     final release = _release;
     if (release == null || _deferred.contains(release['build'])) {

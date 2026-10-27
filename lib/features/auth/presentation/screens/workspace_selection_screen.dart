@@ -6,6 +6,7 @@ import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/ease_hint.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_invitation_card.dart';
@@ -22,6 +23,7 @@ class WorkspaceSelectionScreen extends StatefulWidget {
 class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
   final _inviteToken = TextEditingController();
   bool _obscureInviteToken = true;
+  WorkspaceMembership? _selectedWorkspace;
 
   @override
   void initState() {
@@ -181,6 +183,20 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
             ),
           ],
         ),
+        bottomNavigationBar: memberships.isEmpty
+            ? null
+            : SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: FilledButton(
+                    key: const Key('continue-workspace'),
+                    onPressed: () => _selectWorkspace(
+                      _selectedWorkspace ?? memberships.first,
+                    ),
+                    child: Text(context.tr('Continue to workspace')),
+                  ),
+                ),
+              ),
         body: BlocBuilder<WorkspacesCubit, WorkspacesState>(
           builder: (context, state) => ListView(
             key: Key(
@@ -195,14 +211,17 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
                   memberships: memberships,
                   currentWorkspaceId: session.activeMembership?.workspace.id,
                   shrinkWrap: true,
-                  onSelected: _selectWorkspace,
+                  currentSelectionId: _selectedWorkspace?.workspace.id,
+                  onSelected: (membership) =>
+                      setState(() => _selectedWorkspace = membership),
                 ),
                 const Divider(),
               ],
-              const EaseHint(
-                icon: Icons.apartment_outlined,
-                message: 'Create a workspace for your team, or accept an invitation sent by a manager.',
-              ),
+              if (memberships.isEmpty)
+                const EaseHint(
+                  icon: Icons.apartment_outlined,
+                  message: 'Create a workspace for your team, or accept an invitation sent by a manager.',
+                ),
               const SizedBox(height: AppSpacing.m),
               if (state.invitations.isNotEmpty) ...[
                 Text(
@@ -281,7 +300,7 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
                 ],
               ),
               if (state.loading)
-                const Center(child: CircularProgressIndicator()),
+                const AppContentLoading(rows: 2),
               if (state.failure != null) ...[
                 const SizedBox(height: AppSpacing.m),
                 Text(

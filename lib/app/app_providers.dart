@@ -149,6 +149,7 @@ class _AppProvidersState extends State<AppProviders> {
   Widget build(BuildContext context) {
     final app = MultiRepositoryProvider(
       providers: [
+        RepositoryProvider.value(value: _composition.shiftBreaks),
         RepositoryProvider.value(value: _composition.employees),
         RepositoryProvider.value(value: _composition.invitations),
         RepositoryProvider.value(value: _composition.workspaces),

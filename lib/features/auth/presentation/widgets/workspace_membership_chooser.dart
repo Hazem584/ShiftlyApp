@@ -8,6 +8,7 @@ class WorkspaceMembershipChooser extends StatelessWidget {
     required this.memberships,
     required this.onSelected,
     this.currentWorkspaceId,
+    this.currentSelectionId,
     this.switchingWorkspaceId,
     this.shrinkWrap = false,
     super.key,
@@ -15,6 +16,7 @@ class WorkspaceMembershipChooser extends StatelessWidget {
 
   final List<WorkspaceMembership> memberships;
   final String? currentWorkspaceId;
+  final String? currentSelectionId;
   final String? switchingWorkspaceId;
   final ValueChanged<WorkspaceMembership> onSelected;
   final bool shrinkWrap;
@@ -30,11 +32,25 @@ class WorkspaceMembershipChooser extends StatelessWidget {
     itemBuilder: (context, index) {
       final membership = memberships[index];
       final current = membership.workspace.id == currentWorkspaceId;
+      final selected =
+          membership.workspace.id == (currentSelectionId ?? currentWorkspaceId);
       final switching = membership.workspace.id == switchingWorkspaceId;
       return Card(
+        color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
         child: ListTile(
           key: Key('workspace-${membership.workspace.id}'),
-          leading: const Icon(Icons.business_outlined),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.business_outlined,
+              color: Theme.of(context).colorScheme.primary,
+              size: 20,
+            ),
+          ),
           title: Text(
             membership.workspace.name,
             maxLines: 2,
@@ -60,7 +76,9 @@ class WorkspaceMembershipChooser extends StatelessWidget {
                   ],
                 )
               : const Icon(Icons.chevron_right_rounded),
-          onTap: current || switchingWorkspaceId != null
+          onTap:
+              (current && currentSelectionId == null) ||
+                  switchingWorkspaceId != null
               ? null
               : () => onSelected(membership),
         ),

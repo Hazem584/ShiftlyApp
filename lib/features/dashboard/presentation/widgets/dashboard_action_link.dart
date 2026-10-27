@@ -20,12 +20,27 @@ class DashboardActionLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SurfaceCard(
     onTap: onTap,
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     child: ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: AppPalette.of(context).orange),
-      title: Text(context.tr(title)),
-      subtitle: subtitle == null ? null : Text(context.tr(subtitle!)),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppPalette.of(context).selected,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Icon(icon, size: 20, color: AppPalette.of(context).primaryColor),
+      ),
+      title: Text(
+        context.tr(title),
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+      subtitle: subtitle == null
+          ? null
+          : Text(
+              context.tr(subtitle!),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
       trailing: const Icon(Icons.chevron_right_rounded),
     ),
   );

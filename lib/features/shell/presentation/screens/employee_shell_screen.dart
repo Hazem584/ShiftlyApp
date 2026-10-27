@@ -105,12 +105,24 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                 child: IndexedStack(
                   index: _selectedIndex,
                   children: [
-                    const EmployeeDashboardScreen(),
-                    EmployeeAttendanceScreen(
-                      initialTab: widget.initialAttendanceTab,
+                    TickerMode(
+                      enabled: _selectedIndex == 0,
+                      child: const EmployeeDashboardScreen(),
                     ),
-                    const ChatGroupsScreen(embedded: true),
-                    const MyPerformanceScreen(),
+                    TickerMode(
+                      enabled: _selectedIndex == 1,
+                      child: EmployeeAttendanceScreen(
+                        initialTab: widget.initialAttendanceTab,
+                      ),
+                    ),
+                    TickerMode(
+                      enabled: _selectedIndex == 2,
+                      child: const ChatGroupsScreen(embedded: true),
+                    ),
+                    TickerMode(
+                      enabled: _selectedIndex == 3,
+                      child: const MyPerformanceScreen(),
+                    ),
                   ],
                 ),
               ),
@@ -123,54 +135,61 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
           : BlocBuilder<ChatGroupsCubit, ChatGroupsState>(
               buildWhen: (before, after) =>
                   before.unreadCount != after.unreadCount,
-              builder: (context, chat) => NavigationBar(
-                key: const Key('employee-bottom-navigation'),
-                selectedIndex: _selectedIndex,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                onDestinationSelected: (index) =>
-                    setState(() => _selectedIndex = index),
-                destinations: [
-                  NavigationDestination(
-                    icon: const Icon(Icons.home_outlined),
-                    selectedIcon: const Icon(Icons.home_rounded),
-                    label: context.tr('Overview'),
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.calendar_month_outlined),
-                    selectedIcon: const Icon(Icons.calendar_month_rounded),
-                    label: context.tr('My Shifts'),
-                  ),
-                  NavigationDestination(
-                    icon: Badge(
-                      isLabelVisible: chat.unreadCount > 0,
-                      label: Text(
-                        chat.unreadCount > 99
-                            ? '99+'
-                            : context.tr('{value1}', {
-                                'value1': (chat.unreadCount).toString(),
-                              }),
+              builder: (context, chat) => Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: NavigationBar(
+                    key: const Key('employee-bottom-navigation'),
+                    selectedIndex: _selectedIndex,
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysShow,
+                    onDestinationSelected: (index) =>
+                        setState(() => _selectedIndex = index),
+                    destinations: [
+                      NavigationDestination(
+                        icon: const Icon(Icons.home_outlined),
+                        selectedIcon: const Icon(Icons.home_rounded),
+                        label: context.tr('Overview'),
                       ),
-                      child: const Icon(Icons.chat_bubble_outline_rounded),
-                    ),
-                    selectedIcon: Badge(
-                      isLabelVisible: chat.unreadCount > 0,
-                      label: Text(
-                        chat.unreadCount > 99
-                            ? '99+'
-                            : context.tr('{value1}', {
-                                'value1': (chat.unreadCount).toString(),
-                              }),
+                      NavigationDestination(
+                        icon: const Icon(Icons.calendar_month_outlined),
+                        selectedIcon: const Icon(Icons.calendar_month_rounded),
+                        label: context.tr('My Shifts'),
                       ),
-                      child: const Icon(Icons.chat_bubble_rounded),
-                    ),
-                    label: context.tr('Chat'),
+                      NavigationDestination(
+                        icon: Badge(
+                          isLabelVisible: chat.unreadCount > 0,
+                          label: Text(
+                            chat.unreadCount > 99
+                                ? '99+'
+                                : context.tr('{value1}', {
+                                    'value1': (chat.unreadCount).toString(),
+                                  }),
+                          ),
+                          child: const Icon(Icons.chat_bubble_outline_rounded),
+                        ),
+                        selectedIcon: Badge(
+                          isLabelVisible: chat.unreadCount > 0,
+                          label: Text(
+                            chat.unreadCount > 99
+                                ? '99+'
+                                : context.tr('{value1}', {
+                                    'value1': (chat.unreadCount).toString(),
+                                  }),
+                          ),
+                          child: const Icon(Icons.chat_bubble_rounded),
+                        ),
+                        label: context.tr('Chat'),
+                      ),
+                      NavigationDestination(
+                        icon: const Icon(Icons.auto_graph_outlined),
+                        selectedIcon: const Icon(Icons.auto_graph_rounded),
+                        label: context.tr('Performance'),
+                      ),
+                    ],
                   ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.auto_graph_outlined),
-                    selectedIcon: const Icon(Icons.auto_graph_rounded),
-                    label: context.tr('Performance'),
-                  ),
-                ],
+                ),
               ),
             ),
     );

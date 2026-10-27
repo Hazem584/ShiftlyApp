@@ -19,7 +19,9 @@ class SurfaceCard extends StatelessWidget {
       color: AppPalette.of(context).surface,
       borderRadius: BorderRadius.circular(AppRadii.l),
       border: Border.all(color: AppPalette.of(context).borderColor),
-      boxShadow: AppShadows.soft,
+      boxShadow: Theme.of(context).brightness == Brightness.dark
+          ? const []
+          : AppShadows.soft,
     ),
     child: Material(
       color: Colors.transparent,

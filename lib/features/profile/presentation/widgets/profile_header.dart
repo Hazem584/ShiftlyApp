@@ -13,7 +13,15 @@ class ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) => SurfaceCard(
     child: Column(
       children: [
-        ProfileAvatar(profile: profile, radius: 48),
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppPalette.of(context).selected,
+            border: Border.all(color: AppPalette.of(context).borderColor),
+          ),
+          child: ProfileAvatar(profile: profile, radius: 44),
+        ),
         const SizedBox(height: 13),
         Text(
           profile.displayName,

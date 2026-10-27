@@ -29,14 +29,14 @@ class ScreenHeader extends StatelessWidget {
           if (icon != null) ...[
             DecoratedBox(
               decoration: BoxDecoration(
-                color: AppPalette.of(context).orangeSoft,
+                color: AppPalette.of(context).selected,
                 borderRadius: BorderRadius.circular(AppRadii.m),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(10),
                 child: Icon(
                   icon,
-                  color: AppPalette.of(context).orange,
+                  color: AppPalette.of(context).primaryColor,
                   size: 22,
                 ),
               ),

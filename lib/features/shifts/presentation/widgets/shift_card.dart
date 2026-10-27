@@ -29,7 +29,7 @@ class ShiftCard extends StatelessWidget {
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            color: AppPalette.of(context).orangeSoft,
+            color: AppPalette.of(context).selected,
             borderRadius: BorderRadius.circular(AppRadii.m),
           ),
           child: Padding(
@@ -37,7 +37,7 @@ class ShiftCard extends StatelessWidget {
             child: Icon(
               Icons.schedule_rounded,
               size: 22,
-              color: AppPalette.of(context).orange,
+              color: AppPalette.of(context).primaryColor,
             ),
           ),
         ),

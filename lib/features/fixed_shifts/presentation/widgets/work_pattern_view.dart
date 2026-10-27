@@ -4,6 +4,7 @@ import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
@@ -29,7 +30,7 @@ class WorkPatternView extends StatelessWidget {
     builder: (context, state) {
       if (state.loading && state.history == null) {
         return const SurfaceCard(
-          child: Center(child: CircularProgressIndicator()),
+          child: AppContentLoading(),
         );
       }
       return SurfaceCard(

@@ -9,6 +9,7 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 import 'package:shiftly/core/widgets/brand_session_loading.dart';
@@ -208,7 +209,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('Getting Shiftly ready'), findsOneWidget);
+      expect(find.text(BrandSessionLoading.tagline), findsOneWidget);
       expect(find.text('Sign in'), findsNothing);
       storage.readGate!.complete(false);
       await tester.pumpAndSettle();
@@ -478,13 +479,13 @@ void main() {
     );
   }
 
-  testWidgets('session loading uses approved asset and accessible status', (
+  testWidgets('startup shows only the approved brand and tagline', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: BrandSessionLoading()));
     await tester.pump();
     expect(find.byType(BrandLogo), findsOneWidget);
-    expect(find.text('Getting Shiftly ready'), findsOneWidget);
+    expect(find.text(BrandSessionLoading.tagline), findsOneWidget);
     expect(
       (tester.widget<Image>(find.byType(Image)).image as AssetImage).assetName,
       BrandLogo.asset,
@@ -506,12 +507,13 @@ void main() {
     await tester.pump();
     expect(
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
-      const Color(0xFF080414),
+      const AppPalette(Brightness.dark).canvas,
     );
     expect(
-      tester.widget<Text>(find.text('Getting Shiftly ready')).style!.color,
-      Colors.white,
+      tester.widget<Text>(find.text(BrandSessionLoading.tagline)).style!.color,
+      const Color(0xFFA0B4BF),
     );
+    expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

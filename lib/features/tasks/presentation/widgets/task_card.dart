@@ -33,8 +33,13 @@ class TaskCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: busy ? null : onOpen,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
+        child: Container(
+          decoration: BoxDecoration(
+            border: BorderDirectional(
+              start: BorderSide(color: color, width: 3),
+            ),
+          ),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -89,11 +94,11 @@ class TaskCard extends StatelessWidget {
                   padding: const EdgeInsetsDirectional.only(
                     start: 8,
                     top: 6,
-                    bottom: 16,
+                    bottom: 8,
                   ),
                   child: Text(
                     task.description,
-                    maxLines: 3,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: colors.onSurfaceVariant,
@@ -101,7 +106,7 @@ class TaskCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              const Spacer(),
+              const SizedBox(height: 8),
               TaskCountdown(task: task),
               const SizedBox(height: 10),
               Wrap(

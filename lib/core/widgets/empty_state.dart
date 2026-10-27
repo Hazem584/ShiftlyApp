@@ -26,15 +26,15 @@ class EmptyState extends StatelessWidget {
           children: [
             DecoratedBox(
               decoration: BoxDecoration(
-                color: AppPalette.of(context).orangeSoft,
-                shape: BoxShape.circle,
+                color: AppPalette.of(context).selected,
+                borderRadius: BorderRadius.circular(28),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Icon(
                   icon,
                   size: 36,
-                  color: AppPalette.of(context).orange,
+                  color: AppPalette.of(context).primaryColor,
                 ),
               ),
             ),

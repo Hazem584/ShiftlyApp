@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 
 import '../application/tasks_cubit.dart';
 import '../domain/personal_task.dart';
 import 'widgets/task_card.dart';
 import 'widgets/task_editor.dart';
+import 'widgets/task_progress_overview.dart';
 import 'widgets/task_reminder_banner.dart';
 
 class TasksScreen extends StatefulWidget {
@@ -94,10 +96,20 @@ class _TasksScreenState extends State<TasksScreen> {
     builder: (context, state) {
       final cubit = context.read<TasksCubit>(),
           colors = Theme.of(context).colorScheme;
+      if (state.loading && state.items.isEmpty) return Scaffold(appBar: AppBar(title: Text(context.tr('Task manager'))), body: const AppContentLoading());
       return Scaffold(
         appBar: AppBar(
           title: Text(context.tr('Task manager')),
           actions: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: FloatingActionButton.small(
+                heroTag: 'personal-create-task',
+                tooltip: context.tr('New task'),
+                onPressed: state.saving ? null : () => showTaskEditor(context),
+                child: const Icon(Icons.add_rounded),
+              ),
+            ),
             IconButton(
               onPressed: state.loading
                   ? null
@@ -106,11 +118,6 @@ class _TasksScreenState extends State<TasksScreen> {
               icon: const Icon(Icons.refresh_rounded),
             ),
           ],
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: state.saving ? null : () => showTaskEditor(context),
-          icon: const Icon(Icons.add_rounded),
-          label: Text(context.tr('New task')),
         ),
         body: RefreshIndicator(
           onRefresh: cubit.refresh,
@@ -133,49 +140,13 @@ class _TasksScreenState extends State<TasksScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(24),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(24),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      colors.primaryContainer,
-                                      colors.tertiaryContainer,
-                                    ],
-                                    begin: AlignmentDirectional.topStart,
-                                    end: AlignmentDirectional.bottomEnd,
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.checklist_rounded,
-                                      size: 36,
-                                      color: colors.onPrimaryContainer,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      context.tr('Make room for what matters.'),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            color: colors.onPrimaryContainer,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      context.tr(
-                                        'Your personal tasks, across your workspaces.',
-                                      ),
-                                      style: TextStyle(
-                                        color: colors.onPrimaryContainer,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              TaskProgressOverview(
+                                open: state.totalsAvailable
+                                    ? state.openTotal
+                                    : null,
+                                done: state.totalsAvailable
+                                    ? state.doneTotal
+                                    : null,
                               ),
                               const SizedBox(height: 16),
                               TaskReminderBanner(
@@ -266,27 +237,53 @@ class _TasksScreenState extends State<TasksScreen> {
                     ),
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: columns,
-                        mainAxisExtent:
-                            330 *
-                            MediaQuery.textScalerOf(context).scale(14) /
-                            14,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final task = state.items[index];
-                        return TaskCard(
-                          task: task,
-                          busy: state.saving,
-                          onOpen: () => showTaskEditor(context, task: task),
-                          onToggle: () => unawaited(cubit.toggle(task)),
-                          onDelete: () => unawaited(_delete(task)),
-                        );
-                      }, childCount: state.items.length),
-                    ),
+                    sliver: columns == 1
+                        ? SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final task = state.items[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: TaskCard(
+                                  task: task,
+                                  busy: state.saving,
+                                  onOpen: () =>
+                                      showTaskEditor(context, task: task),
+                                  onToggle: () => unawaited(cubit.toggle(task)),
+                                  onDelete: () => unawaited(_delete(task)),
+                                ),
+                              );
+                            }, childCount: state.items.length),
+                          )
+                        : SliverGrid(
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  mainAxisExtent:
+                                      238 *
+                                      MediaQuery.textScalerOf(context)
+                                          .scale(14) /
+                                      14,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                ),
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final task = state.items[index];
+                              return TaskCard(
+                                task: task,
+                                busy: state.saving,
+                                onOpen: () =>
+                                    showTaskEditor(context, task: task),
+                                onToggle: () => unawaited(cubit.toggle(task)),
+                                onDelete: () => unawaited(_delete(task)),
+                              );
+                            }, childCount: state.items.length),
+                          ),
                   ),
                   SliverToBoxAdapter(
                     child: Padding(

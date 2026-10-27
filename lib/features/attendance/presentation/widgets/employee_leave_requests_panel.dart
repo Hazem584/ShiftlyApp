@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/employee_leave_card.dart';
@@ -21,7 +22,7 @@ class EmployeeLeaveRequestsPanel extends StatelessWidget {
         return const Center(
           child: Padding(
             padding: EdgeInsets.all(48),
-            child: CircularProgressIndicator(),
+            child: AppContentLoading(),
           ),
         );
       }

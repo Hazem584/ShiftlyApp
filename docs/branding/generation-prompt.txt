@@ -1,0 +1,8 @@
+Mode: built-in image_gen. Selected asset: assets/images/shiftly-mark.png
+
+Initial prompt:
+Create a production-ready brand symbol for Shiftly, a modern workforce scheduling and team handover mobile app. A single original geometric monogram combining a flowing capital S with a subtle clock / shift transition motif in its negative space. Minimal premium flat vector-like design, crisp edges and carefully balanced proportions, recognizable at 24px. Main color vivid turquoise #3ED6C3 with a small lighter mint accent, designed to stand out on charcoal #0B1014 and also work on white. Center one symbol occupying about 75% of a square canvas with ample safe margins. Actual transparent background. No wordmark, no letters outside the monogram, no slogans, no mockups, no app tile background, no gradients, no glow, no 3D, no shadows, no watermark. Friendly, confident, professional identity; simple continuous geometry rather than generic arrows.
+
+Refinement prompt:
+Refine this Shiftly S-and-clock logo into impeccably clean flat vector-like production artwork. Preserve the recognizable S silhouette and centered clock idea. Use perfectly solid turquoise #3ED6C3 for the S and solid pale mint #A6F3E4 for the clock hands. Remove ALL grain, speckles, texture, glow, shadows, color mottling, scratches and ragged cutouts. Smooth mathematically clean continuous outer and inner curves, sharp deliberate terminals, generous legible negative space, balanced clock hands. One centered mark, 70% canvas coverage, square image, truly transparent background. No text, no wordmark, no border, no tile, no mockup. The only visible pixels should belong to the simple clean two-color geometric mark.
+

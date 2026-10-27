@@ -5,60 +5,33 @@ import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/section_heading.dart';
-import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_action_link.dart';
-import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_quick_action.dart';
+
+import 'dashboard_action_link.dart';
+import 'dashboard_quick_action.dart';
 
 class DashboardQuickActions extends StatelessWidget {
   const DashboardQuickActions({required this.pendingRequests, super.key});
   final int pendingRequests;
-
   @override
   Widget build(BuildContext context) => Column(
     children: [
       SectionHeading(
         title: context.tr('Quick actions'),
-        trailing: DecoratedBox(
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: pendingRequests > 0
-                ? AppPalette.of(context).orangeSoft
-                : AppPalette.of(context).field,
+            color: AppPalette.of(context).field,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            child: Text(
-              context.tr('{value1} pending', {
-                'value1': (pendingRequests).toString(),
-              }),
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
-            ),
+          child: Text(
+            context.tr('{value1} pending', {
+              'value1': pendingRequests.toString(),
+            }),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
           ),
         ),
       ),
       const SizedBox(height: AppSpacing.s),
-      DashboardActionLink(
-        icon: Icons.insights_outlined,
-        title: 'Performance',
-        subtitle: 'Employee points, policies, disputes and warnings',
-        onTap: () => context.push(AppRoutes.managerPerformance),
-      ),
-      const SizedBox(height: 10),
-      DashboardActionLink(
-        key: const Key('dashboard-manager-tasks'),
-        subtitle: 'View all tasks',
-        icon: Icons.task_alt_outlined,
-        title: 'Manager tasks',
-        onTap: () => context.push('/team-work?tab=tasks'),
-      ),
-      const SizedBox(height: 10),
-      DashboardActionLink(
-        key: const Key('dashboard-team-announcements'),
-        subtitle: 'View all announcements',
-        icon: Icons.campaign_outlined,
-        title: 'Team announcements',
-        onTap: () => context.push('/team-work?tab=announcements'),
-      ),
-      const SizedBox(height: 10),
       Row(
         children: [
           Expanded(
@@ -66,7 +39,7 @@ class DashboardQuickActions extends StatelessWidget {
               icon: Icons.person_add_alt_1_rounded,
               label: context.tr('Add employee'),
               caption: 'Invite someone',
-              color: AppPalette.of(context).ink,
+              color: AppPalette.of(context).primaryColor,
               onTap: () => context.push('/employees/add'),
             ),
           ),
@@ -91,6 +64,51 @@ class DashboardQuickActions extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      const SizedBox(height: 14),
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 900 ? 3 : 1;
+          final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+          final links = [
+            DashboardActionLink(
+              icon: Icons.insights_outlined,
+              title: 'Performance',
+              subtitle: 'Employee points, policies, disputes and warnings',
+              onTap: () => context.push(AppRoutes.managerPerformance),
+            ),
+            DashboardActionLink(
+              key: const Key('dashboard-manager-tasks'),
+              icon: Icons.task_alt_outlined,
+              title: 'Manager tasks',
+              subtitle: 'View all tasks',
+              onTap: () => context.push('/team-work?tab=tasks'),
+            ),
+            DashboardActionLink(
+              key: const Key('dashboard-team-announcements'),
+              icon: Icons.campaign_outlined,
+              title: 'Team announcements',
+              subtitle: 'View all announcements',
+              onTap: () => context.push('/team-work?tab=announcements'),
+            ),
+          ];
+          return Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              for (final link in links)
+                SizedBox(
+                  width: width,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: columns > 1 ? 116 : 0,
+                    ),
+                    child: link,
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     ],
   );

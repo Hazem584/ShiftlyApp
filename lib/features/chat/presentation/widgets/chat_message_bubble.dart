@@ -41,17 +41,16 @@ class ChatMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final foreground = mine
-        ? colors.onPrimaryContainer
-        : colors.onSurfaceVariant;
+    final foreground = mine ? colors.onPrimary : colors.onSurface;
     final bubble = Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: mine ? colors.primaryContainer : colors.surfaceContainerHighest,
+        color: mine ? colors.primary : colors.surface,
+        border: mine ? null : Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(18),
-          topRight: const Radius.circular(18),
+          topLeft: const Radius.circular(16),
+          topRight: const Radius.circular(16),
           bottomLeft: Radius.circular(mine ? 18 : 5),
           bottomRight: Radius.circular(mine ? 5 : 18),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/device_sessions/application/device_sessions_cubit.dart';
 import 'package:shiftly/features/device_sessions/domain/device_sessions_repository.dart';
 import 'package:shiftly/features/device_sessions/presentation/device_session_card.dart';
@@ -85,7 +86,7 @@ class DeviceSessionsView extends StatelessWidget {
               if (state.loading || state.busy)
                 const Padding(
                   padding: EdgeInsets.all(20),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: AppContentLoading(),
                 ),
               if (state.error != null)
                 Card(

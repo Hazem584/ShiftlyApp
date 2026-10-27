@@ -151,129 +151,131 @@ class _ProfileEditFormState extends State<ProfileEditForm> {
   Widget build(BuildContext context) => Form(
     key: _formKey,
     autovalidateMode: AutovalidateMode.onUserInteraction,
-    child: ListView(
+    child: SingleChildScrollView(
       key: const Key('profile-edit-content'),
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
-      children: [
-        ScreenHeader(
-          title: context.tr('Edit Profile'),
-          subtitle: context.tr('Update your manager information'),
-        ),
-        const SizedBox(height: AppSpacing.l),
-        Center(child: ProfileAvatar(profile: widget.profile, radius: 44)),
-        Center(
-          child: TextButton.icon(
-            key: const Key('change-photo'),
-            onPressed: _busy ? null : _pickPhoto,
-            icon: widget.action == ProfileAction.uploadingAvatar
-                ? const SizedBox.square(
-                    dimension: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.photo_camera_outlined, size: 18),
-            label: Text(
-              _picking
-                  ? context.tr('Opening gallery…')
-                  : widget.action == ProfileAction.uploadingAvatar
-                  ? context.tr('Uploading…')
-                  : context.tr('Change photo'),
-            ),
+      child: Column(
+        children: [
+          ScreenHeader(
+            title: context.tr('Edit Profile'),
+            subtitle: context.tr('Update your manager information'),
           ),
-        ),
-        if (widget.profile.avatarUrl != null ||
-            widget.profile.photoBytes != null)
+          const SizedBox(height: AppSpacing.l),
+          Center(child: ProfileAvatar(profile: widget.profile, radius: 44)),
           Center(
-            child: TextButton(
-              key: const Key('delete-avatar'),
-              onPressed: _busy ? null : _deletePhoto,
-              child: Text(
-                widget.action == ProfileAction.deletingAvatar
-                    ? context.tr('Removing…')
-                    : context.tr('Remove photo'),
+            child: TextButton.icon(
+              key: const Key('change-photo'),
+              onPressed: _busy ? null : _pickPhoto,
+              icon: widget.action == ProfileAction.uploadingAvatar
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.photo_camera_outlined, size: 18),
+              label: Text(
+                _picking
+                    ? context.tr('Opening gallery…')
+                    : widget.action == ProfileAction.uploadingAvatar
+                    ? context.tr('Uploading…')
+                    : context.tr('Change photo'),
               ),
             ),
           ),
-        const SizedBox(height: AppSpacing.s),
-        ProfileEditField(
-          key: const Key('profile-name-field'),
-          controller: _name,
-          label: context.tr('Full name'),
-          icon: Icons.person_outline_rounded,
-          capitalization: TextCapitalization.words,
-          enabled: !_busy,
-          validator: (value) =>
-              (value?.trim().isEmpty ?? true) ? 'Enter your full name' : null,
-        ),
-        const SizedBox(height: 13),
-        ProfileEditField(
-          controller: _role,
-          label: context.tr('Role / title'),
-          icon: Icons.badge_outlined,
-          enabled: !_busy,
-          readOnly: true,
-          validator: (value) =>
-              (value?.trim().length ?? 0) < 2 ? 'Enter your role' : null,
-        ),
-        const SizedBox(height: 13),
-        ProfileEditField(
-          key: const Key('profile-email-field'),
-          controller: _email,
-          label: context.tr('Email address'),
-          icon: Icons.email_outlined,
-          keyboardType: TextInputType.emailAddress,
-          enabled: !_busy,
-          readOnly: true,
-          validator: (value) =>
-              RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                  .hasMatch(value?.trim() ?? '')
-              ? null
-              : 'Enter a valid email address',
-        ),
-        const SizedBox(height: 13),
-        ProfileEditField(
-          key: const Key('profile-phone-field'),
-          controller: _phone,
-          label: context.tr('Phone number'),
-          icon: Icons.phone_outlined,
-          keyboardType: TextInputType.phone,
-          enabled: !_busy,
-          validator: (value) {
-            final trimmed = value?.trim() ?? '';
-            if (trimmed.isEmpty) return null;
-            return trimmed.replaceAll(RegExp(r'\D'), '').length < 8
-                ? 'Enter a valid phone number'
-                : null;
-          },
-        ),
-        const SizedBox(height: AppSpacing.l),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                key: const Key('cancel-profile-edit'),
-                onPressed: _busy ? null : widget.onCancel,
-                child: Text(context.tr('Cancel')),
+          if (widget.profile.avatarUrl != null ||
+              widget.profile.photoBytes != null)
+            Center(
+              child: TextButton(
+                key: const Key('delete-avatar'),
+                onPressed: _busy ? null : _deletePhoto,
+                child: Text(
+                  widget.action == ProfileAction.deletingAvatar
+                      ? context.tr('Removing…')
+                      : context.tr('Remove photo'),
+                ),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FilledButton(
-                key: const Key('save-profile'),
-                onPressed: _busy ? null : _save,
-                child: widget.action == ProfileAction.saving
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(context.tr('Save changes')),
+          const SizedBox(height: AppSpacing.s),
+          ProfileEditField(
+            key: const Key('profile-name-field'),
+            controller: _name,
+            label: context.tr('Full name'),
+            icon: Icons.person_outline_rounded,
+            capitalization: TextCapitalization.words,
+            enabled: !_busy,
+            validator: (value) =>
+                (value?.trim().isEmpty ?? true) ? 'Enter your full name' : null,
+          ),
+          const SizedBox(height: 13),
+          ProfileEditField(
+            controller: _role,
+            label: context.tr('Role / title'),
+            icon: Icons.badge_outlined,
+            enabled: !_busy,
+            readOnly: true,
+            validator: (value) =>
+                (value?.trim().length ?? 0) < 2 ? 'Enter your role' : null,
+          ),
+          const SizedBox(height: 13),
+          ProfileEditField(
+            key: const Key('profile-email-field'),
+            controller: _email,
+            label: context.tr('Email address'),
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            enabled: !_busy,
+            readOnly: true,
+            validator: (value) =>
+                RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                    .hasMatch(value?.trim() ?? '')
+                ? null
+                : 'Enter a valid email address',
+          ),
+          const SizedBox(height: 13),
+          ProfileEditField(
+            key: const Key('profile-phone-field'),
+            controller: _phone,
+            label: context.tr('Phone number'),
+            icon: Icons.phone_outlined,
+            keyboardType: TextInputType.phone,
+            enabled: !_busy,
+            validator: (value) {
+              final trimmed = value?.trim() ?? '';
+              if (trimmed.isEmpty) return null;
+              return trimmed.replaceAll(RegExp(r'\D'), '').length < 8
+                  ? 'Enter a valid phone number'
+                  : null;
+            },
+          ),
+          const SizedBox(height: AppSpacing.l),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  key: const Key('cancel-profile-edit'),
+                  onPressed: _busy ? null : widget.onCancel,
+                  child: Text(context.tr('Cancel')),
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton(
+                  key: const Key('save-profile'),
+                  onPressed: _busy ? null : _save,
+                  child: widget.action == ProfileAction.saving
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(context.tr('Save changes')),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     ),
   );
 }

@@ -25,7 +25,16 @@ class AuthBrandHeader extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            BrandLogo(size: 88),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFF153935),
+                borderRadius: BorderRadius.all(Radius.circular(18)),
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(12),
+                child: BrandLogo(size: 64),
+              ),
+            ),
             PositionedDirectional(end: 0, top: 0, child: LanguageSelector()),
             PositionedDirectional(start: 0, top: 0, child: ThemeSelector()),
           ],
@@ -35,7 +44,8 @@ class AuthBrandHeader extends StatelessWidget {
       Text(
         context.tr(title),
         textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.headlineMedium,
+        style: Theme.of(context).textTheme.headlineMedium
+            ?.copyWith(fontSize: 28, height: 1.15),
       ),
       const SizedBox(height: 8),
       Text(

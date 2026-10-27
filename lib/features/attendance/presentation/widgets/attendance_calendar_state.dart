@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_grid.dart';
@@ -19,7 +20,7 @@ class AttendanceCalendarStateView extends StatelessWidget {
           if (state.loading && !state.hasData) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 48),
-              child: Center(child: CircularProgressIndicator()),
+              child: AppContentLoading(),
             );
           }
           if (state.failure != null && !state.hasData) {

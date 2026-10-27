@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shiftly/features/breaks/domain/break_notifier.dart';
 import 'package:shiftly/features/notifications/domain/repositories/push_preference_store.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -14,7 +15,7 @@ import '../domain/task_reminders.dart';
 
 /// Native pending alarms survive process death and Android reboot. UTC preserves
 /// the chosen instant across timezone changes; the editor uses device local time.
-class DeviceTaskReminders implements TaskReminders {
+class DeviceTaskReminders implements TaskReminders, BreakNotifier {
   DeviceTaskReminders(this._preferences, this._pushStore);
   final SharedPreferences _preferences;
   final PushPreferenceStore _pushStore;
@@ -48,6 +49,65 @@ class DeviceTaskReminders implements TaskReminders {
     if (launch?.didNotificationLaunchApp == true) {
       initialTap = _decode(launch?.notificationResponse?.payload);
     }
+  }
+
+  @override
+  Future<void> cancelBreak() async {
+    if (!_supported) return;
+    await _initialize();
+    await _plugin.cancel(id: 1600000001);
+  }
+
+  @override
+  Future<bool> scheduleBreak(DateTime end, {required bool arabic}) async {
+    if (!_supported) return false;
+    await _initialize();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    var exact = true;
+    if (android != null) {
+      if (await android.requestNotificationsPermission() != true) return false;
+      exact = await android.canScheduleExactNotifications() == true;
+    } else {
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      if (await ios?.requestPermissions(
+            alert: true,
+            sound: true,
+            badge: false,
+          ) !=
+          true) {
+        return false;
+      }
+    }
+    await _plugin.zonedSchedule(
+      id: 1600000001,
+      title: arabic ? 'البريك خلص' : 'Your break is over',
+      body: arabic
+          ? 'عدّت ساعة، جاهز تكمّل الشيفت؟'
+          : 'Your one-hour break has ended. Ready to continue?',
+      scheduledDate: tz.TZDateTime.from(end, tz.UTC),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'shiftly_breaks',
+          'Break reminders',
+          channelDescription: 'Local shift break timer',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: 'ic_notification',
+        ),
+        iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+      ),
+      androidScheduleMode: exact
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle,
+      payload: '{"kind":"shift-break"}',
+    );
+    return true;
   }
 
   Map<String, Object?>? _decode(String? value) {

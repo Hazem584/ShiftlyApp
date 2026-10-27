@@ -7,6 +7,7 @@ import 'package:shiftly/core/offline/read_sync_state.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -126,6 +127,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'shift-create-template',
         onPressed: () => _openEditor(context),
         icon: const Icon(Icons.add_rounded),
         label: Text(context.tr('New template')),
@@ -135,7 +137,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
 
   Widget _body(BuildContext context, ManagerTemplatesState state) {
     if (state.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppContentLoading();
     }
     if (state.templates.isEmpty) {
       return RefreshIndicator(

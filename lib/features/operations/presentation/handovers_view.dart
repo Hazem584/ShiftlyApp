@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 
 import '../domain/operations_repository.dart';
 import 'handover_detail.dart';
@@ -127,7 +128,7 @@ class _HandoversViewState extends State<HandoversView> {
           ),
         ],
       ),
-      if (_loading) const Center(child: CircularProgressIndicator()),
+      if (_loading) const AppContentLoading(),
       if (_error != null) Text(_error!),
       if (!_loading && _rows.isEmpty)
         Text(context.tr('No shift handovers yet')),

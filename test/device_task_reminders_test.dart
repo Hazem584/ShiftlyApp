@@ -30,6 +30,7 @@ void main() {
               return true;
             case 'getNotificationAppLaunchDetails':
               return {'notificationLaunchedApp': false};
+            case 'requestNotificationsPermission':
             case 'areNotificationsEnabled':
               return true;
             case 'canScheduleExactNotifications':
@@ -61,6 +62,24 @@ void main() {
     return DeviceTaskReminders(preferences, PreferencesPushStore(preferences));
   }
 
+  test(
+    'break alarm is isolated from task alarms and can be cancelled',
+    () async {
+      final reminders = await service();
+      final end = DateTime.utc(2090, 1, 1, 12);
+      expect(await reminders.scheduleBreak(end, arabic: true), isTrue);
+      final alarm =
+          calls.lastWhere((c) => c.method == 'zonedSchedule').arguments as Map;
+      expect(alarm['id'], 1600000001);
+      expect(alarm['title'], 'البريك خلص');
+      await reminders.cancelBreak();
+      expect(
+        (calls.lastWhere((c) => c.method == 'cancel').arguments as Map)['id'],
+        1600000001,
+      );
+      await reminders.close();
+    },
+  );
   test(
     'three times retain twelve independent alarms and cancel together',
     () async {

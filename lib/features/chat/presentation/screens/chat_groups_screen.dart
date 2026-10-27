@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/chat/domain/usecases/load_active_chat_members.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/create_chat_group_dialog.dart';
@@ -42,6 +43,7 @@ class ChatGroupsScreen extends StatelessWidget {
             ),
             floatingActionButton: manager
                 ? FloatingActionButton.extended(
+                    heroTag: 'chat-create-group',
                     key: const Key('create-chat-group'),
                     onPressed: state.mutating
                         ? null
@@ -56,7 +58,7 @@ class ChatGroupsScreen extends StatelessWidget {
       );
 
   Widget _body(BuildContext context, ChatGroupsState state) {
-    if (state.loading) return const Center(child: CircularProgressIndicator());
+    if (state.loading) return const AppContentLoading();
     if (state.groups.isEmpty && state.failure != null) {
       return ChatMessageState(
         message: state.failure!.message,

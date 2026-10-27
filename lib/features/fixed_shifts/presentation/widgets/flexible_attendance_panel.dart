@@ -5,6 +5,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/failure_notice.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
@@ -64,7 +65,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
       return const SurfaceCard(
         child: SizedBox(
           height: 116,
-          child: Center(child: CircularProgressIndicator()),
+          child: AppContentLoading(),
         ),
       );
     }

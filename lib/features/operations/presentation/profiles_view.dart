@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 
 import '../domain/operations_repository.dart';
 import 'operations_helpers.dart';
@@ -55,7 +56,7 @@ class _ProfilesViewState extends State<ProfilesView> {
       TextButton(onPressed: _load, child: Text(context.tr('Refresh'))),
       if (_error != null) Text(_error!),
       if (_profiles == null && _error == null)
-        const Center(child: CircularProgressIndicator()),
+        const AppContentLoading(),
       for (final p in _profiles ?? <OperationMap>[])
         Card(
           child: ListTile(

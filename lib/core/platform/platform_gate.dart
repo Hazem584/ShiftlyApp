@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/widgets/brand_session_loading.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 
 /// Public service status remains available while authenticated APIs are stopped.
@@ -128,6 +129,9 @@ class _PlatformGateState extends State<PlatformGate>
 
   @override
   Widget build(BuildContext context) {
+    if (_status == null && !_failed && _suspension == null) {
+      return const BrandSessionLoading();
+    }
     final arabic = Localizations.localeOf(context).languageCode == 'ar';
     final mode = _status?['mode'];
     final blocked =
@@ -144,7 +148,7 @@ class _PlatformGateState extends State<PlatformGate>
               arabic ? 'جارٍ تحديث التطبيق' : 'An update is in progress',
             'DISABLED' =>
               arabic ? 'الخدمة متوقفة حاليًا' : 'Service unavailable',
-            _ => arabic ? 'جارٍ التحقق من الخدمة' : 'Checking service status',
+            _ => arabic ? 'تعذّر الاتصال' : 'Unable to connect',
           };
     final message =
         _suspension ??

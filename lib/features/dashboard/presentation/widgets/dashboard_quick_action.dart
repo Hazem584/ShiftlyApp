@@ -20,16 +20,16 @@ class DashboardQuickAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SurfaceCard(
     onTap: onTap,
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
     child: Column(
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            color: color.withValues(alpha: .12),
-            shape: BoxShape.circle,
+            color: color.withValues(alpha: .10),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(9),
             child: Icon(icon, size: 20, color: color),
           ),
         ),

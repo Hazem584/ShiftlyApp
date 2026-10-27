@@ -4,6 +4,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
@@ -54,7 +55,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     body: BlocBuilder<NotificationsCubit, NotificationsState>(
       builder: (context, state) {
         if (state.initialLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppContentLoading();
         }
         if (state.notifications.isEmpty && state.failure != null) {
           return EmptyState(

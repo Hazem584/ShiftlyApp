@@ -134,10 +134,35 @@ class _HandoverDetailState extends State<HandoverDetail> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Text(occurrenceLabel(opMap(h['source']), widget.timezone)),
-                const Icon(Icons.arrow_downward),
-                Text(occurrenceLabel(opMap(h['target']), widget.timezone)),
-                Text(context.tr(h['status'] as String)),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          occurrenceLabel(opMap(h['source']), widget.timezone),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Icon(
+                            Icons.south_rounded,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 18,
+                          ),
+                        ),
+                        Text(
+                          occurrenceLabel(opMap(h['target']), widget.timezone),
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Chip(label: Text(context.tr(h['status'] as String))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 if (h['parent_id'] != null)
                   TextButton(
                     onPressed: () => Navigator.push<void>(

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/app_form_dialog.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/usecases/load_active_chat_members.dart';
@@ -53,7 +54,7 @@ class ChatMembersSheet extends StatelessWidget {
                     if (state.mutating) const LinearProgressIndicator(),
                     Expanded(
                       child: group == null
-                          ? const Center(child: CircularProgressIndicator())
+                          ? const AppContentLoading()
                           : ListView.builder(
                               itemCount: group.members.length,
                               itemBuilder: (_, index) {

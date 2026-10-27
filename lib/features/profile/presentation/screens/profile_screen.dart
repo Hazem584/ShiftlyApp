@@ -4,6 +4,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_settings_tile.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/theme/theme_settings_tile.dart';
+import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
@@ -42,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     body: SafeArea(
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) => switch (state) {
-          ProfileLoading() => const Center(child: CircularProgressIndicator()),
+          ProfileLoading() => const AppContentLoading(),
           ProfileError(:final message) => EmptyState(
             icon: Icons.cloud_off_outlined,
             title: context.tr('Could not load profile'),

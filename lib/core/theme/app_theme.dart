@@ -3,7 +3,7 @@ import 'package:shiftly/core/theme/app_colors.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 
 class AppTheme {
-  static const Color seedColor = AppColors.ink;
+  static const Color seedColor = AppColors.primaryColor;
 
   static ThemeData lightTheme() => _theme(Brightness.light);
   static ThemeData darkTheme() => _theme(Brightness.dark);
@@ -17,7 +17,7 @@ class AppTheme {
         ).copyWith(
           primary: colors.primaryColor,
           onPrimary: brightness == Brightness.dark
-              ? Color(0xFF1B1035)
+              ? Color(0xFF062B29)
               : Colors.white,
           primaryContainer: colors.selected,
           onPrimaryContainer: colors.ink,
@@ -56,16 +56,16 @@ class AppTheme {
       brightness: brightness,
       textTheme: TextTheme(
         headlineMedium: TextStyle(
-          fontSize: 28,
+          fontSize: 26,
           fontWeight: FontWeight.w800,
           letterSpacing: -.6,
-          height: 1.15,
+          height: 1.3,
         ),
         headlineSmall: TextStyle(
-          fontSize: 22,
+          fontSize: 21,
           fontWeight: FontWeight.w800,
           letterSpacing: -.3,
-          height: 1.2,
+          height: 1.35,
         ),
         titleLarge: TextStyle(
           fontSize: 18,
@@ -100,7 +100,7 @@ class AppTheme {
         fillColor: colors.surface,
         contentPadding: EdgeInsets.symmetric(
           horizontal: AppSpacing.m,
-          vertical: 16,
+          vertical: 14,
         ),
         hintStyle: TextStyle(color: colors.lighterGray),
         helperStyle: TextStyle(color: colors.textSecondary, fontSize: 12),
@@ -115,7 +115,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: radius,
-          borderSide: BorderSide(color: colors.orange, width: 1.6),
+          borderSide: BorderSide(color: colors.primaryColor, width: 1.6),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: radius,
@@ -143,7 +143,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 74,
+        height: 66,
         backgroundColor: colors.surface,
         indicatorColor: colors.selected,
         elevation: 0,
@@ -161,8 +161,8 @@ class AppTheme {
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: colors.orange,
-        foregroundColor: colorScheme.onSecondary,
+        backgroundColor: colors.primaryColor,
+        foregroundColor: colorScheme.onPrimary,
         elevation: 2,
       ),
       dialogTheme: DialogThemeData(
@@ -182,7 +182,9 @@ class AppTheme {
       dividerTheme: DividerThemeData(color: colors.borderColor, space: 1),
       listTileTheme: ListTileThemeData(
         iconColor: colors.ink,
-        minVerticalPadding: 12,
+        minVerticalPadding: 10,
+        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
@@ -202,7 +204,7 @@ class AppTheme {
         clipBehavior: Clip.antiAlias,
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: colors.orange,
+        color: colors.primaryColor,
         linearTrackColor: colors.field,
       ),
       tooltipTheme: TooltipThemeData(
@@ -229,9 +231,25 @@ class AppTheme {
           side: WidgetStatePropertyAll(BorderSide(color: colors.borderColor)),
         ),
       ),
+      tabBarTheme: TabBarThemeData(
+        indicatorSize: TabBarIndicatorSize.label,
+        labelColor: colors.primaryColor,
+        unselectedLabelColor: colors.textSecondary,
+        dividerColor: colors.borderColor,
+        labelStyle: TextStyle(
+          fontFamily: 'Cairo',
+          fontWeight: FontWeight.w800,
+          fontSize: 13,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Cairo',
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+      ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: colors.surface,
-        selectedIconTheme: IconThemeData(color: colors.ink),
+        selectedIconTheme: IconThemeData(color: colors.primaryColor),
         unselectedIconTheme: IconThemeData(color: colors.textSecondary),
         selectedLabelTextStyle: TextStyle(
           fontFamily: 'Cairo',
@@ -247,7 +265,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          minimumSize: Size.fromHeight(52),
+          minimumSize: Size.fromHeight(48),
           shape: RoundedRectangleBorder(borderRadius: radius),
         ),
       ),
@@ -257,7 +275,7 @@ class AppTheme {
           foregroundColor: colorScheme.onPrimary,
           disabledBackgroundColor: colors.field,
           disabledForegroundColor: colors.textSecondary,
-          minimumSize: Size(48, 52),
+          minimumSize: Size(48, 48),
           shape: RoundedRectangleBorder(borderRadius: radius),
           padding: EdgeInsets.symmetric(horizontal: AppSpacing.m),
           textStyle: TextStyle(
@@ -271,13 +289,13 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: colors.ink,
           side: BorderSide(color: colors.borderColor),
-          minimumSize: Size(48, 52),
+          minimumSize: Size(48, 48),
           shape: RoundedRectangleBorder(borderRadius: radius),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: colors.orange,
+          foregroundColor: colors.primaryColor,
           minimumSize: Size(48, 48),
           textStyle: TextStyle(
             fontFamily: 'Cairo',
@@ -300,13 +318,13 @@ class AppSpacing {
 
 class AppRadii {
   static const double s = 12;
-  static const double m = 16;
-  static const double l = 20;
-  static const double xl = 28;
+  static const double m = 12;
+  static const double l = 14;
+  static const double xl = 18;
 }
 
 abstract final class AppShadows {
   static const soft = [
-    BoxShadow(color: Color(0x14080414), blurRadius: 28, offset: Offset(0, 10)),
+    BoxShadow(color: Color(0x07133B28), blurRadius: 20, offset: Offset(0, 6)),
   ];
 }

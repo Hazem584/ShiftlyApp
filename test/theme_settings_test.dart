@@ -14,14 +14,14 @@ class _FailingStore implements ThemePreferenceStore {
 }
 
 void main() {
-  test('appearance persists across launches and defaults to system', () async {
+  test('appearance persists across launches and defaults to the dark reference design', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final cubit = ThemeCubit(PreferencesThemeStore(prefs));
-    expect(cubit.state.mode, ThemeMode.system);
-    await cubit.select(ThemeMode.dark);
+    expect(cubit.state.mode, ThemeMode.dark);
+    await cubit.select(ThemeMode.light);
     final reopened = ThemeCubit(PreferencesThemeStore(prefs));
-    expect(reopened.state.mode, ThemeMode.dark);
+    expect(reopened.state.mode, ThemeMode.light);
     await reopened.select(ThemeMode.system);
     expect(prefs.getString('app.theme'), 'system');
     await cubit.close();

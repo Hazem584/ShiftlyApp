@@ -26,9 +26,9 @@ class AuthPageLayout extends StatelessWidget {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.ink, Color(0xFF34314D)],
+                    colors: [AppColors.ink, Color(0xFF102024)],
                   ),
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 child: Center(
                   child: ConstrainedBox(
@@ -62,7 +62,7 @@ class AuthPageLayout extends StatelessWidget {
                             'Manage shifts, attendance and team conversations in one place.',
                           ),
                           style: const TextStyle(
-                            color: Color(0xFFDDDBE8),
+                            color: Color(0xFFA0B4BF),
                             fontSize: 17,
                             height: 1.8,
                           ),

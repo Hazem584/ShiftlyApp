@@ -517,6 +517,9 @@ void main() {
           )
           .first,
     );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('manager-logout')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('manager-logout')));
     await tester.pumpAndSettle();
     expect(find.text('Welcome to Shiftly'), findsOneWidget);

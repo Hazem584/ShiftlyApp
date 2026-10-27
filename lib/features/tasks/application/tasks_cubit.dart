@@ -84,8 +84,24 @@ class TasksCubit extends Cubit<TasksState> {
         await load(page: ((result.total - 1) ~/ 30 + 1).clamp(1, 100000));
         return;
       }
+      // Fetch the opposite filter's total; never infer progress from one page.
+      int? otherTotal;
+      try {
+        otherTotal = (await repository.list(
+          completed: !selected,
+          page: 1,
+        )).total;
+      } catch (_) {}
+      if (!_valid(generation) || request != _load) return;
       emit(
-        state.copy(items: result.items, total: result.total, loading: false),
+        state.copy(
+          items: result.items,
+          total: result.total,
+          loading: false,
+          totalsAvailable: otherTotal != null,
+          openTotal: selected ? otherTotal : result.total,
+          doneTotal: selected ? result.total : otherTotal,
+        ),
       );
     } catch (error) {
       if (_valid(generation) && request == _load) {
