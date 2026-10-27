@@ -34,17 +34,7 @@ class _PlanningViewState extends State<PlanningView> {
   @override
   void initState() {
     super.initState();
-    final now = WorkspaceTime.inWorkspace(DateTime.now(), widget.timezone);
-    final saturday = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).add(Duration(days: (DateTime.saturday - now.weekday + 7) % 7));
-    _week = WorkspaceTime.localDateKey(
-      year: saturday.year,
-      month: saturday.month,
-      day: saturday.day,
-    );
+    _week = WorkspaceTime.nextSaturdayDateKey(DateTime.now(), widget.timezone);
     _load();
   }
 

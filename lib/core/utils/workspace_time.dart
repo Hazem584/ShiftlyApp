@@ -59,6 +59,22 @@ abstract final class WorkspaceTime {
     return (start: start.toUtc(), end: end.toUtc());
   }
 
+  /// Calendar arithmetic must not add 24-hour durations across DST changes.
+  static String nextSaturdayDateKey(DateTime instant, String timezoneName) {
+    final now = inWorkspace(instant, timezoneName);
+    final date = DateTime.utc(now.year, now.month, now.day);
+    final saturday = DateTime.utc(
+      date.year,
+      date.month,
+      date.day + (DateTime.saturday - date.weekday + 7) % 7,
+    );
+    return localDateKey(
+      year: saturday.year,
+      month: saturday.month,
+      day: saturday.day,
+    );
+  }
+
   static String dateKey(DateTime utc, String timezoneName) {
     final value = inWorkspace(utc, timezoneName);
     return '${value.year}-${_two(value.month)}-${_two(value.day)}';
