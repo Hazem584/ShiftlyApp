@@ -196,7 +196,7 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
             ),
             Text(
               context.tr(
-                'Recording EXTRA attendance does not award BLUE. Use Employee Performance → Extra effort approval separately and link the attendance.',
+                'Extra attendance records the authorized shift and its actual working time.',
               ),
             ),
           ],

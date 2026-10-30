@@ -101,15 +101,9 @@ class WorkspaceNavigationRail extends StatelessWidget {
             label: Text(context.tr('Chat')),
           ),
           NavigationRailDestination(
-            icon: Icon(
-              employee
-                  ? Icons.auto_graph_outlined
-                  : Icons.person_outline_rounded,
-            ),
-            selectedIcon: Icon(
-              employee ? Icons.auto_graph_rounded : Icons.person_rounded,
-            ),
-            label: Text(context.tr(employee ? 'Performance' : 'Profile')),
+            icon: const Icon(Icons.person_outline_rounded),
+            selectedIcon: const Icon(Icons.person_rounded),
+            label: Text(context.tr('Profile')),
           ),
         ],
       ),

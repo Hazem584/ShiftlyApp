@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
-import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
@@ -98,13 +96,7 @@ class EmployeeDetailsView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
           children: [
             EmployeeDetailsHeader(employee: employee),
-            ListTile(
-              key: const Key('employee-performance-link'),
-              leading: const Icon(Icons.insights_outlined),
-              title: Text(context.tr('Employee Performance')),
-              onTap: () =>
-                  context.push(AppRoutes.employeePerformance(membershipId)),
-            ),
+
             const SizedBox(height: AppSpacing.l),
             EmployeeContactSection(employee: employee),
             const SizedBox(height: AppSpacing.l),

@@ -277,11 +277,6 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
                   ),
                 ),
               ),
-              OutlinedButton(
-                key: const Key('home-handover'),
-                onPressed: disabled ? null : () => context.push('/operations'),
-                child: Text(context.tr('Hand over')),
-              ),
             ],
           ),
           if (onBreak && !_breaks!.notificationScheduled)

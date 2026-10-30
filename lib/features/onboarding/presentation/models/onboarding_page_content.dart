@@ -22,13 +22,13 @@ class OnboardingPageContent {
       ],
     ),
     OnboardingPageContent(
-      'See your progress',
-      'Follow your attendance and celebrate the progress you make.',
+      'Manage your tasks',
+      'Keep your daily tasks organized and track what is done.',
       Icons.insights_rounded,
       [
-        (Icons.stars_rounded, 'Attendance points'),
-        (Icons.timeline_rounded, 'Performance history'),
-        (Icons.emoji_events_rounded, 'Achievements along the way'),
+        (Icons.stars_rounded, 'Personal tasks'),
+        (Icons.timeline_rounded, 'Task reminders'),
+        (Icons.emoji_events_rounded, 'Completed tasks'),
       ],
     ),
     OnboardingPageContent(

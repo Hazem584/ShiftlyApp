@@ -388,7 +388,7 @@ void main() {
     expect(find.text('Employee workspace'), findsOneWidget);
     expect(find.text('Hello, Preview employee'), findsOneWidget);
     expect(find.text('Overview'), findsOneWidget);
-    expect(find.text('Performance'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
     expect(find.byKey(const Key('notification-bell')), findsOneWidget);
     expect(find.byKey(const Key('employee-switch-workspace')), findsOneWidget);
@@ -400,32 +400,11 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.text('Performance'));
+    await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();
-    expect(find.text('My Performance'), findsWidgets);
-
-    await tester.tap(find.text('Overview'));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.byKey(const Key('performance-thumbnail')),
-      180,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const Key('employee-dashboard-content')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    await tester.tap(find.byKey(const Key('performance-thumbnail')));
-    await tester.pumpAndSettle();
-    expect(find.text('My Performance'), findsWidgets);
-
-    final shellContext = tester.element(
-      find.byKey(const Key('employee-bottom-navigation')),
-    );
-    GoRouter.of(shellContext).go('/employee?tab=performance');
-    await tester.pumpAndSettle();
-    expect(find.text('My Performance'), findsWidgets);
+    expect(find.text('Profile'), findsWidgets);
+    expect(find.byKey(const Key('performance-thumbnail')), findsNothing);
+    expect(find.text('My Performance'), findsNothing);
   });
 
   testWidgets('employee routes share one shifts destination and retain leave', (
@@ -435,14 +414,7 @@ void main() {
     final router = GoRouter.of(
       tester.element(find.byKey(const Key('employee-bottom-navigation'))),
     );
-    for (final tab in [
-      'shifts',
-      'attendance',
-      'leave',
-      'chat',
-      'performance',
-      'points',
-    ]) {
+    for (final tab in ['shifts', 'attendance', 'leave', 'chat', 'profile']) {
       router.go('/employee?tab=$tab');
       await tester.pumpAndSettle();
       final navigation = tester.widget<NavigationBar>(
@@ -451,7 +423,7 @@ void main() {
       expect(navigation.destinations, hasLength(4));
       expect(navigation.selectedIndex, switch (tab) {
         'chat' => 2,
-        'performance' || 'points' => 3,
+        'profile' => 3,
         _ => 1,
       });
       if (tab == 'shifts' || tab == 'attendance') {

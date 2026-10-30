@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
+import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/schedule_exceptions_section.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/work_pattern_view.dart';
-import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 
 class WorkPatternSection extends StatelessWidget {
   const WorkPatternSection({
@@ -23,8 +24,8 @@ class WorkPatternSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final manager = context.watch<ManagerPerformanceCubit>();
-    final scope = manager.state.scope;
+    final manager = context.watch<ManagerTemplatesCubit>();
+    final scope = manager.scope;
     if (scope == null || !scope.isManager || scope.workspaceId != workspaceId) {
       return const SizedBox.shrink();
     }
@@ -39,8 +40,10 @@ class WorkPatternSection extends StatelessWidget {
                     ? getIt<FixedShiftRepository>()
                     : context.read<FixedShiftRepository>(),
                 onChanged: () {
-                  manager.invalidate();
-                  manager.onChanged?.call();
+                  if (!context.mounted || manager.scope != scope) return;
+                  manager.load(refresh: true);
+                  context.read<DashboardCubit>().invalidate();
+                  context.read<AttendanceCalendarCubit>().invalidate();
                 },
               )..bind(
                 workspaceId: workspaceId,
@@ -62,10 +65,12 @@ class WorkPatternSection extends StatelessWidget {
             canEdit: canEdit,
             repository: getIt<ScheduleExceptionRepository>(),
             fixedShifts: getIt<FixedShiftRepository>(),
-            isCurrent: () => manager.state.scope == scope,
+            isCurrent: () => manager.scope == scope,
             onChanged: () {
-              manager.invalidate();
-              manager.onChanged?.call();
+              if (!context.mounted || manager.scope != scope) return;
+              manager.load(refresh: true);
+              context.read<DashboardCubit>().invalidate();
+              context.read<AttendanceCalendarCubit>().invalidate();
             },
           ),
         ],

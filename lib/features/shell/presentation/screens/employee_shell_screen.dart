@@ -12,7 +12,7 @@ import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart'
 import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
 import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
-import 'package:shiftly/features/points/presentation/screens/my_performance_screen.dart';
+import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
 import 'package:shiftly/features/shell/presentation/widgets/workspace_navigation_rail.dart';
 
 class EmployeeShellScreen extends StatefulWidget {
@@ -121,7 +121,9 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                     ),
                     TickerMode(
                       enabled: _selectedIndex == 3,
-                      child: const MyPerformanceScreen(),
+                      child: ProfileScreen(
+                        onLogout: context.read<SessionCoordinator>().signOut,
+                      ),
                     ),
                   ],
                 ),
@@ -183,9 +185,9 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                         label: context.tr('Chat'),
                       ),
                       NavigationDestination(
-                        icon: const Icon(Icons.auto_graph_outlined),
-                        selectedIcon: const Icon(Icons.auto_graph_rounded),
-                        label: context.tr('Performance'),
+                        icon: const Icon(Icons.person_outline_rounded),
+                        selectedIcon: const Icon(Icons.person_rounded),
+                        label: context.tr('Profile'),
                       ),
                     ],
                   ),

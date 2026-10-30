@@ -115,7 +115,7 @@ class _ScheduleExceptionDialogState extends State<ScheduleExceptionDialog> {
               children: [
                 Text(
                   context.tr(
-                    'Changes apply to this date only. Recorded attendance and captured points days cannot be changed.',
+                    'Changes apply to this date only. Recorded attendance cannot be changed.',
                   ),
                 ),
                 const SizedBox(height: 12),

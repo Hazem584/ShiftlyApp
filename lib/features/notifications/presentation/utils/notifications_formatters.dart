@@ -93,12 +93,6 @@ abstract final class NotificationsScreenNotificationNavigator {
       return null;
     }
     return switch (notification.type) {
-      NotificationType.shiftExchangeRequested ||
-      NotificationType.shiftExchangeUpdated => _NotificationDestination(
-        id: _id(data, 'exchangeId'),
-        location: '/shift-exchanges',
-        kind: _DestinationKind.teamWork,
-      ),
       NotificationType.fixedShiftReminder when scope.isEmployee =>
         _NotificationDestination(
           id: _id(data, 'assignmentId'),
@@ -109,12 +103,6 @@ abstract final class NotificationsScreenNotificationNavigator {
         _NotificationDestination(
           id: _id(data, 'attendanceId'),
           location: '/employee?tab=shifts',
-          kind: _DestinationKind.teamWork,
-        ),
-      NotificationType.teamAnnouncement when data['kind'] == 'HANDOVER' =>
-        _NotificationDestination(
-          id: _id(data, 'handoverId'),
-          location: '/operations',
           kind: _DestinationKind.teamWork,
         ),
       NotificationType.teamAnnouncement => _NotificationDestination(

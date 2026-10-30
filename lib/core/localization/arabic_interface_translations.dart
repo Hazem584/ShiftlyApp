@@ -163,8 +163,8 @@ const arabicInterfaceTranslations = <String, String>{
   'No active employees are available. The manager will be included.':
       'مفيش موظفين نشطين متاحين. المدير هيتضاف.',
   'Chat session is no longer active.': 'جلسة الشات مبقتش شغالة.',
-  '{value1} MiB · active files are retained':
-      '{value1} ميبيبايت · الملفات اللي بتستخدمها بتفضل محفوظة',
+  '{value1} MB · active files are retained':
+      '{value1} ميجابايت · الملفات اللي بتستخدمها بتفضل محفوظة',
   'Chat access unavailable.': 'الشات مش متاح دلوقتي.',
   'Group members': 'أعضاء الجروب',
   'Edit group': 'عدّل الجروب',

@@ -72,12 +72,6 @@ class DashboardQuickActions extends StatelessWidget {
           final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
           final links = [
             DashboardActionLink(
-              icon: Icons.insights_outlined,
-              title: 'Performance',
-              subtitle: 'Employee points, policies, disputes and warnings',
-              onTap: () => context.push(AppRoutes.managerPerformance),
-            ),
-            DashboardActionLink(
               key: const Key('dashboard-manager-tasks'),
               icon: Icons.task_alt_outlined,
               title: 'Manager tasks',

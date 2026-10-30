@@ -242,7 +242,7 @@ void main() {
           await tester.ensureVisible(find.text('Next'));
           await tester.tap(find.text('Next'));
           await tester.pumpAndSettle();
-          expect(find.text('See your progress'), findsOneWidget);
+          expect(find.text('Manage your tasks'), findsOneWidget);
           await tester.ensureVisible(find.text('Next'));
           await tester.tap(find.text('Next'));
           await tester.pumpAndSettle();

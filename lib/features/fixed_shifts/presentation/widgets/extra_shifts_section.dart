@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
+import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/cubit/manager_templates_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shifts_view.dart';
-import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 
 class ExtraShiftsSection extends StatelessWidget {
   const ExtraShiftsSection({
@@ -19,8 +21,8 @@ class ExtraShiftsSection extends StatelessWidget {
   final bool canEdit;
   @override
   Widget build(BuildContext context) {
-    final manager = context.watch<ManagerPerformanceCubit>();
-    final scope = manager.state.scope;
+    final manager = context.watch<ManagerTemplatesCubit>();
+    final scope = manager.scope;
     if (scope == null ||
         !scope.isManager ||
         scope.workspaceId != workspaceId ||
@@ -32,8 +34,10 @@ class ExtraShiftsSection extends StatelessWidget {
       create: (_) => ExtraShiftsCubit(
         getIt<ExtraShiftRepository>(),
         onChanged: () {
-          manager.invalidate();
-          manager.onChanged?.call();
+          if (!context.mounted || manager.scope != scope) return;
+          manager.load(refresh: true);
+          context.read<DashboardCubit>().invalidate();
+          context.read<AttendanceCalendarCubit>().invalidate();
         },
       )..bind(scope, membershipId),
       child: ExtraShiftsView(

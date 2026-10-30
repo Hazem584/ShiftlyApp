@@ -105,16 +105,7 @@ void main() {
       expect(find.byKey(const Key('attendance-tab-requests')), findsNothing);
       await tester.tap(find.byKey(const Key('nav-2')));
       await tester.pumpAndSettle();
-      for (final name in [
-        'tasks',
-        'shifts',
-        'performance',
-        'announcements',
-        'planning',
-        'handovers',
-        'swaps',
-        'personal',
-      ]) {
+      for (final name in ['tasks', 'shifts', 'announcements', 'personal']) {
         expect(find.byKey(Key('section-$name')), findsOneWidget);
       }
       await tester.tap(find.byKey(const Key('section-shifts')));

@@ -41,9 +41,7 @@ class SessionRouteIntent {
     final sharedRoute =
         destination.path == '/tasks' ||
         destination.path == '/workspaces' ||
-        destination.path == '/team-work' ||
-        destination.path == '/operations' ||
-        destination.path == '/shift-exchanges';
+        destination.path == '/team-work';
     if (status == SessionStatus.authenticatedEmployee &&
         !employeeRoute &&
         !sharedRoute) {

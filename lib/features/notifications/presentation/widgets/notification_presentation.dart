@@ -10,12 +10,6 @@ import 'package:shiftly/features/notifications/domain/repositories/notification_
     icon: Icons.checklist_rounded,
     color: AppColors.info,
   ),
-  NotificationType.shiftExchangeRequested ||
-  NotificationType.shiftExchangeUpdated => (
-    label: 'Shift swaps and coverage',
-    icon: Icons.swap_horiz,
-    color: AppColors.info,
-  ),
   NotificationType.fixedShiftReminder => (
     label: 'Upcoming fixed shift',
     icon: Icons.alarm,

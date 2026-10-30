@@ -63,10 +63,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
     }
     if (state.loading) {
       return const SurfaceCard(
-        child: SizedBox(
-          height: 116,
-          child: AppContentLoading(),
-        ),
+        child: SizedBox(height: 116, child: AppContentLoading()),
       );
     }
     if (state.recovery != null) {

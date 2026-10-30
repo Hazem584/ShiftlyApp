@@ -36,7 +36,6 @@ import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/invitations/data/mock_invitation_repository.dart';
-import 'package:shiftly/features/operations/presentation/handover_detail.dart';
 import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
 import 'package:shiftly/features/tasks/data/memory_task_repository.dart';
 import 'package:shiftly/features/tasks/domain/task_reminders.dart';
@@ -45,7 +44,6 @@ import 'package:shiftly/features/workspaces/data/mock_workspace_repository.dart'
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
 
 import 'dashboard_fixtures.dart';
-import 'operations_workflows_test.dart' show FakeOperations;
 import 'support/attendance_test_cubit.dart';
 import 'support/onboarding_test_auth.dart';
 
@@ -268,7 +266,6 @@ void main() {
           'team-invite': '/employees?tab=invite',
           'work-tasks': '/work?tab=personal',
           'work-shifts': '/work?tab=shifts',
-          'work-performance': '/work?tab=performance',
         },
         'chat': '/chat',
         'profile': '/profile',
@@ -529,18 +526,6 @@ void main() {
                   ],
                 ),
               ),
-            ),
-          );
-          await capturePage(
-            'handover',
-            HandoverDetail(
-              repository: FakeOperations(),
-              workspaceId: 'review',
-              membershipId: 'receiver',
-              timezone: 'Africa/Cairo',
-              manager: false,
-              isCurrent: () => true,
-              id: 'review',
             ),
           );
           chatText.dispose();

@@ -58,9 +58,7 @@ void main() {
                 .onDestinationSelected!(index);
           } else {
             tester
-                .widget<AppBottomNavigation>(
-                  find.byType(AppBottomNavigation),
-                )
+                .widget<AppBottomNavigation>(find.byType(AppBottomNavigation))
                 .onDestinationSelected(index);
           }
           await tester.pumpAndSettle();

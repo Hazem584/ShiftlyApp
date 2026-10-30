@@ -47,11 +47,6 @@ import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_re
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/invitations/data/mock_invitation_repository.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
-import 'package:shiftly/features/manager_performance/data/memory_manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/data/unavailable_manager_points_repository.dart';
-import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/domain/repositories/manager_points_repository.dart';
-import 'package:shiftly/features/manager_performance/presentation/cubit/manager_performance_cubit.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
 import 'package:shiftly/features/notifications/domain/entities/push_notice.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
@@ -63,10 +58,6 @@ import 'package:shiftly/features/notifications/presentation/cubit/push_notificat
 import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
-import 'package:shiftly/features/points/data/mock_points_repository.dart';
-import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
-import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
-import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/profile/data/mock_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
@@ -123,9 +114,6 @@ class AppComposition {
   late final FixedShiftRepository fixedShifts;
   late final ManagerTemplatesCubit managerTemplatesCubit;
   late final FlexibleAttendanceCubit flexibleAttendanceCubit;
-  late final PointsRepository points;
-  late final PointsCubit pointsCubit;
-  late final ManagerPerformanceCubit managerPerformanceCubit;
   late final SessionCoordinator? sessionCoordinator;
   StreamSubscription<Object?>? sessionSubscription;
   SessionRouterRefresh? sessionRefresh;
@@ -222,27 +210,6 @@ class AppComposition {
             : throw StateError(
                 'Authenticated apps must inject FixedShiftRepository.',
               ));
-    points =
-        dependencies.pointsRepository ??
-        registered<PointsRepository>() ??
-        (dependencies.preview
-            ? const MockPointsRepository()
-            : throw StateError(
-                'Authenticated apps must inject PointsRepository.',
-              ));
-    pointsCubit =
-        registered<PointsCubit>() ??
-        PointsCubit(points, intentStorage: MemoryRedemptionIntentStorage());
-    managerPerformanceCubit = ManagerPerformanceCubit(
-      registered<ManagerPointsRepository>() ??
-          const UnavailableManagerPointsRepository(),
-      registered<ManagerIntentStorage>() ?? MemoryManagerIntentStorage(),
-      onChanged: () {
-        dashboardCubit.invalidate();
-        attendanceCalendarCubit.invalidate();
-        unawaited(pointsCubit.load(refresh: true));
-      },
-    );
     notifications =
         dependencies.notificationRepository ??
         registered<NotificationRepository>() ??
@@ -383,7 +350,6 @@ class AppComposition {
       dashboardCubit.bindSession(previewScope);
       chatGroupsCubit.bindSession(previewScope);
       managerTemplatesCubit.bindSession(previewScope);
-      managerPerformanceCubit.bindSession(previewScope);
     } else {
       sessionSubscription = coordinator.stream.listen(featureCoordinator.bind);
       featureCoordinator.bind(coordinator.state);
@@ -419,8 +385,6 @@ class AppComposition {
     chatGroupsCubit.close();
     managerTemplatesCubit.close();
     flexibleAttendanceCubit.close();
-    pointsCubit.close();
-    managerPerformanceCubit.close();
     sessionSubscription?.cancel();
     sessionRefresh?.dispose();
     if (dependencies.locator == null) {
@@ -455,8 +419,6 @@ class AppComposition {
     chatGroupsCubit.bindSession(featureScope);
     managerTemplatesCubit.bindSession(featureScope);
     flexibleAttendanceCubit.bindSession(featureScope);
-    pointsCubit.bindSession(featureScope);
-    managerPerformanceCubit.bindSession(featureScope);
   }
 
   Future<void> openTaskTap() => taskCoordinator.openPending();
@@ -465,8 +427,6 @@ class AppComposition {
     dashboardCubit.invalidate();
     attendanceCalendarCubit.invalidate();
     attendanceReportsCubit.invalidate();
-    unawaited(pointsCubit.load(refresh: true));
-    managerPerformanceCubit.invalidate();
   }
 
   T? registered<T extends Object>() {

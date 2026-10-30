@@ -19,34 +19,10 @@ class DashboardSections extends StatelessWidget {
       Icons.calendar_month_outlined,
     ),
     (
-      'Performance',
-      'Review team results and points',
-      '/work?tab=performance',
-      Icons.insights_outlined,
-    ),
-    (
       'Team announcements',
       'Publish updates and follow acknowledgments',
       '/work?tab=announcements',
       Icons.campaign_outlined,
-    ),
-    (
-      'Weekly planning',
-      'Build and review the weekly rota',
-      '/work?tab=planning',
-      Icons.date_range_outlined,
-    ),
-    (
-      'Shift handovers',
-      'Transfer open work to the next shift',
-      '/work?tab=handovers',
-      Icons.assignment_turned_in_outlined,
-    ),
-    (
-      'Shift swaps and coverage',
-      'Review swaps and find shift coverage',
-      '/work?tab=swaps',
-      Icons.swap_horiz,
     ),
   ];
   @override

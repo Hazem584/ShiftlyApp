@@ -12,7 +12,6 @@ import 'package:shiftly/features/dashboard/presentation/utils/employee_dashboard
 import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_count_card.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_shift_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
-import 'package:shiftly/features/points/presentation/widgets/performance_thumbnail.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/dashboard_announcements.dart';
 
 import 'shift_session_card.dart';
@@ -109,7 +108,6 @@ class EmployeeDashboardView extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.m),
-        const PerformanceThumbnail(),
         DashboardAnnouncements(refreshToken: data),
         const SizedBox(height: AppSpacing.m),
         Row(
@@ -189,13 +187,6 @@ class EmployeeDashboardView extends StatelessWidget {
                 title: Text(context.tr('Attendance corrections')),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => context.push('/team-work?tab=corrections'),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.swap_horiz),
-                title: Text(context.tr('Shift swaps and coverage')),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => context.push('/shift-exchanges'),
               ),
             ],
           ),

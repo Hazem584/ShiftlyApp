@@ -162,7 +162,7 @@ abstract final class ApiErrorParser {
       'SHIFT_TEMPLATE_UNAVAILABLE' =>
         'This shift template is unavailable. Refresh or contact your manager.',
       'ASSIGNMENT_OCCURRENCE_CAPTURED' => 'Captured attendance protects this assignment. Choose a later effective date.',
-      'SCHEDULE_DAY_LOCKED' => 'This day has started or its attendance or points evidence is already saved. Choose an unused future day.',
+      'SCHEDULE_DAY_LOCKED' => 'This day has started or its attendance is already saved. Choose an unused future day.',
       'EXCHANGE_PENDING' =>
         'An active request already reserves one of these dates.',
       'EXCHANGE_LEAVE_CONFLICT' =>

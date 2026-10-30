@@ -1,27 +1,33 @@
 import 'package:shiftly/core/localization/arabic_error_translations.dart';
-import 'package:shiftly/core/localization/arabic_exchange_translations.dart';
 import 'package:shiftly/core/localization/arabic_interface_translations.dart';
-import 'package:shiftly/core/localization/arabic_points_translations.dart';
 import 'package:shiftly/core/localization/arabic_report_translations.dart';
 import 'package:shiftly/core/localization/arabic_schedule_exception_translations.dart';
 import 'package:shiftly/core/localization/arabic_team_work_translations.dart';
 import 'package:shiftly/core/localization/arabic_workday_translations.dart';
 import 'package:shiftly/core/localization/arabic_workflow_translations.dart';
 import 'package:shiftly/features/device_sessions/device_sessions_translations.dart';
-import 'package:shiftly/features/operations/operations_translations.dart';
 import 'package:shiftly/features/tasks/presentation/task_translations.dart';
 
 // Egyptian Arabic: friendly everyday copy, with precise review and hours rules.
 // Keep source keys and placeholders stable; employee-written content stays as is.
 const arabicTranslations = <String, String>{
+  'Extra attendance records the authorized shift and its actual working time.':
+      'الحضور الإضافي بيسجّل الشيفت المصرّح به ووقت الشغل الفعلي.',
+  'Changes apply to this date only. Recorded attendance cannot be changed.':
+      'التغيير لليوم ده بس، ومينفعش تغيّر حضور اتسجل بالفعل.',
+  'This day has started or its attendance is already saved. Choose an unused future day.':
+      'اليوم ده بدأ أو حضوره اتسجّل. اختار يوم جاي لسه متسجّلش فيه حضور.',
+
+  'Manage your tasks': 'رتّب مهامك',
+  'Keep your daily tasks organized and track what is done.':
+      'رتّب مهام يومك وتابع اللي خلص منها.',
+
   ...arabicWorkdayTranslations,
   'Your workday, in sync': 'يوم شغلك.. كله في مكانه',
   'View all tasks': 'تابع كل المهام',
   'View all announcements': 'شوف إعلانات الفريق',
   ...deviceSessionsTranslations,
-  ...operationsTranslations,
   ...taskTranslations,
-  ...arabicExchangeTranslations,
   ...arabicScheduleExceptionTranslations,
   'Error code: {code}': 'رمز الخطأ: {code}',
   'This reversal would subtract points that are no longer available. Reverse the related deduction adjustment first, then reverse the original award.': 'الإلغاء ده هيخصم نقاط مبقتش موجودة. ارجع في تعديل الخصم المرتبط الأول، وبعدها الغي المنحة الأصلية.',
@@ -320,7 +326,6 @@ const arabicTranslations = <String, String>{
   'Use Clock out when you finish. Your workspace confirms the final worked duration.':
       'سجّل خروجك لما تخلّص شغل. النظام هيأكد مدة الشغل النهائية.',
   ...arabicInterfaceTranslations,
-  ...arabicPointsTranslations,
   ...arabicErrorTranslations,
   ...arabicWorkflowTranslations,
   ...arabicReportTranslations,

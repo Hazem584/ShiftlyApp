@@ -29,9 +29,7 @@ class WorkPatternView extends StatelessWidget {
   ) => BlocBuilder<WorkPatternCubit, WorkPatternState>(
     builder: (context, state) {
       if (state.loading && state.history == null) {
-        return const SurfaceCard(
-          child: AppContentLoading(),
-        );
+        return const SurfaceCard(child: AppContentLoading());
       }
       return SurfaceCard(
         child: Column(

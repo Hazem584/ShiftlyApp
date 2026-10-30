@@ -49,12 +49,6 @@ import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_re
 import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
-import 'package:shiftly/features/manager_performance/data/api_manager_points_repository.dart';
-import 'package:shiftly/features/manager_performance/data/memory_manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/data/preferences_manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/data/unavailable_manager_points_repository.dart';
-import 'package:shiftly/features/manager_performance/domain/repositories/manager_intent_storage.dart';
-import 'package:shiftly/features/manager_performance/domain/repositories/manager_points_repository.dart';
 import 'package:shiftly/features/notifications/data/api_notification_repository.dart';
 import 'package:shiftly/features/notifications/data/api_push_device_repository.dart';
 import 'package:shiftly/features/notifications/data/firebase_push_messaging.dart';
@@ -67,13 +61,6 @@ import 'package:shiftly/features/notifications/presentation/cubit/notifications_
 import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/data/preferences_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
-import 'package:shiftly/features/operations/data/api_operations_repository.dart';
-import 'package:shiftly/features/operations/domain/operations_repository.dart';
-import 'package:shiftly/features/points/data/api_points_repository.dart';
-import 'package:shiftly/features/points/data/mock_points_repository.dart';
-import 'package:shiftly/features/points/data/redemption_intent_storage.dart';
-import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
-import 'package:shiftly/features/points/presentation/cubit/points_cubit.dart';
 import 'package:shiftly/features/profile/data/api_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
@@ -83,9 +70,7 @@ import 'package:shiftly/features/tasks/data/api_task_repository.dart';
 import 'package:shiftly/features/tasks/data/device_task_reminders.dart';
 import 'package:shiftly/features/tasks/domain/task_reminders.dart';
 import 'package:shiftly/features/tasks/domain/task_repository.dart';
-import 'package:shiftly/features/team_work/data/api_shift_exchange_repository.dart';
 import 'package:shiftly/features/team_work/data/api_team_work_repository.dart';
-import 'package:shiftly/features/team_work/domain/shift_exchange_repository.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -165,9 +150,6 @@ abstract final class DependencyRegistration {
           target<PushPreferenceStore>(),
         ),
       )
-      ..registerLazySingleton<OperationsRepository>(
-        () => ApiOperationsRepository(target<Dio>()),
-      )
       ..registerLazySingleton<TeamWorkRepository>(
         () => ApiTeamWorkRepository(target<Dio>()),
       )
@@ -215,18 +197,6 @@ abstract final class DependencyRegistration {
       ..registerLazySingleton<DashboardRepository>(
         () => ApiDashboardRepository(target()),
       )
-      ..registerLazySingleton<PointsRepository>(
-        () => ApiPointsRepository(target()),
-      )
-      ..registerLazySingleton<ManagerPointsRepository>(
-        () => ApiManagerPointsRepository(target()),
-      )
-      ..registerLazySingleton<ManagerIntentStorage>(
-        () => PreferencesManagerIntentStorage(target()),
-      )
-      ..registerLazySingleton<RedemptionIntentStorage>(
-        () => SharedPreferencesRedemptionIntentStorage(target()),
-      )
       ..registerLazySingleton<FixedShiftRepository>(
         () => ApiFixedShiftRepository(target(), target()),
       )
@@ -235,9 +205,6 @@ abstract final class DependencyRegistration {
       )
       ..registerLazySingleton<ScheduleExceptionRepository>(
         () => ApiScheduleExceptionRepository(target()),
-      )
-      ..registerLazySingleton<ShiftExchangeRepository>(
-        () => ApiShiftExchangeRepository(target()),
       )
       ..registerLazySingleton<ProfileRepository>(
         () => ApiProfileRepository(
@@ -260,9 +227,6 @@ abstract final class DependencyRegistration {
         () => SupabaseChatRealtime(target()),
       )
       ..registerFactory<DashboardCubit>(() => DashboardCubit(target()))
-      ..registerFactory<PointsCubit>(
-        () => PointsCubit(target(), intentStorage: target()),
-      )
       ..registerFactory<NotificationsCubit>(() => NotificationsCubit(target()))
       ..registerFactory<ChatGroupsCubit>(
         () => ChatGroupsCubit(
@@ -298,8 +262,6 @@ abstract final class DependencyRegistration {
     required ChatRealtime chatRealtime,
     required FixedShiftRepository fixedShiftRepository,
     OnboardingStorage? onboardingStorage,
-    PointsRepository? pointsRepository,
-    ManagerPointsRepository? managerPointsRepository,
     ProfileImagePicker? profileImagePicker,
   }) {
     if (locator.isRegistered<SessionCoordinator>()) {
@@ -334,27 +296,11 @@ abstract final class DependencyRegistration {
       ..registerSingleton<ChatRepository>(chatRepository)
       ..registerSingleton<ChatRealtime>(chatRealtime)
       ..registerSingleton<FixedShiftRepository>(fixedShiftRepository)
-      ..registerSingleton<PointsRepository>(
-        pointsRepository ?? const MockPointsRepository(),
-      )
-      ..registerSingleton<ManagerPointsRepository>(
-        managerPointsRepository ?? const UnavailableManagerPointsRepository(),
-      )
-      ..registerSingleton<ManagerIntentStorage>(MemoryManagerIntentStorage())
-      ..registerSingleton<RedemptionIntentStorage>(
-        MemoryRedemptionIntentStorage(),
-      )
       ..registerSingleton<ProfileImagePicker>(
         profileImagePicker ?? DeviceProfileImagePicker(),
       )
       ..registerFactory<DashboardCubit>(
         () => DashboardCubit(locator<DashboardRepository>()),
-      )
-      ..registerFactory<PointsCubit>(
-        () => PointsCubit(
-          locator<PointsRepository>(),
-          intentStorage: locator<RedemptionIntentStorage>(),
-        ),
       )
       ..registerFactory<NotificationsCubit>(
         () => NotificationsCubit(locator<NotificationRepository>()),

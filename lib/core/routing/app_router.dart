@@ -18,11 +18,8 @@ import 'package:shiftly/features/device_sessions/presentation/device_sessions_sc
 import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/screens/shift_templates_screen.dart';
-import 'package:shiftly/features/manager_performance/presentation/screens/employee_performance_screen.dart';
-import 'package:shiftly/features/manager_performance/presentation/screens/manager_performance_screen.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:shiftly/features/onboarding/presentation/screens/onboarding_screen.dart';
-import 'package:shiftly/features/operations/presentation/operations_screen.dart';
 import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
@@ -30,7 +27,6 @@ import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/team_hub_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/work_hub_screen.dart';
 import 'package:shiftly/features/tasks/presentation/tasks_screen.dart';
-import 'package:shiftly/features/team_work/presentation/shift_exchanges_screen.dart';
 import 'package:shiftly/features/team_work/presentation/team_work_screen.dart';
 
 GoRouter createAppRouter({
@@ -88,11 +84,7 @@ GoRouter createAppRouter({
           initialTab: state.uri.queryParameters['tab'] ?? 'announcements',
         ),
       ),
-      GoRoute(path: '/operations', builder: (_, _) => const OperationsScreen()),
-      GoRoute(
-        path: '/shift-exchanges',
-        builder: (_, _) => const ShiftExchangesScreen(),
-      ),
+
       GoRoute(
         path: '/session',
         builder: (_, _) => const SessionStatusScreen.loading(),
@@ -130,7 +122,7 @@ GoRouter createAppRouter({
           initialTab: switch (state.uri.queryParameters['tab']) {
             'shifts' || 'attendance' || 'leave' => 1,
             'chat' => 2,
-            'performance' || 'points' => 3,
+            'profile' => 3,
             _ => 0,
           },
         ),
@@ -169,18 +161,6 @@ GoRouter createAppRouter({
                               .timezone ??
                           'Etc/UTC',
                     ),
-                  ),
-                  GoRoute(
-                    path: 'performance',
-                    builder: (_, _) => const ManagerPerformanceScreen(),
-                    routes: [
-                      GoRoute(
-                        path: 'employees/:membershipId',
-                        builder: (_, state) => EmployeePerformanceScreen(
-                          membershipId: state.pathParameters['membershipId']!,
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -298,8 +278,6 @@ String? _redirect(
       location == '/devices' ||
               location == '/tasks' ||
               location == '/team-work' ||
-              location == '/operations' ||
-              location == '/shift-exchanges' ||
               location == '/workspaces' ||
               location == '/employee' ||
               location.startsWith('/employee/chat/')

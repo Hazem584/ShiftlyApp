@@ -96,7 +96,12 @@ class _TasksScreenState extends State<TasksScreen> {
     builder: (context, state) {
       final cubit = context.read<TasksCubit>(),
           colors = Theme.of(context).colorScheme;
-      if (state.loading && state.items.isEmpty) return Scaffold(appBar: AppBar(title: Text(context.tr('Task manager'))), body: const AppContentLoading());
+      if (state.loading && state.items.isEmpty) {
+        return Scaffold(
+          appBar: AppBar(title: Text(context.tr('Task manager'))),
+          body: const AppContentLoading(),
+        );
+      }
       return Scaffold(
         appBar: AppBar(
           title: Text(context.tr('Task manager')),

@@ -36,7 +36,6 @@ import 'package:shiftly/features/notifications/presentation/cubit/notifications_
 import 'package:shiftly/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:shiftly/features/notifications/presentation/utils/notifications_formatters.dart';
 import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
-import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/reports/data/attendance_report_exporter.dart';
@@ -69,7 +68,6 @@ class AppProviders extends StatefulWidget {
     this.chatRepository,
     this.chatRealtime,
     this.fixedShiftRepository,
-    this.pointsRepository,
     this.languageStore,
   });
 
@@ -94,7 +92,6 @@ class AppProviders extends StatefulWidget {
   final ChatRepository? chatRepository;
   final ChatRealtime? chatRealtime;
   final FixedShiftRepository? fixedShiftRepository;
-  final PointsRepository? pointsRepository;
   final LanguagePreferenceStore? languageStore;
 
   AppDependencies get dependencies => AppDependencies(
@@ -116,7 +113,6 @@ class AppProviders extends StatefulWidget {
     chatRepository: chatRepository,
     chatRealtime: chatRealtime,
     fixedShiftRepository: fixedShiftRepository,
-    pointsRepository: pointsRepository,
     languageStore: languageStore,
   );
 
@@ -172,7 +168,6 @@ class _AppProvidersState extends State<AppProviders> {
         RepositoryProvider<FixedShiftRepository>.value(
           value: _composition.fixedShifts,
         ),
-        RepositoryProvider<PointsRepository>.value(value: _composition.points),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -199,8 +194,6 @@ class _AppProvidersState extends State<AppProviders> {
           BlocProvider.value(value: _composition.chatGroupsCubit),
           BlocProvider.value(value: _composition.managerTemplatesCubit),
           BlocProvider.value(value: _composition.flexibleAttendanceCubit),
-          BlocProvider.value(value: _composition.pointsCubit),
-          BlocProvider.value(value: _composition.managerPerformanceCubit),
         ],
         child: BlocBuilder<LanguageCubit, LanguageSettings>(
           buildWhen: (previous, current) =>

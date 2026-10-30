@@ -1,6 +1,6 @@
 # Shiftly
 
-Shiftly is a Flutter workforce management app for managers and employees. It brings workspaces, shifts, attendance, tasks, team chat, performance, and shift handovers into one place, with English and Arabic support.
+Shiftly is a Flutter workforce management app for managers and employees. It brings workspaces, shifts, attendance, tasks, team chat, team updates into one place, with English and Arabic support.
 
 ## Requirements
 

@@ -12,7 +12,6 @@ import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_re
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
-import 'package:shiftly/features/points/domain/repositories/points_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
@@ -38,7 +37,6 @@ class AppDependencies {
     this.chatRepository,
     this.chatRealtime,
     this.fixedShiftRepository,
-    this.pointsRepository,
     this.languageStore,
   });
 
@@ -63,6 +61,5 @@ class AppDependencies {
   final ChatRepository? chatRepository;
   final ChatRealtime? chatRealtime;
   final FixedShiftRepository? fixedShiftRepository;
-  final PointsRepository? pointsRepository;
   final LanguagePreferenceStore? languageStore;
 }
