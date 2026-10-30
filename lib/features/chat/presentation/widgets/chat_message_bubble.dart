@@ -11,6 +11,9 @@ import 'package:shiftly/features/chat/presentation/widgets/chat_remote_image.dar
 import 'package:shiftly/features/chat/presentation/widgets/chat_voice_message.dart';
 import 'package:shiftly/features/chat/presentation/widgets/message_delivery_status.dart';
 
+import 'chat_document_message.dart';
+import 'chat_reaction_picker.dart';
+import 'chat_reactions.dart';
 import 'chat_reply_preview.dart';
 
 class ChatMessageBubble extends StatelessWidget {
@@ -27,7 +30,11 @@ class ChatMessageBubble extends StatelessWidget {
     this.readByAll = false,
     this.onReply,
     this.onPin,
+    this.onReact,
+    this.membershipId,
   });
+  final ValueChanged<String?>? onReact;
+  final String? membershipId;
   final ChatMessage message;
   final bool mine;
   final bool showSender;
@@ -77,7 +84,15 @@ class ChatMessageBubble extends StatelessWidget {
                       message.replyPreview?['text'] as String? ??
                       context.tr('Message'),
                 ),
-              _content(context),
+              message.deletedAt == null
+                  ? _content(context)
+                  : Text(context.tr('Message deleted')),
+              if (message.reactions.isNotEmpty && message.deletedAt == null)
+                ChatReactions(
+                  reactions: message.reactions,
+                  membershipId: membershipId,
+                  onReact: onReact,
+                ),
               if (message.pinnedAt != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -107,12 +122,20 @@ class ChatMessageBubble extends StatelessWidget {
                       style: Theme.of(context).textTheme.labelSmall
                           ?.copyWith(color: foreground.withValues(alpha: .72)),
                     ),
-                    if (onReply != null || onPin != null)
+                    if (onReply != null || onPin != null || onReact != null)
                       PopupMenuButton<String>(
                         tooltip: context.tr('Message actions'),
-                        onSelected: (action) =>
-                            action == 'reply' ? onReply?.call() : onPin?.call(),
+                        onSelected: (action) => action == 'react'
+                            ? _react(context)
+                            : action == 'reply'
+                            ? onReply?.call()
+                            : onPin?.call(),
                         itemBuilder: (_) => [
+                          if (onReact != null)
+                            PopupMenuItem(
+                              value: 'react',
+                              child: Text(context.tr('React to message')),
+                            ),
                           if (onReply != null)
                             PopupMenuItem(
                               value: 'reply',
@@ -177,7 +200,12 @@ class ChatMessageBubble extends StatelessWidget {
                 ),
                 const SizedBox(width: 7),
               ],
-              Flexible(child: bubble),
+              Flexible(
+                child: GestureDetector(
+                  onLongPress: onReact == null ? null : () => _react(context),
+                  child: bubble,
+                ),
+              ),
             ],
           ),
         ),
@@ -185,8 +213,23 @@ class ChatMessageBubble extends StatelessWidget {
     );
   }
 
+  void _react(BuildContext context) {
+    if (onReact != null) {
+      ChatReactionPicker.show(
+        context,
+        onReact!,
+        canRemove: message.reactions.any((r) => r.membershipId == membershipId),
+      );
+    }
+  }
+
   Widget _content(BuildContext context) => switch (message.type) {
     'TEXT' => SelectableText(message.text ?? ''),
+    'DOCUMENT' => ChatDocumentMessage(
+      message: message,
+      repository: repository,
+      workspaceId: workspaceId,
+    ),
     'IMAGE' => ChatRemoteImage(
       repository: repository,
       workspaceId: workspaceId,

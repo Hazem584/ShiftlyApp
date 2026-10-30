@@ -55,10 +55,12 @@ class ChatMessageCache implements ChatMessageStore {
     List<ChatMessage> current,
     List<ChatMessage> incoming,
   ) {
-    final values = <String, ChatMessage>{
-      for (final message in current) message.id: message,
-      for (final message in incoming) message.id: message,
-    };
+    final values = <String, ChatMessage>{};
+    for (final message in [...current, ...incoming]) {
+      if ((values[message.id]?.revision ?? -1) <= message.revision) {
+        values[message.id] = message;
+      }
+    }
     return values.values.toList()..sort((a, b) {
       final time = a.createdAt.compareTo(b.createdAt);
       return time == 0 ? a.id.compareTo(b.id) : time;

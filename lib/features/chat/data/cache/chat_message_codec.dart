@@ -4,6 +4,9 @@ abstract final class ChatMessageCodec {
   static Map<String, Object?> encode(ChatMessage message) => {
     'id': message.id, 'groupId': message.groupId, 'type': message.type,
     'text': message.text,
+    'revision': message.revision,
+    'reactions': message.reactions.map((r) => r.toJson()).toList(),
+    'deletedAt': message.deletedAt?.toIso8601String(),
     'createdAt': message.createdAt.toUtc().toIso8601String(),
     'clientMessageId': message.clientMessageId,
     'replyToMessageId': message.replyToMessageId,
@@ -22,6 +25,7 @@ abstract final class ChatMessageCodec {
         'mimeType': attachment.mimeType,
         'sizeBytes': attachment.sizeBytes,
         'durationMs': attachment.durationMs,
+        'fileName': attachment.fileName,
       },
     if (message.location case final location?) 'location': location.toJson(),
   };

@@ -6,5 +6,6 @@ export 'package:shiftly/features/chat/domain/entities/chat_member.dart';
 export 'package:shiftly/features/chat/domain/entities/chat_message.dart';
 export 'package:shiftly/features/chat/domain/entities/chat_message_page.dart';
 export 'package:shiftly/features/chat/domain/entities/chat_models_parsers.dart';
+export 'package:shiftly/features/chat/domain/entities/chat_reaction.dart';
 export 'package:shiftly/features/chat/domain/entities/chat_sender.dart';
 export 'package:shiftly/features/chat/domain/entities/chat_upload_authorization.dart';

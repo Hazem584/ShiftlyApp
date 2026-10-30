@@ -28,6 +28,40 @@ abstract final class ChatConversationTools {
     );
   }
 
+  static Future<void> react(
+    BuildContext context,
+    String groupId,
+    ChatMessage message,
+    String? emoji,
+  ) async {
+    final groups = context.read<ChatGroupsCubit>();
+    final scope = groups.scope;
+    if (scope == null) return;
+    final conversation = context.read<ChatConversationCubit>();
+    final generation = conversation.generation;
+    try {
+      final canonical = await context.read<ChatRepository>().setReaction(
+        scope.workspaceId,
+        groupId,
+        message.id,
+        emoji: emoji,
+      );
+      if (context.mounted &&
+          groups.scope == scope &&
+          conversation.generation == generation) {
+        conversation.applyMessageUpdate(canonical);
+      }
+    } catch (error) {
+      if (context.mounted && groups.scope == scope) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.tr(ApiErrorParser.parse(error).message)),
+          ),
+        );
+      }
+    }
+  }
+
   static Future<void> pin(
     BuildContext context,
     String groupId,

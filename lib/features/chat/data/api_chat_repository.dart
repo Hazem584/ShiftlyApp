@@ -224,11 +224,12 @@ class ApiChatRepository extends ChatRepository {
     required String mimeType,
     required int sizeBytes,
     int? durationMs,
+    String? fileName,
   }) => _request(() async {
-    if (!const ['IMAGE', 'VOICE'].contains(type) || sizeBytes < 1) {
+    if (!const ['IMAGE', 'VOICE', 'DOCUMENT'].contains(type) || sizeBytes < 1) {
       throw const FormatException('Invalid upload metadata');
     }
-    if ((type == 'IMAGE' && durationMs != null) ||
+    if ((type != 'VOICE' && durationMs != null) ||
         (type == 'VOICE' && (durationMs == null || durationMs < 1))) {
       throw const FormatException('Invalid upload metadata');
     }
@@ -239,6 +240,7 @@ class ApiChatRepository extends ChatRepository {
         'mimeType': mimeType,
         'sizeBytes': sizeBytes,
         'durationMs': ?durationMs,
+        'fileName': ?fileName,
       },
     );
     return ChatUploadAuthorization.fromJson(
@@ -278,7 +280,7 @@ class ApiChatRepository extends ChatRepository {
     required String uploadId,
     required String clientMessageId,
   }) => _request(() async {
-    if (!const ['IMAGE', 'VOICE'].contains(type) ||
+    if (!const ['IMAGE', 'VOICE', 'DOCUMENT'].contains(type) ||
         chatOptionalUuid(uploadId) == null ||
         chatOptionalUuid(clientMessageId) == null) {
       throw const FormatException('Invalid media finalization');
@@ -363,6 +365,34 @@ class ApiChatRepository extends ChatRepository {
     return ChatMediaUrl(url: url, expiresAt: expires.toUtc());
   });
 
+  @override
+  Future<ChatMessage> setReaction(
+    String workspaceId,
+    String groupId,
+    String messageId, {
+    required String? emoji,
+  }) => _request(() async {
+    final response = await _dio.put<Object?>(
+      '${_group(workspaceId, groupId)}/messages/$messageId/reaction',
+      data: {'emoji': emoji},
+    );
+    return ChatMessage.fromJson(chatMap(response.data));
+  });
+  @override
+  Future<List<ChatMessage>> reconcileMessages(
+    String workspaceId,
+    String groupId,
+    List<String> ids,
+  ) => _request(() async {
+    if (ids.isEmpty) return [];
+    final response = await _dio.post<Object?>(
+      '${_group(workspaceId, groupId)}/messages/sync',
+      data: {'ids': ids.take(500).toList()},
+    );
+    return (chatMap(response.data)['data'] as List)
+        .map((m) => ChatMessage.fromJson(chatMap(m)))
+        .toList();
+  });
   @override
   Future<void> markRead(String workspaceId, String groupId, String messageId) =>
       _request(() async {

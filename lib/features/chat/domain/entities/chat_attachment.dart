@@ -8,8 +8,10 @@ class ChatAttachment extends Equatable {
     required this.mimeType,
     required this.sizeBytes,
     this.durationMs,
+    this.fileName,
   });
 
+  final String? fileName;
   final String id;
   final String category;
   final String mimeType;
@@ -24,6 +26,7 @@ class ChatAttachment extends Equatable {
     }
     return ChatAttachment(
       id: chatUuid(json, 'id'),
+      fileName: json['fileName'] as String?,
       category: chatModelsText(json, 'category'),
       mimeType: chatModelsText(json, 'mimeType'),
       sizeBytes: size,
@@ -32,5 +35,12 @@ class ChatAttachment extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, category, mimeType, sizeBytes, durationMs];
+  List<Object?> get props => [
+    id,
+    category,
+    mimeType,
+    sizeBytes,
+    durationMs,
+    fileName,
+  ];
 }

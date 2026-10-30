@@ -106,6 +106,7 @@ class ChatMessageDelivery {
               mimeType: operation.mimeType!,
               sizeBytes: operation.sizeBytes!,
               durationMs: operation.durationMs,
+              fileName: operation.fileName,
             );
             if (!current()) return;
             operation.uploadId = authorization.uploadId;

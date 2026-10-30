@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +11,7 @@ import 'package:record/record.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/storage/platform_file.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/services/chat_document_validation.dart';
 import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
@@ -112,6 +114,58 @@ class ChatMediaCapture extends ChangeNotifier {
       );
     } finally {
       if ((context.mounted && !_disposed)) _update(() => _mediaBusy = false);
+    }
+  }
+
+  Future<void> pickDocument() async {
+    if (_mediaBusy) return;
+    final conversation = context.read<ChatConversationCubit>();
+    final generation = conversation.generation;
+    _update(() => _mediaBusy = true);
+    try {
+      final file = await openFile(
+        acceptedTypeGroups: [
+          const XTypeGroup(
+            label: 'Documents',
+            extensions: ['pdf', 'xlsx', 'xls', 'csv', 'txt'],
+            uniformTypeIdentifiers: [
+              'public.pdf',
+              'org.openxmlformats.spreadsheetml.sheet',
+              'com.microsoft.excel.xls',
+              'public.comma-separated-values-text',
+              'public.plain-text',
+            ],
+          ),
+        ],
+      );
+      if (file == null ||
+          !context.mounted ||
+          _disposed ||
+          conversation.generation != generation) {
+        return;
+      }
+      if (await file.length() > ChatDocumentValidation.maxBytes) {
+        throw const FormatException('Document too large');
+      }
+      final bytes = await file.readAsBytes();
+      if (!context.mounted ||
+          _disposed ||
+          conversation.generation != generation) {
+        return;
+      }
+      if (!ChatDocumentValidation.valid(bytes, file.name)) {
+        throw const FormatException('Invalid document');
+      }
+      final id = await conversation.sendDocument(bytes, file.name);
+      if (id == null) throw StateError('Document not saved');
+    } catch (_) {
+      if (context.mounted && !_disposed) {
+        Fluttertoast.showToast(
+          msg: context.tr('Choose a PDF, Excel, CSV or text file up to 10 MB.'),
+        );
+      }
+    } finally {
+      if (context.mounted && !_disposed) _update(() => _mediaBusy = false);
     }
   }
 

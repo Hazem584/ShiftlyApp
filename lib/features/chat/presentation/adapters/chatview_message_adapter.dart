@@ -2,7 +2,14 @@ import 'package:chatview/chatview.dart' as chatview;
 import 'package:flutter/material.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 
-enum ShiftlyChatPresentationKind { text, image, voice, location, unknown }
+enum ShiftlyChatPresentationKind {
+  text,
+  image,
+  voice,
+  document,
+  location,
+  unknown,
+}
 
 class AdaptedChatMessage {
   const AdaptedChatMessage({required this.message, required this.kind});
@@ -17,6 +24,7 @@ abstract final class ChatViewMessageAdapter {
       'TEXT' => ShiftlyChatPresentationKind.text,
       'IMAGE' => ShiftlyChatPresentationKind.image,
       'VOICE' => ShiftlyChatPresentationKind.voice,
+      'DOCUMENT' => ShiftlyChatPresentationKind.document,
       'LOCATION' => ShiftlyChatPresentationKind.location,
       _ => ShiftlyChatPresentationKind.unknown,
     };

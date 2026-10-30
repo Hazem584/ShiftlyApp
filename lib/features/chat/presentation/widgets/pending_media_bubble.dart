@@ -57,6 +57,20 @@ class PendingMediaBubble extends StatelessWidget {
               Text(pending.text ?? '')
             else if (pending.mediaType == PendingChatMediaType.location)
               ChatLocationCard(location: pending.location!)
+            else if (pending.mediaType == PendingChatMediaType.document)
+              Row(
+                children: [
+                  const Icon(Icons.description_outlined),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      pending.fileName ?? context.tr('Document'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              )
             else if (pending.mediaType == PendingChatMediaType.image)
               if (pending.previewBytes != null)
                 Image.memory(

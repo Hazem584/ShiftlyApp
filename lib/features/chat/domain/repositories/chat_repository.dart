@@ -53,6 +53,7 @@ abstract class ChatRepository {
     required String mimeType,
     required int sizeBytes,
     int? durationMs,
+    String? fileName,
   }) => throw UnsupportedError('Chat media is unavailable');
   Future<void> uploadSigned(
     ChatUploadAuthorization authorization,
@@ -84,6 +85,17 @@ abstract class ChatRepository {
     String groupId,
     String messageId,
   ) => throw UnsupportedError('Chat media is unavailable');
+  Future<ChatMessage> setReaction(
+    String workspaceId,
+    String groupId,
+    String messageId, {
+    required String? emoji,
+  }) => throw UnsupportedError('Reactions unavailable');
+  Future<List<ChatMessage>> reconcileMessages(
+    String workspaceId,
+    String groupId,
+    List<String> ids,
+  ) async => [];
   Future<void> markRead(String workspaceId, String groupId, String messageId);
   Future<int> unreadCount(String workspaceId);
   Future<ChatMessagePage> searchMessages(

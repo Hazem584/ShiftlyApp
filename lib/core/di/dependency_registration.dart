@@ -27,6 +27,7 @@ import 'package:shiftly/features/auth/domain/repositories/authentication_service
 import 'package:shiftly/features/chat/data/api_chat_repository.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
 import 'package:shiftly/features/chat/data/cache/chat_database_factory.dart';
+import 'package:shiftly/features/chat/data/cache/chat_group_cache.dart';
 import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
 import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
 import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
@@ -232,6 +233,8 @@ abstract final class DependencyRegistration {
         () => ChatGroupsCubit(
           target(),
           messageCache: target<ChatMessageCache>(),
+          realtime: target<ChatRealtime>(),
+          groupCache: ChatGroupCache(target<ChatCacheDatabase>()),
           outbox: target<ChatOutboxStorage>(),
           mediaCache: target<ChatMediaCache>(),
           gallery: ChatImageGallery(),

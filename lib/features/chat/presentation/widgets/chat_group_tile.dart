@@ -54,7 +54,11 @@ class ChatGroupTile extends StatelessWidget {
             Text(
               group.lastMessage!.text ??
                   (Localizations.localeOf(context).languageCode == 'ar'
-                      ? context.tr(group.lastMessage!.type)
+                      ? context.tr(
+                          group.lastMessage!.type == 'DOCUMENT'
+                              ? 'Document'
+                              : group.lastMessage!.type,
+                        )
                       : group.lastMessage!.type.toLowerCase()),
               maxLines: narrow ? 1 : 2,
               overflow: TextOverflow.ellipsis,

@@ -252,6 +252,7 @@ class _ChatViewState extends State<ChatConversationView>
                     onSend: _send,
                     onRetryPrepared: _media.retryPreparedMedia,
                     onPickImage: _media.pickImage,
+                    onPickDocument: _media.pickDocument,
                     onStartRecording: _media.startRecording,
                     onShareLocation: _media.shareLocation,
                     onFinishRecording: _media.finishRecording,
@@ -332,6 +333,24 @@ class _ChatViewState extends State<ChatConversationView>
                     messageBuilder: (message, mine, showSender) =>
                         ChatMessageBubble(
                           message: message,
+                          membershipId: scope.membershipId,
+                          onReact:
+                              message.deletedAt != null ||
+                                  context
+                                          .read<ChatGroupDetailsCubit>()
+                                          .state
+                                          .group
+                                          ?.isArchived !=
+                                      false
+                              ? null
+                              : (emoji) => unawaited(
+                                  ChatConversationTools.react(
+                                    context,
+                                    widget.groupId,
+                                    message,
+                                    emoji,
+                                  ),
+                                ),
                           mine: mine,
                           showSender: showSender,
                           repository: context.read<ChatRepository>(),

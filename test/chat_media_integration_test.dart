@@ -724,6 +724,7 @@ class _MediaRepository extends ChatRepository {
     required String mimeType,
     required int sizeBytes,
     int? durationMs,
+    String? fileName,
   }) async {
     authorizations++;
     initiatedTypes.add(type);

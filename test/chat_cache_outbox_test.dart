@@ -798,7 +798,7 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 90));
   });
 
-  testWidgets('all four pending types render before canonical confirmation', (
+  testWidgets('all pending types render before canonical confirmation', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -828,8 +828,14 @@ void main() {
     expect(find.text('Image'), findsOneWidget);
     expect(find.text('Voice message'), findsOneWidget);
     expect(find.text('Shared location'), findsOneWidget);
-    expect(find.byIcon(Icons.schedule_rounded), findsNWidgets(4));
-    expect(find.byTooltip('Sending'), findsNWidgets(4));
+    expect(
+      find.byIcon(Icons.schedule_rounded),
+      findsNWidgets(PendingChatMediaType.values.length),
+    );
+    expect(
+      find.byTooltip('Sending'),
+      findsNWidgets(PendingChatMediaType.values.length),
+    );
     expect(find.byIcon(Icons.check_rounded), findsNothing);
     expect(find.byIcon(Icons.done_all_rounded), findsNothing);
     expect(tester.takeException(), isNull);

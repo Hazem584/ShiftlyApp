@@ -54,3 +54,11 @@ node scripts/prepare-app-icons.mjs --defines config/prod.json
 - `scripts/` and `tool/ci/`: build and release utilities.
 
 The companion projects are **ShiftlyBackend** (NestJS API) and **Shiftly-Admin** (React platform dashboard). Optional screenshot capture tests write to the ignored `.artifacts/ui-review/` directory.
+
+## Live chat
+
+Chat uses private Supabase Realtime Broadcast channels with REST reconciliation after reconnecting. Messages and reactions render directly from authorized events; cached history and a persistent outbox keep conversations usable during transient connection failures. Conversation summaries are cached for seven days, message history for thirty days, and downloaded media for fourteen days, subject to storage limits and account access.
+
+Supported document attachments: PDF, Excel (.xlsx/.xls), CSV, and plain text, up to 10 MiB per file. Use Attach → Document. Long-press a message or open its actions to add, change, or remove a reaction. Document downloads reuse the private media cache; use Save or share document to export a copy.
+
+Deploy the matching backend migration before releasing this client. Supabase Realtime must be enabled for the project; the migration sets up private-channel authorization and publication entries. Changes are not deployed automatically. Test with two signed-in devices, including reconnecting, removing a member, and revoking a session, before production release.

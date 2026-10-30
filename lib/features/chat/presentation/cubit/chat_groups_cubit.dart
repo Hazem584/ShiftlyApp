@@ -8,9 +8,11 @@ import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_gallery.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_group_store.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_message_store.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_outbox_store.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 
 class ChatGroupsState extends Equatable {
@@ -64,10 +66,17 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
   ChatGroupsCubit(
     this._repository, {
     this.messageCache,
+    this.groupCache,
+    this.realtime,
     this.mediaCache,
     this.gallery,
     this.outbox,
   }) : super(const ChatGroupsState());
+  final ChatGroupStore? groupCache;
+  final ChatRealtime? realtime;
+  ChatRealtimeSubscription? _inbox;
+  Timer? _inboxDebounce;
+  bool _groupsRestored = false;
   final ChatMessageStore? messageCache;
   final ChatMediaStore? mediaCache;
   final ChatGallery? gallery;
@@ -91,6 +100,10 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
         ? scope
         : null;
     if (_scope == authorized) return;
+    unawaited(_inbox?.cancel());
+    _inbox = null;
+    _inboxDebounce?.cancel();
+    _groupsRestored = false;
     messageCache?.storage.bindSession(authorized);
     _scope = authorized;
     _generation++;
@@ -103,7 +116,24 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _unreadIssuedSequence = 0;
     _unreadAppliedSequence = 0;
     emit(const ChatGroupsState());
-    if (authorized != null) unawaited(load());
+    if (authorized != null) {
+      final expected = _generation;
+      if (realtime case final ChatLiveRealtime live) {
+        _inbox = live.subscribeToInbox(
+          authorized.workspaceId,
+          authorized.membershipId,
+          () {
+            _inboxDebounce?.cancel();
+            _inboxDebounce = Timer(const Duration(milliseconds: 100), () {
+              if (_scopeCurrent(authorized, expected)) {
+                unawaited(load(refresh: true));
+              }
+            });
+          },
+        );
+      }
+      unawaited(load());
+    }
   }
 
   Future<void> load({bool refresh = false}) async {
@@ -125,6 +155,22 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
           : ChatGroupsState(unreadCount: previous.unreadCount),
     );
     try {
+      if (!_groupsRestored && groupCache != null) {
+        _groupsRestored = true;
+        final cached = await groupCache!.read(scope);
+        if (!_current(scope, generation, request)) return;
+        // Cached summaries never grant access to private history; only fresh API membership does.
+        if (cached != null) {
+          emit(
+            state.copyWith(
+              loading: false,
+              groups: cached.groups,
+              unreadCount: cached.unreadCount,
+              refreshing: true,
+            ),
+          );
+        }
+      }
       final results = await Future.wait<Object>([
         _repository.listGroups(scope.workspaceId),
         _repository.unreadCount(scope.workspaceId),
@@ -135,6 +181,12 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
       if (groups.any((group) => group.workspaceId != scope.workspaceId)) {
         throw const FormatException('Cross-workspace chat response');
       }
+      unawaited(
+        groupCache
+                ?.write(scope, (groups: groups, unreadCount: results[1] as int))
+                .catchError((Object _) {}) ??
+            Future<void>.value(),
+      );
       final ids = groups.map((group) => group.id).toSet();
       for (final former in previous.groups) {
         if (!ids.contains(former.id)) {
@@ -167,7 +219,7 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
       emit(
         state.copyWith(
           loading: false,
-          groups: previous.groups,
+          groups: state.groups,
           refreshing: false,
           failure: failure,
         ),
@@ -333,6 +385,8 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
 
   @override
   Future<void> close() {
+    unawaited(_inbox?.cancel());
+    _inboxDebounce?.cancel();
     _generation++;
     _request++;
     _unreadRequest++;

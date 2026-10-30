@@ -32,6 +32,7 @@ class ChatScreen extends StatelessWidget {
         BlocProvider(
           create: (_) => ChatGroupDetailsCubit(
             repository,
+            realtime: context.read<ChatRealtime>(),
             onChanged: () => groups.load(refresh: true),
             cacheDatabase: groups.messageCache?.storage,
           )..bind(scope, groupId),

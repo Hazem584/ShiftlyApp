@@ -12,6 +12,7 @@ class ChatOutboxOperation {
     this.mimeType,
     this.sizeBytes,
     this.durationMs,
+    this.fileName,
     this.phase = 'queued',
     this.uploadId,
     this.submitted = false,
@@ -26,6 +27,7 @@ class ChatOutboxOperation {
   final String? mimeType;
   final int? sizeBytes;
   final int? durationMs;
+  final String? fileName;
   String phase;
   String? uploadId;
   bool submitted;
@@ -40,6 +42,7 @@ class ChatOutboxOperation {
     'mime': mimeType,
     'size': sizeBytes,
     'duration': durationMs,
+    'fileName': fileName,
     'phase': phase,
     'uploadId': uploadId,
     'submitted': submitted,
@@ -58,6 +61,7 @@ class ChatOutboxOperation {
         mimeType: value['mime'] as String?,
         sizeBytes: value['size'] as int?,
         durationMs: value['duration'] as int?,
+        fileName: value['fileName'] as String?,
         phase: value['phase'] as String,
         uploadId: value['uploadId'] as String?,
         submitted: value['submitted'] as bool,

@@ -11,6 +11,7 @@ import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/services/chat_document_validation.dart';
 import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
 import 'package:uuid/uuid.dart';
 
@@ -77,7 +78,7 @@ class ChatMediaCache implements ChatMediaStore {
     await storage.ready;
     final attachment = message.attachment;
     if (attachment == null ||
-        !const ['IMAGE', 'VOICE'].contains(message.type) ||
+        !const ['IMAGE', 'VOICE', 'DOCUMENT'].contains(message.type) ||
         attachment.category != message.type ||
         attachment.sizeBytes < 1 ||
         attachment.sizeBytes >
@@ -247,6 +248,11 @@ class ChatMediaCache implements ChatMediaStore {
       return false;
     }
     final Uint8List bytes = await file.readAsBytes();
+    if (message.type == 'DOCUMENT') {
+      return ChatDocumentValidation.valid(bytes, attachment.fileName ?? '') &&
+          ChatDocumentValidation.mimeForName(attachment.fileName ?? '') ==
+              attachment.mimeType;
+    }
     return message.type == 'IMAGE'
         ? ChatMediaValidation.imageMime(bytes) == attachment.mimeType
         : ChatMediaValidation.validVoice(

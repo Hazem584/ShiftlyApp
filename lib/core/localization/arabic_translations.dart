@@ -11,6 +11,15 @@ import 'package:shiftly/features/tasks/presentation/task_translations.dart';
 // Egyptian Arabic: friendly everyday copy, with precise review and hours rules.
 // Keep source keys and placeholders stable; employee-written content stays as is.
 const arabicTranslations = <String, String>{
+ 'Document':'مستند',
+ 'React to message':'تفاعل مع الرسالة',
+ 'React with {emoji}':'تفاعل بـ {emoji}',
+ 'Remove reaction':'إزالة التفاعل',
+ 'Message deleted':'تم حذف الرسالة',
+ 'Save or share document':'حفظ أو مشاركة المستند',
+ 'Could not download the document. Try again.':'تعذّر تنزيل المستند. جرّب تاني.',
+ 'Choose a PDF, Excel, CSV or text file up to 10 MB.':'اختار ملف PDF أو Excel أو CSV أو نص، بحد أقصى 10 ميجابايت.',
+
   'Extra attendance records the authorized shift and its actual working time.':
       'الحضور الإضافي بيسجّل الشيفت المصرّح به ووقت الشغل الفعلي.',
   'Changes apply to this date only. Recorded attendance cannot be changed.':

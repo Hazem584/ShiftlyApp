@@ -20,6 +20,7 @@ enum PendingChatMediaType {
   text,
   location,
   image,
+  document,
   voice;
 
   String get apiValue => switch (this) {
@@ -27,6 +28,7 @@ enum PendingChatMediaType {
     PendingChatMediaType.location => 'LOCATION',
     PendingChatMediaType.image => 'IMAGE',
     PendingChatMediaType.voice => 'VOICE',
+    PendingChatMediaType.document => 'DOCUMENT',
   };
 }
 
@@ -38,6 +40,7 @@ class PendingChatMessage extends Equatable {
     this.progress = 0,
     this.previewBytes,
     this.durationMs,
+    this.fileName,
     this.failure,
     this.text,
     this.location,
@@ -52,6 +55,7 @@ class PendingChatMessage extends Equatable {
   final double progress;
   final Uint8List? previewBytes;
   final int? durationMs;
+  final String? fileName;
   final Failure? failure;
   final String? text;
   final ChatLocation? location;
@@ -72,6 +76,7 @@ class PendingChatMessage extends Equatable {
     progress: progress ?? this.progress,
     previewBytes: clearPreview ? null : previewBytes,
     durationMs: durationMs,
+    fileName: fileName,
     failure: clearFailure ? null : failure ?? this.failure,
     text: text,
     location: location,
@@ -88,6 +93,7 @@ class PendingChatMessage extends Equatable {
     progress,
     previewBytes,
     durationMs,
+    fileName,
     failure,
     text,
     location,

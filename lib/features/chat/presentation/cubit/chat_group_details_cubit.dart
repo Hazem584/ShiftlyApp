@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/error/api_exception.dart';
@@ -6,6 +8,7 @@ import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_cache_access.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 
 class ChatGroupDetailsState extends Equatable {
@@ -25,8 +28,14 @@ class ChatGroupDetailsState extends Equatable {
 }
 
 class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
-  ChatGroupDetailsCubit(this._repository, {this.onChanged, this.cacheDatabase})
-    : super(const ChatGroupDetailsState());
+  ChatGroupDetailsCubit(
+    this._repository, {
+    this.onChanged,
+    this.cacheDatabase,
+    this.realtime,
+  }) : super(const ChatGroupDetailsState());
+  final ChatRealtime? realtime;
+  ChatRealtimeSubscription? _subscription;
   final ChatRepository _repository;
   final ChatCacheAccess? cacheDatabase;
   final void Function()? onChanged;
@@ -37,6 +46,10 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
 
   void bind(FeatureSessionScope scope, String groupId) {
     if (_scope == scope && _groupId == groupId) return;
+    unawaited(_subscription?.cancel());
+    _subscription = realtime is ChatLiveRealtime
+        ? realtime!.subscribeToGroup(groupId, () => unawaited(load()))
+        : null;
     _scope = scope;
     _groupId = groupId;
     _generation++;
@@ -187,6 +200,14 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
       }
       return false;
     }
+  }
+
+  @override
+  Future<void> close() async {
+    _generation++;
+    _scope = null;
+    await _subscription?.cancel();
+    return super.close();
   }
 
   Failure _failure(Object error, String fallback) =>

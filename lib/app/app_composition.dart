@@ -307,7 +307,11 @@ class AppComposition {
         const NoopChatRealtime();
     chatGroupsCubit =
         registered<ChatGroupsCubit>() ??
-        ChatGroupsCubit(chat, gallery: ChatImageGallery());
+        ChatGroupsCubit(
+          chat,
+          gallery: ChatImageGallery(),
+          realtime: chatRealtime,
+        );
     final localReminders = registered<TaskReminders>();
     shiftBreaks = ShiftBreakController(
       preferences: registered<SharedPreferences>(),

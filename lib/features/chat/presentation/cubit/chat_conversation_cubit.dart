@@ -14,8 +14,10 @@ import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 
 import 'chat_conversation_host.dart';
 import 'chat_conversation_state.dart';
+import 'chat_live_sync.dart';
 import 'chat_outbox_controller.dart';
 import 'chat_read_receipts.dart';
+import 'pending_chat_message.dart';
 
 export 'chat_conversation_state.dart';
 export 'pending_chat_message.dart';
@@ -82,10 +84,12 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
     emit(const ChatConversationState());
     if (valid != null) {
       final subscriptionGeneration = _generation;
-      _subscription = _realtime.subscribeToGroup(
-        groupId,
-        () => _onRealtimeInsert(subscriptionGeneration),
-      );
+      _subscription = _realtime is ChatLiveRealtime
+          ? _live.bind(_realtime, groupId)
+          : _realtime.subscribeToGroup(
+              groupId,
+              () => _onRealtimeInsert(subscriptionGeneration),
+            );
       unawaited(load());
     }
   }
@@ -309,7 +313,9 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
       for (final item in current) item.id: item,
     };
     for (final item in incoming) {
-      byId[item.id] = item;
+      if ((byId[item.id]?.revision ?? -1) <= item.revision) {
+        byId[item.id] = item;
+      }
     }
     return _chronological(byId.values.toList());
   }
@@ -380,6 +386,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
     return super.close();
   }
 
+  late final _live = ChatLiveSync(this);
   late final _reads = ChatReadReceipts(this);
   late final _outgoing = ChatOutboxController(this);
   @override
@@ -413,15 +420,20 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
   ) => _merge(incoming, current);
   void applyMessageUpdate(ChatMessage message) {
     if (isClosed || state.accessLost || message.groupId != _groupId) return;
-    emit(state.copyWith(messages: _merge([message], state.messages)));
+    _live.accept(message);
   }
 
+  @override
+  List<PendingChatMessage> confirmPending(List<ChatMessage> messages) =>
+      _outgoing.withoutCanonicalPending(messages);
   @override
   void markNewestRead(List<ChatMessage> messages) =>
       _reads.markNewestRead(messages);
   Future<bool> send(String value, {String? replyToMessageId}) =>
       _outgoing.send(value, replyToMessageId: replyToMessageId);
   Future<bool> retrySend() => _outgoing.retrySend();
+  Future<String?> sendDocument(Uint8List bytes, String fileName) =>
+      _outgoing.sendDocument(bytes, fileName);
   Future<String?> sendImage(Uint8List bytes) => _outgoing.sendImage(bytes);
   Future<String?> sendVoice({
     required Uint8List bytes,

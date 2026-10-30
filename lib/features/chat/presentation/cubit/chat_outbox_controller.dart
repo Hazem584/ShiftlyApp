@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_outbox_operation.dart';
+import 'package:shiftly/features/chat/domain/services/chat_document_validation.dart';
 import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
 
 import 'chat_conversation_host.dart';
@@ -65,11 +66,24 @@ class ChatOutboxController {
     return _acceptMedia('VOICE', owned, mimeType, durationMs: durationMs);
   }
 
+  Future<String?> sendDocument(Uint8List bytes, String fileName) {
+    if (!ChatDocumentValidation.valid(bytes, fileName)) {
+      return Future.value(null);
+    }
+    return _acceptMedia(
+      'DOCUMENT',
+      Uint8List.fromList(bytes),
+      ChatDocumentValidation.mimeForName(fileName)!,
+      fileName: fileName,
+    );
+  }
+
   Future<String?> _acceptMedia(
     String type,
     Uint8List bytes,
     String mime, {
     int? durationMs,
+    String? fileName,
   }) async {
     final scope = host.cacheScope;
     final generation = host.generation;
@@ -85,6 +99,7 @@ class ChatOutboxController {
         mimeType: mime,
         sizeBytes: bytes.length,
         durationMs: durationMs,
+        fileName: fileName,
       );
       if (generation != host.generation ||
           host.cacheScope?.key != scope.key ||
@@ -172,6 +187,7 @@ class ChatOutboxController {
       'TEXT' => PendingChatMediaType.text,
       'LOCATION' => PendingChatMediaType.location,
       'IMAGE' => PendingChatMediaType.image,
+      'DOCUMENT' => PendingChatMediaType.document,
       _ => PendingChatMediaType.voice,
     };
     final status = switch (operation.phase) {
@@ -199,6 +215,7 @@ class ChatOutboxController {
           ? queue.localBytes[operation.id]
           : null,
       durationMs: operation.durationMs,
+      fileName: operation.fileName,
       failure: failure,
       canCancel:
           !operation.submitted &&
@@ -326,6 +343,9 @@ class ChatOutboxController {
 
   List<PendingChatMessage> withoutCanonicalPending(List<ChatMessage> messages) {
     final canonicalClientIds = messages
+        .where(
+          (message) => message.sender.membershipId == host.scope?.membershipId,
+        )
         .map((message) => message.clientMessageId)
         .whereType<String>()
         .toSet();

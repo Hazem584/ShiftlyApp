@@ -8,6 +8,7 @@ import 'package:shiftly/features/chat/domain/repositories/chat_outbox_store.dart
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 
 import 'chat_conversation_state.dart';
+import 'pending_chat_message.dart';
 
 abstract interface class ChatConversationHost {
   ChatConversationState get state;
@@ -31,6 +32,7 @@ abstract interface class ChatConversationHost {
     List<ChatMessage> incoming,
     List<ChatMessage> current,
   );
+  List<PendingChatMessage> confirmPending(List<ChatMessage> messages);
   void markNewestRead(List<ChatMessage> messages);
   Future<void> load({bool refresh = false});
   Future<void> loseAccess();

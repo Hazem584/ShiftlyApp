@@ -23,10 +23,12 @@ class ChatMessageComposer extends StatelessWidget {
     required this.onSend,
     required this.onRetryPrepared,
     required this.onPickImage,
+    this.onPickDocument,
     required this.onStartRecording,
     required this.onShareLocation,
     required this.onFinishRecording,
   });
+  final Future<void> Function()? onPickDocument;
   final bool disabled, savingText, mediaBusy, recording, hasPreparedMedia;
   final bool loadingAccess;
   final bool sendOnEnter;
@@ -111,11 +113,19 @@ class ChatMessageComposer extends StatelessWidget {
                             tooltip: context.tr('Attach'),
                             enabled: !effectiveDisabled && !mediaBusy,
                             onSelected: (value) {
+                              if (value == 3 && onPickDocument != null) {
+                                unawaited(onPickDocument!());
+                              }
                               if (value == 0) unawaited(onPickImage());
                               if (value == 1) unawaited(onStartRecording());
                               if (value == 2) unawaited(onShareLocation());
                             },
                             itemBuilder: (_) => [
+                              if (onPickDocument != null)
+                                PopupMenuItem(
+                                  value: 3,
+                                  child: Text(context.tr('Document')),
+                                ),
                               PopupMenuItem(
                                 value: 0,
                                 child: Text(context.tr('Image')),
