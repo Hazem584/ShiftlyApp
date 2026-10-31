@@ -1,0 +1,12 @@
+<resources>
+    <string name="widget_name">مهام شيفتلي</string>
+    <string name="widget_description">المهام المتبقية والوقت المتبقي لمواعيدها</string>
+    <string name="widget_remaining">متبقي %1$d مهمة</string>
+    <string name="widget_sign_in">مهامك في لمحة</string>
+    <string name="widget_open">افتح شيفتلي لتحديث مهامك</string>
+    <string name="widget_updated">آخر تحديث %1$s · اضغط للفتح</string>
+    <string name="widget_due_in">باقي على الموعد</string>
+    <string name="widget_ends_in">باقي على النهاية</string>
+    <string name="widget_overdue">متأخرة · الوقت المنقضي</string>
+    <string name="widget_empty">تمام! خلصت كل مهامك.</string>
+</resources>

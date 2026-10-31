@@ -6,8 +6,10 @@ import 'package:shiftly/core/session/feature_scope.dart';
 
 import '../domain/personal_task.dart';
 import '../domain/task_alarm.dart';
+import '../domain/task_home_widget.dart';
 import '../domain/task_reminders.dart';
 import '../domain/task_repository.dart';
+import 'task_widget_sync.dart';
 import 'tasks_state.dart';
 
 export 'tasks_state.dart';
@@ -17,9 +19,21 @@ class TasksCubit extends Cubit<TasksState> {
     this.repository,
     this.reminders, {
     this.enableRemoteReminders,
+    TaskHomeWidget? homeWidget,
     DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now,
-       super(const TasksState());
+  }) : _homeWidget = homeWidget,
+       _clock = clock ?? DateTime.now,
+       super(const TasksState()) {
+    if (homeWidget != null) {
+      widgetSync = TaskWidgetSync(repository, homeWidget);
+      unawaited(widgetSync!.bind(null));
+    }
+  }
+  TaskWidgetSync? widgetSync;
+  final TaskHomeWidget? _homeWidget;
+  bool get canAddHomeWidget => _homeWidget?.isSupported ?? false;
+  Future<bool> requestHomeWidget() =>
+      _homeWidget?.requestPin() ?? Future.value(false);
   final DateTime Function() _clock;
   final TaskRepository repository;
   final TaskReminders reminders;
@@ -38,6 +52,8 @@ class TasksCubit extends Cubit<TasksState> {
     _lastReminderSignature = null;
     _load++;
     emit(const TasksState());
+    await widgetSync?.bind(value?.userId);
+    if (!_valid(generation)) return;
     _reminderQueue = _reminderQueue
         .then((_) async {
           if (!_valid(generation)) return;
@@ -54,7 +70,11 @@ class TasksCubit extends Cubit<TasksState> {
   }
 
   Future<void> refresh() async {
-    await Future.wait([load(), syncReminders()]);
+    await Future.wait([
+      load(),
+      syncReminders(),
+      if (widgetSync != null) widgetSync!.refresh(),
+    ]);
   }
 
   Future<void> load({bool? completed, int? page}) async {
@@ -269,6 +289,7 @@ class TasksCubit extends Cubit<TasksState> {
     _generation++;
     await _reminderQueue;
     await reminders.close();
+    await widgetSync?.close();
     return super.close();
   }
 }

@@ -23,6 +23,10 @@
             <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
           </intent-filter>
         </receiver>
+        <receiver android:name=".TaskWidgetProvider" android:exported="false" android:label="@string/widget_name">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/task_widget_info" />
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -70,6 +70,7 @@ import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit
 import 'package:shiftly/features/shifts/presentation/cubit/manager_shifts_cubit.dart';
 import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
 import 'package:shiftly/features/tasks/data/memory_task_repository.dart';
+import 'package:shiftly/features/tasks/data/native_task_home_widget.dart';
 import 'package:shiftly/features/tasks/domain/task_reminders.dart';
 import 'package:shiftly/features/tasks/domain/task_repository.dart';
 import 'package:shiftly/features/workspaces/data/mock_workspace_repository.dart';
@@ -331,6 +332,9 @@ class AppComposition {
       registered<TaskRepository>() ?? MemoryTaskRepository(),
       registered<TaskReminders>() ?? const NoTaskReminders(),
       enableRemoteReminders: () async => pushNotifications?.setEnabled(true),
+      homeWidget: NativeTaskHomeWidget.supported
+          ? NativeTaskHomeWidget()
+          : null,
     );
     taskCoordinator = AppTaskCoordinator(tasksCubit, router, isMounted);
     final coordinator = sessionCoordinator;

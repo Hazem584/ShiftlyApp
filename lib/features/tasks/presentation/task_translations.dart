@@ -1,4 +1,7 @@
 const taskTranslations = <String, String>{
+  'Add home screen widget': 'إضافة ويجيت للشاشة الرئيسية',
+  'Long-press your home screen, choose Widgets, then Shiftly tasks.':
+      'اضغط مطولاً على الشاشة الرئيسية، واختار الويجيت ثم مهام شيفتلي.',
   'More alarm times': 'مواعيد إضافية للتنبيه',
   'One task, the same title and details at every time.':
       'نفس المهمة ونفس العنوان والتفاصيل في كل موعد.',

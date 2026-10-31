@@ -3,6 +3,8 @@ package com.example.shiftly
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
+import android.os.Bundle
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
@@ -16,12 +18,26 @@ import java.io.File
 import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
+    private val taskWidget by lazy { TaskWidgetBridge(this) }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        taskWidget.accept(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        taskWidget.accept(intent)
+    }
+
     private val galleryWorker = Executors.newSingleThreadExecutor()
     private data class SaveRequest(val bytes: ByteArray, val mime: String, val name: String, val result: MethodChannel.Result)
     private var pendingSave: SaveRequest? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        taskWidget.register(flutterEngine.dartExecutor.binaryMessenger)
         LauncherIcons(this).register(flutterEngine.dartExecutor.binaryMessenger)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             getSystemService(NotificationManager::class.java).createNotificationChannel(

@@ -16,6 +16,10 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+
+    A11000000000000000000001 /* TaskWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11000000000000000000002; };
+    A11000000000000000000003 /* TaskWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A11000000000000000000004; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,6 +30,9 @@
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
 		};
+
+    A11000000000000000000014 /* PBXContainerItemProxy */ = {isa = PBXContainerItemProxy; containerPortal = 97C146E61CF9000F007C117D; proxyType = 1; remoteGlobalIDString = A11000000000000000000008; remoteInfo = TaskWidget; };
+
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -39,6 +46,9 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+
+    A11000000000000000000013 /* Embed App Extensions */ = {isa = PBXCopyFilesBuildPhase; buildActionMask = 2147483647; dstPath = ""; dstSubfolderSpec = 13; files = (A11000000000000000000003, ); name = "Embed App Extensions"; runOnlyForDeploymentPostprocessing = 0; };
+
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +69,12 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+
+    A11000000000000000000002 /* TaskWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskWidget.swift; sourceTree = "<group>"; };
+    A11000000000000000000004 /* TaskWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TaskWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+    A11000000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+    A11000000000000000000006 /* TaskWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TaskWidget.entitlements; sourceTree = "<group>"; };
+
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +86,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+
+    A11000000000000000000011 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -96,6 +115,7 @@
 		97C146E51CF9000F007C117D = {
 			isa = PBXGroup;
 			children = (
+                A11000000000000000000007 /* TaskWidget */,
 				9740EEB11CF90186004384FC /* Flutter */,
 				97C146F01CF9000F007C117D /* Runner */,
 				97C146EF1CF9000F007C117D /* Products */,
@@ -106,6 +126,7 @@
 		97C146EF1CF9000F007C117D /* Products */ = {
 			isa = PBXGroup;
 			children = (
+                A11000000000000000000004 /* TaskWidget.appex */,
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 			);
@@ -128,6 +149,9 @@
 			path = Runner;
 			sourceTree = "<group>";
 		};
+
+    A11000000000000000000007 /* TaskWidget */ = {isa = PBXGroup; children = (A11000000000000000000002, A11000000000000000000005, A11000000000000000000006, ); path = TaskWidget; sourceTree = "<group>"; };
+
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -157,11 +181,13 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+                A11000000000000000000013 /* Embed App Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+                A11000000000000000000015,
 			);
 			name = Runner;
 			packageProductDependencies = (
@@ -171,6 +197,16 @@
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
 		};
+
+    A11000000000000000000008 /* TaskWidget */ = {
+      isa = PBXNativeTarget;
+      buildConfigurationList = A11000000000000000000009;
+      buildPhases = (A11000000000000000000010, A11000000000000000000011, A11000000000000000000012, );
+      buildRules = (); dependencies = (); name = TaskWidget; productName = TaskWidget;
+      productReference = A11000000000000000000004;
+      productType = "com.apple.product-type.app-extension";
+    };
+
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -207,6 +243,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+                A11000000000000000000008 /* TaskWidget */,
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
 			);
@@ -232,6 +269,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+
+    A11000000000000000000012 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -287,6 +327,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+
+    A11000000000000000000010 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A11000000000000000000001, ); runOnlyForDeploymentPostprocessing = 0; };
+
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -295,6 +338,9 @@
 			target = 97C146ED1CF9000F007C117D /* Runner */;
 			targetProxy = 331C8085294A63A400263BE5 /* PBXContainerItemProxy */;
 		};
+
+    A11000000000000000000015 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = A11000000000000000000008; targetProxy = A11000000000000000000014; };
+
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -597,6 +643,66 @@
 			};
 			name = Release;
 		};
+
+    A11000000000000000000016 /* Debug */ = {
+      isa = XCBuildConfiguration; baseConfigurationReference = 9740EEB21CF90195004384FC;
+      buildSettings = {
+        APPLICATION_EXTENSION_API_ONLY = YES;
+        CODE_SIGN_ENTITLEMENTS = TaskWidget/TaskWidget.entitlements;
+        CODE_SIGN_STYLE = Automatic;
+        CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+        INFOPLIST_FILE = TaskWidget/Info.plist;
+        IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+        LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+        PRODUCT_BUNDLE_IDENTIFIER = com.example.shiftly.TaskWidget;
+        PRODUCT_NAME = "$(TARGET_NAME)";
+        SDKROOT = iphoneos;
+        SKIP_INSTALL = YES;
+        SWIFT_VERSION = 5.0;
+        TARGETED_DEVICE_FAMILY = "1,2";
+      }; name = Debug;
+    };
+
+
+    A11000000000000000000017 /* Release */ = {
+      isa = XCBuildConfiguration; baseConfigurationReference = 7AFA3C8E1D35360C0083082E;
+      buildSettings = {
+        APPLICATION_EXTENSION_API_ONLY = YES;
+        CODE_SIGN_ENTITLEMENTS = TaskWidget/TaskWidget.entitlements;
+        CODE_SIGN_STYLE = Automatic;
+        CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+        INFOPLIST_FILE = TaskWidget/Info.plist;
+        IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+        LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+        PRODUCT_BUNDLE_IDENTIFIER = com.example.shiftly.TaskWidget;
+        PRODUCT_NAME = "$(TARGET_NAME)";
+        SDKROOT = iphoneos;
+        SKIP_INSTALL = YES;
+        SWIFT_VERSION = 5.0;
+        TARGETED_DEVICE_FAMILY = "1,2";
+      }; name = Release;
+    };
+
+
+    A11000000000000000000018 /* Profile */ = {
+      isa = XCBuildConfiguration; baseConfigurationReference = 7AFA3C8E1D35360C0083082E;
+      buildSettings = {
+        APPLICATION_EXTENSION_API_ONLY = YES;
+        CODE_SIGN_ENTITLEMENTS = TaskWidget/TaskWidget.entitlements;
+        CODE_SIGN_STYLE = Automatic;
+        CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+        INFOPLIST_FILE = TaskWidget/Info.plist;
+        IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+        LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks", );
+        PRODUCT_BUNDLE_IDENTIFIER = com.example.shiftly.TaskWidget;
+        PRODUCT_NAME = "$(TARGET_NAME)";
+        SDKROOT = iphoneos;
+        SKIP_INSTALL = YES;
+        SWIFT_VERSION = 5.0;
+        TARGETED_DEVICE_FAMILY = "1,2";
+      }; name = Profile;
+    };
+
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -630,6 +736,12 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+
+    A11000000000000000000009 /* Build configuration list for PBXNativeTarget "TaskWidget" */ = {
+      isa = XCConfigurationList; buildConfigurations = (A11000000000000000000016, A11000000000000000000017, A11000000000000000000018, );
+      defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;
+    };
+
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */

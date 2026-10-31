@@ -1,0 +1,12 @@
+<resources>
+    <string name="widget_name">Shiftly tasks</string>
+    <string name="widget_description">Remaining tasks and time until they are due</string>
+    <string name="widget_remaining">%1$d tasks remaining</string>
+    <string name="widget_sign_in">Your tasks, at a glance</string>
+    <string name="widget_open">Open Shiftly to refresh your tasks</string>
+    <string name="widget_updated">Updated %1$s · Tap to open</string>
+    <string name="widget_due_in">Due in</string>
+    <string name="widget_ends_in">Ends in</string>
+    <string name="widget_overdue">Overdue · elapsed</string>
+    <string name="widget_empty">All done! No remaining tasks.</string>
+</resources>

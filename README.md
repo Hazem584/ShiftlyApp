@@ -62,3 +62,11 @@ Chat uses private Supabase Realtime Broadcast channels with REST reconciliation 
 Supported document attachments: PDF, Excel (.xlsx/.xls), CSV, and plain text, up to 10 MiB per file. Use Attach → Document. Long-press a message or open its actions to add, change, or remove a reaction. Document downloads reuse the private media cache; use Save or share document to export a copy.
 
 Deploy the matching backend migration before releasing this client. Supabase Realtime must be enabled for the project; the migration sets up private-channel authorization and publication entries. Changes are not deployed automatically. Test with two signed-in devices, including reconnecting, removing a member, and revoking a session, before production release.
+
+## Home screen task widget
+
+Android and iOS widgets show the remaining **personal tasks** count, up to three task titles, and native countdowns. Tap a task to open its details. On Android, use the widget button in Task manager or long-press the Home Screen and select Widgets → Shiftly tasks. On iOS, add Shiftly tasks from the Home Screen widget gallery.
+
+The app shares a local display snapshot when tasks refresh or change and when it resumes. Countdowns and scheduled occurrences advance locally; changes made on another device are fetched the next time this app refreshes. The widget shows its last update time, expires snapshots after 24 hours, and clears data on sign-out or account/workspace changes. It does not store authentication tokens or fetch the API in the background.
+
+For iOS signing, enable the **App Groups** capability for Runner and TaskWidget and register `group.com.example.shiftly` in the same Apple team. If the application bundle identifier changes, update both targets' group entitlements and the suite names in AppDelegate.swift and TaskWidget.swift. The WidgetKit target is included and embedded in the Xcode project. Build and test the iOS target on macOS/Xcode.

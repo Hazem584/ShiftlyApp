@@ -106,6 +106,25 @@ class _TasksScreenState extends State<TasksScreen> {
         appBar: AppBar(
           title: Text(context.tr('Task manager')),
           actions: [
+            if (cubit.canAddHomeWidget)
+              IconButton(
+                tooltip: context.tr('Add home screen widget'),
+                icon: const Icon(Icons.widgets_outlined),
+                onPressed: () async {
+                  final pinned = await cubit.requestHomeWidget();
+                  if (!pinned && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          context.tr(
+                            'Long-press your home screen, choose Widgets, then Shiftly tasks.',
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: FloatingActionButton.small(

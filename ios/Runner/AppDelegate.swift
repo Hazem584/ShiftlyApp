@@ -1,3 +1,4 @@
+import WidgetKit
 import Flutter
 import UIKit
 import Photos
@@ -14,6 +15,10 @@ import UserNotifications
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    if let widgetRegistrar = engineBridge.pluginRegistry.registrar(forPlugin: "ShiftlyTaskWidget") {
+      TaskWidgetBridge.shared.register(widgetRegistrar.messenger())
+      widgetRegistrar.addSceneDelegate(TaskWidgetBridge.shared)
+    }
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     let iconChannel = FlutterMethodChannel(name: "shiftly/app_icons", binaryMessenger: engineBridge.applicationRegistrar.messenger())
     iconChannel.setMethodCallHandler { call, result in
@@ -84,5 +89,67 @@ import UserNotifications
         PHPhotoLibrary.requestAuthorization(save)
       }
     }
+  }
+}
+
+final class TaskWidgetBridge: NSObject, FlutterSceneLifeCycleDelegate {
+  static let shared = TaskWidgetBridge()
+  private var channel: FlutterMethodChannel?
+  private var pending: [String: String]?
+  private var ready = false
+
+  func register(_ messenger: FlutterBinaryMessenger) {
+    let bridge = FlutterMethodChannel(name: "shiftly/task_widget", binaryMessenger: messenger)
+    channel = bridge
+    bridge.setMethodCallHandler { [weak self] call, result in
+      guard let self = self else { return }
+      let defaults = UserDefaults(suiteName: "group.com.example.shiftly")
+      switch call.method {
+      case "publish":
+        guard let raw = call.arguments as? String, raw.utf8.count <= 16000,
+              let bytes = raw.data(using: .utf8),
+              let data = (try? JSONSerialization.jsonObject(with: bytes)) as? [String: Any],
+              let tasks = data["tasks"] as? [[String: Any]], tasks.count <= 3,
+              let owner = data["ownerId"] as? String, !owner.isEmpty else {
+          result(FlutterError(code: "WIDGET_DATA", message: "Invalid task snapshot", details: nil)); return
+        }
+        defaults?.set(raw, forKey: "taskSnapshot")
+        WidgetCenter.shared.reloadTimelines(ofKind: "ShiftlyTasksWidget")
+        result(nil)
+      case "clear":
+        defaults?.removeObject(forKey: "taskSnapshot")
+        WidgetCenter.shared.reloadTimelines(ofKind: "ShiftlyTasksWidget")
+        result(nil)
+      case "initialTap":
+        self.ready = true
+        result(self.pending)
+        self.pending = nil
+      case "pin":
+        result(false) // iOS adds widgets through the Home Screen gallery.
+      default: result(FlutterMethodNotImplemented)
+      }
+    }
+  }
+
+
+  func scene(_ scene: UIScene, willConnectTo session: UISceneSession,
+             options connectionOptions: UIScene.ConnectionOptions?) -> Bool {
+    guard let contexts = connectionOptions?.urlContexts else { return false }
+    return contexts.reduce(false) { accept($1.url) || $0 }
+  }
+
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) -> Bool {
+    URLContexts.reduce(false) { accept($1.url) || $0 }
+  }
+
+  @discardableResult
+  func accept(_ url: URL) -> Bool {
+    guard url.scheme == "shiftly", url.host == "task-widget",
+          let parts = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return false }
+    let values = parts.queryItems ?? []
+    let tap = ["ownerId": values.first(where: { $0.name == "ownerId" })?.value ?? "",
+               "taskId": values.first(where: { $0.name == "taskId" })?.value ?? ""]
+    if ready { channel?.invokeMethod("opened", arguments: tap) } else { pending = tap }
+    return true
   }
 }
