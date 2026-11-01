@@ -75,6 +75,8 @@ void main() {
     expect(find.byKey(const Key('approve-leave-1')), findsOneWidget);
     await tester.tap(find.byKey(const Key('approve-leave-1')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-approve-leave')));
+    await tester.pumpAndSettle();
     expect(find.text('Request approved'), findsOneWidget);
     expect(find.byKey(const Key('approve-leave-1')), findsNothing);
 
@@ -131,7 +133,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
-    expect(find.text('Manager Profile'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('profile-heading')),
+        matching: find.text('Profile'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('profile-initials')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('edit-profile')));
@@ -151,7 +159,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('cancel-profile-edit')));
     await tester.pumpAndSettle();
-    expect(find.text('Manager Profile'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('profile-heading')),
+        matching: find.text('Profile'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('profile updates manager text for the current session', (
@@ -175,9 +189,9 @@ void main() {
     expect(find.text('Layla Mostafa'), findsOneWidget);
     expect(find.text('Profile updated successfully'), findsOneWidget);
 
-    await tester.tap(find.text('Dashboard').last);
+    await tester.tap(find.text('Home').last);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Good morning'), findsOneWidget);
+    expect(find.byKey(const Key('manager-home-greeting')), findsOneWidget);
     ToastService.dismissAll();
   });
 }

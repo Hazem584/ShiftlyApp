@@ -18,9 +18,9 @@ class AppBottomNavigation extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
 
   static const _destinations = [
-    (Icons.home_outlined, Icons.home_rounded, AppStrings.dashboard),
-    (Icons.groups_outlined, Icons.groups_rounded, 'Employees'),
-    (Icons.work_outline_rounded, Icons.work_rounded, 'Work management'),
+    (Icons.home_outlined, Icons.home_rounded, 'Home'),
+    (Icons.groups_outlined, Icons.groups_rounded, 'Team'),
+    (Icons.work_outline_rounded, Icons.work_rounded, 'Work'),
     (Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded, 'Chat'),
     (Icons.person_outline_rounded, Icons.person_rounded, AppStrings.profile),
   ];
@@ -30,33 +30,54 @@ class AppBottomNavigation extends StatelessWidget {
       BlocBuilder<ChatGroupsCubit, ChatGroupsState>(
         buildWhen: (before, after) => before.unreadCount != after.unreadCount,
         builder: (context, chat) => Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+          padding: EdgeInsets.zero,
           child: DecoratedBox(
             key: const Key('manager-bottom-navigation'),
             decoration: BoxDecoration(
               color: AppPalette.of(context).surface,
               border: Border.all(color: AppPalette.of(context).borderColor),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.zero,
               boxShadow: const [],
             ),
             child: SafeArea(
               top: false,
               child: SizedBox(
-                height: 46 + MediaQuery.textScalerOf(context).scale(11) * 1.8,
-                child: Row(
-                  children: [
-                    for (var index = 0; index < _destinations.length; index++)
-                      NavigationDestinationItem(
-                        icon: selectedIndex == index
-                            ? _destinations[index].$2
-                            : _destinations[index].$1,
-                        label: context.tr(_destinations[index].$3),
-                        index: index,
-                        selected: selectedIndex == index,
-                        onTap: () => onDestinationSelected(index),
-                        badgeCount: index == 3 ? chat.unreadCount : 0,
+                height: 40 + MediaQuery.textScalerOf(context).scale(12) * 3.2,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final scale =
+                        MediaQuery.textScalerOf(context).scale(12) / 12;
+                    final width = scale > 1.3
+                        ? (MediaQuery.textScalerOf(context).scale(72) *
+                                  _destinations.length)
+                              .clamp(constraints.maxWidth, double.infinity)
+                        : constraints.maxWidth;
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: width,
+                        child: Row(
+                          children: [
+                            for (
+                              var index = 0;
+                              index < _destinations.length;
+                              index++
+                            )
+                              NavigationDestinationItem(
+                                icon: selectedIndex == index
+                                    ? _destinations[index].$2
+                                    : _destinations[index].$1,
+                                label: context.tr(_destinations[index].$3),
+                                index: index,
+                                selected: selectedIndex == index,
+                                onTap: () => onDestinationSelected(index),
+                                badgeCount: index == 3 ? chat.unreadCount : 0,
+                              ),
+                          ],
+                        ),
                       ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),

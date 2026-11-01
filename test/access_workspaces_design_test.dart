@@ -141,9 +141,14 @@ void main() {
     );
     await tester.pumpWidget(accessHarness(f, const JoinWorkspaceScreen()));
     expect(
-      tester.widget<EditableText>(find.descendant(
-        of: find.byKey(const Key('invitation-token-field')),
-        matching: find.byType(EditableText))).obscureText,
+      tester
+          .widget<EditableText>(
+            find.descendant(
+              of: find.byKey(const Key('invitation-token-field')),
+              matching: find.byType(EditableText),
+            ),
+          )
+          .obscureText,
       isTrue,
     );
     await tester.ensureVisible(find.byKey(const Key('accept-invitation')));

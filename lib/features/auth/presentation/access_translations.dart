@@ -7,11 +7,13 @@ const accessTranslations = <String, String>{
   "A few details to get started.": "تفاصيل بسيطة ونبدأ.",
   "Create a strong password": "اختار كلمة مرور قوية",
   "Repeat your password": "اكتب كلمة المرور مرة تانية",
-  "Use at least 8 characters. Keep your password private.": "استخدم ٨ أحرف على الأقل، واحتفظ بكلمة المرور لنفسك.",
+  "Use at least 8 characters. Keep your password private.":
+      "استخدم ٨ أحرف على الأقل، واحتفظ بكلمة المرور لنفسك.",
   "One more step to protect your account.": "خطوة كمان لحماية حسابك.",
   "Check your inbox.": "راجع بريدك الإلكتروني.",
   "Verification sent": "تم إرسال رسالة التحقق",
-  "Open the verification link in your email, then return here to continue.": "افتح رابط التحقق في بريدك، وارجع هنا علشان تكمّل.",
+  "Open the verification link in your email, then return here to continue.":
+      "افتح رابط التحقق في بريدك، وارجع هنا علشان تكمّل.",
   "I’ve verified my email": "أكّدت بريدي الإلكتروني",
   "Sending…": "جاري الإرسال…",
   "Resend email · available in {time}": "إعادة الإرسال متاحة بعد {time}",
@@ -22,7 +24,8 @@ const accessTranslations = <String, String>{
   "This may take a moment.": "ممكن تستغرق لحظات.",
   "Offline startup": "مفيش اتصال بالإنترنت",
   "You’re offline.": "إنت غير متصل.",
-  "We can’t verify your saved session yet. Connect to the internet and try again.": "مش قادرين نتحقق من الجلسة المحفوظة. اتصل بالإنترنت وجرّب تاني.",
+  "We can’t verify your saved session yet. Connect to the internet and try again.":
+      "مش قادرين نتحقق من الجلسة المحفوظة. اتصل بالإنترنت وجرّب تاني.",
   "We’ll be back shortly.": "هنرجع قريب.",
   "Service unavailable": "الخدمة غير متاحة",
   "Shiftly couldn’t reach the service. Your saved information is still here. Try again in a moment.": "شيفتلي مش قادر يوصل للخدمة. بياناتك المحفوظة موجودة؛ جرّب تاني بعد شوية.",
@@ -35,17 +38,21 @@ const accessTranslations = <String, String>{
   "Workspace name is required": "اكتب اسم مساحة العمل",
   "Workspace name is too long": "اسم مساحة العمل طويل جدًا",
   "Timezone is required": "اكتب المنطقة الزمنية",
-  "Schedules and attendance use this workspace’s timezone.": "الشيفتات والحضور بيستخدموا المنطقة الزمنية لمساحة العمل.",
+  "Schedules and attendance use this workspace’s timezone.":
+      "الشيفتات والحضور بيستخدموا المنطقة الزمنية لمساحة العمل.",
   "Paste the token shared by your manager.": "الصق رمز الدعوة اللي بعته مديرك.",
   "Invitation token is required": "اكتب رمز الدعوة",
-  "This one-time token joins the workspace directly. Check who sent it before accepting.": "الرمز ده بيضمك لمساحة العمل مباشرة. اتأكد مين بعته قبل القبول.",
+  "This one-time token joins the workspace directly. Check who sent it before accepting.":
+      "الرمز ده بيضمك لمساحة العمل مباشرة. اتأكد مين بعته قبل القبول.",
   "Show invitation token": "إظهار رمز الدعوة",
   "Hide invitation token": "إخفاء رمز الدعوة",
   "My invitations": "دعواتي",
   "No invitations waiting for you.": "مفيش دعوات في انتظارك.",
-  "Invitations are linked to your signed-in email. Check the details before joining.": "الدعوات مرتبطة بالبريد اللي سجّلت بيه. راجع التفاصيل قبل الانضمام.",
+  "Invitations are linked to your signed-in email. Check the details before joining.":
+      "الدعوات مرتبطة بالبريد اللي سجّلت بيه. راجع التفاصيل قبل الانضمام.",
   "Invitation details": "تفاصيل الدعوة",
-  "Accept to join this workspace with the role shown above.": "اقبل الدعوة للانضمام بالصلاحيات الموضّحة فوق.",
+  "Accept to join this workspace with the role shown above.":
+      "اقبل الدعوة للانضمام بالصلاحيات الموضّحة فوق.",
   "This invitation is no longer available.": "الدعوة دي مش متاحة دلوقتي.",
   "Decline invitation": "رفض الدعوة",
   "Declining…": "جاري الرفض…",

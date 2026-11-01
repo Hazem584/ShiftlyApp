@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/features/manager/presentation/design/manager_theme_marker.dart';
+import 'package:shiftly/features/manager/presentation/widgets/manager_announcement_preview.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 
 class PendingAnnouncementCard extends StatelessWidget {
@@ -18,6 +20,9 @@ class PendingAnnouncementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (Theme.of(context).extension<ManagerThemeMarker>() != null) {
+      return ManagerAnnouncementPreview(announcement: announcement);
+    }
     final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/features/manager/presentation/design/manager_theme_marker.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
 
 class WorkFeedView<T> extends StatelessWidget {
@@ -22,7 +23,11 @@ class WorkFeedView<T> extends StatelessWidget {
           onRefresh: cubit.load,
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(
+              Theme.of(context).extension<ManagerThemeMarker>() != null
+                  ? 24
+                  : 16,
+            ),
             children: [
               ?header,
               if (state.notice != null)
@@ -52,7 +57,11 @@ class WorkFeedView<T> extends StatelessWidget {
               for (final item in state.items)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: itemBuilder(context, item, state.busyId != null),
+                  child: itemBuilder(
+                    context,
+                    item,
+                    state.busyId != null || state.loading,
+                  ),
                 ),
               if (state.hasMore)
                 TextButton(

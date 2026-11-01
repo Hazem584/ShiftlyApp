@@ -13,6 +13,8 @@ import 'package:shiftly/features/attendance/presentation/utils/leave_request_dis
 import 'package:shiftly/features/attendance/presentation/widgets/leave_detail_row.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_details_dialog.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
+import 'package:shiftly/features/manager/presentation/design/manager_theme_marker.dart';
+import 'package:shiftly/features/manager/presentation/widgets/manager_confirmation_sheet.dart';
 
 class LeaveRequestCard extends StatelessWidget {
   const LeaveRequestCard({
@@ -29,6 +31,19 @@ class LeaveRequestCard extends StatelessWidget {
     BuildContext context,
     LeaveReviewDecision decision,
   ) async {
+    if (updating) return;
+    if (decision == LeaveReviewDecision.approved &&
+        Theme.of(context).extension<ManagerThemeMarker>() != null) {
+      final confirmed = await showManagerConfirmation(
+        context,
+        title: 'Approve leave?',
+        description:
+            '${request.employee.displayName}\n${WorkspaceTime.dateTime(request.startsAt, timezone)} – ${WorkspaceTime.dateTime(request.endsAt, timezone)}',
+        action: 'Approve leave',
+        confirmKey: const Key('confirm-approve-leave'),
+      );
+      if (!confirmed || !context.mounted) return;
+    }
     String? rejectionReason;
     if (decision == LeaveReviewDecision.rejected) {
       rejectionReason = await _rejectionReason(context);
@@ -72,7 +87,7 @@ class LeaveRequestCard extends StatelessWidget {
     return SurfaceCard(
       key: Key('request-${request.id}'),
       onTap: () => _openDetails(context),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -100,7 +115,7 @@ class LeaveRequestCard extends StatelessWidget {
                       context.tr(leaveTypeLabel(request.type)),
                       style: TextStyle(
                         color: AppPalette.of(context).textSecondary,
-                        fontSize: 12,
+                        fontSize: 14,
                       ),
                     ),
                   ],

@@ -88,7 +88,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ),
               ],
             ),
-      child: Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
@@ -116,7 +116,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 ],
               ],
             ),
-                );
+          );
         },
       );
 }

@@ -18,7 +18,12 @@ class NotificationBell extends StatelessWidget {
             IconButton(
               key: const Key('notification-bell'),
               onPressed: () => Navigator.of(context).push<void>(
-                MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                MaterialPageRoute(
+                  builder: (_) => InheritedTheme.captureAll(
+                    context,
+                    const NotificationsScreen(),
+                  ),
+                ),
               ),
               tooltip: context.tr('Notifications'),
               icon: Badge(

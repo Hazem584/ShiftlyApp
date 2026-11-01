@@ -123,6 +123,7 @@ class ManagerTasksView extends StatelessWidget {
                             workspaceId: workspaceId,
                             requestId: task.id,
                             timezone: timezone,
+                            isCurrent: () => context.mounted && !cubit.isClosed,
                           ),
                         );
                         if (saved == true) {

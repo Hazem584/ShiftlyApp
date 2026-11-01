@@ -33,7 +33,7 @@ class EmployeeList extends StatelessWidget {
         final rows = (employees.length / columns).ceil();
         return ListView.separated(
           key: const Key('employee-list'),
-          padding: const EdgeInsets.fromLTRB(18, 2, 18, 30),
+          padding: const EdgeInsets.fromLTRB(24, 2, 24, 24),
           itemCount: rows + ((hasMore || loadingMore) ? 1 : 0),
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (_, index) {

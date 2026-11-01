@@ -15,7 +15,7 @@ class EmployeeSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+    padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
     child: Column(
       children: [
         TextField(
@@ -28,25 +28,27 @@ class EmployeeSearchBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<EmployeeStatusFilter?>(
-          key: const Key('employee-status-filter'),
-          initialValue: status,
-          decoration: InputDecoration(labelText: context.tr('Employee status')),
-          onChanged: onStatusChanged,
-          items: [
-            DropdownMenuItem(
-              value: null,
-              child: Text(context.tr('All statuses')),
-            ),
-            DropdownMenuItem(
-              value: EmployeeStatusFilter.active,
-              child: Text(context.tr('Active')),
-            ),
-            DropdownMenuItem(
-              value: EmployeeStatusFilter.suspended,
-              child: Text(context.tr('Suspended')),
-            ),
-          ],
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Wrap(
+            key: const Key('employee-status-filter'),
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final item in <(EmployeeStatusFilter?, String)>[
+                (null, 'All'),
+                (EmployeeStatusFilter.active, 'Active'),
+                (EmployeeStatusFilter.suspended, 'Suspended'),
+              ])
+                ChoiceChip(
+                  label: Text(context.tr(item.$2)),
+                  selected: status == item.$1,
+                  onSelected: onStatusChanged == null
+                      ? null
+                      : (_) => onStatusChanged!(item.$1),
+                ),
+            ],
+          ),
         ),
       ],
     ),

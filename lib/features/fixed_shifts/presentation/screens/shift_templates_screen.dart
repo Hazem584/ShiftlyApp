@@ -52,7 +52,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
         builder: (context, state) => Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: ReadSyncBanner(
                 category: ReadCategory.schedule,
                 onRefresh: () =>
@@ -60,7 +60,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
               child: SurfaceCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +108,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Align(
-                      alignment: Alignment.centerRight,
+                      alignment: AlignmentDirectional.centerEnd,
                       child: FilterChip(
                         key: const Key('show-archived-templates'),
                         label: Text(context.tr('Archived')),
@@ -136,6 +136,8 @@ class ShiftTemplatesScreen extends StatelessWidget {
   }
 
   Widget _body(BuildContext context, ManagerTemplatesState state) {
+    final cubit = context.read<ManagerTemplatesCubit>();
+    final owner = cubit.scope;
     if (state.loading) {
       return const AppContentLoading();
     }
@@ -179,15 +181,15 @@ class ShiftTemplatesScreen extends StatelessWidget {
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 760;
           final cardWidth = wide
-              ? (constraints.maxWidth - 48) / 2
-              : constraints.maxWidth - 36;
+              ? (constraints.maxWidth - 60) / 2
+              : constraints.maxWidth - 48;
           return ListView(
             key: const Key('shift-template-list'),
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
-              18,
+              24,
               4,
-              18,
+              24,
               160 + MediaQuery.viewPaddingOf(context).bottom,
             ),
             children: [
@@ -203,8 +205,20 @@ class ShiftTemplatesScreen extends StatelessWidget {
                       child: ShiftTemplateCard(
                         template: template,
                         busy: state.archivingId == template.id,
-                        onEdit: () => _openEditor(context, template),
-                        onArchive: () => _archive(context, template),
+                        onEdit: () {
+                          if (context.mounted &&
+                              !cubit.isClosed &&
+                              cubit.scope == owner) {
+                            _openEditor(context, template);
+                          }
+                        },
+                        onArchive: () {
+                          if (context.mounted &&
+                              !cubit.isClosed &&
+                              cubit.scope == owner) {
+                            _archive(context, template);
+                          }
+                        },
                       ),
                     ),
                 ],

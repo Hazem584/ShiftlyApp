@@ -109,7 +109,10 @@ class AccessTheme extends StatelessWidget {
         textTheme: text,
         canvasColor: canvas,
         dividerColor: line,
-        progressIndicatorTheme: ProgressIndicatorThemeData(color: primary, linearTrackColor: line),
+        progressIndicatorTheme: ProgressIndicatorThemeData(
+          color: primary,
+          linearTrackColor: line,
+        ),
         iconTheme: IconThemeData(color: muted, size: 24),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
@@ -133,10 +136,16 @@ class AccessTheme extends StatelessWidget {
           hintStyle: text.bodyLarge?.copyWith(color: muted),
           errorMaxLines: 3,
         ),
-        filledButtonTheme: FilledButtonThemeData(style: button.copyWith(
-          backgroundColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.disabled) ? primary.withValues(alpha: .35) : primary),
-          foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
-        )),
+        filledButtonTheme: FilledButtonThemeData(
+          style: button.copyWith(
+            backgroundColor: WidgetStateProperty.resolveWith(
+              (states) => states.contains(WidgetState.disabled)
+                  ? primary.withValues(alpha: .35)
+                  : primary,
+            ),
+            foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
+          ),
+        ),
         outlinedButtonTheme: OutlinedButtonThemeData(style: button),
         textButtonTheme: TextButtonThemeData(
           style: button.copyWith(

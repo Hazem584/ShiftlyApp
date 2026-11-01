@@ -268,7 +268,7 @@ void main() {
       addTearDown(auth.events.close);
 
       await tester.ensureVisible(find.byKey(const Key('login-create-account')));
-     await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('login-create-account')));
       await tester.pumpAndSettle();
@@ -428,9 +428,9 @@ void main() {
     await tester.pumpAndSettle();
     addTearDown(auth.events.close);
     await tester.ensureVisible(find.byKey(const Key('login-create-account')));
-     await tester.pumpAndSettle();
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('login-create-account')));
+    await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('login-create-account')));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('register-email')),

@@ -33,7 +33,7 @@ class NavigationDestinationItem extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
           decoration: BoxDecoration(
             color: selected
                 ? AppPalette.of(context).selected
@@ -67,13 +67,14 @@ class NavigationDestinationItem extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 label,
-                maxLines: 1,
+                maxLines: 2,
+                textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: selected
                       ? AppPalette.of(context).primaryColor
                       : AppPalette.of(context).textSecondary,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),

@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
-import 'package:shiftly/core/widgets/screen_header.dart';
+
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_list.dart';
-import 'package:shiftly/features/employees/presentation/widgets/employee_metrics_section.dart';
+
 import 'package:shiftly/features/employees/presentation/widgets/employee_pending_invitations.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_search_bar.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employees_loading.dart';
@@ -29,40 +29,75 @@ class EmployeesScreen extends StatelessWidget {
       child: BlocBuilder<EmployeesCubit, EmployeesState>(
         builder: (context, state) => Column(
           children: [
-            if (!embedded)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-                child: ScreenHeader(
-                  icon: Icons.groups_rounded,
-                  title: context.tr('Employee Management'),
-                  subtitle: context.tr(
-                    'Search, invite, and manage your team in one place',
-                  ),
-                  action: FilledButton.icon(
-                    onPressed: () => _openAddEmployee(context),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: Text(context.tr('Add')),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(80, 44),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          context.tr('Your team'),
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        if (state is EmployeesLoaded)
+                          Text(
+                            context.tr('{count} people', {
+                              'count': state.total.toString(),
+                            }),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-            if (state case EmployeesLoaded(:final employees, :final total))
-              EmployeeMetricsSection(employees: employees, total: total),
-            EmployeeSearchBar(
-              status: state is EmployeesLoaded ? state.status : null,
-              onChanged: (query) => context.read<EmployeesCubit>().load(
-                query: query,
-                status: state is EmployeesLoaded ? state.status : null,
-              ),
-              onStatusChanged: (status) => context.read<EmployeesCubit>().load(
-                query: state is EmployeesLoaded ? state.query : '',
-                status: status,
+                  PopupMenuButton<String>(
+                    tooltip: context.tr('Team options'),
+                    onSelected: (route) => context.go(route),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: '/employees?tab=attendance',
+                        child: Text(context.tr('Attendance')),
+                      ),
+                      PopupMenuItem(
+                        value: '/employees?tab=calendar',
+                        child: Text(context.tr('Monthly calendar')),
+                      ),
+                      PopupMenuItem(
+                        value: '/employees?tab=leaveRequests',
+                        child: Text(context.tr('Leave requests')),
+                      ),
+                      PopupMenuItem(
+                        value: '/employees?tab=corrections',
+                        child: Text(context.tr('Attendance corrections')),
+                      ),
+                      PopupMenuItem(
+                        value: '/employees/invitations',
+                        child: Text(context.tr('Invitation history')),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
+            EmployeeSearchBar(
+              status: context.read<EmployeesCubit>().selectedStatus,
+              onChanged: context.read<EmployeesCubit>().search,
+              onStatusChanged: context.read<EmployeesCubit>().filter,
+            ),
             Expanded(child: _stateBody(context, state)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  key: const Key('invite-employee'),
+                  onPressed: () => _openAddEmployee(context),
+                  child: Text(context.tr('Invite employee')),
+                ),
+              ),
+            ),
           ],
         ),
       ),

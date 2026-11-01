@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+
 import 'package:shiftly/core/localization/arabic_translations.dart';
 import 'package:shiftly/features/auth/presentation/access_translations.dart';
+import 'package:shiftly/features/manager/presentation/manager_translations.dart';
 
 /// English source messages are stable lookup keys; user content is never passed here.
 class AppLocalizations {
@@ -16,7 +18,10 @@ class AppLocalizations {
 
   String text(String source, [Map<String, String> arguments = const {}]) {
     final result = locale.languageCode == 'ar'
-        ? accessTranslations[source] ?? arabicTranslations[source] ?? source
+        ? managerTranslations[source] ??
+              accessTranslations[source] ??
+              arabicTranslations[source] ??
+              source
         : source;
     return result.replaceAllMapped(
       RegExp(r'\{(\w+)\}'),

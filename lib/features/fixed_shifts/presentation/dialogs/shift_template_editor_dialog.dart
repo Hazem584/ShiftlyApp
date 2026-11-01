@@ -24,6 +24,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
   late TimeOfDay _end;
   late String _colorValue;
   String? _localError;
+  bool _policyStep = false;
   static const _colors = [
     '#2563EB',
     '#0F766E',
@@ -80,219 +81,267 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
   Widget build(
     BuildContext context,
   ) => BlocBuilder<ManagerTemplatesCubit, ManagerTemplatesState>(
-    builder: (context, state) => AlertDialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: Text(
-        widget.template == null
-            ? context.tr('Create fixed shift')
-            : context.tr('Edit fixed shift'),
-      ),
-      content: SizedBox(
-        width: 520,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: _name,
-                  maxLength: 100,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Template name'),
-                  ),
-                  validator: (_) => _input.validate()?.contains('name') == true
-                      ? _input.validate()
-                      : null,
+    builder: (context, state) => PopScope(
+      canPop: !state.saving,
+      child: AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        title: Text(
+          widget.template == null
+              ? context.tr(_policyStep ? 'Template policy' : 'Create template')
+              : context.tr(
+                  _policyStep ? 'Edit template policy' : 'Edit template',
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _description,
-                  maxLength: 1000,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Description (optional)'),
+        ),
+        content: SizedBox(
+          width: 520,
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    context.tr(
+                      _policyStep
+                          ? 'Step 2 of 2 · Attendance policy'
+                          : 'Step 1 of 2 · Hours and identity',
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: state.saving ? null : () => _pick(true),
-                      icon: const Icon(Icons.login_rounded),
-                      label: Text(
-                        context.tr('Start {value1}', {
-                          'value1': (ClockTime.format(
-                            _start.hour,
-                            _start.minute,
-                            locale: Localizations.localeOf(context).toString(),
-                          )).toString(),
-                        }),
+                  const SizedBox(height: 24),
+                  if (!_policyStep) ...[
+                    TextFormField(
+                      controller: _name,
+                      enabled: !state.saving,
+                      maxLength: 100,
+                      decoration: InputDecoration(
+                        labelText: context.tr('Template name'),
+                      ),
+                      validator: (_) =>
+                          _input.validate()?.contains('name') == true
+                          ? _input.validate()
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _description,
+                      enabled: !state.saving,
+                      maxLength: 1000,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        labelText: context.tr('Description (optional)'),
                       ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: state.saving ? null : () => _pick(false),
-                      icon: const Icon(Icons.logout_rounded),
-                      label: Text(
-                        context.tr('End {value1}', {
-                          'value1': (ClockTime.format(
-                            _end.hour,
-                            _end.minute,
-                            locale: Localizations.localeOf(context).toString(),
-                          )).toString(),
-                        }),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Semantics(
-                  label: context.tr('Template color'),
-                  child: Wrap(
-                    spacing: 10,
-                    children: [
-                      if (!_colors.contains(_colorValue))
-                        ChoiceChip(
-                          label: Text(_colorValue),
-                          avatar: CircleAvatar(
-                            backgroundColor: shiftTemplatesScreenColor(
-                              _colorValue,
-                            ),
-                          ),
-                          selected: true,
-                          onSelected: null,
-                        ),
-                      for (final value in _colors)
-                        ChoiceChip(
-                          label: const SizedBox.square(dimension: 20),
-                          avatar: CircleAvatar(
-                            backgroundColor: shiftTemplatesScreenColor(value),
-                          ),
-                          selected: _colorValue == value,
-                          onSelected: state.saving
-                              ? null
-                              : (_) => setState(() => _colorValue = value),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final width = constraints.maxWidth >= 440
-                        ? (constraints.maxWidth - 10) / 2
-                        : constraints.maxWidth;
-                    final labels = [
-                      'Grace minutes',
-                      'Early check-in minutes',
-                      'Late check-in minutes',
-                      'Minimum work minutes',
-                    ];
-                    return Wrap(
+                    const SizedBox(height: 12),
+                    Wrap(
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        for (var i = 0; i < 4; i++)
-                          SizedBox(
-                            width: width,
-                            child: TextFormField(
-                              controller: _policies[i],
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: context.tr(labels[i]),
-                              ),
-                              onChanged: (_) => setState(() {}),
-                              validator: (value) {
-                                final number = int.tryParse(value ?? '');
-                                return number == null ||
-                                        number < 0 ||
-                                        number > 1440
-                                    ? context.tr('Use 0 to 1440')
-                                    : null;
-                              },
-                            ),
+                        OutlinedButton.icon(
+                          onPressed: state.saving ? null : () => _pick(true),
+                          icon: const Icon(Icons.login_rounded),
+                          label: Text(
+                            context.tr('Start {value1}', {
+                              'value1': (ClockTime.format(
+                                _start.hour,
+                                _start.minute,
+                                locale: Localizations.localeOf(context)
+                                    .toString(),
+                              )).toString(),
+                            }),
                           ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: state.saving ? null : () => _pick(false),
+                          icon: const Icon(Icons.logout_rounded),
+                          label: Text(
+                            context.tr('End {value1}', {
+                              'value1': (ClockTime.format(
+                                _end.hour,
+                                _end.minute,
+                                locale: Localizations.localeOf(context)
+                                    .toString(),
+                              )).toString(),
+                            }),
+                          ),
+                        ),
                       ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    context.tr('{value1} – {value2} • {value3} • {value4}', {
-                      'value1': (ClockTime.format(
-                        _start.hour,
-                        _start.minute,
-                        locale: Localizations.localeOf(context).toString(),
-                      )).toString(),
-                      'value2': (ClockTime.format(
-                        _end.hour,
-                        _end.minute,
-                        locale: Localizations.localeOf(context).toString(),
-                      )).toString(),
-                      'value3': (shiftTemplatesScreenDuration(
-                        _input.durationMinutes,
-                        context,
-                      )).toString(),
-                      'value4': context.tr(
-                        _input.durationMinutes == 1440
-                            ? '24-hour'
-                            : _input.endMinute <= _input.startMinute
-                            ? 'Overnight'
-                            : 'Same day',
+                    ),
+                    const SizedBox(height: 12),
+                    Semantics(
+                      label: context.tr('Template color'),
+                      child: Wrap(
+                        spacing: 10,
+                        children: [
+                          if (!_colors.contains(_colorValue))
+                            ChoiceChip(
+                              label: Text(_colorValue),
+                              avatar: CircleAvatar(
+                                backgroundColor: shiftTemplatesScreenColor(
+                                  _colorValue,
+                                ),
+                              ),
+                              selected: true,
+                              onSelected: null,
+                            ),
+                          for (final value in _colors)
+                            ChoiceChip(
+                              label: const SizedBox.square(dimension: 20),
+                              avatar: CircleAvatar(
+                                backgroundColor: shiftTemplatesScreenColor(
+                                  value,
+                                ),
+                              ),
+                              selected: _colorValue == value,
+                              onSelected: state.saving
+                                  ? null
+                                  : (_) => setState(() => _colorValue = value),
+                            ),
+                        ],
                       ),
-                    }),
-                  ),
-                ),
-                if (state.failure != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    shiftTemplatesScreenSupportMessage(
-                      state.failure!.message,
-                      state.failure!.requestId,
                     ),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                    const SizedBox(height: 12),
+                  ],
+                  if (_policyStep) ...[
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final width = constraints.maxWidth >= 440
+                            ? (constraints.maxWidth - 10) / 2
+                            : constraints.maxWidth;
+                        final labels = [
+                          'Grace minutes',
+                          'Early check-in minutes',
+                          'Late check-in minutes',
+                          'Minimum work minutes',
+                        ];
+                        return Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            for (var i = 0; i < 4; i++)
+                              SizedBox(
+                                width: width,
+                                child: TextFormField(
+                                  controller: _policies[i],
+                                  enabled: !state.saving,
+                                  keyboardType: TextInputType.number,
+                                  decoration: InputDecoration(
+                                    labelText: context.tr(labels[i]),
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                  validator: (value) {
+                                    final number = int.tryParse(value ?? '');
+                                    return number == null ||
+                                            number < 0 ||
+                                            number > 1440
+                                        ? context.tr('Use 0 to 1440')
+                                        : null;
+                                  },
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      context.tr('{value1} – {value2} • {value3} • {value4}', {
+                        'value1': (ClockTime.format(
+                          _start.hour,
+                          _start.minute,
+                          locale: Localizations.localeOf(context).toString(),
+                        )).toString(),
+                        'value2': (ClockTime.format(
+                          _end.hour,
+                          _end.minute,
+                          locale: Localizations.localeOf(context).toString(),
+                        )).toString(),
+                        'value3': (shiftTemplatesScreenDuration(
+                          _input.durationMinutes,
+                          context,
+                        )).toString(),
+                        'value4': context.tr(
+                          _input.durationMinutes == 1440
+                              ? '24-hour'
+                              : _input.endMinute <= _input.startMinute
+                              ? 'Overnight'
+                              : 'Same day',
+                        ),
+                      }),
                     ),
                   ),
+                  if (state.failure != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      shiftTemplatesScreenSupportMessage(
+                        state.failure!.message,
+                        state.failure!.requestId,
+                      ),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                  if (_localError != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      context.tr(_localError!),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
                 ],
-                if (_localError != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    context.tr(_localError!),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),
+        actions: [
+          if (_policyStep)
+            TextButton(
+              onPressed: state.saving
+                  ? null
+                  : () => setState(() => _policyStep = false),
+              child: Text(context.tr('Back')),
+            ),
+          TextButton(
+            onPressed: state.saving ? null : () => Navigator.pop(context),
+            child: Text(context.tr('Cancel')),
+          ),
+          FilledButton(
+            key: Key(
+              _policyStep ? 'save-shift-template' : 'template-continue-policy',
+            ),
+            onPressed: state.saving
+                ? null
+                : _policyStep
+                ? _save
+                : () {
+                    if (_formKey.currentState!.validate()) {
+                      FocusScope.of(context).unfocus();
+                      setState(() => _policyStep = true);
+                    }
+                  },
+            child: state.saving
+                ? const SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    context.tr(
+                      _policyStep ? 'Save template' : 'Continue to policy',
+                    ),
+                  ),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: state.saving ? null : () => Navigator.pop(context),
-          child: Text(context.tr('Cancel')),
-        ),
-        FilledButton(
-          key: const Key('save-shift-template'),
-          onPressed: state.saving ? null : _save,
-          child: state.saving
-              ? const SizedBox.square(
-                  dimension: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(context.tr('Save template')),
-        ),
-      ],
     ),
   );
 
@@ -301,7 +350,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
       context: context,
       initialTime: start ? _start : _end,
     );
-    if (value != null) {
+    if (value != null && mounted) {
       setState(() => start ? _start = value : _end = value);
     }
   }

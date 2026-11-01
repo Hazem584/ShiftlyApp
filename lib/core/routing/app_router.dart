@@ -19,6 +19,9 @@ import 'package:shiftly/features/device_sessions/presentation/device_sessions_sc
 import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/screens/shift_templates_screen.dart';
+import 'package:shiftly/features/manager/presentation/design/manager_route_theme.dart';
+import 'package:shiftly/features/manager/presentation/design/manager_theme.dart';
+import 'package:shiftly/features/manager/presentation/screens/manager_invitation_history.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:shiftly/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
@@ -68,10 +71,12 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: '/devices',
-        builder: (_, _) => DeviceSessionsScreen(
-          onCurrentSessionRevoked: () async {
-            await sessionCoordinator?.signOut();
-          },
+        builder: (_, _) => ManagerRouteTheme(
+          child: DeviceSessionsScreen(
+            onCurrentSessionRevoked: () async {
+              await sessionCoordinator?.signOut();
+            },
+          ),
         ),
       ),
       GoRoute(
@@ -81,8 +86,10 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: '/team-work',
-        builder: (_, state) => TeamWorkScreen(
-          initialTab: state.uri.queryParameters['tab'] ?? 'announcements',
+        builder: (_, state) => ManagerRouteTheme(
+          child: TeamWorkScreen(
+            initialTab: state.uri.queryParameters['tab'] ?? 'announcements',
+          ),
         ),
       ),
 
@@ -145,7 +152,8 @@ GoRouter createAppRouter({
         ],
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => ShellScreen(navigationShell: shell),
+        builder: (context, state, shell) =>
+            ManagerTheme(child: ShellScreen(navigationShell: shell)),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -185,6 +193,21 @@ GoRouter createAppRouter({
                 ),
                 routes: [
                   GoRoute(
+                    path: 'invitations',
+                    builder: (_, _) => ManagerInvitationHistory(
+                      key: ValueKey(
+                        sessionCoordinator?.state.activeMembership?.id,
+                      ),
+                      workspaceId:
+                          sessionCoordinator
+                              ?.state
+                              .activeMembership
+                              ?.workspace
+                              .id ??
+                          '',
+                    ),
+                  ),
+                  GoRoute(
                     path: 'add',
                     builder: (_, _) => const AddEmployeeScreen(),
                   ),
@@ -203,7 +226,7 @@ GoRouter createAppRouter({
               GoRoute(
                 path: '/work',
                 builder: (_, state) => WorkHubScreen(
-                  section: state.uri.queryParameters['tab'] ?? 'tasks',
+                  section: state.uri.queryParameters['tab'] ?? 'overview',
                 ),
                 routes: [
                   GoRoute(

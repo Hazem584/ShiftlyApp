@@ -106,13 +106,21 @@ void main() {
             isNull,
             reason: '${entry.key} / $variant',
           );
-          final boundary = key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+          final boundary =
+              key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
           await tester.runAsync(() async {
-            final image = await boundary.toImage(pixelRatio: 1).timeout(const Duration(seconds: 15));
+            final image = await boundary
+                .toImage(pixelRatio: 1)
+                .timeout(const Duration(seconds: 15));
             try {
-              final bytes = await image.toByteData(format: ui.ImageByteFormat.png).timeout(const Duration(seconds: 15));
-              await File('${output.path}/${entry.key}-$variant.png').writeAsBytes(bytes!.buffer.asUint8List());
-            } finally { image.dispose(); }
+              final bytes = await image
+                  .toByteData(format: ui.ImageByteFormat.png)
+                  .timeout(const Duration(seconds: 15));
+              await File('${output.path}/${entry.key}-$variant.png')
+                  .writeAsBytes(bytes!.buffer.asUint8List());
+            } finally {
+              image.dispose();
+            }
           });
           await tester.pumpWidget(const SizedBox());
           await tester.pump();

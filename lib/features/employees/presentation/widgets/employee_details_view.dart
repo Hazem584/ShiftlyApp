@@ -27,14 +27,24 @@ class EmployeeDetailsView extends StatelessWidget {
   final String timezone;
 
   Future<void> _changeStatus(BuildContext context, Employee employee) async {
+    final employees = context.read<EmployeesCubit>();
+    final owner = employees.scope;
     final suspending = employee.employmentStatus == EmploymentStatus.active;
-    if (suspending) {
+    {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: Text(context.tr('Deactivate employee?')),
+          title: Text(
+            context.tr(
+              suspending ? 'Deactivate employee?' : 'Reactivate employee?',
+            ),
+          ),
           content: Text(
-            context.tr('The employee will lose active workspace access.'),
+            context.tr(
+              suspending
+                  ? 'The employee will lose active workspace access.'
+                  : 'Restore this employee’s access to the workspace.',
+            ),
           ),
           actions: [
             TextButton(
@@ -42,14 +52,25 @@ class EmployeeDetailsView extends StatelessWidget {
               child: Text(context.tr('Cancel')),
             ),
             FilledButton(
-              key: const Key('confirm-deactivate-employee'),
+              key: Key(
+                suspending
+                    ? 'confirm-deactivate-employee'
+                    : 'confirm-reactivate-employee',
+              ),
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(context.tr('Deactivate')),
+              child: Text(
+                context.tr(suspending ? 'Deactivate' : 'Reactivate employee'),
+              ),
             ),
           ],
         ),
       );
-      if (confirmed != true || !context.mounted) return;
+      if (confirmed != true ||
+          !context.mounted ||
+          employees.scope != owner ||
+          employees.isClosed) {
+        return;
+      }
     }
     final result = await context.read<EmployeesCubit>().setStatus(
       membershipId,
@@ -93,7 +114,7 @@ class EmployeeDetailsView extends StatelessWidget {
         ),
         EmployeeDetailsLoadedState(:final employee) => ListView(
           key: const Key('employee-details-content'),
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 30),
           children: [
             EmployeeDetailsHeader(employee: employee),
 
@@ -102,18 +123,32 @@ class EmployeeDetailsView extends StatelessWidget {
             const SizedBox(height: AppSpacing.l),
             EmployeeWorkSection(employee: employee),
             const SizedBox(height: AppSpacing.l),
-            WorkPatternSection(
-              workspaceId: workspaceId,
-              membershipId: membershipId,
-              timezone: timezone,
-              canEdit: employee.employmentStatus == EmploymentStatus.active,
+            ExpansionTile(
+              maintainState: true,
+              tilePadding: EdgeInsets.zero,
+              title: Text(context.tr('Current assignment and history')),
+              children: [
+                WorkPatternSection(
+                  workspaceId: workspaceId,
+                  membershipId: membershipId,
+                  timezone: timezone,
+                  canEdit: employee.employmentStatus == EmploymentStatus.active,
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.l),
-            ExtraShiftsSection(
-              workspaceId: workspaceId,
-              membershipId: membershipId,
-              timezone: timezone,
-              canEdit: employee.employmentStatus == EmploymentStatus.active,
+            ExpansionTile(
+              maintainState: true,
+              tilePadding: EdgeInsets.zero,
+              title: Text(context.tr('Extra shifts and attendance')),
+              children: [
+                ExtraShiftsSection(
+                  workspaceId: workspaceId,
+                  membershipId: membershipId,
+                  timezone: timezone,
+                  canEdit: employee.employmentStatus == EmploymentStatus.active,
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.l),
             if (employee.employmentStatus == EmploymentStatus.active ||

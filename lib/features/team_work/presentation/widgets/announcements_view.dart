@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
+import 'package:shiftly/features/team_work/presentation/dialogs/announcement_readers_dialog.dart';
 import 'package:shiftly/features/team_work/presentation/dialogs/publish_announcement_dialog.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/work_feed_view.dart';
 
@@ -49,76 +48,52 @@ class AnnouncementsView extends StatelessWidget {
     );
   }
 
-  Future<void> _readers(BuildContext context, TeamAnnouncement item) async {
-    await showDialog<void>(
+  Future<void> _readers(BuildContext context, TeamAnnouncement item) =>
+      showDialog<void>(
+        context: context,
+        builder: (_) => AnnouncementReadersDialog(
+          repository: repository,
+          workspaceId: workspaceId,
+          announcementId: item.id,
+          timezone: timezone,
+        ),
+      );
+
+  Future<void> _acknowledge(BuildContext context, TeamAnnouncement item) async {
+    if (!manager) {
+      await cubit.mutate(
+        item.id,
+        () => repository.markAnnouncement(
+          workspaceId,
+          item.id,
+          acknowledge: true,
+        ),
+      );
+      return;
+    }
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(context.tr('Read and acknowledgment status')),
-        content: SizedBox(
-          width: 540,
-          height: 400,
-          child: FutureBuilder<List<AnnouncementReader>>(
-            future: repository.readers(workspaceId, item.id),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Text(
-                  context.tr(ApiErrorParser.parse(snapshot.error!).message),
-                );
-              }
-              if (!snapshot.hasData) {
-                return const AppContentLoading();
-              }
-              final readers = snapshot.data!;
-              return ListView(
-                children: [
-                  Text(
-                    context.tr(
-                      '{read} read · {confirmed} confirmed · {total} recipients',
-                      {
-                        'read': readers
-                            .where((r) => r.readAt != null)
-                            .length
-                            .toString(),
-                        'confirmed': readers
-                            .where((r) => r.acknowledgedAt != null)
-                            .length
-                            .toString(),
-                        'total': readers.length.toString(),
-                      },
-                    ),
-                  ),
-                  for (final reader in readers)
-                    ListTile(
-                      title: Text(reader.name),
-                      leading: Icon(
-                        reader.acknowledgedAt != null
-                            ? Icons.verified_outlined
-                            : reader.readAt != null
-                            ? Icons.done_all
-                            : Icons.schedule,
-                      ),
-                      subtitle: Text(
-                        context.tr(
-                          reader.acknowledgedAt != null
-                              ? 'Acknowledged'
-                              : reader.readAt != null
-                              ? 'Read'
-                              : 'Not read yet',
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
+        title: Text(context.tr('Acknowledge this update?')),
+        content: Text(item.title),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.tr('Close')),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.tr('Cancel')),
+          ),
+          FilledButton(
+            key: const Key('confirm-announcement-acknowledgment'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.tr('Acknowledge')),
           ),
         ],
       ),
+    );
+    if (confirmed != true || !context.mounted || cubit.isClosed) return;
+    await cubit.mutate(
+      item.id,
+      () =>
+          repository.markAnnouncement(workspaceId, item.id, acknowledge: true),
     );
   }
 
@@ -139,6 +114,7 @@ class AnnouncementsView extends StatelessWidget {
                     builder: (_) => PublishAnnouncementDialog(
                       repository: repository,
                       workspaceId: workspaceId,
+                      isCurrent: () => context.mounted && !cubit.isClosed,
                     ),
                   );
                   if (published == true) await cubit.load();
@@ -188,16 +164,7 @@ class AnnouncementsView extends StatelessWidget {
                     item.acknowledgedAt == null &&
                     item.readAt != null)
                   FilledButton.icon(
-                    onPressed: busy
-                        ? null
-                        : () => cubit.mutate(
-                            item.id,
-                            () => repository.markAnnouncement(
-                              workspaceId,
-                              item.id,
-                              acknowledge: true,
-                            ),
-                          ),
+                    onPressed: busy ? null : () => _acknowledge(context, item),
                     icon: const Icon(Icons.check),
                     label: Text(context.tr('I have read and understood')),
                   ),

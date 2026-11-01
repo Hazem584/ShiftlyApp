@@ -36,10 +36,13 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('الرئيسية'), findsOneWidget);
-      expect(find.text('إجمالي الموظفين'), findsOneWidget);
+      expect(
+        find.byKey(const Key('manager-attendance-summary')),
+        findsOneWidget,
+      );
       await tester.tap(find.byKey(const Key('nav-4')));
       await tester.pumpAndSettle();
-      expect(find.text('بروفايل المدير'), findsOneWidget);
+      expect(find.byKey(const Key('profile-heading')), findsOneWidget);
       await tester.scrollUntilVisible(
         find.byKey(const Key('language-selector')),
         200,

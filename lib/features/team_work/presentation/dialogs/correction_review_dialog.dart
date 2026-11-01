@@ -15,8 +15,10 @@ class CorrectionReviewDialog extends StatefulWidget {
     required this.workspaceId,
     required this.requestId,
     required this.timezone,
+    this.isCurrent,
   });
   final TeamWorkRepository repository;
+  final bool Function()? isCurrent;
   final String workspaceId, requestId, timezone;
   @override
   State<CorrectionReviewDialog> createState() => _CorrectionReviewDialogState();
@@ -30,7 +32,7 @@ class _CorrectionReviewDialogState extends State<CorrectionReviewDialog> {
   bool _busy = false;
   String? _error;
   Future<void> _review(bool approve) async {
-    if (_busy) return;
+    if (_busy || widget.isCurrent?.call() == false) return;
     if (approve) {
       final request = await _request;
       if (!mounted) return;
@@ -41,13 +43,18 @@ class _CorrectionReviewDialogState extends State<CorrectionReviewDialog> {
           repository: widget.repository,
           workspaceId: widget.workspaceId,
           timezone: widget.timezone,
+          isCurrent: widget.isCurrent,
         ),
       );
       if (saved == true && mounted) Navigator.pop(context, true);
       return;
     }
     final note = approve ? null : await requestReviewNote(context);
-    if (!approve && note == null || !mounted) return;
+    if (!approve && note == null ||
+        !mounted ||
+        widget.isCurrent?.call() == false) {
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;

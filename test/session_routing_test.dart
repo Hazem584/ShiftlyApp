@@ -184,7 +184,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('view-invitation-invitation-id')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('decline-invitation-invitation-id')));
+      await tester.ensureVisible(
+        find.byKey(const Key('decline-invitation-invitation-id')),
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(
@@ -345,7 +347,7 @@ void main() {
   testWidgets('backend manager role opens the manager shell', (tester) async {
     await _pumpRole(tester, WorkspaceRole.manager);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsOneWidget);
-    expect(find.textContaining('Good morning'), findsOneWidget);
+    expect(find.byKey(const Key('manager-home-greeting')), findsOneWidget);
     expect(find.byKey(const Key('notification-bell')), findsOneWidget);
     expect(
       find.descendant(
@@ -373,10 +375,8 @@ void main() {
         await tester.tap(find.text('View attendance and shifts'));
         await tester.pumpAndSettle();
         expect(
-          find.text(
-            kind == 'SHIFT' ? 'Fixed shift templates' : 'Team & attendance',
-          ),
-          findsOneWidget,
+          find.text(kind == 'SHIFT' ? 'Fixed shift templates' : 'Attendance'),
+          findsAtLeastNWidgets(1),
         );
         expect(
           router.routeInformationProvider.value.uri.path,
@@ -391,7 +391,13 @@ void main() {
     await _pumpRole(tester, WorkspaceRole.manager);
     await tester.tap(find.byKey(const Key('dashboard-open-profile')));
     await tester.pumpAndSettle();
-    expect(find.text('Manager Profile'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('profile-heading')),
+        matching: find.text('Profile'),
+      ),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -507,6 +513,8 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('manager-logout')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('manager-logout')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-manager-sign-out')));
     await tester.pumpAndSettle();
     expect(find.text('Good work\nstarts here.'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);

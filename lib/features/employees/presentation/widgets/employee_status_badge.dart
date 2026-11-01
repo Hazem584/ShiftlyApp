@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 
@@ -25,11 +26,11 @@ class EmployeeStatusBadge extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         child: Text(
-          label,
+          context.tr(label),
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w700,
-            fontSize: 12,
+            fontSize: 13,
           ),
         ),
       ),

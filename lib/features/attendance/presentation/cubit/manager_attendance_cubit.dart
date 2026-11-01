@@ -111,6 +111,7 @@ class ManagerAttendanceCubit extends Cubit<ManagerAttendanceState> {
   final AttendanceRepository _repository;
   final void Function()? onDashboardChanged;
   FeatureSessionScope? _scope;
+  FeatureSessionScope? get scope => _scope;
   var _generation = 0;
   var _requestId = 0;
 

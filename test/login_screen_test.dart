@@ -150,8 +150,8 @@ void main() {
         TextDirection.ltr,
       );
       await tester.ensureVisible(find.byKey(const Key('login-submit')));
-  await tester.pumpAndSettle();
-  await tester.tap(find.byKey(const Key('login-submit')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('login-submit')));
       await tester.pump();
       expect(find.text('اكتب إيميل صحيح'), findsOneWidget);
       expect(find.text('اكتب الباسورد'), findsOneWidget);
