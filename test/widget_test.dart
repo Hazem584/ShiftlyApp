@@ -19,7 +19,7 @@ void main() {
   testWidgets('application starts on the manager dashboard', (tester) async {
     await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('manager-home-greeting')), findsOneWidget);
+    expect(find.textContaining('Good morning'), findsOneWidget);
     expect(find.text('Shift Lab Preview Workspace'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsOneWidget);
     expect(find.byKey(const Key('nav-0')), findsOneWidget);
@@ -35,26 +35,20 @@ void main() {
   ) async {
     await tester.pumpWidget(_testApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Team').last);
+    await tester.tap(find.text('Employees').last);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('employee-search')), findsOneWidget);
     await tester.enterText(find.byKey(const Key('employee-search')), 'Mariam');
     await tester.tap(find.byKey(const Key('nav-2')));
     await tester.pumpAndSettle();
-    expect(find.text('Work hub'), findsWidgets);
-    await tester.tap(find.text('Team').last);
+    expect(find.text('Work management'), findsWidgets);
+    await tester.tap(find.text('Employees').last);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('employee-search')), findsOneWidget);
     expect(find.text('Mariam'), findsOneWidget);
     await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('profile-heading')),
-        matching: find.text('Profile'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Manager Profile'), findsOneWidget);
     await tester.tap(find.text('Chat').last);
     await tester.pumpAndSettle();
     expect(find.text('No chat groups yet.'), findsOneWidget);

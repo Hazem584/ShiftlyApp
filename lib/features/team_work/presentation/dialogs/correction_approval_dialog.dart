@@ -12,11 +12,9 @@ class CorrectionApprovalDialog extends StatefulWidget {
     required this.repository,
     required this.workspaceId,
     required this.timezone,
-    this.isCurrent,
   });
   final CorrectionRequest request;
   final TeamWorkRepository repository;
-  final bool Function()? isCurrent;
   final String workspaceId, timezone;
   @override
   State<CorrectionApprovalDialog> createState() =>
@@ -36,7 +34,7 @@ class _CorrectionApprovalDialogState extends State<CorrectionApprovalDialog> {
   }
 
   Future<void> _approve() async {
-    if (_busy || widget.isCurrent?.call() == false) return;
+    if (_busy) return;
     final duration = _end.difference(_start);
     if (duration.inMinutes < 1 ||
         duration > const Duration(hours: 24) ||

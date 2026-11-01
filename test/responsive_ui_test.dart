@@ -89,7 +89,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: find.byType(NavigationRail),
-          matching: find.text('Team'),
+          matching: find.text('Employees'),
         ),
       );
       await tester.pumpAndSettle();

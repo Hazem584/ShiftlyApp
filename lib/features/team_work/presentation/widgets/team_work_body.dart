@@ -77,7 +77,6 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
           repository: widget.repository,
           workspaceId: widget.workspaceId,
           timezone: widget.timezone,
-          isCurrent: () => mounted && !_corrections.isClosed,
         ),
       );
       if (saved == true && mounted) {
@@ -108,7 +107,7 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
           widget.initialTab == 'corrections'
               ? 'Attendance corrections'
               : widget.initialTab == 'tasks' && widget.manager
-              ? 'Action inbox'
+              ? 'Manager tasks'
               : 'Team announcements',
         ),
       ),

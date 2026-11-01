@@ -10,9 +10,6 @@ import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_cache_settings_tile.dart';
 import 'package:shiftly/features/device_sessions/presentation/device_sessions_tile.dart';
-import 'package:shiftly/features/manager/presentation/design/manager_theme_marker.dart';
-import 'package:shiftly/features/manager/presentation/widgets/manager_confirmation_sheet.dart';
-import 'package:shiftly/features/manager/presentation/widgets/manager_support_tile.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_edit_form.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_header.dart';
@@ -30,29 +27,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _editing = false;
   bool _switchingWorkspace = false;
-
-  bool _signingOut = false;
-  Future<void> _signOut() async {
-    if (_signingOut || widget.onLogout == null) return;
-    if (Theme.of(context).extension<ManagerThemeMarker>() != null) {
-      final confirmed = await showManagerConfirmation(
-        context,
-        title: 'Sign out of Shiftly?',
-        description: context.tr(
-          'You will need to sign in again to access your workspaces.',
-        ),
-        action: 'Sign out',
-        confirmKey: const Key('confirm-manager-sign-out'),
-      );
-      if (!confirmed || !mounted) return;
-    }
-    setState(() => _signingOut = true);
-    try {
-      await widget.onLogout!();
-    } finally {
-      if (mounted) setState(() => _signingOut = false);
-    }
-  }
 
   Future<void> _showWorkspaceChooser() async {
     if (_switchingWorkspace) return;
@@ -90,12 +64,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   )
                 : ListView(
                     key: const Key('profile-content'),
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+                    padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
                     children: [
                       ScreenHeader(
-                        key: const Key('profile-heading'),
                         icon: Icons.person_rounded,
-                        title: context.tr('Profile'),
+                        title: context.tr('Manager Profile'),
                         subtitle: context.tr(
                           'Your personal and workplace information',
                         ),
@@ -118,9 +91,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const LanguageSettingsTile(),
                       const ThemeSettingsTile(),
                       const DeviceSessionsTile(),
-                      if (Theme.of(context).extension<ManagerThemeMarker>() !=
-                          null)
-                        const ManagerSupportTile(),
                       if (widget.onLogout != null) ...[
                         const SizedBox(height: AppSpacing.l),
                         OutlinedButton.icon(
@@ -134,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: AppSpacing.s),
                         OutlinedButton.icon(
                           key: const Key('manager-logout'),
-                          onPressed: _signingOut ? null : _signOut,
+                          onPressed: widget.onLogout,
                           icon: const Icon(Icons.logout_rounded),
                           label: Text(context.tr('Sign out')),
                           style: OutlinedButton.styleFrom(

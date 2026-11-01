@@ -10,13 +10,10 @@ import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/utils/approve_manager_attendance.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_records_list.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_rejection_dialog.dart';
-import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
-import 'package:shiftly/features/manager/presentation/widgets/manager_employee_picker.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 class ManagerAttendancePanel extends StatelessWidget {
@@ -182,8 +179,6 @@ class ManagerAttendancePanel extends StatelessWidget {
     ManagerAttendanceState state,
   ) async {
     final employees = _activeEmployees(context);
-    final filterScope = context.read<ManagerAttendanceCubit>().scope;
-    String? pickedName;
     var employeeId = state.query.employeeMembershipId;
     DateTimeRange? dates;
     if (state.query.from != null && state.query.to != null) {
@@ -200,38 +195,21 @@ class ManagerAttendancePanel extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              OutlinedButton.icon(
-                icon: const Icon(Icons.person_search_outlined),
-                label: Text(
-                  pickedName ??
-                      (employeeId == null
-                          ? context.tr('All employees')
-                          : employees
-                                    .where((e) => e.id == employeeId)
-                                    .firstOrNull
-                                    ?.displayName ??
-                                context.tr('Employee')),
-                ),
-                onPressed: () async {
-                  final selected = await showDialog<Employee>(
-                    context: context,
-                    builder: (_) => ManagerEmployeePicker(
-                      repository: context.read<EmployeeRepository>(),
-                      workspaceId: filterScope?.workspaceId ?? '',
-                      isCurrent: () =>
-                          context.mounted &&
-                          dialogContext.mounted &&
-                          context.read<ManagerAttendanceCubit>().scope ==
-                              filterScope,
+              DropdownButtonFormField<String?>(
+                initialValue: employeeId,
+                decoration: InputDecoration(labelText: context.tr('Employee')),
+                items: [
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(context.tr('All employees')),
+                  ),
+                  for (final employee in employees)
+                    DropdownMenuItem(
+                      value: employee.id,
+                      child: Text(employee.displayName),
                     ),
-                  );
-                  if (selected != null && dialogContext.mounted) {
-                    setDialogState(() {
-                      employeeId = selected.id;
-                      pickedName = selected.displayName;
-                    });
-                  }
-                },
+                ],
+                onChanged: (value) => setDialogState(() => employeeId = value),
               ),
               const SizedBox(height: AppSpacing.m),
               OutlinedButton.icon(
@@ -307,9 +285,7 @@ class ManagerAttendancePanel extends StatelessWidget {
         ),
       ),
     );
-    if (query != null &&
-        context.mounted &&
-        context.read<ManagerAttendanceCubit>().scope == filterScope) {
+    if (query != null && context.mounted) {
       await context.read<ManagerAttendanceCubit>().load(query: query);
     }
   }
@@ -379,7 +355,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                   Text(
                     record.occurrenceKind == 'EXTRA'
                         ? context.tr(
-                            'Extra work · Separate from the baseline assignment',
+                            'EXTRA: no baseline substitution or automatic BLUE',
                           )
                         : record.occurrenceKind == 'BASELINE'
                         ? context.tr('BASELINE attendance')
@@ -443,12 +419,19 @@ class ManagerAttendancePanel extends StatelessWidget {
                   const SizedBox(height: AppSpacing.l),
                   FilledButton.icon(
                     key: const Key('approve-attendance'),
-                    onPressed: () => approveManagerAttendance(
-                      context,
-                      sheetContext,
-                      record,
-                      timezone,
-                    ),
+                    onPressed: () async {
+                      final result = await context
+                          .read<ManagerAttendanceCubit>()
+                          .review(record.id, AttendanceReviewDecision.approved);
+                      if (!context.mounted) return;
+                      if (result == AttendanceMutationResult.success) {
+                        Navigator.pop(sheetContext);
+                        ToastService.success(
+                          context,
+                          message: 'Attendance approved.',
+                        );
+                      }
+                    },
                     icon: const Icon(Icons.check_rounded),
                     label: Text(context.tr('Approve')),
                   ),

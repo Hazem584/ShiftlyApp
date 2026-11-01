@@ -9,7 +9,6 @@ import 'package:shiftly/features/fixed_shifts/domain/entities/schedule_exception
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/dialogs/schedule_exception_dialog.dart';
-import 'package:shiftly/features/manager/presentation/widgets/manager_reason_dialog.dart';
 
 class ScheduleExceptionsSection extends StatefulWidget {
   const ScheduleExceptionsSection({
@@ -143,14 +142,41 @@ class _ScheduleExceptionsSectionState extends State<ScheduleExceptionsSection> {
   Future<void> _cancel(ScheduleException entry) async {
     if (_busy || !widget.isCurrent()) return;
     final scope = widget.scope, generation = _generation;
+    final controller = TextEditingController();
     final reason = await showDialog<String>(
       context: context,
-      builder: (_) => const ManagerReasonDialog(
-        title: 'Cancel day exception?',
-        confirm: 'Cancel exception',
-        minimumLength: 5,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(context.tr('Cancel day exception?')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          minLines: 2,
+          maxLines: 4,
+          maxLength: 1000,
+          decoration: InputDecoration(
+            labelText: context.tr(
+              'Cancellation reason (at least 5 characters)',
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(context.tr('Keep exception')),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (controller.text.trim().length >= 5) {
+                Navigator.pop(dialogContext, controller.text.trim());
+              }
+            },
+            child: Text(context.tr('Cancel exception')),
+          ),
+        ],
       ),
     );
+    // Keep the controller alive until the dialog's closing animation completes.
+    Future<void>.delayed(const Duration(seconds: 1), controller.dispose);
     if (reason == null ||
         !mounted ||
         generation != _generation ||

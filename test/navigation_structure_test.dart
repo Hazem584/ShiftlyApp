@@ -90,12 +90,16 @@ void main() {
       expect(find.byKey(const Key('today-at-a-glance-card')), findsNothing);
       await tester.tap(find.byKey(const Key('nav-1')));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('employee-search')), findsOneWidget);
-      expect(find.byKey(const Key('invite-employee')), findsOneWidget);
-      await tester.tap(find.byTooltip('Team options'));
-      await tester.pumpAndSettle();
-      expect(find.text('Invitation history'), findsOneWidget);
-      await tester.tap(find.text('Attendance').last);
+      for (final name in [
+        'employees',
+        'invite',
+        'attendance',
+        'corrections',
+        'reports',
+      ]) {
+        expect(find.byKey(Key('section-$name')), findsOneWidget);
+      }
+      await tester.tap(find.byKey(const Key('section-attendance')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('attendance-content')), findsOneWidget);
       expect(find.byKey(const Key('attendance-tab-requests')), findsNothing);

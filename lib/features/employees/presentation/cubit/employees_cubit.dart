@@ -129,25 +129,14 @@ class EmployeesCubit extends Cubit<EmployeesState> {
   final InvitationRepository? invitations;
   final void Function()? onDashboardChanged;
   EmployeeSessionScope? _scope;
-  EmployeeSessionScope? get scope => _scope;
   var _generation = 0;
   var _requestId = 0;
   var _sessionBound = false;
-  String _searchQuery = '';
-  EmployeeStatusFilter? _selectedStatus;
-  EmployeeStatusFilter? get selectedStatus => _selectedStatus;
-
-  Future<void> search(String query) =>
-      load(query: query, status: _selectedStatus);
-  Future<void> filter(EmployeeStatusFilter? status) =>
-      load(query: _searchQuery, status: status);
 
   void bindSession(EmployeeSessionScope? scope) {
     _sessionBound = true;
     if (_scope == scope) return;
     _scope = scope;
-    _searchQuery = '';
-    _selectedStatus = null;
     _generation += 1;
     _requestId += 1;
     emit(const EmployeesLoading());
@@ -161,8 +150,6 @@ class EmployeesCubit extends Cubit<EmployeesState> {
   }) async {
     final scope = _scope;
     if (_sessionBound && (scope == null || !scope.canManage)) return;
-    _searchQuery = query;
-    _selectedStatus = status;
     final generation = _generation;
     final requestId = ++_requestId;
     final current = state;

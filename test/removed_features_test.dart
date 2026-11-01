@@ -5,12 +5,11 @@ import 'package:shiftly/features/shell/presentation/screens/work_hub_screen.dart
 
 void main() {
   test('work navigation keeps only supported sections', () {
-    expect(WorkHubScreen.destinations.map((t) => t.$1).toList(), [
+    expect(WorkHubScreen.tabs.map((t) => t.$1).toList(), [
       'tasks',
       'shifts',
-      'personal',
       'announcements',
-      'reports',
+      'personal',
     ]);
   });
   test('cache size uses megabytes', () {

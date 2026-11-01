@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/constants/app_strings.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
-import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_avatar.dart';
@@ -23,32 +23,25 @@ class DashboardTopBar extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     children: [
       Expanded(
-        child: InkWell(
-          key: const Key('dashboard-switch-workspace'),
-          onTap: () => showWorkspaceSwitcher(context),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                workspaceName.isEmpty ? context.tr('Workspace') : workspaceName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 23,
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              workspaceName.isEmpty ? AppStrings.workplace : workspaceName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+            ),
+            Text(
+              timezone,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: AppPalette.of(context).textSecondary,
+                fontSize: 12,
               ),
-              Text(
-                timezone,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: AppPalette.of(context).textSecondary,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       const NotificationBell(),

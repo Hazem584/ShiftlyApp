@@ -5,7 +5,6 @@ import 'package:shiftly/core/routing/route_not_found_screen.dart';
 import 'package:shiftly/core/routing/session_route_intent.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
-import 'package:shiftly/features/auth/presentation/design/access_theme.dart';
 import 'package:shiftly/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/login_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/profile_setup_screen.dart';
@@ -19,9 +18,6 @@ import 'package:shiftly/features/device_sessions/presentation/device_sessions_sc
 import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employee_details_screen.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/screens/shift_templates_screen.dart';
-import 'package:shiftly/features/manager/presentation/design/manager_route_theme.dart';
-import 'package:shiftly/features/manager/presentation/design/manager_theme.dart';
-import 'package:shiftly/features/manager/presentation/screens/manager_invitation_history.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:shiftly/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
@@ -71,12 +67,10 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: '/devices',
-        builder: (_, _) => ManagerRouteTheme(
-          child: DeviceSessionsScreen(
-            onCurrentSessionRevoked: () async {
-              await sessionCoordinator?.signOut();
-            },
-          ),
+        builder: (_, _) => DeviceSessionsScreen(
+          onCurrentSessionRevoked: () async {
+            await sessionCoordinator?.signOut();
+          },
         ),
       ),
       GoRoute(
@@ -86,48 +80,37 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: '/team-work',
-        builder: (_, state) => ManagerRouteTheme(
-          child: TeamWorkScreen(
-            initialTab: state.uri.queryParameters['tab'] ?? 'announcements',
-          ),
+        builder: (_, state) => TeamWorkScreen(
+          initialTab: state.uri.queryParameters['tab'] ?? 'announcements',
         ),
       ),
 
       GoRoute(
         path: '/session',
-        builder: (_, _) =>
-            const AccessTheme(child: SessionStatusScreen.loading()),
+        builder: (_, _) => const SessionStatusScreen.loading(),
       ),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
-      GoRoute(
-        path: '/login',
-        builder: (_, _) => const AccessTheme(child: LoginScreen()),
-      ),
-      GoRoute(
-        path: '/register',
-        builder: (_, _) => const AccessTheme(child: RegisterScreen()),
-      ),
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
       GoRoute(
         path: '/verify-email',
-        builder: (_, _) => const AccessTheme(child: EmailVerificationScreen()),
+        builder: (_, _) => const EmailVerificationScreen(),
       ),
       GoRoute(
         path: '/profile-setup',
-        builder: (_, _) => const AccessTheme(child: ProfileSetupScreen()),
+        builder: (_, _) => const ProfileSetupScreen(),
       ),
       GoRoute(
         path: '/workspaces',
-        builder: (_, _) => const AccessTheme(child: WorkspaceSelectionScreen()),
+        builder: (_, _) => const WorkspaceSelectionScreen(),
       ),
       GoRoute(
         path: '/offline',
-        builder: (_, _) =>
-            const AccessTheme(child: SessionStatusScreen.offline()),
+        builder: (_, _) => const SessionStatusScreen.offline(),
       ),
       GoRoute(
         path: '/session-error',
-        builder: (_, _) =>
-            const AccessTheme(child: SessionStatusScreen.failure()),
+        builder: (_, _) => const SessionStatusScreen.failure(),
       ),
       GoRoute(
         path: '/employee',
@@ -152,8 +135,7 @@ GoRouter createAppRouter({
         ],
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) =>
-            ManagerTheme(child: ShellScreen(navigationShell: shell)),
+        builder: (context, state, shell) => ShellScreen(navigationShell: shell),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -193,21 +175,6 @@ GoRouter createAppRouter({
                 ),
                 routes: [
                   GoRoute(
-                    path: 'invitations',
-                    builder: (_, _) => ManagerInvitationHistory(
-                      key: ValueKey(
-                        sessionCoordinator?.state.activeMembership?.id,
-                      ),
-                      workspaceId:
-                          sessionCoordinator
-                              ?.state
-                              .activeMembership
-                              ?.workspace
-                              .id ??
-                          '',
-                    ),
-                  ),
-                  GoRoute(
                     path: 'add',
                     builder: (_, _) => const AddEmployeeScreen(),
                   ),
@@ -226,7 +193,7 @@ GoRouter createAppRouter({
               GoRoute(
                 path: '/work',
                 builder: (_, state) => WorkHubScreen(
-                  section: state.uri.queryParameters['tab'] ?? 'overview',
+                  section: state.uri.queryParameters['tab'] ?? 'tasks',
                 ),
                 routes: [
                   GoRoute(
@@ -276,17 +243,8 @@ String? _redirect(
   final status = coordinator.state.status;
   final location = route.matchedLocation;
   return switch (status) {
-    SessionStatus.initializing => location == '/session' ? null : '/session',
-    SessionStatus.loadingCurrentUser =>
-      const {
-            '/session',
-            '/login',
-            '/register',
-            '/profile-setup',
-            '/workspaces',
-          }.contains(location)
-          ? null
-          : '/session',
+    SessionStatus.initializing || SessionStatus.loadingCurrentUser =>
+      location == '/session' ? null : '/session',
     SessionStatus.unauthenticated => _signedOutRedirect(
       location,
       coordinator.state.failure?.kind == FailureKind.authentication
@@ -312,8 +270,6 @@ String? _redirect(
     SessionStatus.failure =>
       location == '/login' ||
               location == '/register' ||
-              location == '/profile-setup' ||
-              location == '/workspaces' ||
               location == '/session-error'
           ? null
           : '/session-error',

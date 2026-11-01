@@ -47,9 +47,7 @@ class _ChatDocumentMessageState extends State<ChatDocumentMessage> {
       cache.pin(file);
       try {
         final bytes = await file.readAsBytes();
-        if (!mounted ||
-            groups.scope != scope ||
-            !cache.storage.authorized(key)) {
+        if (!mounted || groups.scope != scope || !cache.storage.authorized(key)) {
           return;
         }
         final name = widget.message.attachment?.fileName ?? 'document.pdf';

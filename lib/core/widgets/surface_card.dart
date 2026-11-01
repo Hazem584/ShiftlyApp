@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/features/manager/presentation/design/manager_theme_marker.dart';
 
 class SurfaceCard extends StatelessWidget {
   const SurfaceCard({
@@ -18,17 +17,9 @@ class SurfaceCard extends StatelessWidget {
   Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
       color: AppPalette.of(context).surface,
-      borderRadius: BorderRadius.circular(
-        Theme.of(context).extension<ManagerThemeMarker>() != null
-            ? 16
-            : AppRadii.l,
-      ),
-      border: Theme.of(context).extension<ManagerThemeMarker>() != null
-          ? null
-          : Border.all(color: AppPalette.of(context).borderColor),
-      boxShadow:
-          Theme.of(context).extension<ManagerThemeMarker>() != null ||
-              Theme.of(context).brightness == Brightness.dark
+      borderRadius: BorderRadius.circular(AppRadii.l),
+      border: Border.all(color: AppPalette.of(context).borderColor),
+      boxShadow: Theme.of(context).brightness == Brightness.dark
           ? const []
           : AppShadows.soft,
     ),
@@ -36,11 +27,7 @@ class SurfaceCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(
-          Theme.of(context).extension<ManagerThemeMarker>() != null
-              ? 16
-              : AppRadii.l,
-        ),
+        borderRadius: BorderRadius.circular(AppRadii.l),
         child: Padding(padding: padding, child: child),
       ),
     ),

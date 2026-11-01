@@ -33,7 +33,6 @@ class _Repository implements EmployeeRepository, InvitationRepository {
   Completer<EmployeePage>? pendingLoad;
   Object? listError;
   int listCalls = 0;
-  final filters = <(String, EmployeeStatusFilter?, int)>[];
   int invitationCalls = 0;
   int updateCalls = 0;
 
@@ -46,7 +45,6 @@ class _Repository implements EmployeeRepository, InvitationRepository {
     int limit = 20,
   }) async {
     listCalls++;
-    filters.add((search, status, page));
     if (listError case final Object error) throw error;
     if (pendingLoad case final value?) return value.future;
     if (search.trim().isNotEmpty) {
@@ -150,46 +148,6 @@ const _scopeB = EmployeeSessionScope(
 );
 
 void main() {
-  test('rapid search preserves the active status filter while requests are pending', () async {
-    final repository = _Repository();
-    final cubit = EmployeesCubit(repository, invitations: repository);
-    addTearDown(cubit.close);
-    cubit.bindSession(_scopeA);
-    await Future<void>.delayed(Duration.zero);
-    await cubit.filter(EmployeeStatusFilter.active);
-    repository.pendingLoad = Completer<EmployeePage>();
-    final first = cubit.search('Omar');
-    final latest = cubit.search('Omar Adel');
-    expect(repository.filters[repository.filters.length - 2], (
-      'Omar',
-      EmployeeStatusFilter.active,
-      1,
-    ));
-    expect(repository.filters.last, (
-      'Omar Adel',
-      EmployeeStatusFilter.active,
-      1,
-    ));
-    repository.pendingLoad!.complete(
-      const EmployeePage(data: [], page: 1, limit: 20, total: 0, totalPages: 0),
-    );
-    await Future.wait([first, latest]);
-    expect((cubit.state as EmployeesLoaded).query, 'Omar Adel');
-    expect(
-      (cubit.state as EmployeesLoaded).status,
-      EmployeeStatusFilter.active,
-    );
-    repository.pendingLoad = null;
-    await cubit.filter(EmployeeStatusFilter.suspended);
-    expect(repository.filters.last, (
-      'Omar Adel',
-      EmployeeStatusFilter.suspended,
-      1,
-    ));
-    cubit.bindSession(_scopeB);
-    expect(cubit.selectedStatus, isNull);
-  });
-
   test(
     'initial, empty, search, status, pagination and duplicate prevention',
     () async {

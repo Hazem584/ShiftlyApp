@@ -5,7 +5,7 @@ import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 
 Future<void> _openEmployees(WidgetTester tester) async {
-  await tester.tap(find.text('Team').last);
+  await tester.tap(find.text('Employees').last);
   await tester.pumpAndSettle();
 }
 
@@ -37,7 +37,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _openEmployees(tester);
-    await tester.tap(find.byKey(const Key('invite-employee')));
+    await tester.tap(find.byKey(const Key('section-invite')));
     await tester.pumpAndSettle();
     expect(find.text('Invite Employee'), findsWidgets);
     await tester.enterText(find.byKey(const Key('email-field')), 'invalid');
@@ -61,7 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     await _openEmployees(tester);
-    await tester.tap(find.byKey(const Key('invite-employee')));
+    await tester.tap(find.byKey(const Key('section-invite')));
     await tester.pumpAndSettle();
     expect(find.text('Invite Employee'), findsWidgets);
     await tester.enterText(

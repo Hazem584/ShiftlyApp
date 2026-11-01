@@ -209,7 +209,7 @@ void main() {
         ),
       );
       await tester.pump();
-      expect(find.text('Getting your workspace ready'), findsOneWidget);
+      expect(find.text(BrandSessionLoading.tagline), findsOneWidget);
       expect(find.text('Sign in'), findsNothing);
       storage.readGate!.complete(false);
       await tester.pumpAndSettle();
@@ -390,8 +390,8 @@ void main() {
       expect(
         find.text(
           failure.code == 'PROFILE_NOT_INITIALIZED'
-              ? 'Your profile'
-              : 'You’re offline.',
+              ? 'Complete your profile'
+              : 'You are offline',
         ),
         findsWidgets,
       );

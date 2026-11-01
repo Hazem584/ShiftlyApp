@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/services/toast_service.dart';
-import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 
@@ -31,13 +30,7 @@ void main() {
       tester.element(find.byKey(const Key('manager-bottom-navigation'))),
     ).go('/attendance');
     await tester.pumpAndSettle();
-    expect(
-      find.descendant(
-        of: find.byType(ScreenHeader),
-        matching: find.text('Attendance'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('Team & attendance'), findsOneWidget);
     expect(find.text('Attendance records'), findsOneWidget);
     expect(find.text('94.2%'), findsNothing);
     await tester.scrollUntilVisible(
@@ -77,7 +70,7 @@ void main() {
       _appWith(MockEmployeeRepository(delay: Duration.zero)),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Team').last);
+    await tester.tap(find.text('Employees').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mariam Hassan'));
     await tester.pumpAndSettle();
@@ -115,7 +108,7 @@ void main() {
       _appWith(MockEmployeeRepository(delay: Duration.zero)),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Team').last);
+    await tester.tap(find.text('Employees').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mariam Hassan'));
     await tester.pumpAndSettle();
@@ -130,8 +123,6 @@ void main() {
           .first,
     );
 
-    await tester.ensureVisible(find.byKey(const Key('deactivate-employee')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('deactivate-employee')));
     await tester.pumpAndSettle();
     expect(find.text('Deactivate employee?'), findsOneWidget);
@@ -149,11 +140,7 @@ void main() {
     );
     expect(find.byKey(const Key('reactivate-employee')), findsOneWidget);
 
-    await tester.ensureVisible(find.byKey(const Key('reactivate-employee')));
-    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('reactivate-employee')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('confirm-reactivate-employee')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('deactivate-employee')),
@@ -195,7 +182,7 @@ void main() {
     );
     await tester.pumpWidget(_appWith(employees));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Team').last);
+    await tester.tap(find.text('Employees').last);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.textContaining('Alexandria Very Long'), findsOneWidget);
@@ -211,9 +198,9 @@ void main() {
         _appWith(MockEmployeeRepository(delay: Duration.zero)),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Team').last);
+      await tester.tap(find.text('Employees').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('invite-employee')));
+      await tester.tap(find.byKey(const Key('section-invite')));
       await tester.pumpAndSettle();
       expect(find.text('Invite Employee'), findsWidgets);
       expect(tester.takeException(), isNull, reason: 'Top failed at $size');

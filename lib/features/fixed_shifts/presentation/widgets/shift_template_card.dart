@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/clock_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
-
-import 'shift_template_details.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/utils/shift_templates_formatters.dart';
 
 class ShiftTemplateCard extends StatelessWidget {
   const ShiftTemplateCard({
@@ -16,61 +16,168 @@ class ShiftTemplateCard extends StatelessWidget {
   });
   final ShiftTemplate template;
   final bool busy;
-  final VoidCallback onEdit, onArchive;
+  final VoidCallback onEdit;
+  final VoidCallback onArchive;
+
   @override
   Widget build(BuildContext context) {
-    final locale = Localizations.localeOf(context).toString();
-    return SurfaceCard(
-      key: Key('shift-template-${template.id}'),
-      onTap: busy
-          ? null
-          : () => Navigator.of(context).push<void>(
-              MaterialPageRoute(
-                builder: (_) => InheritedTheme.captureAll(
-                  context,
-                  ShiftTemplateDetails(
-                    template: template,
-                    onEdit: template.active ? onEdit : null,
-                    onArchive: template.active ? onArchive : null,
-                  ),
-                ),
-              ),
-            ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.schedule_outlined),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final color = shiftTemplatesScreenColor(template.color);
+    return Opacity(
+      opacity: template.active ? 1 : .68,
+      child: SurfaceCard(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  template.name,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '${ClockTime.minutes(template.startMinute, locale: locale)} – ${ClockTime.minutes(template.endMinute, locale: locale)}',
-                  textDirection: TextDirection.ltr,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                if (template.overnight)
-                  Text(
-                    context.tr('Overnight / next-day end'),
-                    style: Theme.of(context).textTheme.bodySmall,
+                Container(
+                  width: 12,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                if (!template.active)
-                  Text(
-                    context.tr('Archived'),
-                    style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    template.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                if (busy) const LinearProgressIndicator(),
+                ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: _badge(
+                template.active
+                    ? Icons.check_circle_outline
+                    : Icons.archive_outlined,
+                context.tr(template.active ? 'Active' : 'Archived'),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              context.tr('{value1} – {value2}  •  {value3}', {
+                'value1': (ClockTime.minutes(
+                  template.startMinute,
+                  locale: Localizations.localeOf(context).toString(),
+                )).toString(),
+                'value2': (ClockTime.minutes(
+                  template.endMinute,
+                  locale: Localizations.localeOf(context).toString(),
+                )).toString(),
+                'value3': (shiftTemplatesScreenDuration(
+                  template.durationMinutes,
+                  context,
+                )).toString(),
+              }),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            if (template.overnight)
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Row(
+                  children: [
+                    const Icon(Icons.nights_stay_outlined, size: 15),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(context.tr('Overnight / next-day end')),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 9),
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: [
+                _policy(
+                  Icons.hourglass_top_rounded,
+                  context.tr('{minutes}m grace', {
+                    'minutes': '${template.graceMinutes}',
+                  }),
+                ),
+                _policy(
+                  Icons.login_rounded,
+                  context.tr('{minutes}m early', {
+                    'minutes': '${template.allowedEarlyCheckInMinutes}',
+                  }),
+                ),
+                _policy(
+                  Icons.more_time_rounded,
+                  context.tr('{minutes}m late', {
+                    'minutes': '${template.allowedLateCheckInMinutes}',
+                  }),
+                ),
+                _policy(
+                  Icons.timer_outlined,
+                  context.tr('{duration} minimum', {
+                    'duration': shiftTemplatesScreenDuration(
+                      template.minimumWorkMinutes,
+                      context,
+                    ),
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                if (template.active) ...[
+                  TextButton.icon(
+                    onPressed: busy ? null : onEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: Text(context.tr('Edit')),
+                  ),
+                  TextButton.icon(
+                    onPressed: busy ? null : onArchive,
+                    icon: busy
+                        ? const SizedBox.square(
+                            dimension: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.archive_outlined),
+                    label: Text(context.tr('Archive')),
+                  ),
+                ] else
+                  Text(
+                    context.tr('Read-only history'),
+                    style: TextStyle(
+                      color: AppPalette.of(context).textSecondary,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _policy(IconData icon, String text) => _badge(icon, text);
+
+  Widget _badge(IconData icon, String text) => Builder(
+    builder: (context) => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppPalette.of(context).field,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppPalette.of(context).borderColor),
+      ),
+      child: Wrap(
+        spacing: 5,
+        runSpacing: 2,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [Icon(icon, size: 15), Text(text)],
+      ),
+    ),
+  );
 }

@@ -9,11 +9,9 @@ class PublishAnnouncementDialog extends StatefulWidget {
     super.key,
     required this.repository,
     required this.workspaceId,
-    this.isCurrent,
   });
   final TeamWorkRepository repository;
   final String workspaceId;
-  final bool Function()? isCurrent;
   @override
   State<PublishAnnouncementDialog> createState() =>
       _PublishAnnouncementDialogState();
@@ -33,11 +31,7 @@ class _PublishAnnouncementDialogState extends State<PublishAnnouncementDialog> {
   }
 
   Future<void> _publish() async {
-    if (_busy ||
-        widget.isCurrent?.call() == false ||
-        !_form.currentState!.validate()) {
-      return;
-    }
+    if (_busy || !_form.currentState!.validate()) return;
     setState(() {
       _busy = true;
       _error = null;

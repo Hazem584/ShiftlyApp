@@ -243,7 +243,9 @@ void main() {
         );
         expect(
           find.textContaining(
-            arabic ? 'حضرت ونسيت تسجّل' : 'Did you attend without recording',
+            arabic
+                ? 'حضرت ونسيت تسجّل'
+                : 'Did you attend without recording',
           ),
           findsOneWidget,
         );

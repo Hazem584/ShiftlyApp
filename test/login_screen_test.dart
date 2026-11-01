@@ -95,8 +95,6 @@ Future<void> _fillAndSubmit(WidgetTester tester) async {
     'person@example.com',
   );
   await tester.enterText(find.byKey(const Key('login-password')), 'password');
-  await tester.ensureVisible(find.byKey(const Key('login-submit')));
-  await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('login-submit')));
   await tester.pump();
 }
@@ -137,7 +135,7 @@ void main() {
           Failure(message: 'The email or password is incorrect.'),
         );
       await _pump(tester, auth, locale: const Locale('ar'));
-      expect(find.text('كل يوم عمل\nيبدأ بخطوة.'), findsOneWidget);
+      expect(find.text('نوّرت Shiftly يا صاحبي'), findsOneWidget);
       expect(
         tester
             .widget<TextField>(
@@ -149,8 +147,6 @@ void main() {
             .textDirection,
         TextDirection.ltr,
       );
-      await tester.ensureVisible(find.byKey(const Key('login-submit')));
-      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('login-submit')));
       await tester.pump();
       expect(find.text('اكتب إيميل صحيح'), findsOneWidget);

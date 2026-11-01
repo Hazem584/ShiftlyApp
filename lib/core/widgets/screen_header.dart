@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/features/manager/presentation/design/manager_theme_marker.dart';
 
 class ScreenHeader extends StatelessWidget {
   const ScreenHeader({
@@ -27,8 +26,7 @@ class ScreenHeader extends StatelessWidget {
       final heading = Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (icon != null &&
-              Theme.of(context).extension<ManagerThemeMarker>() == null) ...[
+          if (icon != null) ...[
             DecoratedBox(
               decoration: BoxDecoration(
                 color: AppPalette.of(context).selected,

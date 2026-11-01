@@ -26,7 +26,6 @@ class WorkFeedCubit<T> extends Cubit<WorkFeedState<T>> {
   final Future<WorkPage<T>> Function(int page) loader;
   int _revision = 0;
   Future<void> load({bool more = false}) async {
-    if (isClosed) return;
     if (more && (state.loadingMore || state.loading || !state.hasMore)) return;
     final revision = ++_revision;
     final previous = state;
@@ -72,7 +71,7 @@ class WorkFeedCubit<T> extends Cubit<WorkFeedState<T>> {
   }
 
   Future<bool> mutate(String id, Future<void> Function() operation) async {
-    if (isClosed || state.busyId != null || state.loading) return false;
+    if (state.busyId != null) return false;
     emit(
       WorkFeedState(
         items: state.items,

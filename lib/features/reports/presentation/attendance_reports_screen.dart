@@ -9,7 +9,6 @@ import 'package:shiftly/features/attendance/domain/entities/attendance_record_ap
 import 'package:shiftly/features/reports/domain/attendance_report.dart';
 import 'package:shiftly/features/reports/domain/report_export.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_cubit.dart';
-import 'package:shiftly/features/reports/presentation/compact_attendance_report.dart';
 
 class AttendanceReportsScreen extends StatefulWidget {
   const AttendanceReportsScreen({super.key, this.exporter, this.fileDelivery});
@@ -47,7 +46,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
         return RefreshIndicator(
           onRefresh: () => _exporting ? Future.value() : cubit.load(),
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               Text(
@@ -219,13 +218,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Text(context.tr('No attendance in this period.')),
                   ),
-                if (MediaQuery.sizeOf(context).width < 700)
-                  CompactAttendanceReport(
-                    report: report,
-                    employeeId: state.employeeId,
-                  ),
-                if (MediaQuery.sizeOf(context).width >= 700 &&
-                    report.rowsFor(state.employeeId).isNotEmpty)
+                if (report.rowsFor(state.employeeId).isNotEmpty)
                   PaginatedDataTable(
                     key: ValueKey(
                       'summary-${report.generatedAt}-${state.employeeId}',
@@ -253,8 +246,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                     ],
                     source: _SummarySource(report.rowsFor(state.employeeId)),
                   ),
-                if (MediaQuery.sizeOf(context).width >= 700 &&
-                    report.recordsFor(state.employeeId).isNotEmpty) ...[
+                if (report.recordsFor(state.employeeId).isNotEmpty) ...[
                   const SizedBox(height: 16),
                   PaginatedDataTable(
                     key: ValueKey(

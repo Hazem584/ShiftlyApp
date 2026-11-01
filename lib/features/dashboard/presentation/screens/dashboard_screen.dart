@@ -6,8 +6,11 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_hero_section.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_loading.dart';
-import 'package:shiftly/features/manager/presentation/widgets/manager_overview.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_metrics_grid.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_sections.dart';
+import 'package:shiftly/features/dashboard/presentation/widgets/dashboard_top_bar.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -46,8 +49,14 @@ class DashboardScreen extends StatelessWidget {
     child: ListView(
       key: const Key('dashboard-content'),
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 30),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 30),
       children: [
+        DashboardTopBar(
+          workspaceName:
+              context.read<DashboardCubit>().scope?.workspaceName ??
+              'Workspace',
+          timezone: data.timezone,
+        ),
         if (state.failure != null) ...[
           const SizedBox(height: AppSpacing.s),
           Text(
@@ -56,12 +65,11 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
         const SizedBox(height: AppSpacing.m),
-        ManagerOverview(
-          data: data,
-          workspaceName:
-              context.read<DashboardCubit>().scope?.workspaceName ??
-              context.tr('Workspace'),
-        ),
+        DashboardHeroSection(data: data),
+        const SizedBox(height: AppSpacing.m),
+        DashboardMetricsGrid(data: data),
+        const SizedBox(height: AppSpacing.l),
+        const DashboardSections(),
       ],
     ),
   );

@@ -5,8 +5,6 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
-import 'package:shiftly/features/manager/presentation/design/manager_theme_marker.dart';
-import 'package:shiftly/features/manager/presentation/widgets/manager_attendance_record_tile.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 class AttendanceRecordCard extends StatelessWidget {
@@ -24,14 +22,6 @@ class AttendanceRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (Theme.of(context).extension<ManagerThemeMarker>() != null) {
-      return ManagerAttendanceRecordTile(
-        record: record,
-        timezone: timezone,
-        onTap: onTap,
-        trailing: trailing,
-      );
-    }
     final savedTimezone = record.workspaceTimezone ?? timezone;
     final date = WorkspaceTime.inWorkspace(
       record.shift?.startsAt ?? record.scheduledStartAt ?? record.clockInAt,

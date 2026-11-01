@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/services/toast_service.dart';
@@ -100,31 +99,6 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
           icon: const Icon(Icons.copy_rounded),
           label: Text(context.tr('Copy')),
         ),
-        TextButton.icon(
-          onPressed: () async {
-            final box = dialogContext.findRenderObject() as RenderBox?;
-            try {
-              await SharePlus.instance.share(
-                ShareParams(
-                  text: token,
-                  sharePositionOrigin: box == null
-                      ? null
-                      : box.localToGlobal(Offset.zero) & box.size,
-                ),
-              );
-            } catch (_) {
-              if (dialogContext.mounted) {
-                ToastService.error(
-                  dialogContext,
-                  message:
-                      'Could not share invitation. Copy the token instead.',
-                );
-              }
-            }
-          },
-          icon: const Icon(Icons.share_outlined),
-          label: Text(context.tr('Share invitation')),
-        ),
         FilledButton(
           onPressed: () => Navigator.pop(dialogContext),
           child: Text(context.tr('Done')),
@@ -150,7 +124,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: ListView(
           key: const Key('add-employee-form'),
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
           children: [
             const EmployeeFormHeader(),
             const SizedBox(height: 18),

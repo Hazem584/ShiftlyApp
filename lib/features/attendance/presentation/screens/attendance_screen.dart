@@ -66,7 +66,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           },
           child: ListView(
             key: const Key('attendance-content'),
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
             children: [
               ReadSyncBanner(
                 category: ReadCategory.attendance,
