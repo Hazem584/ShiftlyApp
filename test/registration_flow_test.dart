@@ -267,9 +267,12 @@ void main() {
       await tester.pumpAndSettle();
       addTearDown(auth.events.close);
 
+      await tester.ensureVisible(find.byKey(const Key('login-create-account')));
+     await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('login-create-account')));
       await tester.pumpAndSettle();
-      expect(find.text('Create your Shiftly account'), findsOneWidget);
+      expect(find.text('Create account'), findsWidgets);
 
       await tester.enterText(
         find.byKey(const Key('register-email')),
@@ -283,6 +286,8 @@ void main() {
         find.byKey(const Key('register-confirm-password')),
         'different',
       );
+      await tester.ensureVisible(find.byKey(const Key('register-submit')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('register-submit')));
       await tester.pump();
       expect(find.text('Enter a valid email address'), findsOneWidget);
@@ -302,6 +307,8 @@ void main() {
         find.byKey(const Key('register-confirm-password')),
         'strong-password',
       );
+      await tester.ensureVisible(find.byKey(const Key('register-submit')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('register-submit')));
       await tester.pump();
       expect(auth.signUpCalls, 1);
@@ -368,7 +375,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('verification-back-to-login')));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome to Shiftly'), findsOneWidget);
+    expect(find.text('Good work\nstarts here.'), findsOneWidget);
     expect(auth.signOutCalls, 1);
   });
 
@@ -420,7 +427,10 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     addTearDown(auth.events.close);
-    await tester.tap(find.byKey(const Key('login-create-account')));
+    await tester.ensureVisible(find.byKey(const Key('login-create-account')));
+     await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('login-create-account')));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('register-email')),
@@ -434,6 +444,8 @@ void main() {
       find.byKey(const Key('register-confirm-password')),
       'strong-password',
     );
+    await tester.ensureVisible(find.byKey(const Key('register-submit')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('register-submit')));
     await tester.pump();
 

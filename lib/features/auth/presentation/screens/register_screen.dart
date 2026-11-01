@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/core/widgets/auth_brand_header.dart';
-import 'package:shiftly/core/widgets/auth_page_layout.dart';
+
+import '../design/access_action.dart';
+import '../design/access_field.dart';
+import '../design/access_notice.dart';
+import '../design/access_page.dart';
+import '../widgets/access_password_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
-
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
@@ -21,9 +22,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmation = true;
-
   @override
   void dispose() {
     _email.dispose();
@@ -33,180 +31,96 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   @override
-  Widget build(
-    BuildContext context,
-  ) => BlocConsumer<SessionCoordinator, SessionState>(
-    listenWhen: (previous, current) =>
-        current.status == SessionStatus.failure && previous != current,
-    listener: (context, state) => ToastService.error(
-      context,
-      message: state.failure?.message ?? 'Unable to create your account.',
-    ),
-    builder: (context, state) {
-      final loading = state.status == SessionStatus.registering;
-      return AuthPageLayout(
-        child: Scaffold(
-          body: SafeArea(
-            child: GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.l),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 440),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AuthBrandHeader(
-                            title: context.tr('Create your Shiftly account'),
-                            subtitle: context.tr(
-                              'Use the exact email address your manager invited.',
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xl),
-                          TextFormField(
-                            key: const Key('register-email'),
-                            controller: _email,
-                            textDirection: TextDirection.ltr,
-                            enabled: !loading,
-                            keyboardType: TextInputType.emailAddress,
-                            textInputAction: TextInputAction.next,
-                            autofillHints: const [AutofillHints.email],
-                            decoration: InputDecoration(
-                              labelText: context.tr('Email'),
-                              prefixIcon: const Icon(Icons.email_outlined),
-                            ),
-                            validator: (value) {
-                              final email = value?.trim() ?? '';
-                              if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                  .hasMatch(email)) {
-                                return context.tr(
-                                  'Enter a valid email address',
-                                );
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.m),
-                          TextFormField(
-                            key: const Key('register-password'),
-                            controller: _password,
-                            textDirection: TextDirection.ltr,
-                            enabled: !loading,
-                            obscureText: _obscurePassword,
-                            textInputAction: TextInputAction.next,
-                            autofillHints: const [AutofillHints.newPassword],
-                            decoration: InputDecoration(
-                              labelText: context.tr('Password'),
-                              prefixIcon: const Icon(
-                                Icons.lock_outline_rounded,
-                              ),
-                              suffixIcon: IconButton(
-                                tooltip: context.tr(
-                                  _obscurePassword
-                                      ? 'Show password'
-                                      : 'Hide password',
-                                ),
-                                onPressed: loading
-                                    ? null
-                                    : () => setState(
-                                        () => _obscurePassword =
-                                            !_obscurePassword,
-                                      ),
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                ),
-                              ),
-                            ),
-                            validator: (value) {
-                              if ((value ?? '').trim().isEmpty) {
-                                return context.tr('Password is required');
-                              }
-                              if (value!.length < 8) {
-                                return context.tr('Use at least 8 characters');
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.m),
-                          TextFormField(
-                            key: const Key('register-confirm-password'),
-                            controller: _confirmPassword,
-                            textDirection: TextDirection.ltr,
-                            enabled: !loading,
-                            obscureText: _obscureConfirmation,
-                            textInputAction: TextInputAction.done,
-                            autofillHints: const [AutofillHints.newPassword],
-                            onFieldSubmitted: (_) => _submit(loading),
-                            decoration: InputDecoration(
-                              labelText: context.tr('Confirm password'),
-                              prefixIcon: const Icon(
-                                Icons.lock_outline_rounded,
-                              ),
-                              suffixIcon: IconButton(
-                                tooltip: context.tr(
-                                  _obscureConfirmation
-                                      ? 'Show password confirmation'
-                                      : 'Hide password confirmation',
-                                ),
-                                onPressed: loading
-                                    ? null
-                                    : () => setState(
-                                        () => _obscureConfirmation =
-                                            !_obscureConfirmation,
-                                      ),
-                                icon: Icon(
-                                  _obscureConfirmation
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                ),
-                              ),
-                            ),
-                            validator: (value) => value != _password.text
-                                ? context.tr('Passwords do not match')
-                                : null,
-                          ),
-                          const SizedBox(height: AppSpacing.l),
-                          FilledButton(
-                            key: const Key('register-submit'),
-                            onPressed: loading ? null : () => _submit(false),
-                            child: loading
-                                ? const SizedBox.square(
-                                    dimension: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : Text(context.tr('Create account')),
-                          ),
-                          const SizedBox(height: AppSpacing.s),
-                          TextButton(
-                            key: const Key('register-sign-in'),
-                            onPressed: loading
-                                ? null
-                                : () => context.go('/login'),
-                            child: Text(
-                              context.tr('Already have an account? Sign in'),
-                            ),
-                          ),
-                        ],
+  Widget build(BuildContext context) =>
+      BlocBuilder<SessionCoordinator, SessionState>(
+        builder: (context, state) {
+          final loading =
+              state.status == SessionStatus.registering ||
+              state.status == SessionStatus.loadingCurrentUser;
+          return AccessPage(
+            title: 'Create account',
+            subtitle: 'A few details to get started.',
+            onBack: loading ? null : () => context.go('/login'),
+            footer: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AccessAction(
+                  actionKey: const Key('register-submit'),
+                  label: context.tr('Create account'),
+                  busy: loading,
+                  onPressed: () => _submit(loading),
+                ),
+                TextButton(
+                  key: const Key('register-sign-in'),
+                  onPressed: loading ? null : () => context.go('/login'),
+                  child: Text(context.tr('Already have an account? Sign in')),
+                ),
+              ],
+            ),
+            child: AutofillGroup(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AccessField(
+                      label: context.tr('Email address'),
+                      child: TextFormField(
+                        key: const Key('register-email'),
+                        controller: _email,
+                        enabled: !loading,
+                        textDirection: TextDirection.ltr,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.email],
+                        autocorrect: false,
+                        decoration: const InputDecoration(),
+                        validator: (v) =>
+                            RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                .hasMatch(v?.trim() ?? '')
+                            ? null
+                            : context.tr('Enter a valid email address'),
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+                    AccessPasswordField(
+                      fieldKey: const Key('register-password'),
+                      controller: _password,
+                      label: context.tr('Password'),
+                      enabled: !loading,
+                      hint: context.tr('Create a strong password'),
+                      validator: (v) => (v?.length ?? 0) < 8
+                          ? context.tr('Use at least 8 characters')
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    AccessPasswordField(
+                      fieldKey: const Key('register-confirm-password'),
+                      controller: _confirmPassword,
+                      label: context.tr('Confirm password'),
+                      enabled: !loading,
+                      last: true,
+                      hint: context.tr('Repeat your password'),
+                      onSubmitted: (_) => _submit(loading),
+                      validator: (v) => v != _password.text
+                          ? context.tr('Passwords do not match')
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    const AccessNotice(
+                      'Use at least 8 characters. Keep your password private.',
+                    ),
+                    if (state.failure != null) ...[
+                      const SizedBox(height: 16),
+                      AccessNotice('', failure: state.failure),
+                    ],
+                  ],
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       );
-    },
-  );
-
   void _submit(bool loading) {
     if (loading || !(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();

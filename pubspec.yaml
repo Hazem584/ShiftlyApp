@@ -65,7 +65,16 @@ flutter:
     - assets/images/Logo.png
     - assets/images/shiftly-mark.png
     - assets/app_icons/
+    - assets/access/icons/
+    - assets/access/fonts/
   fonts:
     - family: Cairo
       fonts:
         - asset: assets/fonts/Cairo-Variable.ttf
+
+    - family: AccessInter
+      fonts:
+        - asset: assets/access/fonts/InterTight-Variable.ttf
+    - family: AccessArabic
+      fonts:
+        - asset: assets/access/fonts/NotoSansArabic-Variable.ttf

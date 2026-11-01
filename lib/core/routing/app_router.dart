@@ -5,6 +5,7 @@ import 'package:shiftly/core/routing/route_not_found_screen.dart';
 import 'package:shiftly/core/routing/session_route_intent.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
+import 'package:shiftly/features/auth/presentation/design/access_theme.dart';
 import 'package:shiftly/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/login_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/profile_setup_screen.dart';
@@ -87,30 +88,39 @@ GoRouter createAppRouter({
 
       GoRoute(
         path: '/session',
-        builder: (_, _) => const SessionStatusScreen.loading(),
+        builder: (_, _) =>
+            const AccessTheme(child: SessionStatusScreen.loading()),
       ),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
-      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(
+        path: '/login',
+        builder: (_, _) => const AccessTheme(child: LoginScreen()),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (_, _) => const AccessTheme(child: RegisterScreen()),
+      ),
       GoRoute(
         path: '/verify-email',
-        builder: (_, _) => const EmailVerificationScreen(),
+        builder: (_, _) => const AccessTheme(child: EmailVerificationScreen()),
       ),
       GoRoute(
         path: '/profile-setup',
-        builder: (_, _) => const ProfileSetupScreen(),
+        builder: (_, _) => const AccessTheme(child: ProfileSetupScreen()),
       ),
       GoRoute(
         path: '/workspaces',
-        builder: (_, _) => const WorkspaceSelectionScreen(),
+        builder: (_, _) => const AccessTheme(child: WorkspaceSelectionScreen()),
       ),
       GoRoute(
         path: '/offline',
-        builder: (_, _) => const SessionStatusScreen.offline(),
+        builder: (_, _) =>
+            const AccessTheme(child: SessionStatusScreen.offline()),
       ),
       GoRoute(
         path: '/session-error',
-        builder: (_, _) => const SessionStatusScreen.failure(),
+        builder: (_, _) =>
+            const AccessTheme(child: SessionStatusScreen.failure()),
       ),
       GoRoute(
         path: '/employee',
@@ -243,8 +253,17 @@ String? _redirect(
   final status = coordinator.state.status;
   final location = route.matchedLocation;
   return switch (status) {
-    SessionStatus.initializing || SessionStatus.loadingCurrentUser =>
-      location == '/session' ? null : '/session',
+    SessionStatus.initializing => location == '/session' ? null : '/session',
+    SessionStatus.loadingCurrentUser =>
+      const {
+            '/session',
+            '/login',
+            '/register',
+            '/profile-setup',
+            '/workspaces',
+          }.contains(location)
+          ? null
+          : '/session',
     SessionStatus.unauthenticated => _signedOutRedirect(
       location,
       coordinator.state.failure?.kind == FailureKind.authentication
@@ -270,6 +289,8 @@ String? _redirect(
     SessionStatus.failure =>
       location == '/login' ||
               location == '/register' ||
+              location == '/profile-setup' ||
+              location == '/workspaces' ||
               location == '/session-error'
           ? null
           : '/session-error',

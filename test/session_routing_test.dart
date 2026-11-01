@@ -180,6 +180,13 @@ void main() {
     'decline removes a listed invitation and keeps workspace selection open',
     (tester) async {
       final (_, invitations) = await _pumpNoWorkspace(tester);
+      await tester.tap(find.byKey(const Key('my-invitations')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('view-invitation-invitation-id')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('decline-invitation-invitation-id')));
+      await tester.pumpAndSettle();
+
       await tester.tap(
         find.byKey(const Key('decline-invitation-invitation-id')),
       );
@@ -189,6 +196,9 @@ void main() {
         find.byKey(const Key('decline-invitation-invitation-id')),
         findsNothing,
       );
+      expect(find.text('No invitations waiting for you.'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('no-workspace-onboarding')), findsOneWidget);
       ToastService.dismissAll();
     },
@@ -262,6 +272,10 @@ void main() {
       expect(find.byKey(const Key('workspace-access')), findsOneWidget);
       expect(find.text('Cairo Operations'), findsOneWidget);
       expect(find.byKey(const Key('invitation-token-field')), findsNothing);
+      await tester.tap(find.byKey(const Key('my-invitations')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('view-invitation-invitation-id')));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(
         find.byKey(const Key('accept-invitation-invitation-id')),
       );
@@ -494,7 +508,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('manager-logout')));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome to Shiftly'), findsOneWidget);
+    expect(find.text('Good work\nstarts here.'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
   });
 
@@ -505,6 +519,13 @@ void main() {
       expect(find.byKey(const Key('no-workspace-onboarding')), findsOneWidget);
       expect(find.byKey(const Key('create-workspace')), findsOneWidget);
 
+      await tester.tap(find.byKey(const Key('my-invitations')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('view-invitation-invitation-id')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const Key('accept-invitation-invitation-id')),
+      );
       await tester.tap(
         find.byKey(const Key('accept-invitation-invitation-id')),
       );

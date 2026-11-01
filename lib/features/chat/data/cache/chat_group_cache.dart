@@ -23,10 +23,11 @@ class ChatGroupCache implements ChatGroupStore {
         value['workspace'] != scope.workspaceId) {
       return null;
     }
-    if (value['saved'] is! int || (value['saved'] as int) <
-        DateTime.now()
-            .subtract(const Duration(days: 7))
-            .millisecondsSinceEpoch) {
+    if (value['saved'] is! int ||
+        (value['saved'] as int) <
+            DateTime.now()
+                .subtract(const Duration(days: 7))
+                .millisecondsSinceEpoch) {
       return null;
     }
     try {

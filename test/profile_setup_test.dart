@@ -113,6 +113,8 @@ void main() {
         find.byKey(const Key('profile-setup-phone')),
         blankPhone,
       );
+      await tester.ensureVisible(find.byKey(const Key('profile-setup-submit')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('profile-setup-submit')));
       await tester.pump();
 
