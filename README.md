@@ -59,6 +59,8 @@ The companion projects are **ShiftlyBackend** (NestJS API) and **Shiftly-Admin**
 
 Chat uses private Supabase Realtime Broadcast channels with REST reconciliation after reconnecting. Messages and reactions render directly from authorized events; cached history and a persistent outbox keep conversations usable during transient connection failures. Conversation summaries are cached for seven days, message history for thirty days, and downloaded media for fourteen days, subject to storage limits and account access.
 
+Active and Archived chat tabs filter the locally loaded group list without a new request on each switch. Cached conversations stay visible during background refreshes; a fresh authorization check is still required after a session restart. Text delivery has a separate, ordered queue so uploads cannot block it, and messages remain pending until a canonical server confirmation arrives.
+
 Supported document attachments: PDF, Excel (.xlsx/.xls), CSV, and plain text, up to 10 MiB per file. Use Attach → Document. Long-press a message or open its actions to add, change, or remove a reaction. Document downloads reuse the private media cache; use Save or share document to export a copy.
 
 Deploy the matching backend migration before releasing this client. Supabase Realtime must be enabled for the project; the migration sets up private-channel authorization and publication entries. Changes are not deployed automatically. Test with two signed-in devices, including reconnecting, removing a member, and revoking a session, before production release.

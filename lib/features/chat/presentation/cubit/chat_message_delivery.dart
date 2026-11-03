@@ -50,7 +50,9 @@ class ChatMessageDelivery {
       showOperation(operation);
     }
 
-    await host.outbox?.coordinator.acquire();
+    final lightweight =
+        operation.type == 'TEXT' || operation.type == 'LOCATION';
+    await host.outbox?.coordinator.acquire(lightweight: lightweight);
     try {
       if (!current()) return;
       ChatMessage canonical;
@@ -179,17 +181,6 @@ class ChatMessageDelivery {
           canonical.type != operation.type) {
         throw const FormatException('Invalid confirmation');
       }
-      try {
-        await host.messageCache?.confirm(key, canonical);
-      } catch (_) {
-        /* Delivery remains canonical even if cache is unavailable. */
-      }
-      if (!current()) return;
-      await host.outbox?.remove(key, operation);
-      if (!current()) return;
-      queue.operations.remove(operation.id);
-      queue.authorizations.remove(operation.id);
-      queue.localBytes.remove(operation.id);
       final messages = host.mergeMessages([canonical], host.state.messages);
       host.emitState(
         host.state.copyWith(
@@ -201,6 +192,21 @@ class ChatMessageDelivery {
       );
       host.markNewestRead(messages);
       host.onChanged?.call();
+      try {
+        await host.messageCache?.confirm(key, canonical);
+      } catch (_) {
+        /* Delivery remains canonical even if cache is unavailable. */
+      }
+      if (!current()) return;
+      try {
+        await host.outbox?.remove(key, operation);
+      } catch (_) {
+        /* A retained UUID is safe to reconcile after restart. */
+      }
+      if (!current()) return;
+      queue.operations.remove(operation.id);
+      queue.authorizations.remove(operation.id);
+      queue.localBytes.remove(operation.id);
     } catch (error) {
       if (current()) {
         if (_isAccessLost(error)) {
@@ -246,8 +252,8 @@ class ChatMessageDelivery {
         }
       }
     } finally {
-      queue.uploadCancellation = null;
-      host.outbox?.coordinator.release();
+      if (!lightweight) queue.uploadCancellation = null;
+      host.outbox?.coordinator.release(lightweight: lightweight);
     }
   }
 

@@ -18,7 +18,7 @@ class ChatOutboxController {
   final ChatConversationHost host;
   final queue = ChatOutboxQueue();
   late final _delivery = ChatMessageDelivery(host, queue, _showOperation);
-  bool _outgoingRunning = false;
+  final Set<bool> _runningLanes = {};
   bool _accepting = false;
   Future<bool> send(String value, {String? replyToMessageId}) async {
     final text = value.trim();
@@ -269,8 +269,11 @@ class ChatOutboxController {
   }
 
   Future<void> drain() async {
-    if (_outgoingRunning) return;
-    _outgoingRunning = true;
+    await Future.wait([_drainLane(true), _drainLane(false)]);
+  }
+
+  Future<void> _drainLane(bool lightweight) async {
+    if (!_runningLanes.add(lightweight)) return;
     final generation = host.generation;
     try {
       while (!host.isClosed && generation == host.generation) {
@@ -280,13 +283,17 @@ class ChatOutboxController {
           break;
         }
         final operation = queue.operations.values
-            .where((p) => p.phase == 'queued')
+            .where(
+              (p) =>
+                  p.phase == 'queued' &&
+                  (p.type == 'TEXT' || p.type == 'LOCATION') == lightweight,
+            )
             .firstOrNull;
         if (operation == null) break;
         await _delivery.submit(operation, generation);
       }
     } finally {
-      _outgoingRunning = false;
+      _runningLanes.remove(lightweight);
       if (!host.isClosed &&
           generation != host.generation &&
           queue.operations.values.any((p) => p.phase == 'queued')) {

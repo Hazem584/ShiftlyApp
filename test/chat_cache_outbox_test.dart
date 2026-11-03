@@ -253,6 +253,11 @@ void main() {
     }
 
     verifyMessages(cubit.state.messages);
+    // UI acknowledgement precedes local persistence; wait for durable cleanup separately.
+    for (var attempt = 0; attempt < 300; attempt++) {
+      if ((await outbox.restore(scope)).isEmpty) break;
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+    }
     verifyMessages((await racingCache.read(scope))!.messages);
     expect(await outbox.restore(scope), isEmpty);
 

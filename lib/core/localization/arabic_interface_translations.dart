@@ -417,4 +417,8 @@ const arabicInterfaceTranslations = <String, String>{
   'Ends: {value1}': 'النهاية: {value1}',
   'Break: {value1} minutes': 'البريك: {value1} دقيقة',
   'to {value1}': 'إلى {value1}',
+  'Active chats': 'المحادثات النشطة',
+  'Archived chats': 'المحادثات المؤرشفة',
+  'No active chats.': 'مفيش محادثات نشطة.',
+  'No archived chats.': 'مفيش محادثات مؤرشفة.',
 };

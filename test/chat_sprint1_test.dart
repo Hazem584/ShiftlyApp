@@ -889,6 +889,74 @@ void main() {
     });
   });
 
+  group('chat opening latency', () {
+    test('groups render while the unread badge is still pending', () async {
+      final badge = Completer<int>();
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(Future.value([_chatGroup()]))
+        ..unreadLoads.add(badge.future);
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+      expect(cubit.state.loading, isFalse);
+      expect(cubit.state.groups.single.id, _group);
+      expect(badge.isCompleted, isFalse);
+      badge.complete(7);
+      await _pump();
+      expect(cubit.state.unreadCount, 7);
+      await cubit.close();
+    });
+    test('an ordinary reload keeps the existing groups visible', () async {
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(Future.value([_chatGroup()]));
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await _pump();
+      final delayed = Completer<List<ChatGroup>>();
+      repository.groupLoads.add(delayed.future);
+      final load = cubit.load();
+      expect(cubit.state.loading, isFalse);
+      expect(cubit.state.groups.single.id, _group);
+      delayed.complete([_chatGroup()]);
+      await load;
+      await cubit.close();
+    });
+    testWidgets('active and archive tabs filter locally without requests', (
+      tester,
+    ) async {
+      final repository = _FakeChatRepository()
+        ..groupLoads.add(
+          Future.value([
+            _chatGroup(),
+            ChatGroup.fromJson({
+              ..._groupJson(),
+              'id': _message2,
+              'name': 'Archived fixture',
+              'archivedAt': '2026-10-01T10:00:00Z',
+            }),
+          ]),
+        );
+      final cubit = ChatGroupsCubit(repository)..bindSession(_scope);
+      await tester.pumpWidget(
+        BlocProvider.value(
+          value: cubit,
+          child: const MaterialApp(home: ChatGroupsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final requests = repository.groupLoadCount;
+      expect(find.text('Operations'), findsOneWidget);
+      expect(find.text('Archived fixture'), findsNothing);
+      await tester.tap(find.text('Archived chats'));
+      await tester.pumpAndSettle();
+      expect(find.text('Operations'), findsNothing);
+      expect(find.text('Archived fixture'), findsOneWidget);
+      await tester.tap(find.text('Active chats'));
+      await tester.pumpAndSettle();
+      expect(find.text('Operations'), findsOneWidget);
+      expect(repository.groupLoadCount, requests);
+      await cubit.close();
+    });
+  });
+
   group('single-flight unread refresh', () {
     test('initial load failure preserves a newer unread refresh', () async {
       final groups = Completer<List<ChatGroup>>();
@@ -1764,6 +1832,7 @@ class _FakeChatRepository extends ChatRepository {
   int messageLoadCount = 0;
   int memberMutations = 0;
   int unreadLoadCount = 0;
+  int groupLoadCount = 0;
   int createCalls = 0;
   int updateCalls = 0;
   ChatGroup details = _chatGroup();
@@ -1772,8 +1841,11 @@ class _FakeChatRepository extends ChatRepository {
   Future<void>? updateResult;
 
   @override
-  Future<List<ChatGroup>> listGroups(String workspaceId) =>
-      groupLoads.isEmpty ? Future.value(const []) : groupLoads.removeAt(0);
+  Future<List<ChatGroup>> listGroups(String workspaceId) {
+    groupLoadCount++;
+    return groupLoads.isEmpty ? Future.value(const []) : groupLoads.removeAt(0);
+  }
+
   @override
   Future<int> unreadCount(String workspaceId) {
     unreadLoadCount++;

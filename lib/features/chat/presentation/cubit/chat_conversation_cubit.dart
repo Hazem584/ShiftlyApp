@@ -28,6 +28,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
     this._repository,
     this._realtime, {
     this.onChanged,
+    this.loadGroup,
     this.messageCache,
     this.outbox,
   }) : super(const ChatConversationState()) {
@@ -42,6 +43,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
   final ChatRealtime _realtime;
   @override
   final void Function()? onChanged;
+  final Future<ChatGroup> Function()? loadGroup;
   FeatureSessionScope? _scope;
   String? _groupId;
   ChatRealtimeSubscription? _subscription;
@@ -49,6 +51,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
   var _generation = 0;
   var _request = 0;
 
+  Future<void> _pagePersistence = Future<void>.value();
   bool _loadingPage = false;
   bool _refreshQueued = false;
 
@@ -114,14 +117,18 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
       final cacheScope = _cacheScope;
       if (!_cacheRestored && cacheScope != null && messageCache != null) {
         if (!messageCache!.storage.authorized(cacheScope)) {
-          final group = await _repository.getGroup(scope.workspaceId, groupId);
+          final group =
+              await (loadGroup?.call() ??
+                  _repository.getGroup(scope.workspaceId, groupId));
           if (!_current(scope, groupId, generation, request)) return;
           if (group.id != groupId || group.workspaceId != scope.workspaceId) {
             throw const FormatException('Invalid group');
           }
           messageCache!.storage.grant(cacheScope, archived: group.isArchived);
         }
-        final cached = await messageCache!.read(cacheScope);
+        final cached = await messageCache!
+            .read(cacheScope)
+            .catchError((Object _) => null);
         if (!_current(scope, groupId, generation, request)) return;
         _cacheRestored = true;
         _latestLoaded = cached?.messages.isNotEmpty == true;
@@ -142,17 +149,6 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
       final page = await _repository.listMessages(scope.workspaceId, groupId);
       if (!_current(scope, groupId, generation, request)) return;
       _validate(page.messages, scope, groupId);
-      try {
-        await messageCache?.write(
-          ChatCacheScope.fromSession(scope, groupId),
-          page,
-        );
-      } catch (_) {
-        /* Canonical rendering remains available if cache writes fail. */
-      }
-      if (!_current(scope, groupId, generation, request)) return;
-      // Sends may finish while persistence awaits. Merge the current state only
-      // after that await so a refresh cannot replace a newer confirmation.
       final currentMessages = state.messages;
       final overlaps =
           currentMessages.isEmpty ||
@@ -182,8 +178,15 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
         ),
       );
       _latestLoaded = true;
+      // Rendering never waits for disk persistence. The cache merges concurrent confirmations.
+      _pagePersistence =
+          messageCache
+              ?.write(ChatCacheScope.fromSession(scope, groupId), page)
+              .catchError((Object _) {}) ??
+          Future<void>.value();
       _reads.markNewestRead(merged);
       unawaited(_outgoing.drain());
+      await _pagePersistence;
     } catch (error) {
       if (!_current(scope, groupId, generation, request)) return;
       final failure = _failure(error, 'Unable to load messages.');
@@ -219,6 +222,11 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
     final scope = _scope;
     final groupId = _groupId;
     final previous = state;
+    final expectedGeneration = _generation;
+    // A page can already be on screen while its cache write is still finishing.
+    // Preserve page ordering without discarding an immediate history gesture.
+    await _pagePersistence;
+    if (_generation != expectedGeneration) return;
     if (scope == null ||
         groupId == null ||
         previous.loadingOlder ||
@@ -383,6 +391,7 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
     final subscription = _subscription;
     _subscription = null;
     await subscription?.cancel();
+    await _pagePersistence;
     return super.close();
   }
 

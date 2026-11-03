@@ -150,14 +150,16 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     final unreadSequence = ++_unreadIssuedSequence;
     final previous = state;
     emit(
-      refresh && previous.groups.isNotEmpty
+      !previous.loading
           ? previous.copyWith(refreshing: true, clearFailure: true)
           : ChatGroupsState(unreadCount: previous.unreadCount),
     );
     try {
       if (!_groupsRestored && groupCache != null) {
         _groupsRestored = true;
-        final cached = await groupCache!.read(scope);
+        final cached = await groupCache!
+            .read(scope)
+            .catchError((Object _) => null);
         if (!_current(scope, generation, request)) return;
         // Cached summaries never grant access to private history; only fresh API membership does.
         if (cached != null) {
@@ -171,22 +173,16 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
           );
         }
       }
-      final results = await Future.wait<Object>([
-        _repository.listGroups(scope.workspaceId),
-        _repository.unreadCount(scope.workspaceId),
-      ]);
+      // Attach the badge error handler immediately, but never block the list on it.
+      final unread = _repository
+          .unreadCount(scope.workspaceId)
+          .then<int?>((value) => value, onError: (Object _) => null);
+      final groups = await _repository.listGroups(scope.workspaceId);
       if (!_current(scope, generation, request)) return;
       if (cacheRevision != messageCache?.storage.revision) return;
-      final groups = results[0] as List<ChatGroup>;
       if (groups.any((group) => group.workspaceId != scope.workspaceId)) {
         throw const FormatException('Cross-workspace chat response');
       }
-      unawaited(
-        groupCache
-                ?.write(scope, (groups: groups, unreadCount: results[1] as int))
-                .catchError((Object _) {}) ??
-            Future<void>.value(),
-      );
       final ids = groups.map((group) => group.id).toSet();
       for (final former in previous.groups) {
         if (!ids.contains(former.id)) {
@@ -204,15 +200,24 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
           archived: group.isArchived,
         );
       }
-      emit(
-        ChatGroupsState(
-          loading: false,
-          groups: groups,
-          unreadCount: _acceptUnreadResult(scope, generation, unreadSequence)
-              ? results[1] as int
-              : state.unreadCount,
-        ),
+      emit(state.copyWith(loading: false, groups: groups, refreshing: false));
+      void persist() => unawaited(
+        groupCache
+                ?.write(scope, (groups: groups, unreadCount: state.unreadCount))
+                .catchError((Object _) {}) ??
+            Future<void>.value(),
       );
+      persist();
+      final count = await unread;
+      if (!_current(scope, generation, request) ||
+          cacheRevision != messageCache?.storage.revision) {
+        return;
+      }
+      if (count != null &&
+          _acceptUnreadResult(scope, generation, unreadSequence)) {
+        emit(state.copyWith(unreadCount: count));
+        persist();
+      }
     } catch (error) {
       if (!_current(scope, generation, request)) return;
       final failure = _failure(error, 'Unable to load chat groups.');

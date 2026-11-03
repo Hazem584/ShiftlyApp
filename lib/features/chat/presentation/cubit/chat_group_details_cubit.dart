@@ -31,6 +31,7 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
   ChatGroupDetailsCubit(
     this._repository, {
     this.onChanged,
+    this.loadGroup,
     this.cacheDatabase,
     this.realtime,
   }) : super(const ChatGroupDetailsState());
@@ -39,12 +40,17 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
   final ChatRepository _repository;
   final ChatCacheAccess? cacheDatabase;
   final void Function()? onChanged;
+  final Future<ChatGroup> Function()? loadGroup;
   FeatureSessionScope? _scope;
   String? _groupId;
   var _generation = 0;
   bool _loading = false;
 
-  void bind(FeatureSessionScope scope, String groupId) {
+  void bind(
+    FeatureSessionScope scope,
+    String groupId, {
+    ChatGroup? initialGroup,
+  }) {
     if (_scope == scope && _groupId == groupId) return;
     unawaited(_subscription?.cancel());
     _subscription = realtime is ChatLiveRealtime
@@ -54,8 +60,18 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
     _groupId = groupId;
     _generation++;
     _loading = false;
-    emit(const ChatGroupDetailsState());
-    load();
+    final trusted =
+        initialGroup?.id == groupId &&
+        initialGroup?.workspaceId == scope.workspaceId &&
+        cacheDatabase?.authorized(ChatCacheScope.fromSession(scope, groupId)) ==
+            true;
+    emit(
+      ChatGroupDetailsState(
+        loading: !trusted,
+        group: trusted ? initialGroup : null,
+      ),
+    );
+    unawaited(load());
   }
 
   Future<void> load() async {
@@ -67,7 +83,9 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
     final generation = _generation;
     final cacheRevision = cacheDatabase?.revision;
     try {
-      final group = await _repository.getGroup(scope.workspaceId, groupId);
+      final group =
+          await (loadGroup?.call() ??
+              _repository.getGroup(scope.workspaceId, groupId));
       if (!_current(scope, groupId, generation)) return;
       if (cacheRevision != cacheDatabase?.revision) return;
       if (group.workspaceId != scope.workspaceId || group.id != groupId) {

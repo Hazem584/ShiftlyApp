@@ -16,10 +16,15 @@ import 'package:shiftly/features/chat/presentation/widgets/chat_group_tile.dart'
 import 'package:shiftly/features/chat/presentation/widgets/chat_message_state.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
-class ChatGroupsScreen extends StatelessWidget {
+class ChatGroupsScreen extends StatefulWidget {
   const ChatGroupsScreen({this.embedded = false, super.key});
   final bool embedded;
+  @override
+  State<ChatGroupsScreen> createState() => _ChatGroupsScreenState();
+}
 
+class _ChatGroupsScreenState extends State<ChatGroupsScreen> {
+  bool _archived = false;
   @override
   Widget build(BuildContext context) =>
       BlocBuilder<ChatGroupsCubit, ChatGroupsState>(
@@ -27,7 +32,7 @@ class ChatGroupsScreen extends StatelessWidget {
           final cubit = context.read<ChatGroupsCubit>();
           final manager = cubit.scope?.isManager == true;
           final content = _body(context, state);
-          if (embedded) return content;
+          if (widget.embedded) return content;
           return Scaffold(
             appBar: AppBar(
               title: Text(context.tr('Chat')),
@@ -58,18 +63,38 @@ class ChatGroupsScreen extends StatelessWidget {
       );
 
   Widget _body(BuildContext context, ChatGroupsState state) {
-    if (state.loading) return const AppContentLoading();
+    if (state.loading && state.groups.isEmpty) return const AppContentLoading();
     if (state.groups.isEmpty && state.failure != null) {
       return ChatMessageState(
         message: state.failure!.message,
         action: () => context.read<ChatGroupsCubit>().load(),
       );
     }
-    if (state.groups.isEmpty) {
-      return const ChatMessageState(message: 'No chat groups yet.');
-    }
+    final groups = state.groups
+        .where((group) => group.isArchived == _archived)
+        .toList();
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: SegmentedButton<bool>(
+            segments: [
+              ButtonSegment(
+                value: false,
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: Text(context.tr('Active chats')),
+              ),
+              ButtonSegment(
+                value: true,
+                icon: const Icon(Icons.archive_outlined),
+                label: Text(context.tr('Archived chats')),
+              ),
+            ],
+            selected: {_archived},
+            onSelectionChanged: (selection) =>
+                setState(() => _archived = selection.single),
+          ),
+        ),
         if (context.read<ChatGroupsCubit>().mediaCache != null)
           const ChatCacheSettingsTile(),
         if (state.failure != null)
@@ -84,41 +109,54 @@ class ChatGroupsScreen extends StatelessWidget {
             ],
           ),
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: () =>
-                context.read<ChatGroupsCubit>().load(refresh: true),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final narrow = constraints.maxWidth < 360;
-                return ListView.separated(
+          child: groups.isEmpty
+              ? SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    narrow ? 8 : 16,
-                    8,
-                    narrow ? 8 : 16,
-                    96,
+                  child: ChatMessageState(
+                    message: _archived
+                        ? 'No archived chats.'
+                        : 'No active chats.',
                   ),
-                  itemCount: state.groups.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) => ChatGroupTile(
-                    group: state.groups[index],
-                    narrow: narrow,
-                    onTap: () =>
-                        context.read<ChatGroupsCubit>().scope?.isManager == true
-                        ? context.push(
-                            AppRoutes.chatGroup(state.groups[index].id),
-                          )
-                        : Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  ChatScreen(groupId: state.groups[index].id),
-                            ),
-                          ),
+                )
+              : RefreshIndicator(
+                  onRefresh: () =>
+                      context.read<ChatGroupsCubit>().load(refresh: true),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final narrow = constraints.maxWidth < 360;
+                      return ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          narrow ? 8 : 16,
+                          8,
+                          narrow ? 8 : 16,
+                          96,
+                        ),
+                        itemCount: groups.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) => ChatGroupTile(
+                          group: groups[index],
+                          narrow: narrow,
+                          onTap: () =>
+                              context
+                                      .read<ChatGroupsCubit>()
+                                      .scope
+                                      ?.isManager ==
+                                  true
+                              ? context.push(
+                                  AppRoutes.chatGroup(groups[index].id),
+                                )
+                              : Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        ChatScreen(groupId: groups[index].id),
+                                  ),
+                                ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ),
+                ),
         ),
       ],
     );
