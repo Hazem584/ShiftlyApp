@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:sembast/sembast.dart';
 import 'package:shiftly/core/error/api_exception.dart';
@@ -11,9 +9,10 @@ import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_media_store.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
-import 'package:shiftly/features/chat/domain/services/chat_document_validation.dart';
 import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
 import 'package:uuid/uuid.dart';
+
+import 'chat_media_inspection.dart';
 
 class ChatMediaCache implements ChatMediaStore {
   ChatMediaCache(
@@ -44,6 +43,7 @@ class ChatMediaCache implements ChatMediaStore {
   final Map<String, ChatCacheScope> _scopes = {};
   final List<Completer<void>> _waiting = [];
   int _active = 0;
+  Future<void> _inspections = Future<void>.value();
   String _key(ChatCacheScope scope, ChatMessage message) =>
       'media:${scope.key}:${message.id}:${message.attachment?.id}';
   @override
@@ -109,9 +109,8 @@ class ChatMediaCache implements ChatMediaStore {
       if (await file.exists() &&
           (existing['access'] as int) >=
               DateTime.now().subtract(retention).millisecondsSinceEpoch &&
-          await _valid(file, message) &&
-          sha256.convert(await file.readAsBytes()).toString() ==
-              existing['digest']) {
+          existing['digest'] is String &&
+          await _inspect(file, message) == existing['digest']) {
         check();
         await record.update(storage.database, {
           'access': DateTime.now().millisecondsSinceEpoch,
@@ -161,7 +160,8 @@ class ChatMediaCache implements ChatMediaStore {
         }
       }
       check();
-      if (!await _valid(temporary, message)) {
+      final digest = await _inspect(temporary, message);
+      if (digest == null) {
         throw const FormatException('Invalid chat media');
       }
       check();
@@ -173,7 +173,7 @@ class ChatMediaCache implements ChatMediaStore {
         'user': scope.userId,
         'file': name,
         'size': attachment.sizeBytes,
-        'digest': sha256.convert(await target.readAsBytes()).toString(),
+        'digest': digest,
         'access': DateTime.now().millisecondsSinceEpoch,
       });
       check();
@@ -242,24 +242,37 @@ class ChatMediaCache implements ChatMediaStore {
     if (length != size) throw const FormatException('Invalid media size');
   }
 
-  Future<bool> _valid(ChatLocalFile file, ChatMessage message) async {
+  Future<String?> _inspect(ChatLocalFile file, ChatMessage message) {
+    // Bound CPU work and memory even when a list opens many cached attachments.
+    // Wait before reading the next file, not after allocating its byte buffer.
+    final operation = _inspections.then((_) => _readAndInspect(file, message));
+    _inspections = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return operation;
+  }
+
+  Future<String?> _readAndInspect(
+    ChatLocalFile file,
+    ChatMessage message,
+  ) async {
     final attachment = message.attachment!;
     if (!await file.exists() || await file.length() != attachment.sizeBytes) {
-      return false;
+      return null;
     }
-    final Uint8List bytes = await file.readAsBytes();
-    if (message.type == 'DOCUMENT') {
-      return ChatDocumentValidation.valid(bytes, attachment.fileName ?? '') &&
-          ChatDocumentValidation.mimeForName(attachment.fileName ?? '') ==
-              attachment.mimeType;
-    }
-    return message.type == 'IMAGE'
-        ? ChatMediaValidation.imageMime(bytes) == attachment.mimeType
-        : ChatMediaValidation.validVoice(
-            bytes: bytes,
-            mimeType: attachment.mimeType,
-            durationMs: attachment.durationMs ?? 0,
-          );
+    // File/database/plugin access stays here; the worker receives only bytes
+    // and metadata. Hash the same snapshot used for content validation.
+    return inspectChatMedia(
+      ChatMediaInspection(
+        bytes: await file.readAsBytes(),
+        type: message.type,
+        mimeType: attachment.mimeType,
+        sizeBytes: attachment.sizeBytes,
+        fileName: attachment.fileName ?? '',
+        durationMs: attachment.durationMs ?? 0,
+      ),
+    );
   }
 
   Future<void> _acquire() async {

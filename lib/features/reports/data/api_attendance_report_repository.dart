@@ -4,6 +4,8 @@ import 'package:shiftly/features/attendance/domain/repositories/attendance_repos
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/reports/domain/attendance_report.dart';
 
+import 'report_preparation.dart';
+
 class ApiAttendanceReportRepository implements AttendanceReportRepository {
   ApiAttendanceReportRepository(
     this._attendance,
@@ -97,25 +99,21 @@ class ApiAttendanceReportRepository implements AttendanceReportRepository {
       if (page >= result.totalPages) break;
     }
     if (employeeIds.length != total) throw _changed();
-    // Keep historical attendance even when a membership no longer appears in the roster.
-    for (final r in records) {
-      employees.putIfAbsent(
-        r.employeeMembershipId,
-        () => ReportEmployee(r.employeeMembershipId, r.employee.displayName),
-      );
-    }
-    final sorted = employees.values.toList()
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    records.sort((a, b) => a.clockInAt.compareTo(b.clockInAt));
-    return AttendanceReport(
-      workspaceId: workspaceId,
-      workspaceName: workspaceName,
-      timezone: timezone,
-      range: range,
-      generatedAt: _now().toUtc(),
-      employees: sorted,
-      records: records,
+    _checkCurrent(isCurrent);
+    final report = await prepareAttendanceReport(
+      ReportPreparation(
+        workspaceId: workspaceId,
+        workspaceName: workspaceName,
+        timezone: timezone,
+        range: range,
+        generatedAt: _now().toUtc(),
+        employees: employees.values.toList(),
+        records: records,
+      ),
     );
+    // Session/workspace can change while a worker runs. Never publish its stale result.
+    _checkCurrent(isCurrent);
+    return report;
   }
 
   void _checkPage(

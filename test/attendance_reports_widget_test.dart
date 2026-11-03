@@ -83,7 +83,13 @@ void main() {
         250,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.byKey(const Key('report-export-excel')));
+      final action = tester
+          .widget<FilledButton>(find.byKey(const Key('report-export-excel')))
+          .onPressed!;
+      // Invoke the actual async UI action outside the fake-clock gesture zone.
+      await tester.runAsync(() async {
+        await (Function.apply(action, const []) as Future<void>);
+      });
       await tester.pumpAndSettle();
       expect(delivery.files.single.name, endsWith('_employee.xlsx'));
       expect(tester.takeException(), isNull);
@@ -118,11 +124,13 @@ void main() {
     await tester.pump();
     cubit.bindSession(null);
     exporter.pending.complete(
-      await AttendanceReportExporter().create(
-        fixtureReport(),
-        format: ReportFileFormat.excel,
-        strings: ReportLabels(const AppLocalizations(Locale('en')).text),
-      ),
+      (await tester.runAsync(
+        () => AttendanceReportExporter().create(
+          fixtureReport(),
+          format: ReportFileFormat.excel,
+          strings: ReportLabels(const AppLocalizations(Locale('en')).text),
+        ),
+      ))!,
     );
     await tester.pumpAndSettle();
     expect(delivery.files, isEmpty);

@@ -70,3 +70,11 @@ Android and iOS widgets show the remaining **personal tasks** count, up to three
 The app shares a local display snapshot when tasks refresh or change and when it resumes. Countdowns and scheduled occurrences advance locally; changes made on another device are fetched the next time this app refreshes. The widget shows its last update time, expires snapshots after 24 hours, and clears data on sign-out or account/workspace changes. It does not store authentication tokens or fetch the API in the background.
 
 For iOS signing, enable the **App Groups** capability for Runner and TaskWidget and register `group.com.example.shiftly` in the same Apple team. If the application bundle identifier changes, update both targets' group entitlements and the suite names in AppDelegate.swift and TaskWidget.swift. The WidgetKit target is included and embedded in the Xcode project. Build and test the iOS target on macOS/Xcode.
+
+## CPU-intensive work
+
+Attendance Excel/PDF generation runs through Flutter `compute`, using data-only requests. Translations and PDF font assets are resolved on the main isolate; document construction, formatting and encoding run in the worker. Large report preparation (200 records or employees) also sorts and calculates metrics before results reach the UI, with session revalidation after completion.
+
+Chat media validation and SHA-256 use one byte snapshot. Attachments of at least 256 KiB are inspected in a worker; smaller files stay inline to avoid startup overhead. Inspections are serialized before file reads to bound CPU work and buffer allocation. File/database/plugin operations stay outside workers, and existing authorization/cancellation checks remain in place.
+
+These cutoffs are conservative defaults, not measured performance guarantees for every device. On native mobile/desktop, `compute` runs in an isolate; on web it runs on the current event loop, so browser parallelism is not claimed. See [Flutter concurrency and isolates](https://docs.flutter.dev/perf/isolates). The installed Dio transformer already offloads sufficiently large JSON responses; ordinary network requests do not need an extra worker.
