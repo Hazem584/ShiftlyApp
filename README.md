@@ -61,7 +61,7 @@ Chat uses private Supabase Realtime Broadcast channels with REST reconciliation 
 
 Active and Archived chat tabs filter the locally loaded group list without a new request on each switch. Cached conversations stay visible during background refreshes; a fresh authorization check is still required after a session restart. Text delivery has a separate, ordered queue so uploads cannot block it, and messages remain pending until a canonical server confirmation arrives.
 
-Supported document attachments: PDF, Excel (.xlsx/.xls), CSV, and plain text, up to 10 MiB per file. Use Attach → Document. Long-press a message or open its actions to add, change, or remove a reaction. Document downloads reuse the private media cache; use Save or share document to export a copy.
+Supported document attachments: PDF, Excel (.xlsx/.xls), CSV, and plain text, up to 10 MiB per file. Use Attach → Document. Long-press a message or open its actions to add, change, or remove a reaction. Document downloads reuse the private media cache; use Download file to choose where to save a copy. Preview file opens PDFs in an in-app reader and shows bounded previews for XLSX, CSV, and text files. Legacy XLS and unsupported/corrupt files retain download access. Preview parsing runs outside the UI isolate on native platforms, and no document is sent to an external preview service.
 
 Deploy the matching backend migration before releasing this client. Supabase Realtime must be enabled for the project; the migration sets up private-channel authorization and publication entries. Changes are not deployed automatically. Test with two signed-in devices, including reconnecting, removing a member, and revoking a session, before production release.
 

@@ -421,4 +421,14 @@ const arabicInterfaceTranslations = <String, String>{
   'Archived chats': 'المحادثات المؤرشفة',
   'No active chats.': 'مفيش محادثات نشطة.',
   'No archived chats.': 'مفيش محادثات مؤرشفة.',
+  'Preview file': 'معاينة',
+  'Download file': 'تنزيل الملف',
+  'File downloaded.': 'تم تنزيل الملف.',
+  'Could not preview the document. Try again.':
+      'تعذرت معاينة الملف. حاول تاني.',
+  'This file is empty.': 'الملف ده فاضي.',
+  'Preview is limited. Download to view the complete file.':
+      'المعاينة محدودة. نزّل الملف لعرضه بالكامل.',
+  'Preview unavailable. Download this file to open it in another app.':
+      'المعاينة مش متاحة للتنسيق ده. نزّل الملف وافتحه بتطبيق مناسب.',
 };

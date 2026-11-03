@@ -38,6 +38,32 @@ def summarize(log):
         "Cannot recover key": "The signing key could not be recovered.",
         "Android resource linking failed": "Android resource linking failed.",
         "Could not resolve all files": "Gradle dependency resolution failed.",
+        "Could not resolve all artifacts": "Gradle plugin dependency resolution failed.",
+        "Unsupported class file major version": "The active JDK cannot read a build dependency's Java bytecode.",
+        "UnsupportedClassVersionError": "A build dependency was compiled for a newer Java runtime.",
+        "requires Java 21": "A build dependency requires Java 21.",
+        "Dependency requires at least JVM runtime version 21": "A build dependency requires Java 21.",
+        "Inconsistent JVM-target compatibility detected": "Java and Kotlin compilation targets do not match.",
+        "requires Java 17": "A build dependency requires Java 17.",
+        "invalid source release": "The active Java compiler does not support a requested source target.",
+        "Unknown Kotlin JVM target": "The configured Kotlin JVM target is unsupported.",
+        "Unresolved reference": "Gradle Kotlin script compilation has unresolved references.",
+        "Script compilation errors": "A Gradle build script failed to compile.",
+        "Namespace not specified": "An Android dependency is missing its namespace.",
+        "SDK location not found": "Gradle could not locate the Android SDK.",
+        "License for package": "An Android SDK package license was not accepted.",
+        "uses-sdk:minSdkVersion": "An Android dependency requires a higher minimum SDK.",
+        "password was incorrect": "The signing keystore password was rejected.",
+        "does not exist in the keystore": "The signing key alias was not found in the keystore.",
+        "PKIX path building failed": "A build dependency download failed TLS certificate validation.",
+        "Read timed out": "A build dependency download timed out.",
+        "No matching variant": "A build dependency has no variant compatible with the requested platform or JDK.",
+        "java.lang.NoSuchMethodError": "A Java library called an unavailable method (check build-tool versions).",
+        "java.lang.NoClassDefFoundError": "A Java build-tool class could not be loaded.",
+        "Could not create task": "Gradle failed while creating its task graph.",
+        "A problem occurred configuring project": "Gradle project configuration failed.",
+        "A problem occurred evaluating project": "Gradle project evaluation failed.",
+        "Could not find method": "A Gradle script called an unavailable DSL method.",
     }
     output.extend(message for signature, message in signatures.items() if signature in log)
     # Verbose Gradle startup echoes -XX:+HeapDumpOnOutOfMemoryError. That
@@ -58,7 +84,8 @@ def summarize(log):
     for task in (
         "compileFlutterBuildRelease", "validateSigningRelease", "packageRelease",
         "processReleaseResources", "mergeReleaseResources", "mergeReleaseAssets",
-        "minifyReleaseWithR8", "assembleRelease",
+        "minifyReleaseWithR8", "assembleRelease", "checkReleaseAarMetadata",
+        "processReleaseMainManifest", "compileReleaseKotlin", "compileReleaseJavaWithJavac",
     ):
         if re.search(r"Execution failed for task ['\"]:app:" + task + r"['\"]", log):
             output.append("Failed Gradle task: :app:" + task)
@@ -69,6 +96,16 @@ def summarize(log):
     ):
         for code in dict.fromkeys(re.findall(pattern, log)):
             output.append(label + ": " + code)
+    # Print only fixed artifact names and numeric versions, never repository URLs.
+    for artifact in ("com.android.tools.build:gradle", "org.jetbrains.kotlin:kotlin-gradle-plugin"):
+        if re.search(r"Could not (?:find|resolve) " + re.escape(artifact) + r":", log):
+            output.append("Unresolved build plugin: " + artifact)
+    # Gradle's script locations use different syntax from Dart compiler locations.
+    for script in ("android/settings.gradle.kts", "android/build.gradle.kts", "android/app/build.gradle.kts"):
+        normalized = log.replace("\\", "/")
+        pattern = re.escape(script) + r"['\"]? (?:line: |line )(\d{1,5})\b"
+        for number in dict.fromkeys(re.findall(pattern, normalized)):
+            output.append("Reported Gradle script location: " + script + ":" + number)
     exceptions = (
         "PathNotFoundException", "FileSystemException", "ProcessException",
         "IconTreeShakerException", "ToolExit", "CompilationError", "FormatException",

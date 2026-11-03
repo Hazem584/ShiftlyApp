@@ -5,9 +5,11 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   emoji_picker_flutter
+  file_saver
   file_selector_windows
   firebase_core
   geolocator_windows
+  pdfx
   record_windows
   share_plus
   url_launcher_windows

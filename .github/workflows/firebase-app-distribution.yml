@@ -123,6 +123,9 @@ jobs:
     - name: Resolve dependencies
       run: flutter pub get
 
+    - name: Test private build diagnostic summaries
+      run: python3 -m unittest discover -s tool/ci -p 'test_summarize_release_failure.py'
+
     - name: Analyze
       run: flutter analyze --no-pub
 
@@ -266,6 +269,18 @@ jobs:
         PY
         # Verbose output can contain encoded Dart defines and private paths.
         # Keep it private and publish only the allowlisted diagnostic summary.
+        # Separate Gradle/JDK/plugin configuration failures from Flutter compilation.
+        # This uses the same private signing environment and Gradle home as the build.
+        config_status=0
+        (cd android && ./gradlew help --stacktrace --console=plain) \
+          > "$CI_PRIVATE_DIR/gradle-config.log" 2>&1 || config_status=$?
+        if [[ "$config_status" -ne 0 ]]; then
+          echo 'Gradle configuration failed before APK compilation.'
+          python3 tool/ci/summarize_release_failure.py "$CI_PRIVATE_DIR/gradle-config.log" || \
+            echo 'Diagnostic summary unavailable; private build output withheld.'
+          exit "$config_status"
+        fi
+        echo 'Gradle configuration succeeded.'
         build_status=0
         flutter build apk --release --no-pub --verbose \
           --dart-define-from-file="$CI_PRIVATE_DIR/dart-defines.json" \

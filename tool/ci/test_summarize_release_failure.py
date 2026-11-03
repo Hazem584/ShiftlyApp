@@ -80,6 +80,55 @@ class ReleaseFailureSummaryTest(unittest.TestCase):
         self.assertIn("ConstantEvaluator._recordConstructorCoverage", output)
         self.assertIn("Reported source location: lib/example.dart:10:2", output)
 
+    def test_gradle_script_failure_reports_only_known_location_and_label(self):
+        output = summarize(
+            "Build file '/private/fixture-secret/android/app/build.gradle.kts' line: 77\n"
+            "Script compilation errors: Unresolved reference: fixture-secret"
+        )
+        self.assertIn("Reported Gradle script location: android/app/build.gradle.kts:77", output)
+        self.assertIn("Gradle Kotlin script compilation has unresolved references.", output)
+        self.assertNotIn("fixture-secret", output)
+        self.assertNotIn("/private", output)
+
+    def test_java_compatibility_failure_hides_dependency_and_credentials(self):
+        output = summarize(
+            "Could not resolve all artifacts for configuration fixture-secret\n"
+            "Dependency requires at least JVM runtime version 21. "
+            "This build uses a Java 17 JVM. https://private.invalid/?token=fixture-secret"
+        )
+        self.assertIn("A build dependency requires Java 21.", output)
+        self.assertIn("Gradle plugin dependency resolution failed.", output)
+        self.assertNotIn("fixture-secret", output)
+        self.assertNotIn("https://", output)
+
+    def test_signing_failure_has_a_fixed_message_without_key_values(self):
+        output = summarize("Alias name fixture-secret does not exist in the keystore")
+        self.assertIn("The signing key alias was not found in the keystore.", output)
+        self.assertNotIn("fixture-secret", output)
+
+    def test_gradle_plugin_download_hides_urls_and_versions(self):
+        output = summarize(
+            "Could not resolve com.android.tools.build:gradle:9.1.0. "
+            "PKIX path building failed at https://private.invalid/fixture-secret"
+        )
+        self.assertIn("Unresolved build plugin: com.android.tools.build:gradle", output)
+        self.assertIn("A build dependency download failed TLS certificate validation.", output)
+        self.assertNotIn("fixture-secret", output)
+        self.assertNotIn("https://", output)
+
+    def test_native_compile_failure_uses_allowlisted_task_only(self):
+        output = summarize("Execution failed for task ':app:compileReleaseKotlin'. "
+                           "Inconsistent JVM-target compatibility detected: fixture-secret")
+        self.assertIn("Failed Gradle task: :app:compileReleaseKotlin", output)
+        self.assertIn("Java and Kotlin compilation targets do not match.", output)
+        self.assertNotIn("fixture-secret", output)
+
+    def test_unrecognized_gradle_exception_body_is_still_private(self):
+        output = summarize("* What went wrong:\n> fixture-secret value\n"
+                           "Line 71: password=fixture-secret\n* Try:")
+        self.assertNotIn("fixture-secret", output)
+        self.assertNotIn("password=", output)
+
     def test_unknown_messages_arguments_and_task_names_are_withheld(self):
         output = summarize(
             "frontend_server.snapshot --aot --dart-defines=Zml4dHVyZS1zZWNyZXQ= "
