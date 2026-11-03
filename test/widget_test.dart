@@ -51,7 +51,9 @@ void main() {
     expect(find.text('Manager Profile'), findsOneWidget);
     await tester.tap(find.text('Chat').last);
     await tester.pumpAndSettle();
-    expect(find.text('No chat groups yet.'), findsOneWidget);
+    expect(find.text('Active chats'), findsOneWidget);
+    expect(find.text('Archived chats'), findsOneWidget);
+    expect(find.text('No active chats.'), findsOneWidget);
   });
 
   testWidgets('manager shell fits a compact mobile viewport', (tester) async {
