@@ -6,6 +6,16 @@ from summarize_release_failure import summarize
 
 
 class ReleaseFailureSummaryTest(unittest.TestCase):
+    def test_missing_wrapper_launcher_is_identified_without_private_path(self):
+        output = summarize("/private/fixture-secret.sh: line 14: ./gradlew: No such file or directory")
+        self.assertIn("Gradle wrapper launcher is missing", output)
+        self.assertNotIn("fixture-secret", output)
+        self.assertNotIn("/private", output)
+
+    def test_missing_wrapper_jar_is_identified(self):
+        output = summarize("Error: Could not find or load main class org.gradle.wrapper.GradleWrapperMain")
+        self.assertIn("The Gradle wrapper JAR is missing or invalid.", output)
+
     def test_heap_dump_option_is_not_an_oom_error(self):
         output = summarize(
             "Starting Gradle with -Xmx8G -XX:+HeapDumpOnOutOfMemoryError\n"

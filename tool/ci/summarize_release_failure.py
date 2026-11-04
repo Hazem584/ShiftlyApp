@@ -18,6 +18,11 @@ def summarize(log):
         if marker in log:
             output.append(marker)
 
+    if re.search(r"(?:^|[\s/])(?:\./)?gradlew(?:\.bat)?: (?:No such file or directory|not found)", log, re.M):
+        output.append("Gradle wrapper launcher is missing; prepare it before invoking Gradle directly.")
+    if "Could not find or load main class org.gradle.wrapper.GradleWrapperMain" in log:
+        output.append("The Gradle wrapper JAR is missing or invalid.")
+
     # A frontend invocation only proves the compiler was started. Failure can
     # occur afterwards in AOT, assets/fonts, native hooks, or Gradle. Emit fixed
     # labels for observed signatures, never the exception's arbitrary message.
