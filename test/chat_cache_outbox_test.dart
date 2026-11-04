@@ -274,6 +274,84 @@ void main() {
     verifyMessages((await racingCache.read(scope))!.messages);
   });
 
+  for (final lateFailure in [false, true]) {
+    test(
+      'realtime confirmation releases the lane before late HTTP failure=$lateFailure',
+      () async {
+        final http = Completer<ChatMessage>();
+        final repository = FixtureRepository()..sendGate = http;
+        final cubit = ChatConversationCubit(
+          repository,
+          const NoopChatRealtime(),
+          messageCache: cache,
+          outbox: outbox,
+        );
+        addTearDown(cubit.close);
+        final loaded = cubit.stream.firstWhere((state) => !state.loading);
+        cubit.bind(session, group);
+        await loaded;
+        await cubit.send('first');
+        await repository.firstSendStarted.future;
+        final firstId = repository.sendIds.single;
+        final canonical = message(19, clientId: firstId);
+        try {
+          repository.sendGate = null;
+          cubit.applyMessageUpdate(canonical);
+          expect(cubit.state.pending, isEmpty);
+          expect(http.isCompleted, isFalse);
+          await cubit.send('second');
+          await until(() => repository.sendIds.length == 2);
+          await until(() => cubit.state.pending.isEmpty);
+          expect(http.isCompleted, isFalse);
+          expect(
+            cubit.state.messages.map((m) => m.clientMessageId).toSet(),
+            hasLength(2),
+          );
+        } finally {
+          // A late response must not resend or duplicate either message.
+          if (lateFailure) {
+            http.completeError(
+              const ApiException(message: 'Late lost HTTP response'),
+            );
+          } else {
+            http.complete(canonical);
+          }
+        }
+        await Future<void>.delayed(Duration.zero);
+        expect(repository.sendIds, hasLength(2));
+        expect(cubit.state.pending, isEmpty);
+        expect(cubit.state.messages, hasLength(2));
+      },
+    );
+  }
+
+  test('slow cache confirmation does not hold the next network send', () async {
+    final repository = FixtureRepository();
+    final gated = GatedConfirmationCache(storage);
+    final cubit = ChatConversationCubit(
+      repository,
+      const NoopChatRealtime(),
+      messageCache: gated,
+      outbox: outbox,
+    );
+    addTearDown(cubit.close);
+    final loaded = cubit.stream.firstWhere((state) => !state.loading);
+    cubit.bind(session, group);
+    await loaded;
+    try {
+      await cubit.send('first');
+      await gated.started.future;
+      expect(cubit.state.pending, isEmpty);
+      await cubit.send('second');
+      await until(() => repository.sendIds.length == 2);
+      await until(() => cubit.state.pending.isEmpty);
+      expect(gated.release.isCompleted, isFalse);
+    } finally {
+      gated.release.complete();
+    }
+    await until(() => gated.finished == 2);
+  });
+
   test('a quoted text keeps its reply target in the durable outbox and API submission', () async {
     final gate = Completer<ChatMessage>();
     final repository = FixtureRepository()..sendGate = gate;
@@ -1020,4 +1098,18 @@ class FixtureDownloadAdapter implements HttpClientAdapter {
 
   @override
   void close({bool force = false}) {}
+}
+
+class GatedConfirmationCache extends ChatMessageCache {
+  GatedConfirmationCache(super.storage);
+  final started = Completer<void>();
+  final release = Completer<void>();
+  int finished = 0;
+  @override
+  Future<void> confirm(ChatCacheScope scope, ChatMessage message) async {
+    if (!started.isCompleted) started.complete();
+    await release.future;
+    await super.confirm(scope, message);
+    finished++;
+  }
 }

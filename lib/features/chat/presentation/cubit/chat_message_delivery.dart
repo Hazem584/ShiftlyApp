@@ -53,31 +53,40 @@ class ChatMessageDelivery {
     final lightweight =
         operation.type == 'TEXT' || operation.type == 'LOCATION';
     await host.outbox?.coordinator.acquire(lightweight: lightweight);
+    final confirmation = Completer<void>();
+    queue.confirmations[operation.id] = confirmation;
+    Future<ChatMessage?> acknowledged(Future<ChatMessage> response) =>
+        Future.any<ChatMessage?>([
+          response,
+          confirmation.future.then((_) => null),
+        ]);
     try {
       if (!current()) return;
-      ChatMessage canonical;
+      ChatMessage? canonical;
       if (operation.type == 'TEXT' || operation.type == 'LOCATION') {
         await phase('sending', submitted: true);
-        canonical = operation.type == 'TEXT'
-            ? await _retryIdempotent(
-                () => host.repository.sendMessage(
-                  scope.workspaceId,
-                  group,
-                  text: operation.text!,
-                  replyToMessageId: operation.replyToMessageId,
-                  clientMessageId: operation.id,
+        canonical = await acknowledged(
+          operation.type == 'TEXT'
+              ? _retryIdempotent(
+                  () => host.repository.sendMessage(
+                    scope.workspaceId,
+                    group,
+                    text: operation.text!,
+                    replyToMessageId: operation.replyToMessageId,
+                    clientMessageId: operation.id,
+                  ),
+                  current,
+                )
+              : _retryIdempotent(
+                  () => host.repository.sendLocation(
+                    scope.workspaceId,
+                    group,
+                    location: operation.location!,
+                    clientMessageId: operation.id,
+                  ),
+                  current,
                 ),
-                current,
-              )
-            : await _retryIdempotent(
-                () => host.repository.sendLocation(
-                  scope.workspaceId,
-                  group,
-                  location: operation.location!,
-                  clientMessageId: operation.id,
-                ),
-                current,
-              );
+        );
       } else {
         if (!operation.submitted) {
           await phase('preparing');
@@ -164,18 +173,20 @@ class ChatMessageDelivery {
           }
         }
         await phase('finalizing', submitted: true);
-        canonical = await _retryIdempotent(
-          () => host.repository.finalizeUpload(
-            scope.workspaceId,
-            group,
-            type: operation.type,
-            uploadId: operation.uploadId!,
-            clientMessageId: operation.id,
+        canonical = await acknowledged(
+          _retryIdempotent(
+            () => host.repository.finalizeUpload(
+              scope.workspaceId,
+              group,
+              type: operation.type,
+              uploadId: operation.uploadId!,
+              clientMessageId: operation.id,
+            ),
+            current,
           ),
-          current,
         );
       }
-      if (!current()) return;
+      if (canonical == null || !current()) return;
       host.validateMessages([canonical], scope, group);
       if (canonical.clientMessageId != operation.id ||
           canonical.type != operation.type) {
@@ -192,21 +203,30 @@ class ChatMessageDelivery {
       );
       host.markNewestRead(messages);
       host.onChanged?.call();
-      try {
-        await host.messageCache?.confirm(key, canonical);
-      } catch (_) {
-        /* Delivery remains canonical even if cache is unavailable. */
-      }
-      if (!current()) return;
-      try {
-        await host.outbox?.remove(key, operation);
-      } catch (_) {
-        /* A retained UUID is safe to reconcile after restart. */
-      }
-      if (!current()) return;
       queue.operations.remove(operation.id);
       queue.authorizations.remove(operation.id);
       queue.localBytes.remove(operation.id);
+      final saved = canonical;
+      // Persistence is recoverable using the same UUID. It must not hold the
+      // network lane after canonical server acknowledgement.
+      final persistence = () async {
+        try {
+          await host.messageCache?.confirm(key, saved);
+        } catch (_) {
+          /* canonical delivery survives unavailable cache */
+        }
+        if (!host.scopeCurrent(scope, group, generation)) return;
+        try {
+          await host.outbox?.remove(key, operation);
+        } catch (_) {
+          /* reconcile retained UUID on restart */
+        }
+      }();
+      if (lightweight) {
+        unawaited(persistence);
+      } else {
+        await persistence;
+      }
     } catch (error) {
       if (current()) {
         if (_isAccessLost(error)) {
@@ -252,6 +272,9 @@ class ChatMessageDelivery {
         }
       }
     } finally {
+      if (identical(queue.confirmations[operation.id], confirmation)) {
+        queue.confirmations.remove(operation.id);
+      }
       if (!lightweight) queue.uploadCancellation = null;
       host.outbox?.coordinator.release(lightweight: lightweight);
     }

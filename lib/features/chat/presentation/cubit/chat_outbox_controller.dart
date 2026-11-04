@@ -342,6 +342,10 @@ class ChatOutboxController {
 
   void clear() {
     queue.uploadCancellation?.cancel();
+    for (final confirmation in queue.confirmations.values) {
+      if (!confirmation.isCompleted) confirmation.complete();
+    }
+    queue.confirmations.clear();
     queue.operations.clear();
     queue.localBytes.clear();
     queue.authorizations.clear();
@@ -358,13 +362,18 @@ class ChatOutboxController {
         .toSet();
     if (canonicalClientIds.isEmpty) return host.state.pending;
     for (final id in canonicalClientIds) {
+      final confirmation = queue.confirmations[id];
+      if (confirmation != null && !confirmation.isCompleted) {
+        confirmation.complete();
+      }
       final operation = queue.operations.remove(id);
       queue.localBytes.remove(id);
       queue.authorizations.remove(id);
       if (operation != null && host.cacheScope != null) {
         unawaited(
-          host.outbox?.remove(host.cacheScope!, operation) ??
-              Future<void>.value(),
+          (host.outbox?.remove(host.cacheScope!, operation) ??
+                  Future<void>.value())
+              .catchError((Object _) {}),
         );
       }
     }
