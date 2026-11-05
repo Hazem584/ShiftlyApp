@@ -24,3 +24,12 @@ abstract interface class ChatLiveRealtime implements ChatRealtime {
     void Function() onChanged,
   );
 }
+
+/// Details need membership, archive, and receipt changes. Message bodies
+/// already arrive on the conversation's private Broadcast channel.
+abstract interface class ChatGroupStateRealtime {
+  ChatRealtimeSubscription subscribeToGroupState(
+    String groupId,
+    void Function() onChanged,
+  );
+}

@@ -53,8 +53,14 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
   }) {
     if (_scope == scope && _groupId == groupId) return;
     unawaited(_subscription?.cancel());
-    _subscription = realtime is ChatLiveRealtime
-        ? realtime!.subscribeToGroup(groupId, () => unawaited(load()))
+    final source = realtime;
+    _subscription = source is ChatGroupStateRealtime
+        ? (source as ChatGroupStateRealtime).subscribeToGroupState(
+            groupId,
+            () => unawaited(load()),
+          )
+        : source is ChatLiveRealtime
+        ? source.subscribeToGroup(groupId, () => unawaited(load()))
         : null;
     _scope = scope;
     _groupId = groupId;

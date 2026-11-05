@@ -10,6 +10,44 @@ class ChatLiveSync {
   ChatLiveSync(this.host);
   final ChatConversationHost host;
   bool _syncing = false, _again = false;
+  String? _inboxHint;
+  void clearInboxHint() => _inboxHint = null;
+
+  /// The inbox may receive its event even when the conversation channel misses
+  /// one. Treat its fresh last-message ID as a catch-up signal, never as a new
+  /// permission grant or as proof that every unread message was displayed.
+  void syncInboxGroup(ChatGroup? group) {
+    final scope = host.scope;
+    if (scope == null ||
+        group == null ||
+        host.state.accessLost ||
+        host.isClosed ||
+        group.id != host.groupId ||
+        group.workspaceId != scope.workspaceId) {
+      return;
+    }
+    final key = host.cacheScope;
+    if (host.messageCache != null &&
+        (key == null || !host.messageCache!.storage.authorized(key))) {
+      return;
+    }
+    final last = group.lastMessage;
+    if (last == null || last.groupId != group.id) return;
+    if (host.state.messages.any(
+      (m) => m.id == last.id && m.revision >= last.revision,
+    )) {
+      return;
+    }
+    if (host.state.messages.isNotEmpty &&
+        host.state.messages.last.createdAt.isAfter(last.createdAt)) {
+      return;
+    }
+    final hint = '${host.generation}:${last.id}:${last.revision}';
+    if (_inboxHint == hint) return;
+    _inboxHint = hint;
+    unawaited(host.load(refresh: true));
+  }
+
   ChatRealtimeSubscription bind(ChatLiveRealtime realtime, String groupId) {
     final scope = host.scope!, generation = host.generation;
     return realtime.subscribeToMessages(

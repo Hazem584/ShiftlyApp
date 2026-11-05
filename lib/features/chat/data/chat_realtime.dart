@@ -9,7 +9,7 @@ import 'chat_broadcast_codec.dart';
 
 export 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
 
-class SupabaseChatRealtime implements ChatLiveRealtime {
+class SupabaseChatRealtime implements ChatLiveRealtime, ChatGroupStateRealtime {
   SupabaseChatRealtime(this._client);
   final SupabaseClient _client;
   int _sequence = 0;
@@ -32,6 +32,12 @@ class SupabaseChatRealtime implements ChatLiveRealtime {
     String groupId,
     void Function() onInsert,
   ) => _changes(groupId, onInsert, messages: true, receipts: true);
+
+  @override
+  ChatRealtimeSubscription subscribeToGroupState(
+    String groupId,
+    void Function() onChanged,
+  ) => _changes(groupId, onChanged, receipts: true);
 
   ChatRealtimeSubscription _changes(
     String id,

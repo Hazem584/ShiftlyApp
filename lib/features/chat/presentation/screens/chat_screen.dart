@@ -53,17 +53,41 @@ class ChatScreen extends StatelessWidget {
               ),
         ),
         BlocProvider(
-          create: (_) => ChatConversationCubit(
-            repository,
-            context.read<ChatRealtime>(),
-            loadGroup: loadGroup,
-            messageCache: groups.messageCache,
-            outbox: groups.outbox,
-            onChanged: () => groups.load(refresh: true),
-          )..bind(scope, groupId),
+          create: (_) =>
+              ChatConversationCubit(
+                  repository,
+                  context.read<ChatRealtime>(),
+                  loadGroup: loadGroup,
+                  messageCache: groups.messageCache,
+                  outbox: groups.outbox,
+                  onChanged: () => groups.load(refresh: true),
+                )
+                ..bind(scope, groupId)
+                ..syncInboxGroup(
+                  groups.state.groups.where((g) => g.id == groupId).firstOrNull,
+                ),
         ),
       ],
-      child: ChatConversationView(groupId: groupId),
+      child: Builder(
+        builder: (context) => MultiBlocListener(
+          listeners: [
+            BlocListener<ChatGroupsCubit, ChatGroupsState>(
+              listener: (context, state) =>
+                  context.read<ChatConversationCubit>().syncInboxGroup(
+                    state.groups.where((g) => g.id == groupId).firstOrNull,
+                  ),
+            ),
+            // Access checks also return the last message. They repair a missed
+            // channel event after foreground/resume without requiring a send.
+            BlocListener<ChatGroupDetailsCubit, ChatGroupDetailsState>(
+              listener: (context, state) => context
+                  .read<ChatConversationCubit>()
+                  .syncInboxGroup(state.group),
+            ),
+          ],
+          child: ChatConversationView(groupId: groupId),
+        ),
+      ),
     );
   }
 }

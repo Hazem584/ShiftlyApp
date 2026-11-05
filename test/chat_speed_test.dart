@@ -9,16 +9,18 @@ import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
 import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
 import 'package:shiftly/features/chat/data/outbox/chat_outbox_storage.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubit.dart';
 
 import 'chat_cache_outbox_test.dart' as f;
 
-ChatGroup summary() => ChatGroup(
+ChatGroup summary({ChatMessage? lastMessage}) => ChatGroup(
   id: f.group,
   workspaceId: f.workspace,
   name: 'Fixture',
+  lastMessage: lastMessage,
   memberCount: 1,
   unreadCount: 0,
   createdAt: DateTime.utc(2026),
@@ -44,6 +46,71 @@ void main() {
   tearDown(() async {
     await storage.close();
     await directory.delete(recursive: true);
+  });
+
+  test('group details subscribe to receipts and access without duplicating message traffic', () async {
+    final live = _GroupStateRealtime();
+    final cubit = ChatGroupDetailsCubit(
+      f.FixtureRepository(),
+      realtime: live,
+      cacheDatabase: storage,
+      loadGroup: () async => summary(),
+    )..bind(f.session, f.group);
+    addTearDown(cubit.close);
+    await f.until(() => !cubit.state.loading);
+    expect(live.groupStateSubscriptions, 1);
+    expect(live.messageSubscriptions, 0);
+  });
+
+  test(
+    'inbox last-message update catches up an open conversation without sending',
+    () async {
+      final repository = f.FixtureRepository()
+        ..page = ChatMessagePage(messages: [f.message(1)]);
+      final cubit = ChatConversationCubit(
+        repository,
+        const NoopChatRealtime(),
+        messageCache: ChatMessageCache(storage),
+        outbox: outbox,
+      )..bind(f.session, f.group);
+      addTearDown(cubit.close);
+      await f.until(() => !cubit.state.loading);
+      repository.page = ChatMessagePage(
+        messages: [f.message(1), f.message(2), f.message(3)],
+      );
+      final inbox = summary(lastMessage: f.message(3));
+      cubit.syncInboxGroup(inbox);
+      cubit.syncInboxGroup(inbox);
+      await f.until(() => cubit.state.messages.length == 3);
+      expect(repository.sendIds, isEmpty);
+      expect(repository.listCalls, 2);
+      cubit.syncInboxGroup(inbox);
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.listCalls, 2);
+    },
+  );
+
+  test('a queued incoming refresh reaches the network while cache persistence is blocked', () async {
+    final cache = f.GatedMessageCache(storage)..blockNextWrite = true;
+    final repository = f.FixtureRepository()
+      ..page = ChatMessagePage(messages: [f.message(1)]);
+    final cubit = ChatConversationCubit(
+      repository,
+      const NoopChatRealtime(),
+      messageCache: cache,
+      outbox: outbox,
+    )..bind(f.session, f.group);
+    addTearDown(cubit.close);
+    await cache.writeStarted.future;
+    try {
+      repository.page = ChatMessagePage(messages: [f.message(1), f.message(2)]);
+      unawaited(cubit.load(refresh: true));
+      await f.until(() => cubit.state.messages.length == 2);
+      expect(cache.releaseWrite.isCompleted, isFalse);
+      expect(repository.listCalls, 2);
+    } finally {
+      cache.releaseWrite.complete();
+    }
   });
 
   test('fresh messages render before a blocked cache write', () async {
@@ -192,5 +259,27 @@ class _SlowUpload extends f.FixtureRepository {
   }) async {
     uploadStarted.complete();
     await releaseUpload.future;
+  }
+}
+
+class _GroupStateRealtime extends NoopChatRealtime
+    implements ChatGroupStateRealtime {
+  int messageSubscriptions = 0, groupStateSubscriptions = 0;
+  @override
+  ChatRealtimeSubscription subscribeToGroup(
+    String groupId,
+    void Function() onChanged,
+  ) {
+    messageSubscriptions++;
+    return super.subscribeToGroup(groupId, onChanged);
+  }
+
+  @override
+  ChatRealtimeSubscription subscribeToGroupState(
+    String groupId,
+    void Function() onChanged,
+  ) {
+    groupStateSubscriptions++;
+    return super.subscribeToGroup(groupId, onChanged);
   }
 }

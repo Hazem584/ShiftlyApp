@@ -97,6 +97,8 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
     }
   }
 
+  void syncInboxGroup(ChatGroup? group) => _live.syncInboxGroup(group);
+
   @override
   Future<void> load({bool refresh = false}) async {
     final scope = _scope;
@@ -179,16 +181,26 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
       );
       _latestLoaded = true;
       // Rendering never waits for disk persistence. The cache merges concurrent confirmations.
-      _pagePersistence =
-          messageCache
-              ?.write(ChatCacheScope.fromSession(scope, groupId), page)
-              .catchError((Object _) {}) ??
-          Future<void>.value();
+      // Keep disk snapshots in network order, but release the network gate
+      // immediately. A slow disk must not suppress an incoming refresh.
+      final cacheRevision = messageCache?.storage.revision;
+      _pagePersistence = _pagePersistence.then((_) async {
+        // Closing a route must still preserve its fetched page for reopening.
+        if (cacheRevision != messageCache?.storage.revision) return;
+        try {
+          await messageCache?.write(
+            ChatCacheScope.fromSession(scope, groupId),
+            page,
+          );
+        } catch (_) {
+          /* canonical network state remains visible */
+        }
+      });
       _reads.markNewestRead(merged);
       unawaited(_outgoing.drain());
-      await _pagePersistence;
     } catch (error) {
       if (!_current(scope, groupId, generation, request)) return;
+      _live.clearInboxHint();
       final failure = _failure(error, 'Unable to load messages.');
       if (_isAccessLost(error)) {
         await loseAccess();
