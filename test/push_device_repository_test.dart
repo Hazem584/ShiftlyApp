@@ -61,6 +61,7 @@ void main() {
         'installationId': 'installation',
         'token': 'private-token',
         'platform': 'ANDROID',
+        'taskActionsVersion': 1,
       });
       expect(adapter.requests.last.method, 'DELETE');
       expect(adapter.requests.last.path, '/notifications/devices/installation');
