@@ -1,1 +1,14 @@
-{"icons":[]}
+{
+  "icons": [
+    {
+      "key": "icon_7a0c1ada186cd386da93349ab2c216970b46dadb74ba6fc760941e821b3d63d6",
+      "sha256": "7a0c1ada186cd386da93349ab2c216970b46dadb74ba6fc760941e821b3d63d6",
+      "name": "مواح"
+    },
+    {
+      "key": "icon_b25f7d0015a7b8ef3cf63d5e653f03795bb6ab23b84b7ee2bfa7703d7365b64e",
+      "sha256": "b25f7d0015a7b8ef3cf63d5e653f03795bb6ab23b84b7ee2bfa7703d7365b64e",
+      "name": "Test"
+    }
+  ]
+}

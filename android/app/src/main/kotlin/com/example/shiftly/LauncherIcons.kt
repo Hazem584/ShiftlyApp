@@ -30,7 +30,7 @@ class LauncherIcons(private val activity: MainActivity) : Application.ActivityLi
             try {
                 val entries = aliases()
                 when (call.method) {
-                    "capabilities" -> result.success(mapOf("supported" to true, "icons" to entries.mapValues { it.value.metaData.getString("shiftly.iconSha256") }, "current" to (prefs.getString("pending", null) ?: entries.entries.firstOrNull { enabled(it.value) }?.key ?: "default")))
+                    "capabilities" -> result.success(mapOf("supported" to true, "icons" to entries.mapValues { it.value.metaData.getString("shiftly.iconSha256") }, "current" to (entries.entries.firstOrNull { enabled(it.value) }?.key ?: "default"), "pending" to prefs.getString("pending", null)))
                     "select" -> {
                         val key = call.argument<String>("key")
                         if (key == null || !entries.containsKey(key)) result.error("ICON_NOT_BUNDLED", "Icon is not in this build", null)

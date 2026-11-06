@@ -77,16 +77,16 @@ class AppIconSync with WidgetsBindingObserver {
     });
   }
 
-  Future<void> synchronize() async {
+  Future<void> synchronize({bool force = false}) async {
     if (!enabled ||
         _busy ||
         _disposed ||
-        (_lastCheck != null &&
+        (!force &&
+            _lastCheck != null &&
             now().difference(_lastCheck!) < const Duration(seconds: 30))) {
       return;
     }
     _busy = true;
-    _lastCheck = now();
     try {
       final capability = await _invoke('capabilities');
       if (_disposed || capability is! Map || capability['supported'] != true) {
@@ -112,6 +112,7 @@ class AppIconSync with WidgetsBindingObserver {
           available[key] != sha) {
         return;
       }
+      _lastCheck = now();
       if (capability['current'] == key) return;
       await _invoke('select', {'key': key});
     } catch (_) {
@@ -123,7 +124,9 @@ class AppIconSync with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) unawaited(synchronize());
+    if (state == AppLifecycleState.resumed) {
+      unawaited(synchronize(force: true));
+    }
   }
 
   void dispose() {
