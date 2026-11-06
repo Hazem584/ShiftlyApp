@@ -3,6 +3,7 @@ import Flutter
 import UIKit
 import Photos
 import UserNotifications
+import flutter_local_notifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -11,13 +12,31 @@ import UserNotifications
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     UNUserNotificationCenter.current().delegate = self
+    let action = UNNotificationAction(identifier: "shiftly_task_snooze_10",
+      title: Locale.preferredLanguages.first?.hasPrefix("ar") == true ? "ذكّرني بعد 10 دقائق" : "Remind me in 10 minutes", options: [])
+    UNUserNotificationCenter.current().setNotificationCategories([
+      UNNotificationCategory(identifier: "shiftly_task_reminder", actions: [action], intentIdentifiers: [], options: [])
+    ])
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  override func userNotificationCenter(_ center: UNUserNotificationCenter,
+      didReceive response: UNNotificationResponse,
+      withCompletionHandler completionHandler: @escaping () -> Void) {
+    if response.actionIdentifier == "shiftly_task_snooze_10" {
+      TaskNotificationSnooze.schedule(response, completion: completionHandler)
+      return
+    }
+    super.userNotificationCenter(center, didReceive: response, withCompletionHandler: completionHandler)
   }
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     if let widgetRegistrar = engineBridge.pluginRegistry.registrar(forPlugin: "ShiftlyTaskWidget") {
       TaskWidgetBridge.shared.register(widgetRegistrar.messenger())
       widgetRegistrar.addSceneDelegate(TaskWidgetBridge.shared)
+    }
+    FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { registry in
+      GeneratedPluginRegistrant.register(with: registry)
     }
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     let iconChannel = FlutterMethodChannel(name: "shiftly/app_icons", binaryMessenger: engineBridge.applicationRegistrar.messenger())
@@ -151,5 +170,51 @@ final class TaskWidgetBridge: NSObject, FlutterSceneLifeCycleDelegate {
                "taskId": values.first(where: { $0.name == "taskId" })?.value ?? ""]
     if ready { channel?.invokeMethod("opened", arguments: tap) } else { pending = tap }
     return true
+  }
+}
+
+// iOS calls this action in the background, including for visible APNs task alerts.
+// No Flutter UI, authentication request, or network call is needed to snooze.
+private enum TaskNotificationSnooze {
+  static func schedule(_ response: UNNotificationResponse, completion: @escaping () -> Void) {
+    let content = response.notification.request.content
+    let info = content.userInfo
+    var payload: [String: Any]
+    if let raw = info["payload"] as? String, let bytes = raw.data(using: .utf8),
+       let decoded = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any] {
+      payload = decoded
+    } else {
+      guard info["taskActionsVersion"] as? String == "1",
+        let owner = info["recipientProfileId"] as? String,
+        let task = info["taskId"] as? String else { completion(); return }
+      payload = ["kind":"personal-task", "ownerId":owner, "taskId":task]
+      if let revision = info["taskRevision"] as? String, let number = Int(revision) { payload["revision"] = number }
+    }
+    guard payload["kind"] as? String == "personal-task",
+      let owner = payload["ownerId"] as? String, !owner.isEmpty,
+      let task = payload["taskId"] as? String, !task.isEmpty else { completion(); return }
+    let defaults = UserDefaults.standard
+    guard defaults.string(forKey:"flutter.tasks.notification.owner") == owner,
+      !defaults.bool(forKey:"flutter.tasks.notification.cancelled.\(owner).\(task)") else { completion(); return }
+    let revisionKey = "flutter.tasks.notification.revision.\(owner).\(task)"
+    if let saved = defaults.object(forKey: revisionKey) as? Int, let revision = payload["revision"] as? Int, saved != revision { completion(); return }
+    var hash: UInt32 = 0x811c9dc5
+    for byte in "\(owner):\(task)".utf8 { hash = (hash ^ UInt32(byte)) &* 0x01000193 }
+    let id = 1400000000 + Int(hash % 100000000)
+    payload["snoozed"] = true; payload["reminderKind"] = "SNOOZE"
+    payload["title"] = content.title; payload["body"] = content.body
+    guard let json = try? JSONSerialization.data(withJSONObject: payload),
+      let raw = String(data: json, encoding: .utf8),
+      let next = content.mutableCopy() as? UNMutableNotificationContent else { completion(); return }
+    next.categoryIdentifier = "shiftly_task_reminder"
+    next.userInfo = ["notificationId":id,"presentAlert":true,"presentSound":true,"presentBadge":false,"payload":raw]
+    let request = UNNotificationRequest(identifier:String(id),content:next,
+      trigger:UNTimeIntervalNotificationTrigger(timeInterval:600,repeats:false))
+    UNUserNotificationCenter.current().add(request) { _ in
+      if defaults.string(forKey:"flutter.tasks.notification.owner") != owner {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers:[String(id)])
+      }
+      completion()
+    }
   }
 }

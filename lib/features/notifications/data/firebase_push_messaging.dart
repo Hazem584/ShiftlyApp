@@ -1,8 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shiftly/features/notifications/domain/entities/push_notice.dart';
 import 'package:shiftly/features/notifications/domain/repositories/push_messaging.dart';
+import 'package:shiftly/features/tasks/data/task_notification_actions.dart';
+
+import 'task_push_notifications.dart';
 
 class FirebasePushMessaging implements PushMessaging {
   bool _ready = false;
@@ -36,6 +40,8 @@ class FirebasePushMessaging implements PushMessaging {
     if (!_supported) return PushPermission.unsupported;
     try {
       if (Firebase.apps.isEmpty) await Firebase.initializeApp();
+      await TaskNotificationSetup.initialize(FlutterLocalNotificationsPlugin());
+      FirebaseMessaging.onBackgroundMessage(taskPushBackground);
       _ready = true;
       await FirebaseMessaging.instance.setAutoInitEnabled(false);
       // Foreground notices are shown inside Shiftly, avoiding duplicate alerts.

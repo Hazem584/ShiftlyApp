@@ -6,12 +6,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/features/breaks/domain/break_notifier.dart';
 import 'package:shiftly/features/notifications/domain/repositories/push_preference_store.dart';
-import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../domain/personal_task.dart';
 import '../domain/task_alarm.dart';
 import '../domain/task_reminders.dart';
+import 'task_notification_actions.dart';
 
 /// Native pending alarms survive process death and Android reboot. UTC preserves
 /// the chosen instant across timezone changes; the editor uses device local time.
@@ -30,24 +30,19 @@ class DeviceTaskReminders implements TaskReminders, BreakNotifier {
   Future<void> _initialize() => _initializing ??= _start();
   Future<void> _start() async {
     if (!_supported) return;
-    tzdata.initializeTimeZones();
-    await _plugin.initialize(
-      settings: const InitializationSettings(
-        android: AndroidInitializationSettings('ic_notification'),
-        iOS: DarwinInitializationSettings(
-          requestAlertPermission: false,
-          requestBadgePermission: false,
-          requestSoundPermission: false,
-        ),
-      ),
-      onDidReceiveNotificationResponse: (response) {
+    await TaskNotificationSetup.initialize(
+      _plugin,
+      onTap: (response) {
         final tap = _decode(response.payload);
         if (tap != null) opened.add(tap);
       },
     );
     final launch = await _plugin.getNotificationAppLaunchDetails();
     if (launch?.didNotificationLaunchApp == true) {
-      initialTap = _decode(launch?.notificationResponse?.payload);
+      final response = launch?.notificationResponse;
+      if (response?.actionId != taskSnoozeAction) {
+        initialTap = _decode(response?.payload);
+      }
     }
   }
 
@@ -178,7 +173,13 @@ class DeviceTaskReminders implements TaskReminders, BreakNotifier {
     await _initialize();
     final state = await permission(userId);
     if (state == TaskReminderPermission.disabled) {
-      await clear();
+      for (final notification in await _plugin.pendingNotificationRequests()) {
+        final tap = _decode(notification.payload);
+        if (tap != null &&
+            !(tap['ownerId'] == userId && tap['snoozed'] == true)) {
+          await _plugin.cancel(id: notification.id);
+        }
+      }
       return [];
     }
     final pending = await _plugin.pendingNotificationRequests();
@@ -202,12 +203,42 @@ class DeviceTaskReminders implements TaskReminders, BreakNotifier {
             final time = a.at.compareTo(b.at);
             return time == 0 ? a.key.compareTo(b.key) : time;
           });
+    for (final task in tasks.where((t) => t.ownerId == userId)) {
+      if (task.completed) {
+        await _preferences.setBool(
+          'tasks.notification.cancelled.$userId.${task.id}',
+          true,
+        );
+        continue;
+      }
+      await _preferences.setInt(
+        'tasks.notification.revision.$userId.${task.id}',
+        task.revision,
+      );
+      await _preferences.remove(
+        'tasks.notification.cancelled.$userId.${task.id}',
+      );
+    }
     final desiredIds = alarms.take(60).map((alarm) => alarm.key).toSet();
     if (!preserveExisting) {
       // Free obsolete slots first so reconciliation never exceeds iOS's cap.
       for (final notification in pending) {
         final tap = _decode(notification.payload);
         if (tap != null &&
+            !(tap['ownerId'] == userId &&
+                tap['snoozed'] == true &&
+                _preferences.getBool(
+                      'tasks.notification.cancelled.$userId.${tap['taskId']}',
+                    ) !=
+                    true &&
+                (_preferences.getInt(
+                          'tasks.notification.revision.$userId.${tap['taskId']}',
+                        ) ==
+                        null ||
+                    _preferences.getInt(
+                          'tasks.notification.revision.$userId.${tap['taskId']}',
+                        ) ==
+                        tap['revision'])) &&
             (tap['ownerId'] != userId ||
                 !desiredIds.contains(_alarmKey(tap)))) {
           await _plugin.cancel(id: notification.id);
@@ -243,20 +274,7 @@ class DeviceTaskReminders implements TaskReminders, BreakNotifier {
         },
         body: task.description.isEmpty ? task.title : task.description,
         scheduledDate: tz.TZDateTime.from(alarm.at, tz.UTC),
-        notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'shiftly_tasks',
-            'Task reminders',
-            channelDescription: 'Scheduled personal task reminders',
-            importance: Importance.max,
-            priority: Priority.high,
-            icon: 'ic_notification',
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentSound: true,
-          ),
-        ),
+        notificationDetails: taskNotificationDetails(arabic: arabic),
         androidScheduleMode: state == TaskReminderPermission.exact
             ? AndroidScheduleMode.exactAllowWhileIdle
             : AndroidScheduleMode.inexactAllowWhileIdle,
@@ -265,6 +283,9 @@ class DeviceTaskReminders implements TaskReminders, BreakNotifier {
           'ownerId': userId,
           'taskId': task.id,
           'revision': task.revision,
+          'title': task.title,
+          'body': task.description.isEmpty ? task.title : task.description,
+          'arabic': arabic,
           'reminderKind': alarm.wireKind,
           if (alarm.occurrenceDueAt != null)
             'occurrenceDueAt': alarm.occurrenceDueAt!.toUtc().toIso8601String(),
@@ -299,11 +320,26 @@ class DeviceTaskReminders implements TaskReminders, BreakNotifier {
   @override
   Future<void> cancel(String taskId) async {
     if (!_supported) return;
+    final owner = _preferences.getString(taskNotificationOwnerKey);
+    if (owner != null) {
+      await _preferences.setBool(
+        'tasks.notification.cancelled.$owner.$taskId',
+        true,
+      );
+    }
     await _initialize();
     for (final pending in await _plugin.pendingNotificationRequests()) {
       if (_decode(pending.payload)?['taskId'] == taskId) {
         await _plugin.cancel(id: pending.id);
       }
+    }
+  }
+
+  Future<void> bindNotificationOwner(String? owner) async {
+    if (owner == null) {
+      await _preferences.remove(taskNotificationOwnerKey);
+    } else {
+      await _preferences.setString(taskNotificationOwnerKey, owner);
     }
   }
 

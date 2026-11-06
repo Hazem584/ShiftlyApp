@@ -59,6 +59,10 @@ class AppTaskCoordinator with WidgetsBindingObserver {
   StreamSubscription<Map<String, Object?>>? _taps;
   Map<String, Object?>? _pending;
   Future<void> bindSession(FeatureSessionScope? scope) async {
+    final reminders = cubit.reminders;
+    if (reminders is DeviceTaskReminders) {
+      await reminders.bindNotificationOwner(scope?.userId);
+    }
     await cubit.bindSession(scope);
     await openPending();
   }

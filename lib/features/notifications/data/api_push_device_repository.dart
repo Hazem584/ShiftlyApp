@@ -20,6 +20,7 @@ class ApiPushDeviceRepository implements PushDeviceRepository {
         'installationId': installationId,
         'token': token,
         'platform': platform,
+        'taskActionsVersion': 1,
       },
     );
     if (ApiModelParser.map(response.data)['registered'] != true) {

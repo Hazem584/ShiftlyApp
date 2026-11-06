@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/features/notifications/data/preferences_push_store.dart';
 import 'package:shiftly/features/tasks/data/device_task_reminders.dart';
+import 'package:shiftly/features/tasks/data/task_notification_actions.dart';
 import 'package:shiftly/features/tasks/domain/personal_task.dart';
 
 void main() {
@@ -21,7 +22,10 @@ void main() {
     pending = [];
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     AndroidFlutterLocalNotificationsPlugin.registerWith();
-    SharedPreferences.setMockInitialValues({'tasks.reminders.owner': true});
+    SharedPreferences.setMockInitialValues({
+      'tasks.reminders.owner': true,
+      taskNotificationOwnerKey: 'owner',
+    });
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
           calls.add(call);
@@ -61,6 +65,98 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
     return DeviceTaskReminders(preferences, PreferencesPushStore(preferences));
   }
+
+  String snoozePayload({String owner = 'owner', bool snoozed = false}) =>
+      jsonEncode({
+        'kind': 'personal-task',
+        'ownerId': owner,
+        'taskId': 'task-0',
+        'revision': 2,
+        'title': 'Same task',
+        'body': 'Same description',
+        'arabic': true,
+        if (snoozed) 'snoozed': true,
+        if (snoozed) 'reminderKind': 'SNOOZE',
+      });
+  NotificationResponse snoozeResponse({String owner = 'owner'}) =>
+      NotificationResponse(
+        notificationResponseType:
+            NotificationResponseType.selectedNotificationAction,
+        id: 17,
+        actionId: taskSnoozeAction,
+        payload: snoozePayload(owner: owner),
+      );
+
+  test(
+    'snooze action schedules the same task exactly ten minutes from pressing',
+    () async {
+      final now = DateTime.utc(2090, 11, 6, 12);
+      expect(
+        await snoozeTaskNotification(snoozeResponse(), clock: () => now),
+        isTrue,
+      );
+      final alarm =
+          calls.lastWhere((c) => c.method == 'zonedSchedule').arguments as Map;
+      expect(alarm['scheduledDateTime'], contains('12:10:00'));
+      expect(alarm['title'], 'Same task');
+      expect(alarm['body'], 'Same description');
+      expect(alarm['id'], taskSnoozeId('owner', 'task-0'));
+      final payload = jsonDecode(alarm['payload'] as String) as Map;
+      expect(payload['taskId'], 'task-0');
+      expect(payload['snoozed'], isTrue);
+      final android = alarm['platformSpecifics'] as Map;
+      final action = (android['actions'] as List).single as Map;
+      expect(action['id'], taskSnoozeAction);
+      expect(action['showsUserInterface'], isFalse);
+      expect(action['title'], 'ذكّرني بعد 10 دقائق');
+    },
+  );
+  test('repeated snooze replaces a single alarm and works without exact-alarm permission', () async {
+    exact = false;
+    await snoozeTaskNotification(snoozeResponse());
+    await snoozeTaskNotification(snoozeResponse());
+    final alarms = calls
+        .where((c) => c.method == 'zonedSchedule')
+        .map((c) => c.arguments as Map)
+        .toList();
+    expect(alarms.map((a) => a['id']).toSet(), hasLength(1));
+    expect(
+      (alarms.last['platformSpecifics'] as Map)['scheduleMode'],
+      'inexactAllowWhileIdle',
+    );
+  });
+  test(
+    'a stale notification from another account or completed task cannot snooze',
+    () async {
+      expect(
+        await snoozeTaskNotification(snoozeResponse(owner: 'other')),
+        isFalse,
+      );
+      final reminders = await service();
+      await reminders.cancel('task-0');
+      expect(await snoozeTaskNotification(snoozeResponse()), isFalse);
+      expect(calls.where((c) => c.method == 'zonedSchedule'), isEmpty);
+      await reminders.close();
+    },
+  );
+  test('normal task synchronization preserves a requested snooze and logout clears it', () async {
+    pending = [
+      {
+        'id': taskSnoozeId('owner', 'task-0'),
+        'title': 'Same task',
+        'body': 'Details',
+        'payload': snoozePayload(snoozed: true),
+      },
+    ];
+    final reminders = await service();
+    await reminders.replace('owner', []);
+    expect(calls.where((c) => c.method == 'cancel'), isEmpty);
+    await reminders.bindNotificationOwner(null);
+    await reminders.clear();
+    expect(calls.where((c) => c.method == 'cancel'), hasLength(1));
+    expect(await snoozeTaskNotification(snoozeResponse()), isFalse);
+    await reminders.close();
+  });
 
   test(
     'break alarm is isolated from task alarms and can be cancelled',
@@ -271,6 +367,9 @@ void main() {
       'taskId': 'task-0',
       'revision': 2,
       'reminderKind': 'DUE',
+      'title': 'Title 0',
+      'body': 'Details',
+      'arabic': false,
     });
     await reminders.close();
   });
