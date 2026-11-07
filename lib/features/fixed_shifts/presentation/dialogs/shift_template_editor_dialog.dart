@@ -95,6 +95,14 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (widget.template != null) ...[
+                  Text(
+                    context.tr(
+                      'Changes apply automatically to assigned employees. Shifts already started keep their saved schedule; changes apply from the next day.',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 TextFormField(
                   controller: _name,
                   maxLength: 100,

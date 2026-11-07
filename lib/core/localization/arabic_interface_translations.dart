@@ -1,6 +1,8 @@
 /// Interface messages only. Employee names, chat content and free-text reasons
 /// are supplied as parameters and are never translated.
 const arabicInterfaceTranslations = <String, String>{
+  'Changes apply automatically to assigned employees. Shifts already started keep their saved schedule; changes apply from the next day.': 'التعديلات بتتطبق تلقائيًا على الموظفين المرتبطين بالشيفت. الشيفت اللي بدأ بالفعل بيحتفظ بميعاده، والتعديل يبدأ من اليوم التالي.',
+
   'Accept': 'وافق',
   'Decline': 'ارفض',
   'Invitation declined.': 'اترفض الدعوة.',
