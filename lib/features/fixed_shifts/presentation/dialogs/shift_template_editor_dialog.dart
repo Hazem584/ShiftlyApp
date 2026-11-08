@@ -21,6 +21,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
   late final TextEditingController _description;
   late final List<TextEditingController> _policies;
   late TimeOfDay _start;
+  TimeOfDay? _breakAt;
   late TimeOfDay _end;
   late String _colorValue;
   String? _localError;
@@ -41,6 +42,9 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
     _description = TextEditingController(text: value?.description);
     _start = shiftTemplatesScreenTod(value?.startMinute ?? 540);
     _end = shiftTemplatesScreenTod(value?.endMinute ?? 1020);
+    _breakAt = value?.breakStartMinute == null
+        ? null
+        : shiftTemplatesScreenTod(value!.breakStartMinute!);
     _colorValue = value?.color ?? _colors.first;
     _policies = [
       TextEditingController(text: (value?.graceMinutes ?? 10).toString()),
@@ -51,6 +55,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
         text: (value?.allowedLateCheckInMinutes ?? 120).toString(),
       ),
       TextEditingController(text: (value?.minimumWorkMinutes ?? 0).toString()),
+      TextEditingController(text: (value?.breakMinutes ?? 60).toString()),
     ];
   }
 
@@ -65,6 +70,10 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
   }
 
   ShiftTemplateInput get _input => ShiftTemplateInput(
+    breakMinutes: int.tryParse(_policies[4].text) ?? -1,
+    breakStartMinute: _breakAt == null
+        ? null
+        : _breakAt!.hour * 60 + _breakAt!.minute,
     name: _name.text,
     description: _description.text,
     color: _colorValue,
@@ -187,6 +196,32 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                   ),
                 ),
                 const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(context.tr('Break reminder time')),
+                  subtitle: Text(
+                    _breakAt?.format(context) ?? context.tr('Not set'),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: state.saving
+                        ? null
+                        : () => setState(() => _breakAt = null),
+                  ),
+                  onTap: state.saving
+                      ? null
+                      : () async {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime:
+                                _breakAt ??
+                                const TimeOfDay(hour: 14, minute: 0),
+                          );
+                          if (time != null && mounted) {
+                            setState(() => _breakAt = time);
+                          }
+                        },
+                ),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final width = constraints.maxWidth >= 440
@@ -197,12 +232,13 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
                       'Early check-in minutes',
                       'Late check-in minutes',
                       'Minimum work minutes',
+                      'Break minutes',
                     ];
                     return Wrap(
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        for (var i = 0; i < 4; i++)
+                        for (var i = 0; i < 5; i++)
                           SizedBox(
                             width: width,
                             child: TextFormField(

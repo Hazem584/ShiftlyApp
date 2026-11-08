@@ -8,9 +8,13 @@ class ShiftTemplateInput {
     required this.allowedEarlyCheckInMinutes,
     required this.allowedLateCheckInMinutes,
     required this.minimumWorkMinutes,
+    this.breakMinutes = 60,
+    this.breakStartMinute,
     this.description,
   });
 
+  final int breakMinutes;
+  final int? breakStartMinute;
   final String name;
   final String? description;
   final String color;
@@ -27,6 +31,18 @@ class ShiftTemplateInput {
   }
 
   String? validate() {
+    final offset = breakStartMinute == null
+        ? null
+        : (breakStartMinute! - startMinute + 1440) % 1440;
+    if (breakMinutes < 0 ||
+        breakMinutes > durationMinutes ||
+        (breakStartMinute != null &&
+            (breakStartMinute! < 0 || breakStartMinute! > 1439)) ||
+        (breakMinutes > 0 &&
+            offset != null &&
+            offset + breakMinutes > durationMinutes)) {
+      return 'Break must fit within the shift.';
+    }
     if (name.trim().isEmpty || name.trim().length > 100) {
       return 'Enter a template name up to 100 characters.';
     }
@@ -57,6 +73,8 @@ class ShiftTemplateInput {
   }
 
   Map<String, Object?> toJson() => {
+    'breakMinutes': breakMinutes,
+    'breakStartMinute': breakStartMinute,
     'name': name.trim(),
     if (description != null) 'description': description!.trim(),
     'color': color,

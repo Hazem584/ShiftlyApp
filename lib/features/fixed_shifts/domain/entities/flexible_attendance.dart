@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/breaks/domain/shift_break_state.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
 import 'package:shiftly/features/fixed_shifts/domain/services/fixed_shift_dates.dart';
 
@@ -32,6 +33,9 @@ class FlexibleAttendance extends Equatable {
     this.classification,
     this.clockOutAt,
     this.workedMinutes,
+    this.breakState,
+    this.netWorkedMinutes,
+    this.overtimeMinutes = 0,
   });
 
   final String? occurrenceKind,
@@ -59,6 +63,9 @@ class FlexibleAttendance extends Equatable {
   final DateTime? clockOutAt;
   final int minutesLate;
   final int? workedMinutes;
+  final int? netWorkedMinutes;
+  final int overtimeMinutes;
+  final ShiftBreakState? breakState;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -120,6 +127,14 @@ class FlexibleAttendance extends Equatable {
       clockOutAt: ApiModelParser.optionalDate(json['clockOutAt']),
       minutesLate: ApiModelParser.integer(json, 'minutesLate'),
       workedMinutes: ApiModelParser.optionalInteger(json['workedMinutes']),
+      netWorkedMinutes: ApiModelParser.optionalInteger(
+        json['netWorkedMinutes'],
+      ),
+      overtimeMinutes:
+          ApiModelParser.optionalInteger(json['overtimeMinutes']) ?? 0,
+      breakState: json['breakState'] == null
+          ? null
+          : ShiftBreakState.fromJson(ApiModelParser.map(json['breakState'])),
       createdAt: ApiModelParser.date(json, 'createdAt'),
       updatedAt: ApiModelParser.date(json, 'updatedAt'),
     );
@@ -173,6 +188,9 @@ class FlexibleAttendance extends Equatable {
     clockOutAt,
     minutesLate,
     workedMinutes,
+    breakState,
+    netWorkedMinutes,
+    overtimeMinutes,
     createdAt,
     updatedAt,
   ];

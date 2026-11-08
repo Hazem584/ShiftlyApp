@@ -17,12 +17,16 @@ class ShiftTemplate extends Equatable {
     required this.overnight,
     required this.createdAt,
     required this.updatedAt,
+    this.breakMinutes = 60,
+    this.breakStartMinute,
     this.description,
     this.archivedAt,
   });
 
   final String id;
   final String workspaceId;
+  final int breakMinutes;
+  final int? breakStartMinute;
   final String name;
   final String? description;
   final String color;
@@ -86,6 +90,10 @@ class ShiftTemplate extends Equatable {
     return ShiftTemplate(
       id: ApiModelParser.string(json, 'id'),
       workspaceId: ApiModelParser.string(json, 'workspaceId'),
+      breakMinutes: ApiModelParser.optionalInteger(json['breakMinutes']) ?? 60,
+      breakStartMinute: ApiModelParser.optionalInteger(
+        json['breakStartMinute'],
+      ),
       name: ApiModelParser.string(json, 'name'),
       description: ApiModelParser.optionalString(json['description']),
       color: color,
@@ -108,6 +116,8 @@ class ShiftTemplate extends Equatable {
     id,
     workspaceId,
     name,
+    breakMinutes,
+    breakStartMinute,
     description,
     color,
     startMinute,

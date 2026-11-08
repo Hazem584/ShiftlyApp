@@ -1,4 +1,13 @@
 const arabicWorkdayTranslations = <String, String>{
+  'Extra shift hours are part of worked hours. Overtime uses scheduled work hours after the planned break deduction; an untaken break counts as work.': 'ساعات الشيفت الإضافي جزء من ساعات الشغل. الوقت الإضافي بيتحسب بعد خصم البريك المخطط من ساعات الشيفت، والبريك اللي ما اتاخدش بيتحسب شغل.',
+
+  'Break minutes': 'مدة البريك بالدقائق',
+  'Break reminder time': 'ميعاد تذكير البريك',
+  'Break must fit within the shift.':
+      'مدة وميعاد البريك لازم يكونوا داخل الشيفت.',
+  'Break at {time}': 'البريك الساعة {time}',
+  'Overtime: {time}': 'وقت إضافي: {time}',
+
   'Employee status': 'حالة الموظف',
   'Team & attendance': 'الفريق والحضور',
   'Work management': 'إدارة الشغل',

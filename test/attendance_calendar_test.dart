@@ -404,6 +404,50 @@ void main() {
     expect(data.days['2026-03-31']!.single.attendance, record);
   });
 
+  test(
+    'fixed occurrence becomes absent only after its overnight shift ends',
+    () {
+      final shift = _shift(
+        id: 'schedule:assignment:2026-03-10',
+        employeeId: 'a',
+        start: DateTime.utc(2026, 3, 10, 22),
+        end: DateTime.utc(2026, 3, 11, 6),
+      );
+      AttendanceCalendarMonth derive(DateTime now) =>
+          deriveAttendanceCalendarMonth(
+            workspaceId: _workspace,
+            timezoneName: 'Etc/UTC',
+            year: 2026,
+            month: 3,
+            shifts: [shift],
+            attendance: [],
+            leaveRequests: [],
+            nowUtc: now,
+          );
+      final before = derive(DateTime.utc(2026, 3, 11, 5, 59));
+      expect(before.days, isEmpty);
+      expect(before.nextRefreshAt, shift.endsAt);
+      expect(
+        derive(DateTime.utc(2026, 3, 11, 6)).days['2026-03-10']!.single.status,
+        CalendarAttendanceStatus.absent,
+      );
+      final present = deriveAttendanceCalendarMonth(
+        workspaceId: _workspace,
+        timezoneName: 'Etc/UTC',
+        year: 2026,
+        month: 3,
+        shifts: [shift],
+        attendance: [_templateAttendance(employeeId: 'a')],
+        leaveRequests: [],
+        nowUtc: DateTime.utc(2026, 3, 12),
+      );
+      expect(
+        present.days['2026-03-10']!.single.status,
+        CalendarAttendanceStatus.present,
+      );
+    },
+  );
+
   testWidgets('template calendar details show the saved schedule and times', (
     tester,
   ) async {

@@ -74,10 +74,17 @@ class AttendanceCalendarCubit extends Cubit<AttendanceCalendarState> {
   bool _requestActive = false;
   bool _followUpRequested = false;
   bool _opened = false;
+  Timer? _deadline;
+  @override
+  Future<void> close() {
+    _deadline?.cancel();
+    return super.close();
+  }
 
   void bindSession(FeatureSessionScope? scope) {
     final authorized = scope?.isManager == true ? scope : null;
     if (_scope == authorized) return;
+    _deadline?.cancel();
     _scope = authorized;
     _generation += 1;
     _requestId += 1;
@@ -170,6 +177,17 @@ class AttendanceCalendarCubit extends Cubit<AttendanceCalendarState> {
           data.month != month ||
           data.timezone != scope.timezone) {
         throw const FormatException('Invalid calendar response scope');
+      }
+      _deadline?.cancel();
+      final due = data.nextRefreshAt;
+      if (due != null) {
+        final delay =
+            due.difference(data.evaluatedAt ?? _now().toUtc()) +
+            const Duration(seconds: 1);
+        _deadline = Timer(
+          delay.isNegative ? const Duration(seconds: 1) : delay,
+          () => load(refresh: true),
+        );
       }
       emit(
         AttendanceCalendarState(

@@ -8,8 +8,11 @@ class AttendanceCalendarMonth extends Equatable {
     required this.month,
     required this.timezone,
     required this.days,
+    this.nextRefreshAt,
+    this.evaluatedAt,
   });
 
+  final DateTime? nextRefreshAt, evaluatedAt;
   final int year;
   final int month;
   final String timezone;
@@ -24,5 +27,12 @@ class AttendanceCalendarMonth extends Equatable {
       const [];
 
   @override
-  List<Object?> get props => [year, month, timezone, days];
+  List<Object?> get props => [
+    year,
+    month,
+    timezone,
+    days,
+    nextRefreshAt,
+    evaluatedAt,
+  ];
 }

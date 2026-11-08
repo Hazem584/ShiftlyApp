@@ -5,6 +5,7 @@ import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
@@ -403,9 +404,12 @@ class ManagerAttendancePanel extends StatelessWidget {
                 ),
                 if (record.workedMinutes != null)
                   Text(
-                    context.tr('Worked: {value1} minutes', {
-                      'value1': (record.workedMinutes).toString(),
-                    }),
+                    workDurationWithOvertime(
+                      record.netWorkedMinutes ?? record.workedMinutes!,
+                      record.overtimeMinutes,
+                      arabic:
+                          Localizations.localeOf(context).languageCode == 'ar',
+                    ),
                   ),
                 if (record.rejectionReason != null) ...[
                   const SizedBox(height: AppSpacing.s),

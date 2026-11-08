@@ -156,7 +156,8 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
         status = CalendarAttendanceStatus.present;
       } else if (employeeLeave != null) {
         status = CalendarAttendanceStatus.leave;
-      } else if (employeeShifts.any((item) => !item.endsAt.isAfter(nowUtc))) {
+      } else if (employeeShifts.isNotEmpty &&
+          employeeShifts.every((item) => !item.endsAt.isAfter(nowUtc))) {
         status = CalendarAttendanceStatus.absent;
       }
       if (status != null) {
@@ -179,7 +180,15 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
       days[key] = List.unmodifiable(entries);
     }
   }
+  final upcoming =
+      validShifts.values
+          .map((e) => e.endsAt.toUtc())
+          .where((e) => e.isAfter(nowUtc))
+          .toList()
+        ..sort();
   return AttendanceCalendarMonth(
+    nextRefreshAt: upcoming.firstOrNull,
+    evaluatedAt: nowUtc,
     year: year,
     month: month,
     timezone: timezoneName,

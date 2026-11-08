@@ -267,6 +267,7 @@ class _AppProvidersState extends State<AppProviders> {
         unawaited(_composition.flexibleAttendanceCubit.load(refresh: true));
         unawaited(_composition.notificationsCubit.refreshUnreadCount());
         unawaited(_composition.chatGroupsCubit.refreshUnread());
+        _composition.attendanceCalendarCubit.invalidate();
         _composition.dashboardCubit.invalidate();
       },
       child: provided,

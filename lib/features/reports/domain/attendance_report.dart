@@ -193,7 +193,7 @@ class AttendanceReport {
         case AttendanceReviewStatus.approved:
           days.add(WorkspaceTime.dateKey(r.clockInAt, timezone));
           final closed = r.clockOutAt != null;
-          final work = closed ? r.workedMinutes ?? 0 : 0;
+          final work = closed ? r.netWorkedMinutes ?? r.workedMinutes ?? 0 : 0;
           final extra = r.occurrenceKind == 'EXTRA';
           final start = r.scheduledStartAt ?? r.shift?.startsAt;
           final end = r.scheduledEndAt ?? r.shift?.endsAt;
@@ -207,8 +207,12 @@ class AttendanceReport {
             lateMinutes: r.minutesLate,
             workMinutes: work,
             extraMinutes: extra ? work : 0,
-            excessMinutes: !extra && scheduled != null && scheduled > 0
-                ? math.max(0, work - scheduled)
+            excessMinutes: !extra && closed
+                ? r.breakState != null
+                      ? r.overtimeMinutes
+                      : scheduled != null && scheduled > 0
+                      ? math.max(0, work - scheduled)
+                      : 0
                 : 0,
             missingSchedule:
                 closed && !extra && (scheduled == null || scheduled <= 0)

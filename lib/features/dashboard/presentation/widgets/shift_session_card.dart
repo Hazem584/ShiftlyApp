@@ -58,7 +58,13 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
 
   void _restore() {
     final active = widget.state.current;
-    if (active?.isOpen == true) _breaks?.restore(active!.id);
+    if (active?.isOpen == true) {
+      _breaks?.restore(
+        active!.id,
+        policy: active.breakState,
+        arabic: Localizations.localeOf(context).languageCode == 'ar',
+      );
+    }
   }
 
   void _changed() {
@@ -144,7 +150,24 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
     final now = widget.now?.call() ?? DateTime.now();
     final end = active.scheduledEndAt;
     final start = active.scheduledStartAt ?? active.clockInAt;
-    final elapsed = now.difference(active.clockInAt);
+    final elapsedMinutes = now.difference(active.clockInAt).inMinutes;
+    final netMinutes = (elapsedMinutes - (_breaks?.takenMinutes ?? 0)).clamp(
+      0,
+      999999,
+    );
+    final elapsed = Duration(minutes: netMinutes);
+    final scheduledMinutes = active.scheduledEndAt
+        ?.difference(active.scheduledStartAt ?? active.clockInAt)
+        .inMinutes;
+    final expected = scheduledMinutes == null
+        ? null
+        : (scheduledMinutes - (active.breakState?.allowedMinutes ?? 0)).clamp(
+            0,
+            999999,
+          );
+    final overtime = expected == null
+        ? 0
+        : (netMinutes - expected).clamp(0, 999999);
     final remaining = end?.difference(now);
     final length = end?.difference(start).inSeconds ?? 0;
     final progress = length <= 0
@@ -232,7 +255,12 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
           const SizedBox(height: 12),
           LinearProgressIndicator(
             value: onBreak
-                ? (1 - _breaks!.remaining.inSeconds / 3600).clamp(0.0, 1.0)
+                ? (1 -
+                          _breaks!.remaining.inSeconds /
+                              (_breaks!.totalSeconds == 0
+                                  ? 1
+                                  : _breaks!.totalSeconds))
+                      .clamp(0.0, 1.0)
                 : progress,
             minHeight: 6,
             borderRadius: BorderRadius.circular(8),
@@ -242,6 +270,22 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
             context.tr('Worked {time}', {'time': _duration(elapsed)}),
             style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
           ),
+          if (overtime > 0)
+            Text(
+              context.tr('Overtime: {time}', {
+                'time': _duration(Duration(minutes: overtime)),
+              }),
+            ),
+          if (_breaks?.reminderAt != null && _breaks?.used != true)
+            Text(
+              context.tr('Break at {time}', {
+                'time': WorkspaceTime.time(
+                  _breaks!.reminderAt!,
+                  widget.timezone,
+                  locale: locale,
+                ),
+              }),
+            ),
           const SizedBox(height: 14),
           Wrap(
             spacing: 8,
@@ -250,11 +294,14 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
               FilledButton.icon(
                 key: const Key('start-shift-break'),
                 onPressed:
-                    disabled || _breaks == null || (!onBreak && _breaks!.used)
+                    disabled ||
+                        _breaks == null ||
+                        _breaks!.allowedMinutes <= 0 ||
+                        (!onBreak && _breaks!.used)
                     ? null
                     : () async {
                         if (onBreak) {
-                          await _breaks!.finish();
+                          await _breaks!.end();
                         } else {
                           await _breaks!.start(
                             arabic:

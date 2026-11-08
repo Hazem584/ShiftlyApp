@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_shift_summary.dart';
+import 'package:shiftly/features/breaks/domain/shift_break_state.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
@@ -30,6 +31,9 @@ class AttendanceRecordApi extends Equatable {
     this.reviewedAt,
     this.rejectionReason,
     this.workedMinutes,
+    this.breakState,
+    this.netWorkedMinutes,
+    this.overtimeMinutes = 0,
     this.shiftTemplateId,
     this.templateName,
     this.workspaceTimezone,
@@ -70,6 +74,9 @@ class AttendanceRecordApi extends Equatable {
   final String? rejectionReason;
   final int minutesLate;
   final int? workedMinutes;
+  final int? netWorkedMinutes;
+  final int overtimeMinutes;
+  final ShiftBreakState? breakState;
   final DateTime createdAt;
   final DateTime updatedAt;
   final AttendanceShiftSummary? shift;
@@ -129,6 +136,12 @@ class AttendanceRecordApi extends Equatable {
     rejectionReason: ApiModelParser.optionalString(json['rejectionReason']),
     minutesLate: ApiModelParser.integer(json, 'minutesLate'),
     workedMinutes: ApiModelParser.optionalInteger(json['workedMinutes']),
+    netWorkedMinutes: ApiModelParser.optionalInteger(json['netWorkedMinutes']),
+    overtimeMinutes:
+        ApiModelParser.optionalInteger(json['overtimeMinutes']) ?? 0,
+    breakState: json['breakState'] == null
+        ? null
+        : ShiftBreakState.fromJson(ApiModelParser.map(json['breakState'])),
     createdAt: ApiModelParser.date(json, 'createdAt'),
     updatedAt: ApiModelParser.date(json, 'updatedAt'),
     shift: json['shift'] == null
@@ -172,6 +185,9 @@ class AttendanceRecordApi extends Equatable {
     rejectionReason,
     minutesLate,
     workedMinutes,
+    breakState,
+    netWorkedMinutes,
+    overtimeMinutes,
     createdAt,
     updatedAt,
     shift,

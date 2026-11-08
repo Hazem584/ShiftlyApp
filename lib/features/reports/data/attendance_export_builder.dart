@@ -95,7 +95,7 @@ class AttendanceExportBuilder {
               r.occurrenceKind == 'EXTRA' ? 'Extra shift' : 'Regular shift',
             ),
             r.minutesLate,
-            r.workedMinutes ?? '',
+            r.netWorkedMinutes ?? r.workedMinutes ?? '',
             '${r.templateName ?? ''} · ${r.operationalDate ?? ''}\n'
                 '${r.scheduledStartAt == null ? '' : WorkspaceTime.dateTime(r.scheduledStartAt!, r.workspaceTimezone ?? report.timezone)} - '
                 '${r.scheduledEndAt == null ? '' : WorkspaceTime.dateTime(r.scheduledEndAt!, r.workspaceTimezone ?? report.timezone)}',
@@ -108,7 +108,7 @@ class AttendanceExportBuilder {
         'Hours include approved closed records only. Open, pending and rejected records do not add hours.',
       ),
       strings.text(
-        'Extra shift hours are part of worked hours. Schedule excess is time beyond the scheduled duration of regular shifts; it is an estimate, not payroll approval.',
+        'Extra shift hours are part of worked hours. Overtime uses scheduled work hours after the planned break deduction; an untaken break counts as work.',
       ),
       strings.text(
         'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Breaks are not deducted.',

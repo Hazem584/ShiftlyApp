@@ -15,7 +15,8 @@ import 'task_notification_actions.dart';
 
 /// Native pending alarms survive process death and Android reboot. UTC preserves
 /// the chosen instant across timezone changes; the editor uses device local time.
-class DeviceTaskReminders implements TaskReminders, BreakNotifier {
+class DeviceTaskReminders
+    implements TaskReminders, BreakNotifier, BreakStartNotifier {
   DeviceTaskReminders(this._preferences, this._pushStore);
   final SharedPreferences _preferences;
   final PushPreferenceStore _pushStore;
@@ -54,7 +55,23 @@ class DeviceTaskReminders implements TaskReminders, BreakNotifier {
   }
 
   @override
-  Future<bool> scheduleBreak(DateTime end, {required bool arabic}) async {
+  Future<bool> scheduleBreakStart(DateTime at, {required bool arabic}) =>
+      _scheduleBreak(at, arabic: arabic, start: true);
+  @override
+  Future<void> cancelBreakStart() async {
+    if (!_supported) return;
+    await _initialize();
+    await _plugin.cancel(id: 1600000002);
+  }
+
+  @override
+  Future<bool> scheduleBreak(DateTime end, {required bool arabic}) =>
+      _scheduleBreak(end, arabic: arabic, start: false);
+  Future<bool> _scheduleBreak(
+    DateTime end, {
+    required bool arabic,
+    required bool start,
+  }) async {
     if (!_supported) return false;
     await _initialize();
     final android = _plugin
@@ -80,11 +97,17 @@ class DeviceTaskReminders implements TaskReminders, BreakNotifier {
       }
     }
     await _plugin.zonedSchedule(
-      id: 1600000001,
-      title: arabic ? 'البريك خلص' : 'Your break is over',
-      body: arabic
-          ? 'عدّت ساعة، جاهز تكمّل الشيفت؟'
-          : 'Your one-hour break has ended. Ready to continue?',
+      id: start ? 1600000002 : 1600000001,
+      title: start
+          ? (arabic ? 'ميعاد البريك' : 'Time for your break')
+          : (arabic ? 'البريك خلص' : 'Your break is over'),
+      body: start
+          ? (arabic
+                ? 'ابدأ البريك من التطبيق لما توقف شغل.'
+                : 'Start your break in the app when you stop working.')
+          : arabic
+          ? 'وقت البريك انتهى، ارجع كمّل الشيفت.'
+          : 'Your break has ended. Time to return to work.',
       scheduledDate: tz.TZDateTime.from(end, tz.UTC),
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(

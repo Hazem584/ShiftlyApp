@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
+import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
@@ -135,9 +136,13 @@ class AttendanceRecordCard extends StatelessWidget {
                       ? context.tr('Rejected; occurrence remains used')
                       : record.workedMinutes == null
                       ? context.tr('Duration not recorded')
-                      : context.tr('{value1} minutes worked', {
-                          'value1': (record.workedMinutes).toString(),
-                        }),
+                      : workDurationWithOvertime(
+                          record.netWorkedMinutes ?? record.workedMinutes!,
+                          record.overtimeMinutes,
+                          arabic:
+                              Localizations.localeOf(context).languageCode ==
+                              'ar',
+                        ),
                   style: TextStyle(
                     color: AppPalette.of(context).textSecondary,
                     fontSize: 11,

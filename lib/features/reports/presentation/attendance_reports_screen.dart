@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_record_api.dart';
@@ -199,7 +200,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                 ),
                 Text(
                   context.tr(
-                    'Extra shift hours are part of worked hours. Schedule excess is time beyond the scheduled duration of regular shifts; it is an estimate, not payroll approval.',
+                    'Extra shift hours are part of worked hours. Overtime uses scheduled work hours after the planned break deduction; an untaken break counts as work.',
                   ),
                 ),
                 Text(
@@ -264,7 +265,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                         'Clock out',
                         'Review status',
                         'Late minutes',
-                        'Recorded work minutes',
+                        'Worked hours',
                       ])
                         DataColumn(label: Text(context.tr(title))),
                     ],
@@ -459,7 +460,13 @@ class _DetailsSource extends DataTableSource {
                 r.reviewStatus.name.substring(1),
           ),
           r.minutesLate,
-          r.workedMinutes ?? strings.text('Not recorded'),
+          r.workedMinutes == null
+              ? strings.text('Not recorded')
+              : workDurationWithOvertime(
+                  r.netWorkedMinutes ?? r.workedMinutes!,
+                  r.overtimeMinutes,
+                  arabic: strings.locale.languageCode == 'ar',
+                ),
         ])
           DataCell(Text('$value')),
       ],

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/features/breaks/application/shift_break_controller.dart';
 import 'package:shiftly/features/breaks/domain/break_notifier.dart';
+import 'package:shiftly/features/breaks/domain/shift_break_state.dart';
 
 class Notices implements BreakNotifier {
   DateTime? scheduled;
@@ -43,6 +44,79 @@ void main() {
           ..restore('shift-1');
   });
   tearDown(() => controller.dispose());
+  test(
+    'remote start and early end survive stale attendance rebuilds',
+    () async {
+      final initial = ShiftBreakState(
+        allowedMinutes: 30,
+        reminderAt: now.add(const Duration(hours: 1)),
+      );
+      final started = ShiftBreakState(allowedMinutes: 30, startedAt: now);
+      final c = ShiftBreakController(
+        now: () => now,
+        notifier: notices,
+        startRemote: (_) async => started,
+        endRemote: (_) async => ShiftBreakState(
+          allowedMinutes: 30,
+          startedAt: started.startedAt,
+          endedAt: now,
+        ),
+      );
+      c.bind('owner');
+      c.restore('remote', policy: initial);
+      expect(await c.start(arabic: false), true);
+      c.restore('remote', policy: initial);
+      expect(c.used, true);
+      expect(c.remaining, const Duration(minutes: 30));
+      now = now.add(const Duration(minutes: 10));
+      await c.end();
+      c.restore('remote', policy: started);
+      expect(c.running, false);
+      expect(c.takenMinutes, 10);
+      c.dispose();
+    },
+  );
+  test('remote failure never starts an unrecorded paid break', () async {
+    final c = ShiftBreakController(
+      now: () => now,
+      startRemote: (_) async => throw StateError('offline'),
+    );
+    c.bind('owner');
+    c.restore('remote', policy: const ShiftBreakState(allowedMinutes: 60));
+    expect(await c.start(arabic: false), false);
+    expect(c.used, false);
+    expect(c.running, false);
+    c.dispose();
+  });
+  test(
+    'confirmed remote break survives restart with stale offline attendance',
+    () async {
+      final initial = const ShiftBreakState(allowedMinutes: 30);
+      final c = ShiftBreakController(
+        preferences: prefs,
+        notifier: notices,
+        now: () => now,
+        startRemote: (_) async =>
+            ShiftBreakState(allowedMinutes: 30, startedAt: now),
+      );
+      c.bind('owner');
+      c.restore('remote', policy: initial);
+      await c.start(arabic: false);
+      now = now.add(const Duration(minutes: 10));
+      final reopened = ShiftBreakController(
+        preferences: prefs,
+        notifier: notices,
+        now: () => now,
+      );
+      reopened.bind('owner');
+      reopened.restore('remote', policy: initial);
+      expect(reopened.used, true);
+      expect(reopened.remaining, const Duration(minutes: 20));
+      expect(reopened.takenMinutes, 10);
+      c.dispose();
+      reopened.dispose();
+    },
+  );
   test('one hour survives restart and never restarts after expiry', () async {
     expect(await controller.start(arabic: true), isTrue);
     expect(notices.scheduled, now.add(const Duration(hours: 1)));

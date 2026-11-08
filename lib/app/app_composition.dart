@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,6 +31,7 @@ import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cu
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/breaks/application/shift_break_controller.dart';
+import 'package:shiftly/features/breaks/data/api_shift_break.dart';
 import 'package:shiftly/features/breaks/domain/break_notifier.dart';
 import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
@@ -222,7 +224,12 @@ class AppComposition {
     dashboardCubit = registered<DashboardCubit>() ?? DashboardCubit(dashboard);
     attendanceCalendarCubit = AttendanceCalendarCubit(
       registered<AttendanceCalendarRepository>() ??
-          ApiAttendanceCalendarRepository(shifts, attendance, leaveRequests),
+          ApiAttendanceCalendarRepository(
+            shifts,
+            attendance,
+            leaveRequests,
+            dio: registered<Dio>(),
+          ),
     );
     attendanceReportsCubit = AttendanceReportsCubit(
       ApiAttendanceReportRepository(attendance, employees),
@@ -314,7 +321,12 @@ class AppComposition {
           realtime: chatRealtime,
         );
     final localReminders = registered<TaskReminders>();
+    final breakApi = registered<Dio>() == null
+        ? null
+        : ApiShiftBreak(registered<Dio>()!);
     shiftBreaks = ShiftBreakController(
+      startRemote: breakApi?.start,
+      endRemote: breakApi?.end,
       preferences: registered<SharedPreferences>(),
       notifier: localReminders is BreakNotifier
           ? localReminders as BreakNotifier
@@ -324,6 +336,13 @@ class AppComposition {
       state,
     ) {
       final closed = state.current;
+      if (closed?.isOpen == true) {
+        shiftBreaks.restore(
+          closed!.id,
+          policy: closed.breakState,
+          arabic: languageCubit.state.languageCode == 'ar',
+        );
+      }
       if (closed?.clockOutAt != null) {
         unawaited(shiftBreaks.finishFor(closed!.id));
       }

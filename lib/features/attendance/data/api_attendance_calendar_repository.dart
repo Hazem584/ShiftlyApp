@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
@@ -10,11 +11,13 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
     this._shifts,
     this._attendance,
     this._leaveRequests, {
+    this.dio,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
   static const _pageSize = 100;
   static const _maximumPages = 1000;
+  final Dio? dio;
   final ShiftRepository _shifts;
   final AttendanceRepository _attendance;
   final LeaveRequestRepository _leaveRequests;
@@ -43,16 +46,38 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
         range.end.add(const Duration(days: 2)),
       ),
       _allLeave(workspaceId, range.start, range.end),
+      _scheduled(workspaceId, year, month),
     ]);
+    final scheduled = results[3] as ({List<ShiftRecord> shifts, DateTime now});
     return deriveAttendanceCalendarMonth(
       workspaceId: workspaceId,
       timezoneName: timezone,
       year: year,
       month: month,
-      shifts: results[0] as List<ShiftRecord>,
+      shifts: [...results[0] as List<ShiftRecord>, ...scheduled.shifts],
       attendance: results[1] as List<AttendanceRecordApi>,
       leaveRequests: results[2] as List<LeaveRequestRecord>,
-      nowUtc: _now().toUtc(),
+      nowUtc: scheduled.now,
+    );
+  }
+
+  Future<({List<ShiftRecord> shifts, DateTime now})> _scheduled(
+    String workspaceId,
+    int year,
+    int month,
+  ) async {
+    if (dio == null) return (shifts: <ShiftRecord>[], now: _now().toUtc());
+    final result = await dio!.get<Object?>(
+      '/workspaces/$workspaceId/attendance-schedule',
+      queryParameters: {'year': year, 'month': month},
+    );
+    final json = ApiModelParser.map(result.data);
+    return (
+      shifts: ApiModelParser.list(
+        json['data'],
+        'data',
+      ).map((e) => ShiftRecord.fromJson(ApiModelParser.map(e))).toList(),
+      now: ApiModelParser.date(json, 'evaluatedAt'),
     );
   }
 
