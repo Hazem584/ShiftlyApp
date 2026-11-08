@@ -96,6 +96,29 @@ void main() {
     await directory.delete(recursive: true);
   });
 
+  test('workspace departure purges private records and queued messages for only that workspace', () async {
+    await cache.write(
+      scope,
+      ChatMessagePage(messages: [message(1)], nextCursor: null),
+    );
+    const other = ChatCacheScope(user, 'another-workspace', 'another-group');
+    await storage.records.record('other-fixture').put(storage.database, {
+      'kind': 'page',
+      'user': user,
+      'scope': other.key,
+      'payload': 'keep',
+    });
+    await storage.records.record('groups-fixture').put(storage.database, {
+      'kind': 'groups',
+      'user': user,
+      'workspace': workspace,
+    });
+    await storage.purgeWorkspace(user, workspace);
+    final rows = await storage.records.find(storage.database);
+    expect(rows.map((r) => r.key), ['other-fixture']);
+    expect(storage.authorized(scope), false);
+  });
+
   test('cached reopen renders before delayed refresh and retains content on failure', () async {
     await cache.write(
       scope,

@@ -128,6 +128,41 @@ Future<SessionCoordinator> _coordinator(
 }
 
 void main() {
+  test(
+    'last workspace departure keeps auth and clears the saved workspace',
+    () async {
+      final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+      final storage = MemoryActiveWorkspaceStorage()..value = 'one';
+      final c = await _coordinator(
+        auth,
+        _user([_membership('one', WorkspaceRole.employee)]),
+        storage,
+      );
+      await c.workspaceLeft('one', c.state.currentUser!.id);
+      expect(c.state.status, SessionStatus.workspaceSelectionRequired);
+      expect(storage.value, isNull);
+      expect(auth.signOutCalls, 0);
+    },
+  );
+  test('workspace departure selects and persists another membership', () async {
+    final auth = _Auth()..session = const AuthSession(accessToken: 'token');
+    final storage = MemoryActiveWorkspaceStorage()..value = 'one';
+    final c = await _coordinator(
+      auth,
+      _user([
+        _membership('one', WorkspaceRole.employee),
+        _membership('two', WorkspaceRole.manager),
+      ]),
+      storage,
+    );
+    await c.workspaceLeft('one', c.state.currentUser!.id);
+    expect(c.state.status, SessionStatus.authenticatedManager);
+    expect(storage.value, 'two');
+    expect(c.state.currentUser!.memberships.map((m) => m.workspace.id), [
+      'two',
+    ]);
+  });
+
   test('signed-out startup events do not invent an expired session', () async {
     final auth = _Auth();
     final repository = _Repository(_user([]));

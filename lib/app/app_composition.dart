@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/app/app_task_coordinator.dart';
 import 'package:shiftly/app/session_feature_coordinator.dart';
+import 'package:shiftly/app/workspace_local_cleanup.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
 import 'package:shiftly/core/localization/language_preference_store.dart';
 import 'package:shiftly/core/localization/memory_language_store.dart';
@@ -33,6 +34,7 @@ import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/breaks/application/shift_break_controller.dart';
 import 'package:shiftly/features/breaks/data/api_shift_break.dart';
 import 'package:shiftly/features/breaks/domain/break_notifier.dart';
+import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
 import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
@@ -125,6 +127,7 @@ class AppComposition {
   PushDeviceRepository? pushDevices;
   late final TasksCubit tasksCubit;
   late final ShiftBreakController shiftBreaks;
+  late final WorkspaceLocalCleanup workspaceRemoval;
   StreamSubscription<FlexibleAttendanceState>? breakAttendanceSubscription;
   late final AppTaskCoordinator taskCoordinator;
 
@@ -242,6 +245,7 @@ class AppComposition {
     workspacesCubit = WorkspacesCubit(
       workspaces,
       invitations,
+      onWorkspaceLeft: (id, user) => workspaceRemoval.remove(id, user),
       onMembershipChanged: (workspaceId, expectedUserId) async =>
           await sessionCoordinator?.refreshMemberships(
             preferredWorkspaceId: workspaceId,
@@ -331,6 +335,12 @@ class AppComposition {
       notifier: localReminders is BreakNotifier
           ? localReminders as BreakNotifier
           : null,
+    );
+    workspaceRemoval = WorkspaceLocalCleanup(
+      session: sessionCoordinator,
+      breaks: shiftBreaks,
+      reads: readSyncCubit.store,
+      chat: registered<ChatCacheDatabase>(),
     );
     breakAttendanceSubscription = flexibleAttendanceCubit.stream.listen((
       state,

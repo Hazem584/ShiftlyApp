@@ -6,6 +6,7 @@ import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/core/session/profile_session_update.dart';
 import 'package:shiftly/core/session/session_state.dart';
+import 'package:shiftly/core/session/workspace_exit_session.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/entities/authentication_exception.dart';
@@ -15,7 +16,6 @@ import 'package:shiftly/features/auth/domain/repositories/authentication_service
 
 import 'session_results.dart';
 import 'workspace_membership_policy.dart';
-
 export 'session_results.dart';
 
 class SessionCoordinator extends Cubit<SessionState> {
@@ -250,20 +250,7 @@ class SessionCoordinator extends Cubit<SessionState> {
       return const MembershipRefreshResult.failed();
     }
     await _resolveCurrentUser(preferredWorkspaceId: preferredWorkspaceId);
-    final user = state.currentUser;
-    final membership = state.activeMembership;
-    if (!state.isAuthenticated ||
-        user?.id != expectedUserId ||
-        membership?.workspace.id != preferredWorkspaceId ||
-        membership?.status != MembershipStatus.active ||
-        membership?.role == WorkspaceRole.unknown) {
-      return const MembershipRefreshResult.failed();
-    }
-    return MembershipRefreshResult.authorized(
-      userId: user!.id,
-      workspaceId: membership!.workspace.id,
-      role: membership.role,
-    );
+    return refreshedMembership(state, expectedUserId, preferredWorkspaceId);
   }
 
   List<WorkspaceMembership> get selectableMemberships =>
@@ -314,6 +301,18 @@ class SessionCoordinator extends Cubit<SessionState> {
       return WorkspaceSwitchResult.failure;
     } finally {
       _switchingWorkspace = false;
+    }
+  }
+
+  Future<void> workspaceLeft(String workspaceId, String expectedUserId) async {
+    if (state.currentUser?.id != expectedUserId) return;
+    _resolutionGeneration++;
+    final next = sessionWithoutWorkspace(state, workspaceId);
+    emit(next);
+    if (next.activeMembership case final membership?) {
+      await _workspaceStorage.write(membership.workspace.id);
+    } else {
+      await _workspaceStorage.clear();
     }
   }
 

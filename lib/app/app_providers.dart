@@ -17,6 +17,7 @@ import 'package:shiftly/core/monitoring/monitoring_gate.dart';
 import 'package:shiftly/core/offline/read_sync_cubit.dart';
 import 'package:shiftly/core/platform/platform_gate.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
+import 'package:shiftly/core/session/workspace_access_monitor.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/theme/theme_cubit.dart';
 import 'package:shiftly/core/theme/theme_settings.dart';
@@ -122,6 +123,7 @@ class AppProviders extends StatefulWidget {
 
 class _AppProvidersState extends State<AppProviders> {
   Dio? _platformStatusClient;
+  WorkspaceAccessMonitor? _workspaceAccess;
   late final AppComposition _composition;
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
   @override
@@ -133,10 +135,21 @@ class _AppProvidersState extends State<AppProviders> {
       onOpened: _openPushNotice,
       onForeground: _showPushNotice,
     );
+    final locator = widget.locator;
+    final session = _composition.sessionCoordinator;
+    if (locator != null && locator.isRegistered<Dio>() && session != null) {
+      _workspaceAccess = WorkspaceAccessMonitor(
+        locator<Dio>(),
+        session,
+        _composition.readSyncCubit.store,
+        onRemoval: _composition.workspaceRemoval.remove,
+      );
+    }
   }
 
   @override
   void dispose() {
+    _workspaceAccess?.dispose();
     _composition.dispose();
     super.dispose();
   }
@@ -258,6 +271,7 @@ class _AppProvidersState extends State<AppProviders> {
           );
     return ShiftlyAppLifecycleListener(
       onResumed: () {
+        unawaited(_workspaceAccess?.check());
         unawaited(
           _composition.tasksCubit.refresh().then(
             (_) => _composition.openTaskTap(),

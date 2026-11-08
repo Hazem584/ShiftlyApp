@@ -14,6 +14,7 @@ import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_edit_form.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_header.dart';
 import 'package:shiftly/features/profile/presentation/widgets/profile_information_section.dart';
+import 'package:shiftly/features/workspaces/presentation/widgets/workspace_exit_tile.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({this.onLogout, super.key});
@@ -91,6 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const LanguageSettingsTile(),
                       const ThemeSettingsTile(),
                       const DeviceSessionsTile(),
+                      const WorkspaceExitTile(),
                       if (widget.onLogout != null) ...[
                         const SizedBox(height: AppSpacing.l),
                         OutlinedButton.icon(

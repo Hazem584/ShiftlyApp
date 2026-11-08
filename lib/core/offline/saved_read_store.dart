@@ -79,6 +79,19 @@ class SavedReadStore {
     }
   });
 
+  Future<void> clearWorkspace(String userId, String workspaceId) =>
+      _serialize(() async {
+        for (final key in _keys().toList()) {
+          try {
+            final raw = _preferences?.getString(key) ?? _memory[key];
+            final owner = (jsonDecode(raw!) as Map)['owner'] as String;
+            if (owner.startsWith('$userId|$workspaceId|')) await _remove(key);
+          } catch (_) {
+            await _remove(key);
+          }
+        }
+      });
+
   Future<void> clearUser(String userId) => _serialize(() async {
     for (final key in _keys().toList()) {
       try {

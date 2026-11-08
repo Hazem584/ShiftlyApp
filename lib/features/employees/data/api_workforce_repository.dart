@@ -6,13 +6,27 @@ import 'package:shiftly/core/models/work_location.dart';
 import 'package:shiftly/core/network/api_endpoints.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_exit_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 
 class ApiWorkforceRepository
-    implements EmployeeRepository, InvitationRepository, WorkspaceRepository {
+    implements
+        EmployeeRepository,
+        InvitationRepository,
+        WorkspaceRepository,
+        WorkspaceExitRepository {
   ApiWorkforceRepository(this._dio);
 
   final Dio _dio;
+
+  @override
+  Future<void> leaveWorkspace(String workspaceId, {String? confirmation}) =>
+      _request(() async {
+        await _dio.post<Object?>(
+          '/workspaces/$workspaceId/leave',
+          data: {'confirmation': ?confirmation},
+        );
+      });
 
   @override
   Future<WorkspaceRecord> createWorkspace({

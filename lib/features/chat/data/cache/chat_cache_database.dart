@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
@@ -142,6 +143,38 @@ class ChatCacheDatabase implements ChatCacheAccess {
     changes.value = revision;
     _revisionEvents.add(revision);
     await purge(Filter.equals('scope', scope.key));
+  }
+
+  Future<void> purgeWorkspace(String userId, String workspaceId) async {
+    final encoded = jsonEncode([userId, workspaceId]);
+    final prefix = '${encoded.substring(0, encoded.length - 1)},';
+    _grants.removeWhere((key) => key.startsWith(prefix));
+    _archived.removeWhere((key) => key.startsWith(prefix));
+    revision++;
+    for (final listener in listeners.toList()) {
+      listener();
+    }
+    changes.value = revision;
+    _revisionEvents.add(revision);
+    final rows = await records.find(
+      database,
+      finder: Finder(filter: Filter.equals('user', userId)),
+    );
+    final scopes = rows
+        .map((r) => r.value['scope'])
+        .whereType<String>()
+        .where((key) => key.startsWith(prefix))
+        .toSet()
+        .toList();
+    await purge(
+      Filter.and([
+        Filter.equals('user', userId),
+        Filter.or([
+          Filter.equals('workspace', workspaceId),
+          Filter.inList('scope', scopes),
+        ]),
+      ]),
+    );
   }
 
   Future<void> purgeUser(String userId) => purge(Filter.equals('user', userId));

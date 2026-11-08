@@ -1,7 +1,22 @@
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_exit_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 
-class MockWorkspaceRepository implements WorkspaceRepository {
+class MockWorkspaceRepository
+    implements WorkspaceRepository, WorkspaceExitRepository {
   final List<WorkspaceRecord> _items = [];
+  @override
+  Future<void> leaveWorkspace(
+    String workspaceId, {
+    String? confirmation,
+  }) async {
+    final workspace = await getWorkspace(workspaceId);
+    if (workspace.role == WorkspaceAccessRole.manager &&
+        confirmation != workspace.name) {
+      throw StateError('Confirmation required');
+    }
+    _items.removeWhere((e) => e.id == workspaceId);
+  }
+
   @override
   Future<WorkspaceRecord> createWorkspace({
     required String name,

@@ -6,6 +6,7 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_exit_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 
 class WorkspacesState extends Equatable {
@@ -13,12 +14,14 @@ class WorkspacesState extends Equatable {
     this.loading = true,
     this.workspaces = const [],
     this.invitations = const [],
+    this.leaving = false,
     this.creating = false,
     this.accepting = false,
     this.declining = false,
     this.respondingInvitationId,
     this.failure,
   });
+  final bool leaving;
   final bool loading;
   final List<WorkspaceRecord> workspaces;
   final List<WorkspaceInvitation> invitations;
@@ -26,13 +29,14 @@ class WorkspacesState extends Equatable {
   final bool accepting;
   final bool declining;
   final String? respondingInvitationId;
-  bool get busy => creating || accepting || declining;
+  bool get busy => creating || accepting || declining || leaving;
   final Failure? failure;
 
   WorkspacesState copyWith({
     bool? loading,
     List<WorkspaceRecord>? workspaces,
     List<WorkspaceInvitation>? invitations,
+    bool? leaving,
     bool? creating,
     bool? accepting,
     bool? declining,
@@ -41,6 +45,7 @@ class WorkspacesState extends Equatable {
     Failure? failure,
     bool clearFailure = false,
   }) => WorkspacesState(
+    leaving: leaving ?? this.leaving,
     loading: loading ?? this.loading,
     workspaces: workspaces ?? this.workspaces,
     invitations: invitations ?? this.invitations,
@@ -56,6 +61,7 @@ class WorkspacesState extends Equatable {
   @override
   List<Object?> get props => [
     loading,
+    leaving,
     workspaces,
     invitations,
     creating,
@@ -71,6 +77,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     this._workspaces,
     this._invitations, {
     required this.onMembershipChanged,
+    this.onWorkspaceLeft,
   }) : super(const WorkspacesState());
   final WorkspaceRepository _workspaces;
   final InvitationRepository _invitations;
@@ -79,6 +86,10 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     String expectedUserId,
   )
   onMembershipChanged;
+  final Future<void> Function(String workspaceId, String userId)?
+  onWorkspaceLeft;
+  bool get canLeave => _workspaces is WorkspaceExitRepository;
+  bool _leaveInFlight = false;
   String? _userId;
   var _generation = 0;
   var _createInFlight = false;
@@ -99,6 +110,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     _loadRevision++;
     emit(
       WorkspacesState(
+        leaving: _leaveInFlight,
         creating: _createInFlight,
         accepting: _acceptInFlight,
         declining: _declineInFlight,
@@ -124,6 +136,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
           loading: false,
           workspaces: results[0] as List<WorkspaceRecord>,
           invitations: results[1] as List<WorkspaceInvitation>,
+          leaving: _leaveInFlight,
           creating: _createInFlight,
           accepting: _acceptInFlight,
           declining: _declineInFlight,
@@ -136,10 +149,48 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     }
   }
 
+  Future<bool> leave(String workspaceId, {String? confirmation}) async {
+    final user = _userId, generation = _generation, repository = _workspaces;
+    if (user == null ||
+        _leaveInFlight ||
+        state.busy ||
+        repository is! WorkspaceExitRepository) {
+      return false;
+    }
+    _leaveInFlight = true;
+    _loadRevision++;
+    emit(state.copyWith(leaving: true, loading: false, clearFailure: true));
+    try {
+      await (repository as WorkspaceExitRepository).leaveWorkspace(
+        workspaceId,
+        confirmation: confirmation,
+      );
+      if (!_current(user, generation)) return false;
+      emit(
+        state.copyWith(
+          workspaces: state.workspaces
+              .where((w) => w.id != workspaceId)
+              .toList(),
+        ),
+      );
+      await onWorkspaceLeft?.call(workspaceId, user);
+      return _current(user, generation);
+    } catch (error) {
+      if (_current(user, generation)) {
+        emit(state.copyWith(failure: _failure(error)));
+      }
+      return false;
+    } finally {
+      _leaveInFlight = false;
+      if (_current(user, generation)) emit(state.copyWith(leaving: false));
+    }
+  }
+
   Future<bool> create({required String name, String? timezone}) async {
     final userId = _userId;
     final generation = _generation;
     if (userId == null ||
+        _leaveInFlight ||
         _createInFlight ||
         _acceptInFlight ||
         _declineInFlight) {
@@ -189,6 +240,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     final userId = _userId;
     final generation = _generation;
     if (userId == null ||
+        _leaveInFlight ||
         _acceptInFlight ||
         _declineInFlight ||
         _createInFlight) {
@@ -232,6 +284,7 @@ class WorkspacesCubit extends Cubit<WorkspacesState> {
     final userId = _userId;
     final generation = _generation;
     if (userId == null ||
+        _leaveInFlight ||
         _acceptInFlight ||
         _declineInFlight ||
         _createInFlight) {

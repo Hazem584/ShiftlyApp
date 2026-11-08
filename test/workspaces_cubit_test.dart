@@ -5,9 +5,9 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:shiftly/features/workspaces/domain/repositories/workspace_exit_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
-
 const _workspace = WorkspaceRecord(
   id: 'workspace-1',
   name: 'Shiftly Cairo',
@@ -34,6 +34,57 @@ MembershipRefreshResult _authorized(
 );
 
 void main() {
+  test('leave invalidates stale lists, prevents duplicate requests and refreshes the session', () async {
+    final repo = _FakeWorkspaceRepository(), gate = Completer<void>();
+    repo.leaveGate = gate.future;
+    String? removed;
+    final cubit = WorkspacesCubit(
+      repo,
+      _FakeInvitationRepository(),
+      onMembershipChanged: (id, user) async => _authorized(id),
+      onWorkspaceLeft: (id, user) async {
+        removed = id;
+      },
+    );
+    cubit.bindUser('user-1');
+    await _settle();
+    final pending = cubit.leave(_workspace.id, confirmation: _workspace.name);
+    expect(cubit.state.busy, true);
+    expect(await cubit.leave(_workspace.id), false);
+    gate.complete();
+    expect(await pending, true);
+    expect(repo.leaveCalls, 1);
+    expect(removed, _workspace.id);
+    expect(cubit.state.workspaces, isEmpty);
+    expect(cubit.state.leaving, false);
+    await cubit.close();
+  });
+  test(
+    'a leave response for an old account cannot change the new session',
+    () async {
+      final repo = _FakeWorkspaceRepository(), gate = Completer<void>();
+      repo.leaveGate = gate.future;
+      var changes = 0;
+      final cubit = WorkspacesCubit(
+        repo,
+        _FakeInvitationRepository(),
+        onMembershipChanged: (id, user) async => _authorized(id),
+        onWorkspaceLeft: (_, _) async {
+          changes++;
+        },
+      );
+      cubit.bindUser('user-1');
+      await _settle();
+      final pending = cubit.leave(_workspace.id);
+      cubit.bindUser('user-2');
+      await _settle();
+      gate.complete();
+      expect(await pending, false);
+      expect(changes, 0);
+      await cubit.close();
+    },
+  );
+
   test(
     'accepts the listed invitation by ID and refreshes that workspace',
     () async {
@@ -312,12 +363,20 @@ Future<void> _settle() async {
   await Future<void>.delayed(Duration.zero);
 }
 
-class _FakeWorkspaceRepository implements WorkspaceRepository {
+class _FakeWorkspaceRepository
+    implements WorkspaceRepository, WorkspaceExitRepository {
   _FakeWorkspaceRepository({this.pendingList, this.createError});
 
   Future<List<WorkspaceRecord>>? pendingList;
   final Object? createError;
   int createCalls = 0;
+  int leaveCalls = 0;
+  Future<void>? leaveGate;
+  @override
+  Future<void> leaveWorkspace(String id, {String? confirmation}) async {
+    leaveCalls++;
+    await leaveGate;
+  }
 
   @override
   Future<WorkspaceRecord> createWorkspace({

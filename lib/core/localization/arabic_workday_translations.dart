@@ -1,4 +1,14 @@
 const arabicWorkdayTranslations = <String, String>{
+  'Delete workspace for everyone': 'حذف مساحة العمل لكل الأعضاء',
+  'Leave workspace': 'مغادرة مساحة العمل',
+  'Permanently delete': 'حذف نهائي',
+  'Type {name} to confirm': 'اكتب {name} للتأكيد',
+  'This permanently deletes this workspace, its chats, files, tasks and attendance for every member. Their accounts and other workspaces stay available.': 'هيتم حذف مساحة العمل والشات والملفات والمهام والحضور نهائيًا لكل الأعضاء. حساباتهم ومساحات العمل التانية هتفضل موجودة.',
+  'This workspace cannot be recovered.': 'لا يمكن استعادة مساحة العمل دي.',
+  'You will lose access to this workspace and its chats. Any running attendance will be clocked out. You can return only with a new invitation.': 'هتخرج من مساحة العمل والشات بتاعها، وأي حضور مفتوح هيتقفل. الرجوع محتاج دعوة جديدة.',
+  'Could not leave workspace. Please retry.':
+      'تعذر الخروج من مساحة العمل. حاول تاني.',
+
   'Extra shift hours are part of worked hours. Overtime uses scheduled work hours after the planned break deduction; an untaken break counts as work.': 'ساعات الشيفت الإضافي جزء من ساعات الشغل. الوقت الإضافي بيتحسب بعد خصم البريك المخطط من ساعات الشيفت، والبريك اللي ما اتاخدش بيتحسب شغل.',
 
   'Break minutes': 'مدة البريك بالدقائق',
