@@ -108,7 +108,7 @@ class AttendanceExportBuilder {
         'Hours include approved closed records only. Open, pending and rejected records do not add hours.',
       ),
       strings.text(
-        'Extra shift hours are part of worked hours. Overtime uses scheduled work hours after the planned break deduction; an untaken break counts as work.',
+        'Overtime is time after the scheduled shift ends, minus arrival delay. Late arrival reduces the available break.',
       ),
       strings.text(
         'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Breaks are not deducted.',

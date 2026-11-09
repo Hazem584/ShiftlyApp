@@ -1,7 +1,6 @@
-import 'dart:math' as math;
-
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_record_api.dart';
+import 'package:shiftly/features/attendance/domain/services/attendance_overtime.dart';
 import 'package:shiftly/features/shifts/domain/entities/attendance_review_status.dart';
 
 enum ReportPeriod { weekly, monthly, custom }
@@ -208,11 +207,12 @@ class AttendanceReport {
             workMinutes: work,
             extraMinutes: extra ? work : 0,
             excessMinutes: !extra && closed
-                ? r.breakState != null
-                      ? r.overtimeMinutes
-                      : scheduled != null && scheduled > 0
-                      ? math.max(0, work - scheduled)
-                      : 0
+                ? attendanceOvertimeMinutes(
+                    clockIn: r.clockInAt,
+                    clockOut: r.clockOutAt!,
+                    scheduledStart: start,
+                    scheduledEnd: end,
+                  )
                 : 0,
             missingSchedule:
                 closed && !extra && (scheduled == null || scheduled <= 0)

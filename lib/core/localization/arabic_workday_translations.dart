@@ -1,4 +1,8 @@
 const arabicWorkdayTranslations = <String, String>{
+  'Break reduced by {time} for late arrival.':
+      'اتخصم {time} من البريك بسبب التأخير.',
+  'No break remaining': 'رصيد البريك خلص',
+
   'Delete workspace for everyone': 'حذف مساحة العمل لكل الأعضاء',
   'Leave workspace': 'مغادرة مساحة العمل',
   'Permanently delete': 'حذف نهائي',
@@ -9,7 +13,7 @@ const arabicWorkdayTranslations = <String, String>{
   'Could not leave workspace. Please retry.':
       'تعذر الخروج من مساحة العمل. حاول تاني.',
 
-  'Extra shift hours are part of worked hours. Overtime uses scheduled work hours after the planned break deduction; an untaken break counts as work.': 'ساعات الشيفت الإضافي جزء من ساعات الشغل. الوقت الإضافي بيتحسب بعد خصم البريك المخطط من ساعات الشيفت، والبريك اللي ما اتاخدش بيتحسب شغل.',
+  'Overtime is time after the scheduled shift ends, minus arrival delay. Late arrival reduces the available break.': 'الوقت الإضافي هو الوقت بعد نهاية الشيفت مع خصم التأخير. التأخير بيقلل رصيد البريك المتاح.',
 
   'Break minutes': 'مدة البريك بالدقائق',
   'Break reminder time': 'ميعاد تذكير البريك',

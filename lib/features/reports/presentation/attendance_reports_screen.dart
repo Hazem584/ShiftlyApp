@@ -200,7 +200,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                 ),
                 Text(
                   context.tr(
-                    'Extra shift hours are part of worked hours. Overtime uses scheduled work hours after the planned break deduction; an untaken break counts as work.',
+                    'Overtime is time after the scheduled shift ends, minus arrival delay. Late arrival reduces the available break.',
                   ),
                 ),
                 Text(

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/features/attendance/domain/services/attendance_overtime.dart';
 import 'package:shiftly/features/breaks/application/shift_break_controller.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/attendance_status_card.dart';
@@ -156,18 +157,12 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
       999999,
     );
     final elapsed = Duration(minutes: netMinutes);
-    final scheduledMinutes = active.scheduledEndAt
-        ?.difference(active.scheduledStartAt ?? active.clockInAt)
-        .inMinutes;
-    final expected = scheduledMinutes == null
-        ? null
-        : (scheduledMinutes - (active.breakState?.allowedMinutes ?? 0)).clamp(
-            0,
-            999999,
-          );
-    final overtime = expected == null
-        ? 0
-        : (netMinutes - expected).clamp(0, 999999);
+    final overtime = attendanceOvertimeMinutes(
+      clockIn: active.clockInAt,
+      clockOut: now,
+      scheduledStart: active.scheduledStartAt,
+      scheduledEnd: active.scheduledEndAt,
+    );
     final remaining = end?.difference(now);
     final length = end?.difference(start).inSeconds ?? 0;
     final progress = length <= 0
@@ -276,6 +271,14 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
                 'time': _duration(Duration(minutes: overtime)),
               }),
             ),
+          if ((active.breakState?.lateDeductionMinutes ?? 0) > 0)
+            Text(
+              context.tr('Break reduced by {time} for late arrival.', {
+                'time': _duration(
+                  Duration(minutes: active.breakState!.lateDeductionMinutes),
+                ),
+              }),
+            ),
           if (_breaks?.reminderAt != null && _breaks?.used != true)
             Text(
               context.tr('Break at {time}', {
@@ -318,6 +321,8 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
                   context.tr(
                     onBreak
                         ? 'End break'
+                        : _breaks?.allowedMinutes == 0
+                        ? 'No break remaining'
                         : _breaks?.used == true
                         ? 'Break used'
                         : 'Start break',

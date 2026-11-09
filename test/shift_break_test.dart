@@ -117,6 +117,50 @@ void main() {
       reopened.dispose();
     },
   );
+  test(
+    'server reduces the timer to 55 minutes after a five-minute delay',
+    () async {
+      final c = ShiftBreakController(
+        preferences: prefs,
+        notifier: notices,
+        now: () => now,
+        startRemote: (_) async => ShiftBreakState(
+          allowedMinutes: 55,
+          plannedMinutes: 60,
+          lateDeductionMinutes: 5,
+          startedAt: now,
+        ),
+      );
+      c.bind('owner');
+      c.restore(
+        'late',
+        policy: const ShiftBreakState(
+          allowedMinutes: 55,
+          plannedMinutes: 60,
+          lateDeductionMinutes: 5,
+        ),
+      );
+      expect(await c.start(arabic: false), true);
+      expect(c.remaining, const Duration(minutes: 55));
+      expect(notices.scheduled, now.add(const Duration(minutes: 55)));
+      c.dispose();
+    },
+  );
+  test('a break consumed by lateness cannot start', () async {
+    final c = ShiftBreakController(notifier: notices, now: () => now);
+    c.bind('owner');
+    c.restore(
+      'late',
+      policy: const ShiftBreakState(
+        allowedMinutes: 0,
+        plannedMinutes: 60,
+        lateDeductionMinutes: 60,
+      ),
+    );
+    expect(await c.start(arabic: false), false);
+    expect(c.running, false);
+    c.dispose();
+  });
   test('one hour survives restart and never restarts after expiry', () async {
     expect(await controller.start(arabic: true), isTrue);
     expect(notices.scheduled, now.add(const Duration(hours: 1)));

@@ -193,6 +193,8 @@ class ShiftBreakController {
           );
           _policy = ShiftBreakState(
             allowedMinutes: allowedMinutes,
+            plannedMinutes: record?['plannedMinutes'] as int?,
+            lateDeductionMinutes: record?['lateDeductionMinutes'] as int? ?? 0,
             startedAt: _startedAt,
             endedAt: _endedAt,
           );
@@ -246,6 +248,8 @@ class ShiftBreakController {
           'endsAt': end.toUtc().toIso8601String(),
           'notified': false,
           'remoteConfirmed': server != null,
+          'plannedMinutes': server?.plannedMinutes,
+          'lateDeductionMinutes': server?.lateDeductionMinutes ?? 0,
           'allowedMinutes': allowedMinutes,
           'startedAt': _startedAt?.toUtc().toIso8601String(),
           'endedAt': _endedAt?.toUtc().toIso8601String(),
@@ -307,6 +311,8 @@ class ShiftBreakController {
           'attendance': attendance,
           'used': used,
           'remoteConfirmed': _policy?.startedAt != null,
+          'plannedMinutes': _policy?.plannedMinutes,
+          'lateDeductionMinutes': _policy?.lateDeductionMinutes ?? 0,
           'allowedMinutes': allowedMinutes,
           'startedAt': _startedAt?.toUtc().toIso8601String(),
           'endedAt': _endedAt?.toUtc().toIso8601String(),
