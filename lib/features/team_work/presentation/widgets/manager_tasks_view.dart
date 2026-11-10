@@ -6,6 +6,7 @@ import 'package:shiftly/core/routing/app_routes.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
+import 'package:shiftly/features/attendance/presentation/refresh_attendance_views.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
@@ -31,7 +32,7 @@ class ManagerTasksView extends StatelessWidget {
   ) async {
     final note = approve ? null : await requestReviewNote(context);
     if (!approve && note == null) return;
-    await cubit.mutate(task.id, () async {
+    final saved = await cubit.mutate(task.id, () async {
       if (task.kind == 'ATTENDANCE') {
         await getIt<AttendanceRepository>().reviewAttendance(
           workspaceId,
@@ -50,6 +51,7 @@ class ManagerTasksView extends StatelessWidget {
         );
       }
     });
+    if (saved && context.mounted) refreshAttendanceViews(context);
   }
 
   @override

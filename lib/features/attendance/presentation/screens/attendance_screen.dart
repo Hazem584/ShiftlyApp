@@ -10,6 +10,7 @@ import 'package:shiftly/features/attendance/presentation/cubit/attendance_calend
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_state.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_daily_status_panel.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_metrics_section.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_tab_selector.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_requests_panel.dart';
@@ -36,10 +37,15 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   void initState() {
     super.initState();
     _selectedTab = widget.initialTab;
-    if (_selectedTab == 2) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => context.read<AttendanceCalendarCubit>().open(),
-      );
+    if (_selectedTab != 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_selectedTab == 0) {
+          context.read<AttendanceCalendarCubit>().showCurrentMonth();
+        } else if (_selectedTab == 2) {
+          context.read<AttendanceCalendarCubit>().open();
+        }
+      });
     }
   }
 
@@ -48,10 +54,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialTab != widget.initialTab) {
       _selectedTab = widget.initialTab;
-      if (_selectedTab == 2) {
+      if (_selectedTab == 0) {
+        context.read<AttendanceCalendarCubit>().showCurrentMonth();
+      } else if (_selectedTab == 2) {
         context.read<AttendanceCalendarCubit>().open();
       }
     }
+  }
+
+  Future<void> _refreshAttendance() async {
+    await Future.wait([
+      context.read<ManagerAttendanceCubit>().load(refresh: true),
+      context.read<AttendanceCalendarCubit>().showCurrentMonth(),
+    ]);
   }
 
   @override
@@ -60,7 +75,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => switch (_selectedTab) {
-            0 => context.read<ManagerAttendanceCubit>().load(refresh: true),
+            0 => _refreshAttendance(),
             1 => context.read<LeaveRequestsCubit>().load(refresh: true),
             _ => context.read<AttendanceCalendarCubit>().load(refresh: true),
           },
@@ -71,9 +86,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               ReadSyncBanner(
                 category: ReadCategory.attendance,
                 onRefresh: () => switch (_selectedTab) {
-                  0 => context.read<ManagerAttendanceCubit>().load(
-                    refresh: true,
-                  ),
+                  0 => _refreshAttendance(),
                   1 => context.read<LeaveRequestsCubit>().load(refresh: true),
                   _ => context.read<AttendanceCalendarCubit>().load(
                     refresh: true,
@@ -104,14 +117,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 selectedTab: _selectedTab,
                 onSelected: (tab) {
                   setState(() => _selectedTab = tab);
-                  if (tab == 2) {
+                  if (tab == 0) {
+                    context.read<AttendanceCalendarCubit>().showCurrentMonth();
+                  } else if (tab == 2) {
                     context.read<AttendanceCalendarCubit>().open();
                   }
                 },
               ),
               const SizedBox(height: AppSpacing.l),
               switch (_selectedTab) {
-                0 => ManagerAttendancePanel(timezone: widget.timezone),
+                0 => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AttendanceDailyStatusPanel(timezone: widget.timezone),
+                    ManagerAttendancePanel(timezone: widget.timezone),
+                  ],
+                ),
                 1 => LeaveRequestsPanel(timezone: widget.timezone),
                 _ => const AttendanceCalendarStateView(),
               },

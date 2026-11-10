@@ -113,6 +113,22 @@ class AttendanceCalendarCubit extends Cubit<AttendanceCalendarState> {
     await _performLoad(scope, year, month, refresh: refresh);
   }
 
+  Future<void> showCurrentMonth() async {
+    final scope = _scope;
+    if (scope == null) return;
+    _opened = true;
+    final today = WorkspaceTime.inWorkspace(_now().toUtc(), scope.timezone);
+    if (state.year == today.year && state.month == today.month) {
+      await load(refresh: state.hasData);
+      return;
+    }
+    _requestId += 1;
+    _requestActive = false;
+    _followUpRequested = false;
+    emit(AttendanceCalendarState(year: today.year, month: today.month));
+    await load();
+  }
+
   Future<void> previousMonth() => _moveMonth(-1);
   Future<void> nextMonth() => _moveMonth(1);
 

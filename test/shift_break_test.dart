@@ -76,6 +76,74 @@ void main() {
       c.dispose();
     },
   );
+  test('split breaks retain their balance, seconds and newer revision after restore', () async {
+    final c = ShiftBreakController(
+      preferences: prefs,
+      notifier: notices,
+      now: () => now,
+    );
+    c.bind('owner');
+    c.restore(
+      'split',
+      policy: ShiftBreakState(
+        allowedMinutes: 60,
+        revision: 0,
+        consumedSeconds: 0,
+        shiftEndsAt: now.add(const Duration(hours: 8)),
+      ),
+    );
+    expect(await c.start(arabic: false), true);
+    now = now.add(const Duration(minutes: 30));
+    await c.end();
+    expect(c.canStart, true);
+    expect(c.takenMinutes, 30);
+    expect(c.availableSeconds, 1800);
+    c.restore(
+      'split',
+      policy: const ShiftBreakState(
+        allowedMinutes: 60,
+        revision: 0,
+        consumedSeconds: 0,
+      ),
+    );
+    expect(c.takenMinutes, 30);
+    expect(await c.start(arabic: false), true);
+    expect(c.remaining, const Duration(minutes: 30));
+    now = now.add(const Duration(minutes: 10));
+    await c.end();
+    final reopened = ShiftBreakController(preferences: prefs, now: () => now)
+      ..bind('owner')
+      ..restore('split');
+    expect(reopened.takenMinutes, 40);
+    expect(reopened.availableSeconds, 1200);
+    expect(reopened.canStart, true);
+    expect(await reopened.start(arabic: false), true);
+    now = now.add(const Duration(minutes: 20));
+    expect(reopened.canStart, false);
+    expect(reopened.takenMinutes, 60);
+    c.dispose();
+    reopened.dispose();
+  });
+  test('split breaks stop at the scheduled shift finish', () async {
+    final c = ShiftBreakController(now: () => now);
+    c.bind('owner');
+    c.restore(
+      'split',
+      policy: ShiftBreakState(
+        allowedMinutes: 60,
+        revision: 0,
+        consumedSeconds: 0,
+        shiftEndsAt: now.add(const Duration(minutes: 5)),
+      ),
+    );
+    expect(await c.start(arabic: false), true);
+    expect(c.remaining, const Duration(minutes: 5));
+    now = now.add(const Duration(minutes: 6));
+    expect(c.running, false);
+    expect(c.canStart, false);
+    expect(c.takenMinutes, 5);
+    c.dispose();
+  });
   test('remote failure never starts an unrecorded paid break', () async {
     final c = ShiftBreakController(
       now: () => now,

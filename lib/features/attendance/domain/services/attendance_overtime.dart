@@ -5,6 +5,7 @@ int attendanceOvertimeMinutes({
   required DateTime clockOut,
   required DateTime? scheduledStart,
   required DateTime? scheduledEnd,
+  int unusedBreakSeconds = 0,
 }) {
   if (scheduledEnd == null) return 0;
   final lateMilliseconds = scheduledStart == null
@@ -12,7 +13,15 @@ int attendanceOvertimeMinutes({
       : math.max(0, clockIn.difference(scheduledStart).inMilliseconds);
   final extraMilliseconds =
       clockOut.difference(scheduledEnd).inMilliseconds - lateMilliseconds;
-  return extraMilliseconds <= 0
-      ? 0
-      : extraMilliseconds ~/ Duration.millisecondsPerMinute;
+  final postShift = math.max(
+    0,
+    extraMilliseconds ~/ Duration.millisecondsPerMinute,
+  );
+  final unusedBreak =
+      scheduledStart != null &&
+          lateMilliseconds == 0 &&
+          !clockOut.isBefore(scheduledEnd)
+      ? math.max(0, unusedBreakSeconds ~/ Duration.secondsPerMinute)
+      : 0;
+  return postShift + unusedBreak;
 }

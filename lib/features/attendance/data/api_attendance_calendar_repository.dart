@@ -11,7 +11,7 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
     this._shifts,
     this._attendance,
     this._leaveRequests, {
-    this.dio,
+    required this.dio,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 

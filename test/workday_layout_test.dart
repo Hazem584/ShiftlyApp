@@ -85,7 +85,12 @@ void main() {
       expect(breaks.running, isTrue);
       await tester.tap(find.byKey(const Key('start-shift-break')));
       await tester.pumpAndSettle();
-      expect(find.text('Break used'), findsOneWidget);
+      expect(find.text('Start break'), findsOneWidget);
+      expect(find.text('Break remaining 1h 0m'), findsOneWidget);
+      expect(breaks.canStart, isTrue);
+      await tester.tap(find.byKey(const Key('start-shift-break')));
+      await tester.pumpAndSettle();
+      expect(find.text('End break'), findsOneWidget);
       expect(breaks.used, isTrue);
       await tester.pumpWidget(const SizedBox());
       breaks.dispose();

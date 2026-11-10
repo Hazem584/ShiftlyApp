@@ -3,6 +3,20 @@ import 'package:shiftly/features/attendance/domain/services/attendance_overtime.
 
 DateTime at(String time) => DateTime.parse('2026-11-09T$time:00Z');
 void main() {
+  test('credits unused break only at shift end for on-time attendance', () {
+    int overtime(String arrival, String departure) => attendanceOvertimeMinutes(
+      clockIn: at(arrival),
+      clockOut: at(departure),
+      scheduledStart: at('08:30'),
+      scheduledEnd: at('17:00'),
+      unusedBreakSeconds: 1800,
+    );
+    expect(overtime('08:30', '16:59'), 0);
+    expect(overtime('08:30', '17:00'), 30);
+    expect(overtime('08:30', '17:15'), 45);
+    expect(overtime('08:35', '18:09'), 64);
+  });
+
   test('reported shift produces 64 minutes, without an unused break bonus', () {
     expect(
       attendanceOvertimeMinutes(

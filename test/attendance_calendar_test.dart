@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +18,7 @@ import 'package:shiftly/features/attendance/presentation/cubit/manager_attendanc
 import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_employee_day_row.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_state.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_daily_status_panel.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
@@ -79,12 +82,16 @@ AttendanceRecordApi _attendanceRecord({
   employee: shift.employee,
 );
 
-LeaveRequestRecord _leave(String id, String employeeId) => LeaveRequestRecord(
+LeaveRequestRecord _leave(
+  String id,
+  String employeeId, {
+  LeaveRequestStatus status = LeaveRequestStatus.approved,
+}) => LeaveRequestRecord(
   id: id,
   workspaceId: _workspace,
   employeeMembershipId: employeeId,
   type: LeaveRequestType.annualLeave,
-  status: LeaveRequestStatus.approved,
+  status: status,
   startsAt: DateTime.utc(2026, 3, 11),
   endsAt: DateTime.utc(2026, 3, 13),
   reason: 'Leave',
@@ -104,8 +111,9 @@ AttendanceRecordApi _templateAttendance({
   AttendanceClassification classification = AttendanceClassification.onTime,
   int minutesLate = 0,
   DateTime? clockInAt,
+  DateTime? scheduledStart,
 }) {
-  final start = DateTime.utc(2026, 3, 10, 22);
+  final start = scheduledStart ?? DateTime.utc(2026, 3, 10, 22);
   return AttendanceRecordApi(
     id: id,
     workspaceId: workspaceId,
@@ -118,9 +126,9 @@ AttendanceRecordApi _templateAttendance({
     shiftTemplateId: 'template',
     templateName: 'Night shift',
     scheduledStartAt: start,
-    scheduledEndAt: DateTime.utc(2026, 3, 11, 6),
+    scheduledEndAt: start.add(const Duration(hours: 8)),
     clockInAt: clockInAt ?? DateTime.utc(2026, 3, 11),
-    clockOutAt: DateTime.utc(2026, 3, 11, 6),
+    clockOutAt: start.add(const Duration(hours: 8)),
     clockInClassification: classification,
     minutesLate: minutesLate,
     reviewStatus: reviewStatus,
@@ -258,6 +266,166 @@ const _scope = FeatureSessionScope(
 );
 
 void main() {
+  test('only an approved leave replaces a missed shift on its dates', () {
+    final shift = _shift(
+      id: 'schedule:leave-day',
+      employeeId: 'a',
+      start: DateTime.utc(2026, 3, 11, 8),
+      end: DateTime.utc(2026, 3, 11, 16),
+    );
+    CalendarAttendanceStatus status(LeaveRequestStatus decision) =>
+        deriveAttendanceCalendarMonth(
+          workspaceId: _workspace,
+          timezoneName: 'Etc/UTC',
+          year: 2026,
+          month: 3,
+          shifts: [shift],
+          attendance: [],
+          leaveRequests: [_leave('leave', 'a', status: decision)],
+          nowUtc: DateTime.utc(2026, 3, 11, 17),
+        ).days['2026-03-11']!.single.status;
+    expect(status(LeaveRequestStatus.pending), CalendarAttendanceStatus.absent);
+    expect(
+      status(LeaveRequestStatus.rejected),
+      CalendarAttendanceStatus.absent,
+    );
+    expect(status(LeaveRequestStatus.approved), CalendarAttendanceStatus.leave);
+  });
+
+  test('loads fixed schedules over HTTP and replaces November 10 absence after approval', () async {
+    final dio = Dio();
+    addTearDown(dio.close);
+    var evaluatedAt = DateTime.utc(2026, 11, 10, 14, 59);
+    final paths = <String>[];
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          paths.add(options.path);
+          expect(options.queryParameters, {'year': 2026, 'month': 11});
+          handler.resolve(
+            Response(
+              requestOptions: options,
+              data: {
+                'evaluatedAt': evaluatedAt.toIso8601String(),
+                'data': [
+                  {
+                    'id': 'schedule:pattern:2026-11-10',
+                    'workspaceId': _workspace,
+                    'employeeMembershipId': 'a',
+                    'createdByMembershipId': 'manager',
+                    'startsAt': '2026-11-10T07:00:00Z',
+                    'endsAt': '2026-11-10T15:00:00Z',
+                    'breakMinutes': 60,
+                    'graceMinutes': 0,
+                    'status': 'SCHEDULED',
+                    'createdAt': '2026-11-01T00:00:00Z',
+                    'updatedAt': '2026-11-01T00:00:00Z',
+                    'employee': {
+                      'id': 'a',
+                      'profileId': 'profile-a',
+                      'role': 'EMPLOYEE',
+                      'status': 'ACTIVE',
+                    },
+                  },
+                ],
+              },
+            ),
+          );
+        },
+      ),
+    );
+    final records = <AttendanceRecordApi>[];
+    final repository = ApiAttendanceCalendarRepository(
+      _ShiftRepository(),
+      _AttendanceRepository(records: records),
+      _LeaveRepository(),
+      dio: dio,
+    );
+    Future<AttendanceCalendarMonth> load() => repository.loadMonth(
+      workspaceId: _workspace,
+      timezone: 'Africa/Cairo',
+      year: 2026,
+      month: 11,
+    );
+    expect((await load()).days, isEmpty);
+    evaluatedAt = DateTime.utc(2026, 11, 10, 16);
+    expect(
+      (await load()).days['2026-11-10']!.single.status,
+      CalendarAttendanceStatus.absent,
+    );
+    // A pending missed-attendance request does not create an attendance record.
+    expect(
+      (await load()).days['2026-11-10']!.single.status,
+      CalendarAttendanceStatus.absent,
+    );
+    records.add(
+      _templateAttendance(
+        employeeId: 'a',
+        operationalDate: '2026-11-10',
+        clockInAt: DateTime.utc(2026, 11, 10, 7),
+        scheduledStart: DateTime.utc(2026, 11, 10, 7),
+      ),
+    );
+    expect(
+      (await load()).days['2026-11-10']!.single.status,
+      CalendarAttendanceStatus.present,
+    );
+    expect(paths, everyElement('/workspaces/workspace/attendance-schedule'));
+  });
+  testWidgets(
+    'regular attendance shows today absence and approved leave without clock-ins',
+    (tester) async {
+      final now = DateTime.now().toUtc();
+      final key =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final repository = _CalendarRepository()
+        ..value = AttendanceCalendarMonth(
+          year: now.year,
+          month: now.month,
+          timezone: 'Etc/UTC',
+          days: {
+            key: [
+              AttendanceCalendarEntry(
+                employeeMembershipId: 'a',
+                employee: _employee('a', 'Absent Employee'),
+                status: CalendarAttendanceStatus.absent,
+              ),
+              AttendanceCalendarEntry(
+                employeeMembershipId: 'b',
+                employee: _employee('b', 'Leave Employee'),
+                status: CalendarAttendanceStatus.leave,
+              ),
+            ],
+          },
+        );
+      final calendar = AttendanceCalendarCubit(repository, now: () => now)
+        ..bindSession(_scope);
+      final attendance = ManagerAttendanceCubit(_AttendanceRepository())
+        ..bindSession(_scope);
+      addTearDown(calendar.close);
+      addTearDown(attendance.close);
+      await calendar.showCurrentMonth();
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: calendar),
+            BlocProvider.value(value: attendance),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: AttendanceDailyStatusPanel(timezone: 'Etc/UTC'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Absent Employee'), findsOneWidget);
+      expect(find.text('Leave Employee'), findsOneWidget);
+      expect(find.text('Absent'), findsOneWidget);
+      expect(find.text('Leave'), findsOneWidget);
+    },
+  );
+
   test(
     'uses DST-safe month boundaries and loads every pagination page',
     () async {
@@ -268,6 +436,7 @@ void main() {
         shifts,
         attendance,
         leave,
+        dio: null,
       );
 
       await repository.loadMonth(
@@ -393,6 +562,7 @@ void main() {
       _ShiftRepository(),
       _AttendanceRepository(records: [record]),
       _LeaveRepository(),
+      dio: null,
     );
     final data = await repository.loadMonth(
       workspaceId: _workspace,

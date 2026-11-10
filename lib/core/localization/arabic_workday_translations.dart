@@ -51,6 +51,7 @@ const arabicWorkdayTranslations = <String, String>{
       'أعداد المهام مش متاحة حاليًا. حدّث الصفحة للمحاولة.',
   'ON SHIFT NOW': 'في الشيفت دلوقتي',
   'ON BREAK': 'في البريك',
+  'Break remaining {duration}': 'المتبقي من البريك {duration}',
   'Break remaining': 'فاضل من البريك',
   'Time worked': 'الوقت اللي اشتغلته',
   'Shift ended · time worked': 'وقت الشيفت خلص · اشتغلت',

@@ -329,8 +329,7 @@ class AppComposition {
         ? null
         : ApiShiftBreak(registered<Dio>()!);
     shiftBreaks = ShiftBreakController(
-      startRemote: breakApi?.start,
-      endRemote: breakApi?.end,
+      changeRemote: breakApi?.change,
       preferences: registered<SharedPreferences>(),
       notifier: localReminders is BreakNotifier
           ? localReminders as BreakNotifier

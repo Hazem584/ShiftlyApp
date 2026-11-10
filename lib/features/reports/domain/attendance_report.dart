@@ -207,12 +207,14 @@ class AttendanceReport {
             workMinutes: work,
             extraMinutes: extra ? work : 0,
             excessMinutes: !extra && closed
-                ? attendanceOvertimeMinutes(
-                    clockIn: r.clockInAt,
-                    clockOut: r.clockOutAt!,
-                    scheduledStart: start,
-                    scheduledEnd: end,
-                  )
+                ? r.netWorkedMinutes != null
+                      ? r.overtimeMinutes
+                      : attendanceOvertimeMinutes(
+                          clockIn: r.clockInAt,
+                          clockOut: r.clockOutAt!,
+                          scheduledStart: start,
+                          scheduledEnd: end,
+                        )
                 : 0,
             missingSchedule:
                 closed && !extra && (scheduled == null || scheduled <= 0)

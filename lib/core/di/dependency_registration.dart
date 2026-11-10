@@ -183,7 +183,12 @@ abstract final class DependencyRegistration {
         () => ApiLeaveRequestRepository(target()),
       )
       ..registerLazySingleton<AttendanceCalendarRepository>(
-        () => ApiAttendanceCalendarRepository(target(), target(), target()),
+        () => ApiAttendanceCalendarRepository(
+          target(),
+          target(),
+          target(),
+          dio: target<Dio>(),
+        ),
       )
       ..registerLazySingleton<NotificationRepository>(
         () => ApiNotificationRepository(target()),
@@ -292,6 +297,7 @@ abstract final class DependencyRegistration {
           locator<ShiftRepository>(),
           locator<AttendanceRepository>(),
           locator<LeaveRequestRepository>(),
+          dio: null,
         ),
       )
       ..registerSingleton<NotificationRepository>(notificationRepository)

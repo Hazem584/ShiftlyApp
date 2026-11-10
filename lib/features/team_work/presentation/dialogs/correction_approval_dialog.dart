@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/features/attendance/presentation/refresh_attendance_views.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/attendance_period_fields.dart';
@@ -67,7 +68,10 @@ class _CorrectionApprovalDialogState extends State<CorrectionApprovalDialog> {
         clockOut: _end,
         note: _note.text.trim().isEmpty ? null : _note.text.trim(),
       );
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) {
+        refreshAttendanceViews(context);
+        Navigator.pop(context, true);
+      }
     } catch (error) {
       if (mounted) {
         setState(() {

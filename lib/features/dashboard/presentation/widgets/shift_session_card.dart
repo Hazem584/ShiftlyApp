@@ -162,6 +162,7 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
       clockOut: now,
       scheduledStart: active.scheduledStartAt,
       scheduledEnd: active.scheduledEndAt,
+      unusedBreakSeconds: _breaks?.availableSeconds ?? 0,
     );
     final remaining = end?.difference(now);
     final length = end?.difference(start).inSeconds ?? 0;
@@ -299,8 +300,7 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
                 onPressed:
                     disabled ||
                         _breaks == null ||
-                        _breaks!.allowedMinutes <= 0 ||
-                        (!onBreak && _breaks!.used)
+                        (!onBreak && !_breaks!.canStart)
                     ? null
                     : () async {
                         if (onBreak) {
@@ -321,10 +321,8 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
                   context.tr(
                     onBreak
                         ? 'End break'
-                        : _breaks?.allowedMinutes == 0
+                        : _breaks?.availableSeconds == 0
                         ? 'No break remaining'
-                        : _breaks?.used == true
-                        ? 'Break used'
                         : 'Start break',
                   ),
                 ),
@@ -346,11 +344,15 @@ class _ShiftSessionCardState extends State<ShiftSessionCard>
               context.tr(_breaks!.error!),
               style: TextStyle(color: colors.error),
             ),
-          if (_breaks?.used == true && !onBreak)
+          if (_breaks != null && !onBreak && _breaks!.canStart)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                context.tr('Your break has ended.'),
+                context.tr('Break remaining {duration}', {
+                  'duration': _duration(
+                    Duration(seconds: _breaks!.availableSeconds),
+                  ),
+                }),
                 style: TextStyle(color: colors.primary, fontSize: 12),
               ),
             ),
