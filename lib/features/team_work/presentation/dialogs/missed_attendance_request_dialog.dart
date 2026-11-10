@@ -42,8 +42,8 @@ class _MissedAttendanceRequestDialogState
     if (duration.inMinutes < 1 ||
         duration > const Duration(hours: 24) ||
         _end.isAfter(DateTime.now()) ||
-        _start.isBefore(widget.entry.scheduledStartAt) ||
-        _end.isAfter(widget.entry.scheduledEndAt)) {
+        !_start.isBefore(widget.entry.scheduledEndAt) ||
+        !_end.isAfter(widget.entry.scheduledStartAt)) {
       setState(() => _error = 'Choose a completed period within this shift.');
       return;
     }

@@ -9,10 +9,12 @@ class AttendanceCalendarMonth extends Equatable {
     required this.timezone,
     required this.days,
     this.nextRefreshAt,
+    this.scheduledDates = const {},
     this.evaluatedAt,
   });
 
   final DateTime? nextRefreshAt, evaluatedAt;
+  final Set<String> scheduledDates;
   final int year;
   final int month;
   final String timezone;
@@ -32,6 +34,7 @@ class AttendanceCalendarMonth extends Equatable {
     month,
     timezone,
     days,
+    scheduledDates,
     nextRefreshAt,
     evaluatedAt,
   ];

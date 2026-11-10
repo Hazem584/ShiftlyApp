@@ -5,16 +5,19 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_employee_day_row.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_selected_day_empty.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_day_entry_actions.dart';
 
 class AttendanceCalendarSelectedDay extends StatelessWidget {
   const AttendanceCalendarSelectedDay({
     required this.date,
     required this.timezone,
     required this.entries,
+    this.editable = false,
     super.key,
   });
 
   final DateTime? date;
+  final bool editable;
   final String timezone;
   final List<AttendanceCalendarEntry> entries;
 
@@ -44,12 +47,18 @@ class AttendanceCalendarSelectedDay extends StatelessWidget {
             if (entries.isEmpty)
               Text(context.tr('No attendance events for this date.'))
             else
-              ...entries.map(
-                (entry) => AttendanceCalendarEmployeeDayRow(
+              for (final entry in entries) ...[
+                AttendanceCalendarEmployeeDayRow(
                   entry: entry,
                   timezone: timezone,
                 ),
-              ),
+                if (editable)
+                  AttendanceDayEntryActions(
+                    entry: entry,
+                    date: date!,
+                    timezone: timezone,
+                  ),
+              ],
           ],
         ),
       ),

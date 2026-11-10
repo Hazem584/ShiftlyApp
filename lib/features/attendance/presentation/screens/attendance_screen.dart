@@ -134,7 +134,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ],
                 ),
                 1 => LeaveRequestsPanel(timezone: widget.timezone),
-                _ => const AttendanceCalendarStateView(),
+                _ => const AttendanceCalendarStateView(editable: true),
               },
             ],
           ),

@@ -11,7 +11,8 @@ import 'package:shiftly/features/attendance/presentation/widgets/attendance_cale
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_selected_day.dart';
 
 class AttendanceCalendarStateView extends StatelessWidget {
-  const AttendanceCalendarStateView({super.key});
+  const AttendanceCalendarStateView({this.editable = false, super.key});
+  final bool editable;
 
   @override
   Widget build(BuildContext context) =>
@@ -94,6 +95,7 @@ class AttendanceCalendarStateView extends StatelessWidget {
               ],
               const SizedBox(height: AppSpacing.m),
               AttendanceCalendarSelectedDay(
+                editable: editable,
                 date: state.selectedDate,
                 timezone: data.timezone,
                 entries: state.selectedDate == null

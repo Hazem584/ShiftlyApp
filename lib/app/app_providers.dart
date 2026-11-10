@@ -201,6 +201,9 @@ class _AppProvidersState extends State<AppProviders> {
           BlocProvider.value(value: _composition.employeeShiftsCubit),
           BlocProvider.value(value: _composition.managerAttendanceCubit),
           BlocProvider.value(value: _composition.attendanceCalendarCubit),
+          BlocProvider.value(
+            value: _composition.employeeAttendanceCalendarCubit,
+          ),
           BlocProvider.value(value: _composition.attendanceReportsCubit),
           BlocProvider.value(value: _composition.employeeAttendanceCubit),
           BlocProvider.value(value: _composition.notificationsCubit),
@@ -282,6 +285,7 @@ class _AppProvidersState extends State<AppProviders> {
         unawaited(_composition.notificationsCubit.refreshUnreadCount());
         unawaited(_composition.chatGroupsCubit.refreshUnread());
         _composition.attendanceCalendarCubit.invalidate();
+        _composition.employeeAttendanceCalendarCubit.invalidate();
         _composition.dashboardCubit.invalidate();
       },
       child: provided,

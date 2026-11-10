@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +8,8 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
+import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
@@ -19,8 +20,10 @@ import 'package:shiftly/features/attendance/presentation/screens/attendance_scre
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_employee_day_row.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_state.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_daily_status_panel.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_month_summary.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
+import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 const _workspace = 'workspace';
@@ -266,6 +269,120 @@ const _scope = FeatureSessionScope(
 );
 
 void main() {
+  test(
+    'employee calendar calls only its own attendance, leave and shifts APIs',
+    () async {
+      final dio = Dio();
+      addTearDown(dio.close);
+      final paths = <String>[];
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            paths.add(options.path);
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                data: options.path.endsWith('attendance-schedule')
+                    ? {'data': [], 'evaluatedAt': '2026-11-10T16:00:00Z'}
+                    : {
+                        'data': [],
+                        'pagination': {
+                          'page': 1,
+                          'limit': 100,
+                          'total': 0,
+                          'totalPages': 0,
+                        },
+                      },
+              ),
+            );
+          },
+        ),
+      );
+      final repository = ApiAttendanceCalendarRepository(
+        ApiShiftRepository(dio),
+        ApiAttendanceRepository(dio),
+        ApiLeaveRequestRepository(dio),
+        dio: dio,
+        employeeOnly: true,
+      );
+      await repository.loadMonth(
+        workspaceId: _workspace,
+        timezone: 'Africa/Cairo',
+        year: 2026,
+        month: 11,
+      );
+      expect(paths.toSet(), {
+        '/shifts/me',
+        '/attendance/me',
+        '/leave-requests/me',
+        '/workspaces/workspace/attendance-schedule',
+      });
+    },
+  );
+  testWidgets(
+    'monthly employee totals include late days in presence without inflating absences',
+    (tester) async {
+      final repository = _CalendarRepository()
+        ..value = AttendanceCalendarMonth(
+          year: 2026,
+          month: 3,
+          timezone: 'Etc/UTC',
+          days: {
+            '2026-03-01': [
+              AttendanceCalendarEntry(
+                employeeMembershipId: 'a',
+                employee: _employee('a'),
+                status: CalendarAttendanceStatus.present,
+              ),
+            ],
+            '2026-03-02': [
+              AttendanceCalendarEntry(
+                employeeMembershipId: 'a',
+                employee: _employee('a'),
+                status: CalendarAttendanceStatus.late,
+              ),
+            ],
+            '2026-03-03': [
+              AttendanceCalendarEntry(
+                employeeMembershipId: 'a',
+                employee: _employee('a'),
+                status: CalendarAttendanceStatus.absent,
+              ),
+            ],
+          },
+        );
+      final cubit =
+          AttendanceCalendarCubit(
+            repository,
+            employee: true,
+            now: () => DateTime.utc(2026, 3, 10),
+          )..bindSession(
+            const FeatureSessionScope(
+              userId: 'u',
+              workspaceId: _workspace,
+              membershipId: 'a',
+              timezone: 'Etc/UTC',
+              role: WorkspaceRole.employee,
+            ),
+          );
+      addTearDown(cubit.close);
+      await cubit.open();
+      await tester.pumpWidget(
+        BlocProvider.value(
+          value: cubit,
+          child: const MaterialApp(
+            home: Scaffold(body: AttendanceMonthSummary()),
+          ),
+        ),
+      );
+      expect(find.text('Present days (including late)  2'), findsOneWidget);
+      expect(find.text('Late days  1'), findsOneWidget);
+      expect(find.text('Absent days  1'), findsOneWidget);
+      cubit.bindSession(null);
+      expect(cubit.state.hasData, false);
+    },
+  );
+
   test('only an approved leave replaces a missed shift on its dates', () {
     final shift = _shift(
       id: 'schedule:leave-day',

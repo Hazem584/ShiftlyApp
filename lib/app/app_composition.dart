@@ -26,6 +26,7 @@ import 'package:shiftly/features/attendance/domain/repositories/attendance_calen
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_calendar_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
@@ -109,6 +110,7 @@ class AppComposition {
   late final EmployeeShiftsCubit employeeShiftsCubit;
   late final ManagerAttendanceCubit managerAttendanceCubit;
   late final AttendanceCalendarCubit attendanceCalendarCubit;
+  late final EmployeeAttendanceCalendarCubit employeeAttendanceCalendarCubit;
   late final AttendanceReportsCubit attendanceReportsCubit;
   late final EmployeeAttendanceCubit employeeAttendanceCubit;
   late final NotificationRepository notifications;
@@ -233,6 +235,15 @@ class AppComposition {
             leaveRequests,
             dio: registered<Dio>(),
           ),
+    );
+    employeeAttendanceCalendarCubit = EmployeeAttendanceCalendarCubit(
+      ApiAttendanceCalendarRepository(
+        shifts,
+        attendance,
+        leaveRequests,
+        dio: registered<Dio>(),
+        employeeOnly: true,
+      ),
     );
     attendanceReportsCubit = AttendanceReportsCubit(
       ApiAttendanceReportRepository(attendance, employees),
@@ -415,6 +426,7 @@ class AppComposition {
     employeeShiftsCubit.close();
     managerAttendanceCubit.close();
     attendanceCalendarCubit.close();
+    employeeAttendanceCalendarCubit.close();
     attendanceReportsCubit.close();
     employeeAttendanceCubit.close();
     notificationsCubit.close();
@@ -441,6 +453,7 @@ class AppComposition {
     employeeShiftsCubit.bindSession(featureScope);
     managerAttendanceCubit.bindSession(featureScope);
     attendanceCalendarCubit.bindSession(featureScope);
+    employeeAttendanceCalendarCubit.bindSession(featureScope);
     attendanceReportsCubit.bindSession(featureScope);
     employeeAttendanceCubit.bindSession(featureScope);
     leaveRequestsCubit.bindSession(featureScope);
@@ -462,6 +475,7 @@ class AppComposition {
   void invalidateDashboardAndCalendar() {
     dashboardCubit.invalidate();
     attendanceCalendarCubit.invalidate();
+    employeeAttendanceCalendarCubit.invalidate();
     attendanceReportsCubit.invalidate();
   }
 

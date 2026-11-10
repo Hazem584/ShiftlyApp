@@ -188,6 +188,11 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
         ..sort();
   return AttendanceCalendarMonth(
     nextRefreshAt: upcoming.firstOrNull,
+    scheduledDates: Set.unmodifiable(
+      validShifts.values.map(
+        (shift) => WorkspaceTime.dateKey(shift.startsAt, timezoneName),
+      ),
+    ),
     evaluatedAt: nowUtc,
     year: year,
     month: month,

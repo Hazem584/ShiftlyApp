@@ -95,10 +95,41 @@ class ApiTeamWorkRepository implements TeamWorkRepository {
     );
   });
   @override
+  Future<void> recordAttendanceDay(
+    String workspaceId, {
+    required String employeeMembershipId,
+    String? attendanceId,
+    String? assignmentId,
+    String? extraAuthorizationId,
+    String? shiftId,
+    required String operationalDate,
+    required String reasonKind,
+    required DateTime clockIn,
+    required DateTime clockOut,
+    required String reason,
+  }) => _request(() async {
+    await _dio.post<Object?>(
+      '${_base(workspaceId)}/corrections/direct',
+      data: {
+        'employeeMembershipId': employeeMembershipId,
+        'attendanceId': ?attendanceId,
+        'assignmentId': ?assignmentId,
+        'extraAuthorizationId': ?extraAuthorizationId,
+        'shiftId': ?shiftId,
+        'operationalDate': operationalDate,
+        'reasonKind': reasonKind,
+        'clockInAt': clockIn.toUtc().toIso8601String(),
+        'clockOutAt': clockOut.toUtc().toIso8601String(),
+        'reason': reason.trim(),
+      },
+    );
+  });
+  @override
   Future<void> requestMissedAttendance(
     String workspaceId, {
     String? assignmentId,
     String? extraAuthorizationId,
+    String? shiftId,
     required String operationalDate,
     required String reasonKind,
     required DateTime clockIn,
@@ -108,6 +139,7 @@ class ApiTeamWorkRepository implements TeamWorkRepository {
     await _dio.post<Object?>(
       '${_base(workspaceId)}/corrections/missed',
       data: {
+        'shiftId': ?shiftId,
         'assignmentId': ?assignmentId,
         'extraAuthorizationId': ?extraAuthorizationId,
         'operationalDate': operationalDate,

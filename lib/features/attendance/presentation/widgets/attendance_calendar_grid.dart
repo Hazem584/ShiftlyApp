@@ -105,19 +105,35 @@ class AttendanceCalendarGrid extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      FittedBox(
-                        child: Text(
-                          context.tr('{value1}', {'value1': (day).toString()}),
-                          style: TextStyle(
-                            color: selected
-                                ? Theme.of(context).colorScheme.onPrimary
-                                : null,
-                            fontWeight: today || selected
-                                ? FontWeight.w700
-                                : null,
+                      Flexible(
+                        child: FittedBox(
+                          child: Text(
+                            context.tr('{value1}', {
+                              'value1': (day).toString(),
+                            }),
+                            style: TextStyle(
+                              color: selected
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : null,
+                              fontWeight: today || selected
+                                  ? FontWeight.w700
+                                  : null,
+                            ),
                           ),
                         ),
                       ),
+                      if (date.weekday == DateTime.friday &&
+                          entries.isEmpty &&
+                          !data.scheduledDates.contains(key))
+                        Text(
+                          context.tr('Off'),
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                        ),
                       if (statuses.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Wrap(

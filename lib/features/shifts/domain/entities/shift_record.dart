@@ -20,6 +20,8 @@ class ShiftRecord extends Equatable {
     required this.updatedAt,
     required this.employee,
     this.notes,
+    this.assignmentId,
+    this.extraAuthorizationId,
     this.attendance,
   });
 
@@ -31,7 +33,7 @@ class ShiftRecord extends Equatable {
   final DateTime endsAt;
   final int breakMinutes;
   final int graceMinutes;
-  final String? notes;
+  final String? notes, assignmentId, extraAuthorizationId;
   final ShiftStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -60,6 +62,8 @@ class ShiftRecord extends Equatable {
     breakMinutes: breakMinutes,
     graceMinutes: graceMinutes,
     notes: notes,
+    assignmentId: assignmentId,
+    extraAuthorizationId: extraAuthorizationId,
     status: status ?? this.status,
     createdAt: createdAt,
     updatedAt: updatedAt,
@@ -86,6 +90,10 @@ class ShiftRecord extends Equatable {
       breakMinutes: ApiModelParser.integer(json, 'breakMinutes'),
       graceMinutes: ApiModelParser.integer(json, 'graceMinutes'),
       notes: ApiModelParser.optionalString(json['notes']),
+      assignmentId: ApiModelParser.optionalString(json['assignmentId']),
+      extraAuthorizationId: ApiModelParser.optionalString(
+        json['extraAuthorizationId'],
+      ),
       status: ShiftStatus.parse(json['status']),
       createdAt: ApiModelParser.date(json, 'createdAt'),
       updatedAt: ApiModelParser.date(json, 'updatedAt'),
@@ -107,6 +115,8 @@ class ShiftRecord extends Equatable {
     breakMinutes,
     graceMinutes,
     notes,
+    assignmentId,
+    extraAuthorizationId,
     status,
     createdAt,
     updatedAt,

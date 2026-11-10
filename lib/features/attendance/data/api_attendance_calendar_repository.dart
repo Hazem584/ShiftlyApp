@@ -12,12 +12,14 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
     this._attendance,
     this._leaveRequests, {
     required this.dio,
+    this.employeeOnly = false,
     DateTime Function()? now,
   }) : _now = now ?? DateTime.now;
 
   static const _pageSize = 100;
   static const _maximumPages = 1000;
   final Dio? dio;
+  final bool employeeOnly;
   final ShiftRepository _shifts;
   final AttendanceRepository _attendance;
   final LeaveRequestRepository _leaveRequests;
@@ -88,10 +90,15 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
   ) async {
     final values = <ShiftRecord>[];
     for (var page = 1; page <= _maximumPages; page++) {
-      final result = await _shifts.listWorkspaceShifts(
-        workspaceId,
-        ShiftQuery(page: page, limit: _pageSize, from: from, to: to),
+      final query = ShiftQuery(
+        page: page,
+        limit: _pageSize,
+        from: from,
+        to: to,
       );
+      final result = employeeOnly
+          ? await _shifts.listMyShifts(workspaceId, query)
+          : await _shifts.listWorkspaceShifts(workspaceId, query);
       values.addAll(result.data);
       if (!_hasNext(result.pagination, page)) {
         return _dedupe(values, (e) => e.id);
@@ -107,10 +114,15 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
   ) async {
     final values = <AttendanceRecordApi>[];
     for (var page = 1; page <= _maximumPages; page++) {
-      final result = await _attendance.listWorkspaceAttendance(
-        workspaceId,
-        AttendanceQuery(page: page, limit: _pageSize, from: from, to: to),
+      final query = AttendanceQuery(
+        page: page,
+        limit: _pageSize,
+        from: from,
+        to: to,
       );
+      final result = employeeOnly
+          ? await _attendance.listMyAttendance(workspaceId, query)
+          : await _attendance.listWorkspaceAttendance(workspaceId, query);
       values.addAll(result.data);
       if (!_hasNext(result.pagination, page)) {
         return _dedupe(values, (e) => e.id);
@@ -128,16 +140,16 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
   ) async {
     final values = <LeaveRequestRecord>[];
     for (var page = 1; page <= _maximumPages; page++) {
-      final result = await _leaveRequests.listWorkspace(
-        workspaceId,
-        LeaveRequestQuery(
-          page: page,
-          limit: _pageSize,
-          from: from,
-          to: to,
-          status: LeaveRequestStatus.approved,
-        ),
+      final query = LeaveRequestQuery(
+        page: page,
+        limit: _pageSize,
+        from: from,
+        to: to,
+        status: LeaveRequestStatus.approved,
       );
+      final result = employeeOnly
+          ? await _leaveRequests.listMine(workspaceId, query)
+          : await _leaveRequests.listWorkspace(workspaceId, query);
       values.addAll(result.data);
       if (!_hasNext(result.pagination, page)) {
         return _dedupe(values, (e) => e.id);

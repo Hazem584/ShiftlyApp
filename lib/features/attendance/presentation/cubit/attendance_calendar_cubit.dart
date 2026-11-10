@@ -62,11 +62,15 @@ class AttendanceCalendarState extends Equatable {
 }
 
 class AttendanceCalendarCubit extends Cubit<AttendanceCalendarState> {
-  AttendanceCalendarCubit(this._repository, {DateTime Function()? now})
-    : _now = now ?? DateTime.now,
-      super(const AttendanceCalendarState());
+  AttendanceCalendarCubit(
+    this._repository, {
+    DateTime Function()? now,
+    this.employee = false,
+  }) : _now = now ?? DateTime.now,
+       super(const AttendanceCalendarState());
 
   final AttendanceCalendarRepository _repository;
+  final bool employee;
   final DateTime Function() _now;
   FeatureSessionScope? _scope;
   var _generation = 0;
@@ -82,7 +86,10 @@ class AttendanceCalendarCubit extends Cubit<AttendanceCalendarState> {
   }
 
   void bindSession(FeatureSessionScope? scope) {
-    final authorized = scope?.isManager == true ? scope : null;
+    final authorized =
+        (employee ? scope?.isEmployee == true : scope?.isManager == true)
+        ? scope
+        : null;
     if (_scope == authorized) return;
     _deadline?.cancel();
     _scope = authorized;

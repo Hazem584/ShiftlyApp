@@ -5,6 +5,8 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/app_tab_selector.dart';
 import 'package:shiftly/core/widgets/screen_header.dart';
+import 'package:shiftly/features/attendance/presentation/cubit/employee_attendance_calendar_cubit.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/employee_attendance_calendar.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/employee_attendance_history.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/employee_leave_requests_panel.dart';
 
@@ -25,12 +27,20 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   void initState() {
     super.initState();
     _tab = widget.initialTab;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _tab == 2) {
+        context.read<EmployeeAttendanceCalendarCubit>().open();
+      }
+    });
   }
 
   @override
   void didUpdateWidget(covariant EmployeeAttendanceScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTab != widget.initialTab) _tab = widget.initialTab;
+    if (oldWidget.initialTab != widget.initialTab) {
+      _tab = widget.initialTab;
+      if (_tab == 2) context.read<EmployeeAttendanceCalendarCubit>().open();
+    }
   }
 
   @override
@@ -59,17 +69,24 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                 ),
                 const SizedBox(height: AppSpacing.m),
                 AppTabSelector(
-                  labels: const ['Attendance', 'Leave'],
+                  labels: const ['Attendance', 'Leave', 'Calendar'],
                   selectedIndex: _tab,
-                  onSelected: (selected) => setState(() => _tab = selected),
+                  onSelected: (selected) {
+                    setState(() => _tab = selected);
+                    if (selected == 2) {
+                      context.read<EmployeeAttendanceCalendarCubit>().open();
+                    }
+                  },
                 ),
               ],
             ),
           ),
           Expanded(
-            child: _tab == 0
-                ? EmployeeAttendanceHistory(timezone: timezone)
-                : EmployeeLeaveRequestsPanel(timezone: timezone),
+            child: switch (_tab) {
+              0 => EmployeeAttendanceHistory(timezone: timezone),
+              1 => EmployeeLeaveRequestsPanel(timezone: timezone),
+              _ => const EmployeeAttendanceCalendar(),
+            },
           ),
         ],
       ),

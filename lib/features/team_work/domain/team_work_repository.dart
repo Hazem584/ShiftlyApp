@@ -23,10 +23,24 @@ abstract interface class TeamWorkRepository {
     DateTime? clockIn,
     DateTime? clockOut,
   });
+  Future<void> recordAttendanceDay(
+    String workspaceId, {
+    required String employeeMembershipId,
+    String? attendanceId,
+    String? assignmentId,
+    String? extraAuthorizationId,
+    String? shiftId,
+    required String operationalDate,
+    required String reasonKind,
+    required DateTime clockIn,
+    required DateTime clockOut,
+    required String reason,
+  });
   Future<void> requestMissedAttendance(
     String workspaceId, {
     String? assignmentId,
     String? extraAuthorizationId,
+    String? shiftId,
     required String operationalDate,
     required String reasonKind,
     required DateTime clockIn,

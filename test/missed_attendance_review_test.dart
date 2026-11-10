@@ -83,6 +83,7 @@ class _Repository implements TeamWorkRepository {
     String workspaceId, {
     String? assignmentId,
     String? extraAuthorizationId,
+    String? shiftId,
     required String operationalDate,
     required String reasonKind,
     required DateTime clockIn,
@@ -243,9 +244,7 @@ void main() {
         );
         expect(
           find.textContaining(
-            arabic
-                ? 'حضرت ونسيت تسجّل'
-                : 'Did you attend without recording',
+            arabic ? 'حضرت ونسيت تسجّل' : 'Did you attend without recording',
           ),
           findsOneWidget,
         );

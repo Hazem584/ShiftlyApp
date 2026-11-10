@@ -1,4 +1,23 @@
 const arabicWorkdayTranslations = <String, String>{
+  'Monthly attendance summary': 'ملخص الحضور الشهري',
+  'Present days (including late)': 'أيام الحضور (تشمل التأخير)',
+  'Absent days': 'أيام الغياب',
+  'Late days': 'أيام التأخير',
+  'Leave days': 'أيام الإجازة',
+  'Friday is off unless you have an assigned shift.':
+      'الجمعة إجازة إلا لو عندك شيفت متسجل في اليوم ده.',
+  'Off': 'إجازة',
+  'Calendar': 'الكالندر',
+  'Edit attendance': 'تعديل الحضور',
+  'Save attendance': 'حفظ الحضور',
+  'Changes are applied immediately and recorded in the audit history.':
+      'التعديل هيتطبق فورًا مع تسجيله في سجل التغييرات.',
+  'Your attendance changes only after your manager approves this request.':
+      'الحضور هيتعدل بعد موافقة المدير على الطلب.',
+  'Overtime is calculated from the approved times and your break policy.':
+      'الأوفر تايم بيتحسب من الأوقات المعتمدة وقواعد البريك.',
+  'Attendance times must overlap the selected shift.':
+      'أوقات الحضور لازم تكون مرتبطة بالشيفت المحدد.',
   'Break reduced by {time} for late arrival.':
       'اتخصم {time} من البريك بسبب التأخير.',
   'No break remaining': 'رصيد البريك خلص',
