@@ -30,8 +30,6 @@ const arabicInterfaceTranslations = <String, String>{
   'Connect and refresh before recording attendance.':
       'اتصل بالإنترنت وحدّث البيانات قبل تسجيل الحضور.',
   'We could not confirm your clock-in. Connect and check its status before starting another shift.': 'معرفناش نتأكد من تسجيل حضورك. اتصل بالإنترنت واتأكد من حالته قبل ما تبدأ شيفت جديد.',
-  'Connect to load your team’s performance.':
-      'اتصل بالنت عشان تشوف أداء فريقك.',
   'This record has already been reversed. Refresh to see its current status.':
       'السجل ده اتعمله عكس بالفعل. حدّث وشوف حالته دلوقتي.',
   'Su': 'أحد',
@@ -226,7 +224,6 @@ const arabicInterfaceTranslations = <String, String>{
   'The employee will lose active workspace access.':
       'الموظف مش هيقدر يدخل مكان الشغل وهو موقوف.',
   'Deactivate': 'وقّف',
-  'Employee Performance': 'أداء الموظف',
   'New team member': 'عضو جديد بالفريق',
   'Send a secure workspace invitation by email.':
       'ابعت دعوة آمنة لمكان الشغل على الإيميل.',
@@ -268,7 +265,7 @@ const arabicInterfaceTranslations = <String, String>{
   'Unknown schedule conversion policy. Read-only evidence; contact support.':
       'طريقة تحويل مواعيد الشيفت مش معروفة. السجل للعرض بس؛ كلّم الدعم.',
   'Revoke unused authorization': 'إلغاء التصريح غير المستخدم',
-  'Extras require explicit manager authorization. They do not replace baseline attendance or automatically award BLUE.': 'الشيفتات الإضافية لازم يكون ليها تصريح من المدير. مش بديل للحضور الأساسي، ومش بتدي نقاط زرقاء تلقائي.',
+  'Extra shifts require explicit manager authorization and are recorded separately from regular attendance.': 'الشيفتات الإضافية محتاجة تصريح من المدير، وبتتسجل بشكل مستقل عن الحضور الأساسي.',
   'Saved {value1} for employee membership {value2} on {value3}. Resolve this operation before creating another extra.': 'عملية {value1} اتحفظت للعضو {value2} يوم {value3}. اتأكد من نتيجتها قبل ما تعمل شيفت إضافي تاني.',
   'Last saved canonical result': 'آخر نتيجة مؤكّدة محفوظة',
   'Previous': 'اللي قبله',
@@ -285,7 +282,6 @@ const arabicInterfaceTranslations = <String, String>{
   'Enter local dates/times with the offset applicable at each instant. During a repeated DST hour, choose the intended offset explicitly. Missing DST times are invalid.': 'اكتب التاريخ والوقت المحلي مع فرق التوقيت الصحيح لكل وقت. لو الساعة بتتكرر بسبب التوقيت الصيفي، اختار فرق التوقيت اللي تقصده. الوقت اللي مش موجود بسبب تغيير التوقيت مينفعش تستخدمه.',
   'Actual clock-in with offset': 'وقت الحضور الفعلي مع فرق التوقيت',
   'Actual clock-out with offset': 'وقت الخروج الفعلي مع فرق التوقيت',
-  'Recording EXTRA attendance does not award BLUE. Use Employee Performance → Extra effort approval separately and link the attendance.': 'تسجيل حضور إضافي مش بيدي نقاط زرقاء. اعتمدها لوحدها من أداء الموظف ← المجهود الإضافي، واربطها بسجل الحضور.',
   'Confirm extra shift': 'تأكيد الشيفت الإضافي',
   'Confirm': 'تأكيد',
   'Saved request ID: {value1}': 'معرّف الطلب المحفوظ: {value1}',
@@ -322,17 +318,6 @@ const arabicInterfaceTranslations = <String, String>{
   'Active manager workspace required.':
       'لازم تختار مكان شغل نشط عندك فيه صلاحية مدير.',
   'Membership: {value1}': 'معرّف العضوية: {value1}',
-  'BLACK total: {value1} · This month: {value2}':
-      'إجمالي النقاط السوداء: {value1} · الشهر ده: {value2}',
-  'ORANGE total: {value1} · This month: {value2}':
-      'إجمالي النقاط البرتقالية: {value1} · الشهر ده: {value2}',
-  'BLUE total: {value1} · This month: {value2}':
-      'إجمالي النقاط الزرقاء: {value1} · الشهر ده: {value2}',
-  'GREEN earned: {value1} · Bonuses: {value2} · Adjusted: {value3}': 'النقاط الخضراء المكتسبة: {value1} · المكافآت: {value2} · التعديلات: {value3}',
-  'GREEN spent on compensation: {value1} · RED compensated: {value2}': 'النقاط الخضراء المستخدمة للتعويض: {value1} · النقاط الحمراء المعوّضة: {value2}',
-  'Adjust points': 'عدّل النقاط',
-  'Grant BLUE': 'منح نقاط زرقاء',
-  'Points dispute': 'اعتراض على النقاط',
   'Manager access required.': 'لازم تكون عندك صلاحية مدير.',
   'Refresh detail': 'حدّث التفاصيل',
   'Status: {value1}': 'الحالة: {value1}',
@@ -340,11 +325,8 @@ const arabicInterfaceTranslations = <String, String>{
   'Employee reason: {value1}': 'سبب الموظف: {value1}',
   'Related immutable event\n{value1} {value2}\n{value3}\nOperational date: {value4}': 'العملية المرتبطة المحفوظة\n{value1} {value2}\n{value3}\nيوم الشغل: {value4}',
   'Manager response: {value1}': 'رد المدير: {value1}',
-  'Review dispute': 'مراجعة الاعتراض',
   'Employee name': 'اسم الموظف',
   'Current policy': 'السياسة الحالية',
-  'Effective {value1} · Points enabled: {value2}':
-      'سارية من {value1} · نظام النقاط مفعّل: {value2}',
   'New future-effective version': 'ضيف نسخة بتاريخ سريان مستقبلي',
   'Version history': 'سجل النسخ',
   'Manager access changed or another operation needs recovery.':
@@ -368,48 +350,24 @@ const arabicInterfaceTranslations = <String, String>{
   'No records for this selection.': 'مفيش سجلات للاختيار ده.',
   'Showing up to the 100 most recent server records.':
       'بنعرض آخر 100 سجل بحد أقصى.',
-  'GREEN available: {value1} · Active RED: {value2}':
-      'النقاط الخضراء المتاحة: {value1} · النقاط الحمراء النشطة: {value2}',
-  'BLACK total: {value1} · ORANGE total: {value2} · BLUE total: {value3}':
-      'إجمالي السوداء: {value1} · البرتقالية: {value2} · الزرقاء: {value3}',
-  'Achievements: {value1}': 'الإنجازات: {value1}',
   'Effective {value1} – {value2}': 'السريان: {value1} – {value2}',
   'Version ID: {value1}': 'معرّف النسخة: {value1}',
   'Policy settings': 'إعدادات السياسة',
-  'BLACK warning': 'تنبيه النقاط السوداء',
   'Cycle: {value1} · Threshold: {value2}': 'الدورة: {value1} · الحد: {value2}',
-  'View dispute': 'شوف الاعتراض',
   'Reverses entry {value1}': 'يعكس القيد {value1}',
-  'BLUE {value1} · Linked GREEN {value2}':
-      'نقاط زرقاء {value1} · نقاط خضراء مرتبطة {value2}',
   'Manager access changed.': 'تغيّرت صلاحية المدير.',
   'Mark all read': 'علّم الكل كمقروء',
   'Delete notification?': 'هتمسح التنبيه؟',
   'This notification will be permanently removed.':
       'التنبيه ده هيتمسح نهائيًا.',
   'Delete notification': 'امسح التنبيه',
-  'RED compensation completed.': 'النقاط الحمراء اتعوّضت.',
-  'Loading My Performance…': 'بنحمّل أدائي…',
-  'My Performance': 'أدائي',
-  'Achievements': 'الإنجازات',
   'This day is unresolved. It is not recorded as an absence.':
       'لسه مش متأكدين من حالة اليوم ده، ومتسجّلش غياب.',
-  'Point changes': 'تغييرات النقاط',
   'Recent activity': 'أحدث العمليات',
   'Support details': 'تفاصيل للدعم',
   'Request ID: {value1}': 'معرّف الطلب: {value1}',
-  'Compensate RED': 'تعويض النقاط الحمراء',
-  '{value1} GREEN compensates 1 RED':
-      '{value1} نقطة خضراء تعوّض نقطة حمراء واحدة',
-  'Retry same redemption': 'جرّب نفس التعويض تاني',
-  'Compensate 1 RED': 'تعويض نقطة حمراء',
-  'Compensate 1 RED?': 'تعويض نقطة حمراء واحدة؟',
-  'Exact cost: {value1} GREEN': 'التكلفة: {value1} نقطة خضراء',
-  'Estimated remaining balance: {value1} GREEN':
-      'الرصيد المتبقي المتوقع: {value1} نقطة خضراء',
   'Your wallet will refresh from the server after confirmation.':
       'رصيدك هيتحدّث من النظام بعد التأكيد.',
-  'Points wallet': 'رصيد النقاط',
   'Remove profile photo?': 'هتشيل صورة البروفايل؟',
   'Your initials will be shown instead.': 'أول حروف اسمك هتظهر بدل الصورة.',
   'Remove': 'شيل',

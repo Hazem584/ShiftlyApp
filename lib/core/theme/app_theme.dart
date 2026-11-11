@@ -44,6 +44,15 @@ class AppTheme {
           error: colors.error,
         );
 
+    final dateForeground = WidgetStateProperty.resolveWith<Color>((states) {
+      if (states.contains(WidgetState.disabled)) {
+        return colors.textSecondary;
+      }
+      if (states.contains(WidgetState.selected)) {
+        return colorScheme.onPrimary;
+      }
+      return colors.ink;
+    });
     const radius = BorderRadius.all(Radius.circular(AppRadii.m));
 
     return ThemeData(
@@ -122,6 +131,23 @@ class AppTheme {
           borderSide: BorderSide(color: colors.error),
         ),
       ),
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: colors.surface,
+        headerForegroundColor: colors.ink,
+        dayForegroundColor: dateForeground,
+        yearForegroundColor: dateForeground,
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        textStyle: TextStyle(color: colors.ink, fontFamily: 'Cairo'),
+      ),
+      dataTableTheme: DataTableThemeData(
+        headingTextStyle: TextStyle(
+          color: colors.ink,
+          fontFamily: 'Cairo',
+          fontWeight: FontWeight.w700,
+        ),
+        dataTextStyle: TextStyle(color: colors.ink, fontFamily: 'Cairo'),
+      ),
       cardTheme: CardThemeData(
         color: colors.surface,
         elevation: 0,
@@ -134,8 +160,18 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: colors.field,
         selectedColor: colors.selected,
+        disabledColor: colors.field,
+        checkmarkColor: colors.ink,
+        iconTheme: IconThemeData(color: colors.ink),
+        secondaryLabelStyle: TextStyle(
+          color: colors.ink,
+          fontFamily: 'Cairo',
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
         side: BorderSide(color: colors.borderColor),
         labelStyle: TextStyle(
+          color: colors.ink,
           fontFamily: 'Cairo',
           fontWeight: FontWeight.w700,
           fontSize: 12,

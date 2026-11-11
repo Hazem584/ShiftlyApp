@@ -32,7 +32,7 @@ const arabicWorkdayTranslations = <String, String>{
   'Could not leave workspace. Please retry.':
       'تعذر الخروج من مساحة العمل. حاول تاني.',
 
-  'Overtime is time after the scheduled shift ends, minus arrival delay. Late arrival reduces the available break.': 'الوقت الإضافي هو الوقت بعد نهاية الشيفت مع خصم التأخير. التأخير بيقلل رصيد البريك المتاح.',
+  'Overtime includes time after the shift, minus arrival delay. Unused break time is added at shift end for on-time attendance.': 'الأوفر تايم بيشمل الوقت بعد نهاية الشيفت مع خصم التأخير. المتبقي من البريك بيتضاف عند نهاية الشيفت للحاضر في الميعاد.',
 
   'Break minutes': 'مدة البريك بالدقائق',
   'Break reminder time': 'ميعاد تذكير البريك',
@@ -48,7 +48,6 @@ const arabicWorkdayTranslations = <String, String>{
   'Workspace sections': 'أقسام مساحة العمل',
   'Review work that needs your decision': 'راجع البنود اللي محتاجة قرارك',
   'Manage shift templates and schedules': 'رتّب قوالب الشيفتات والمواعيد',
-  'Review team results and points': 'تابع نتائج الفريق والنقاط',
   'Publish updates and follow acknowledgments':
       'انشر التحديثات وتابع تأكيد قراءتها',
   'Build and review the weekly rota': 'جهّز جدول الأسبوع وراجعه قبل الاعتماد',
@@ -56,9 +55,6 @@ const arabicWorkdayTranslations = <String, String>{
   'Review swaps and find shift coverage': 'راجع التبديلات ووفّر بديل للشيفت',
   'Check attendance records and the team calendar':
       'راجع سجلات الحضور وتقويم الفريق',
-  'Performance workspace guide': 'نتائج الفريق وإدارة النقاط',
-  'Review results first, then manage points rules, warnings and disputes.':
-      'ابدأ بنتائج الموظفين، وبعدها راجع قواعد النقاط والتنبيهات والاعتراضات.',
 
   'Loading content': 'جارٍ تحميل المحتوى',
   'Your team. Every shift. In sync.': 'فريقك وشيفتاتك… في مكان واحد',

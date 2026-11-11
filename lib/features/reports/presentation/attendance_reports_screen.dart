@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
-import 'package:shiftly/features/attendance/domain/entities/attendance_record_api.dart';
 import 'package:shiftly/features/reports/domain/attendance_report.dart';
 import 'package:shiftly/features/reports/domain/report_export.dart';
+import 'package:shiftly/features/reports/presentation/attendance_report_sources.dart';
+import 'package:shiftly/features/reports/presentation/attendance_report_totals.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_cubit.dart';
 
 class AttendanceReportsScreen extends StatefulWidget {
@@ -157,7 +157,9 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                   '${context.tr('Generated at')}: ${WorkspaceTime.dateTime(report.generatedAt, report.timezone, locale: Localizations.localeOf(context).languageCode)}',
                 ),
                 const SizedBox(height: 12),
-                _totals(report.totalsFor(state.employeeId)),
+                AttendanceReportTotals(
+                  metrics: report.totalsFor(state.employeeId),
+                ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
@@ -200,12 +202,12 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                 ),
                 Text(
                   context.tr(
-                    'Overtime is time after the scheduled shift ends, minus arrival delay. Late arrival reduces the available break.',
+                    'Overtime includes time after the shift, minus arrival delay. Unused break time is added at shift end for on-time attendance.',
                   ),
                 ),
                 Text(
                   context.tr(
-                    'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Breaks are not deducted.',
+                    'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Recorded breaks are deducted.',
                   ),
                 ),
                 Text(
@@ -245,7 +247,9 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                       ])
                         DataColumn(label: Text(context.tr(title))),
                     ],
-                    source: _SummarySource(report.rowsFor(state.employeeId)),
+                    source: AttendanceSummarySource(
+                      report.rowsFor(state.employeeId),
+                    ),
                   ),
                 if (report.recordsFor(state.employeeId).isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -269,7 +273,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                       ])
                         DataColumn(label: Text(context.tr(title))),
                     ],
-                    source: _DetailsSource(
+                    source: AttendanceDetailsSource(
                       report,
                       state.employeeId,
                       AppLocalizations.of(context),
@@ -282,40 +286,6 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
         );
       },
     ),
-  );
-
-  Widget _totals(ReportMetrics m) => Wrap(
-    spacing: 12,
-    runSpacing: 12,
-    children: [
-      for (final item in <(String, String)>[
-        ('Employee attendance days', '${m.attendanceDays}'),
-        ('Late records', '${m.late}'),
-        ('Late minutes', '${m.lateMinutes}'),
-        ('Worked hours', (m.workMinutes / 60).toStringAsFixed(2)),
-        ('Extra shift hours', (m.extraMinutes / 60).toStringAsFixed(2)),
-        ('Schedule excess hours', (m.excessMinutes / 60).toStringAsFixed(2)),
-        ('Pending records', '${m.pending}'),
-        ('Rejected records', '${m.rejected}'),
-        ('Open records', '${m.open}'),
-        if (m.missingSchedule > 0) ('Missing schedule', '${m.missingSchedule}'),
-        if (m.missingWorkMinutes > 0)
-          ('Missing work duration', '${m.missingWorkMinutes}'),
-        if (m.unknown > 0) ('Unknown review status', '${m.unknown}'),
-      ])
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(context.tr(item.$1)),
-                Text(item.$2, style: Theme.of(context).textTheme.headlineSmall),
-              ],
-            ),
-          ),
-        ),
-    ],
   );
 
   Future<void> _chooseRange(AttendanceReportsState state) async {
@@ -397,86 +367,4 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
   void _message(String message) =>
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(context.tr(message))));
-}
-
-class _SummarySource extends DataTableSource {
-  _SummarySource(this.rows);
-  final List<ReportEmployeeRow> rows;
-  @override
-  DataRow? getRow(int index) {
-    if (index >= rows.length) return null;
-    final r = rows[index];
-    final m = r.metrics;
-    return DataRow.byIndex(
-      index: index,
-      cells: [
-        for (final value in [
-          r.employee.name,
-          m.attendanceDays,
-          m.approved,
-          m.pending,
-          m.rejected,
-          m.open,
-          m.late,
-          m.lateMinutes,
-          (m.workMinutes / 60).toStringAsFixed(2),
-          (m.extraMinutes / 60).toStringAsFixed(2),
-          (m.excessMinutes / 60).toStringAsFixed(2),
-        ])
-          DataCell(Text('$value')),
-      ],
-    );
-  }
-
-  @override
-  int get rowCount => rows.length;
-  @override
-  bool get isRowCountApproximate => false;
-  @override
-  int get selectedRowCount => 0;
-}
-
-class _DetailsSource extends DataTableSource {
-  _DetailsSource(this.report, String? employeeId, this.strings)
-    : rows = report.recordsFor(employeeId);
-  final AttendanceReport report;
-  final AppLocalizations strings;
-  final List<AttendanceRecordApi> rows;
-  @override
-  DataRow? getRow(int index) {
-    if (index >= rows.length) return null;
-    final r = rows[index];
-    return DataRow.byIndex(
-      index: index,
-      cells: [
-        for (final value in [
-          r.employee.displayName,
-          WorkspaceTime.dateTime(r.clockInAt, report.timezone),
-          r.clockOutAt == null
-              ? strings.text('Not recorded')
-              : WorkspaceTime.dateTime(r.clockOutAt!, report.timezone),
-          strings.text(
-            r.reviewStatus.name[0].toUpperCase() +
-                r.reviewStatus.name.substring(1),
-          ),
-          r.minutesLate,
-          r.workedMinutes == null
-              ? strings.text('Not recorded')
-              : workDurationWithOvertime(
-                  r.netWorkedMinutes ?? r.workedMinutes!,
-                  r.overtimeMinutes,
-                  arabic: strings.locale.languageCode == 'ar',
-                ),
-        ])
-          DataCell(Text('$value')),
-      ],
-    );
-  }
-
-  @override
-  int get rowCount => rows.length;
-  @override
-  bool get isRowCountApproximate => false;
-  @override
-  int get selectedRowCount => 0;
 }

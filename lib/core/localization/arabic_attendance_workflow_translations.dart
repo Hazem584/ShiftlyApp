@@ -31,8 +31,7 @@ const arabicAttendanceWorkflowTranslations = <String, String>{
       'معرفناش نقرا نتيجة الحضور. حدّث البيانات.',
   'The server returned an invalid leave review response.':
       'معرفناش نقرا نتيجة مراجعة الإجازة. حدّث البيانات.',
-  '\nClock-in: {start}\nClock-out: {end}\nNo automatic BLUE award.':
-      '\nالحضور: {start}\nالخروج: {end}\nمفيش نقاط زرقاء بتتضاف تلقائي.',
+  '\nClock-in: {start}\nClock-out: {end}': '\nالحضور: {start}\nالخروج: {end}',
   'actualClockInAt': 'وقت الحضور الفعلي',
   'actualClockOutAt': 'وقت الخروج الفعلي',
   '{minutes}m late': 'تسجيل متأخر {minutes} د',

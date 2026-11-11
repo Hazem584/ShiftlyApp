@@ -267,29 +267,6 @@ abstract final class ApiErrorParser {
       'CHAT_MESSAGE_HAS_NO_MEDIA' => 'This message has no available media.',
       'CHAT_READ_MESSAGE_INVALID' =>
         'The selected message cannot be used as a read position.',
-      'POINTS_INSUFFICIENT_GREEN' =>
-        'You do not have enough GREEN points for this redemption.',
-      'POINTS_INSUFFICIENT_RED' =>
-        'You do not have an active RED point to compensate.',
-      'POINTS_REDEMPTION_CONFLICT' =>
-        'This redemption conflicts with an earlier request. Refresh and retry.',
-      'POINTS_POLICY_DISABLED' || 'POINTS_COMPENSATION_DISABLED' =>
-        'Points or compensation are currently disabled for this workspace.',
-      'POINTS_POLICY_EFFECTIVE_DATE_IN_PAST' =>
-        'Choose a future workspace-local policy date.',
-      'POINTS_POLICY_CONFLICT' =>
-        'A policy already covers that date. Refresh the version history.',
-      'POINT_DISPUTE_ALREADY_REVIEWED' => 'Another review already resolved this dispute. Refresh its canonical status.',
-      'EXTRA_EFFORT_ALREADY_REVERSED' || 'POINT_ADJUSTMENT_ALREADY_REVERSED' => 'This record has already been reversed. Refresh to see its current status.',
-      'POINT_ADJUSTMENT_CONFLICT' ||
-      'EXTRA_EFFORT_CONFLICT' ||
-      'POINTS_REVERSAL_CONFLICT' => 'The saved operation conflicts with an existing UUID. Its outcome needs review before another change.',
-      'EXTRA_EFFORT_INVALID' || 'POINT_ADJUSTMENT_INVALID' =>
-        'Check the quantity, reason and employee evidence.',
-      'POINTS_HISTORICAL_CONTEXT_UNAVAILABLE' => 'This date is unresolved because historical work context is unavailable.',
-      'POINTS_BALANCE_INVARIANT_VIOLATION' =>
-        'Your points balance needs support review.',
-      'POINTS_REVERSAL_INSUFFICIENT_BALANCE' => 'This reversal would subtract points that are no longer available. Reverse the related deduction adjustment first, then reverse the original award.',
       _ => switch (status) {
         400 => 'Please check the information you entered.',
         401 => 'Your session has expired. Please sign in again.',

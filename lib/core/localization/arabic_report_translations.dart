@@ -39,7 +39,7 @@ const arabicReportTranslations = <String, String>{
   'No attendance in this period.': 'مفيش سجلات حضور في الفترة دي.',
   'Hours include approved closed records only. Open, pending and rejected records do not add hours.': 'الساعات بتتحسب من السجلات المقفولة والمتوافق عليها بس. السجلات المفتوحة أو المستنية أو المرفوضة مش بتضيف ساعات.',
   'Extra shift hours are part of worked hours. Schedule excess is time beyond the scheduled duration of regular shifts; it is an estimate, not payroll approval.': 'ساعات الشيفتات الإضافية جزء من ساعات الشغل. تجاوز المدة هو الوقت الزيادة عن مدة الشيفت الأساسي؛ ده تقدير، مش موافقة على أجر إضافي.',
-  'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Breaks are not deducted.': 'التواريخ حسب وقت تسجيل الحضور بتوقيت مكان الشغل. الشيفت اللي بيكمل لتاني يوم بيتحسب في تاريخ الحضور. البريك مش بيتخصم.',
+  'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Recorded breaks are deducted.': 'التواريخ حسب وقت تسجيل الحضور بتوقيت مكان الشغل. الشيفت اللي بيكمل لتاني يوم بيتحسب في تاريخ الحضور. البريك المسجل بيتخصم من ساعات الشغل.',
   'Attendance days count distinct approved clock-in dates per employee. No attendance does not prove absence.': 'أيام الحضور هي تواريخ الحضور المختلفة المتوافق عليها لكل موظف. لو مفيش سجل حضور، ده لوحده مش دليل غياب.',
   'Choose a period of up to 366 days.': 'اختار فترة متزيدش عن ٣٦٦ يوم.',
   'Unable to load attendance report.': 'معرفناش نحمّل تقرير الحضور.',

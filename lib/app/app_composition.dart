@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shiftly/app/app_repositories.dart';
 import 'package:shiftly/app/app_task_coordinator.dart';
 import 'package:shiftly/app/session_feature_coordinator.dart';
 import 'package:shiftly/app/workspace_local_cleanup.dart';
@@ -20,8 +21,6 @@ import 'package:shiftly/core/theme/memory_theme_store.dart';
 import 'package:shiftly/core/theme/theme_cubit.dart';
 import 'package:shiftly/core/theme/theme_preference_store.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
-import 'package:shiftly/features/attendance/data/mock_attendance_repository.dart';
-import 'package:shiftly/features/attendance/data/mock_leave_request_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
@@ -41,18 +40,12 @@ import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
-import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
-import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
-import 'package:shiftly/features/fixed_shifts/data/preview_fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
-import 'package:shiftly/features/invitations/data/mock_invitation_repository.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
-import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
 import 'package:shiftly/features/notifications/domain/entities/push_notice.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/domain/repositories/push_device_repository.dart';
@@ -63,13 +56,11 @@ import 'package:shiftly/features/notifications/presentation/cubit/push_notificat
 import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
-import 'package:shiftly/features/profile/data/mock_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:shiftly/features/reports/data/api_attendance_report_repository.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_cubit.dart';
-import 'package:shiftly/features/shifts/data/mock_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/employee_shifts_cubit.dart';
 import 'package:shiftly/features/shifts/presentation/cubit/manager_shifts_cubit.dart';
@@ -78,7 +69,6 @@ import 'package:shiftly/features/tasks/data/memory_task_repository.dart';
 import 'package:shiftly/features/tasks/data/native_task_home_widget.dart';
 import 'package:shiftly/features/tasks/domain/task_reminders.dart';
 import 'package:shiftly/features/tasks/domain/task_repository.dart';
-import 'package:shiftly/features/workspaces/data/mock_workspace_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
 
@@ -152,28 +142,18 @@ class AppComposition {
     featureCoordinator = SessionFeatureCoordinator(applySession);
     sessionCoordinator =
         dependencies.sessionCoordinator ?? registered<SessionCoordinator>();
-    employees =
-        dependencies.employeeRepository ??
-        registered<EmployeeRepository>() ??
-        MockEmployeeRepository();
-    invitations =
-        dependencies.invitationRepository ??
-        registered<InvitationRepository>() ??
-        MockInvitationRepository();
-    workspaces =
-        dependencies.workspaceRepository ??
-        registered<WorkspaceRepository>() ??
-        MockWorkspaceRepository();
-    final dashboard =
-        dependencies.dashboardRepository ??
-        registered<DashboardRepository>() ??
-        (dependencies.preview
-            ? MockDashboardRepository(
-                employeeRepository: MockEmployeeRepository(),
-              )
-            : throw StateError(
-                'Authenticated apps must inject DashboardRepository.',
-              ));
+    final repositories = AppRepositories(dependencies, registered);
+    employees = repositories.employees;
+    invitations = repositories.invitations;
+    workspaces = repositories.workspaces;
+    leaveRequests = repositories.leaveRequests;
+    profile = repositories.profile;
+    profileImagePicker = repositories.profileImagePicker;
+    shifts = repositories.shifts;
+    attendance = repositories.attendance;
+    fixedShifts = repositories.fixedShifts;
+    notifications = repositories.notifications;
+    final dashboard = repositories.dashboard;
     onboardingCubit = OnboardingCubit(
       dependencies.onboardingStorage ??
           registered<OnboardingStorage>() ??
@@ -190,42 +170,6 @@ class AppComposition {
           onboarding: onboardingCubit,
           refreshListenable: sessionRefresh,
         );
-    leaveRequests =
-        dependencies.leaveRequestRepository ??
-        registered<LeaveRequestRepository>() ??
-        MockLeaveRequestRepository();
-    profile =
-        dependencies.profileRepository ??
-        registered<ProfileRepository>() ??
-        MockProfileRepository();
-    profileImagePicker =
-        dependencies.profileImagePicker ??
-        registered<ProfileImagePicker>() ??
-        DeviceProfileImagePicker();
-    shifts =
-        dependencies.shiftRepository ??
-        registered<ShiftRepository>() ??
-        const MockShiftRepository();
-    attendance =
-        dependencies.attendanceRepository ??
-        registered<AttendanceRepository>() ??
-        const MockAttendanceRepository();
-    fixedShifts =
-        dependencies.fixedShiftRepository ??
-        registered<FixedShiftRepository>() ??
-        (dependencies.preview
-            ? const PreviewFixedShiftRepository()
-            : throw StateError(
-                'Authenticated apps must inject FixedShiftRepository.',
-              ));
-    notifications =
-        dependencies.notificationRepository ??
-        registered<NotificationRepository>() ??
-        (dependencies.preview
-            ? MockNotificationRepository()
-            : throw StateError(
-                'Authenticated apps must inject NotificationRepository.',
-              ));
     dashboardCubit = registered<DashboardCubit>() ?? DashboardCubit(dashboard);
     attendanceCalendarCubit = AttendanceCalendarCubit(
       registered<AttendanceCalendarRepository>() ??

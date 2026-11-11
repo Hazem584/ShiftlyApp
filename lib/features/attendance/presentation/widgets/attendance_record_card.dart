@@ -89,7 +89,7 @@ class AttendanceRecordCard extends StatelessWidget {
                 if (record.source == AttendanceSource.template)
                   Text(
                     record.occurrenceKind == 'EXTRA'
-                        ? context.tr('EXTRA (optional; no automatic BLUE)')
+                        ? context.tr('Extra shift')
                         : record.occurrenceKind == 'BASELINE'
                         ? context.tr('BASELINE')
                         : context.tr(

@@ -321,7 +321,7 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
               'value6':
                   (widget.actual
                           ? context.tr(
-                              '\nClock-in: {start}\nClock-out: {end}\nNo automatic BLUE award.',
+                              '\nClock-in: {start}\nClock-out: {end}',
                               {
                                 'start': WorkspaceTime.dateTime(
                                   DateTime.parse(

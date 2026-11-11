@@ -50,7 +50,7 @@ class ExtraShiftsView extends StatelessWidget {
                 ),
                 Text(
                   context.tr(
-                    'Extras require explicit manager authorization. They do not replace baseline attendance or automatically award BLUE.',
+                    'Extra shifts require explicit manager authorization and are recorded separately from regular attendance.',
                   ),
                 ),
                 if (state.loading) const AppContentLoading(rows: 1),

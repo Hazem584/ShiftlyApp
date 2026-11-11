@@ -11,14 +11,16 @@ import 'package:shiftly/features/tasks/presentation/task_translations.dart';
 // Egyptian Arabic: friendly everyday copy, with precise review and hours rules.
 // Keep source keys and placeholders stable; employee-written content stays as is.
 const arabicTranslations = <String, String>{
- 'Document':'مستند',
- 'React to message':'تفاعل مع الرسالة',
- 'React with {emoji}':'تفاعل بـ {emoji}',
- 'Remove reaction':'إزالة التفاعل',
- 'Message deleted':'تم حذف الرسالة',
- 'Save or share document':'حفظ أو مشاركة المستند',
- 'Could not download the document. Try again.':'تعذّر تنزيل المستند. جرّب تاني.',
- 'Choose a PDF, Excel, CSV or text file up to 10 MB.':'اختار ملف PDF أو Excel أو CSV أو نص، بحد أقصى 10 ميجابايت.',
+  'Document': 'مستند',
+  'React to message': 'تفاعل مع الرسالة',
+  'React with {emoji}': 'تفاعل بـ {emoji}',
+  'Remove reaction': 'إزالة التفاعل',
+  'Message deleted': 'تم حذف الرسالة',
+  'Save or share document': 'حفظ أو مشاركة المستند',
+  'Could not download the document. Try again.':
+      'تعذّر تنزيل المستند. جرّب تاني.',
+  'Choose a PDF, Excel, CSV or text file up to 10 MB.':
+      'اختار ملف PDF أو Excel أو CSV أو نص، بحد أقصى 10 ميجابايت.',
 
   'Extra attendance records the authorized shift and its actual working time.':
       'الحضور الإضافي بيسجّل الشيفت المصرّح به ووقت الشغل الفعلي.',
@@ -39,7 +41,6 @@ const arabicTranslations = <String, String>{
   ...taskTranslations,
   ...arabicScheduleExceptionTranslations,
   'Error code: {code}': 'رمز الخطأ: {code}',
-  'This reversal would subtract points that are no longer available. Reverse the related deduction adjustment first, then reverse the original award.': 'الإلغاء ده هيخصم نقاط مبقتش موجودة. ارجع في تعديل الخصم المرتبط الأول، وبعدها الغي المنحة الأصلية.',
   'Workspace groups appear here once a manager creates one.':
       'جروبات الشغل هتظهر هنا لما المدير يعمل جروب.',
   'Active employees': 'الموظفين النشطين',
@@ -69,8 +70,7 @@ const arabicTranslations = <String, String>{
   'Recommended': 'بنرشّحه ليك',
   'Assigned BASELINE': 'الشيفت الأساسي المعيّن',
   'Authorized EXTRA': 'شيفت إضافي مصرّح بيه',
-  'Authorized EXTRA ? no automatic BLUE award':
-      'إضافي مصرّح بيه · مفيش نقاط BLUE تلقائي',
+  'Authorized extra shift': 'شيفت إضافي مصرّح بيه',
   'Historical attendance ? assignment evidence not recorded':
       'حضور سابق · بيانات التعيين مش متسجّلة',
   'Unknown occurrence; read-only': 'شيفت مش معروف؛ للعرض بس',
@@ -93,8 +93,6 @@ const arabicTranslations = <String, String>{
   'Invite someone': 'دعوة موظف',
   'Plan the day': 'رتّب اليوم',
   'Review leave': 'مراجعة الإجازات',
-  'Employee points, policies, disputes and warnings':
-      'نقاط الموظفين والسياسات والاعتراضات والتنبيهات',
   'Contact information': 'بيانات التواصل',
   'Email address': 'الإيميل',
   'Workplace': 'مكان الشغل',
@@ -122,9 +120,6 @@ const arabicTranslations = <String, String>{
   'See your progress': 'تابع تقدّمك',
   'Follow your attendance and celebrate the progress you make.':
       'تابع حضورك وشوف كل خطوة بتتقدمها.',
-  'Attendance points': 'نقاط الحضور',
-  'Performance history': 'سجل الأداء',
-  'Achievements along the way': 'إنجازاتك مع كل خطوة',
   'Stay connected': 'خليك على تواصل',
   'Keep your workspace conversations and updates together.':
       'شات الشغل وآخر الأخبار، كلهم في مكان واحد.',
@@ -161,7 +156,6 @@ const arabicTranslations = <String, String>{
       'الموظف ده عليه شيفت تاني في نفس الوقت.',
   'We could not save your profile. Refresh your profile to check its latest details before saving again.':
       'معرفناش نحفظ بروفايلك. حدّث البيانات واتأكد منها قبل الحفظ تاني.',
-  'We could not confirm your latest points information. Refresh your balance and history before trying again.': 'معرفناش نأكد بيانات نقاطك الحالية. حدّث الرصيد والسجل قبل ما تجرّب تاني.',
   'Language': 'اللغة',
   'Device language': 'لغة الجهاز',
   'Choose Arabic, English or your device language':
@@ -174,7 +168,6 @@ const arabicTranslations = <String, String>{
 
   'Chat': 'الشات',
   'Profile': 'البروفايل',
-  'Performance': 'الأداء',
   'My Shifts': 'شيفتاتي',
   'Employee workspace': 'مكان شغل الموظف',
   'Manager Profile': 'بروفايل المدير',

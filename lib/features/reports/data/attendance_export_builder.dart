@@ -108,10 +108,10 @@ class AttendanceExportBuilder {
         'Hours include approved closed records only. Open, pending and rejected records do not add hours.',
       ),
       strings.text(
-        'Overtime is time after the scheduled shift ends, minus arrival delay. Late arrival reduces the available break.',
+        'Overtime includes time after the shift, minus arrival delay. Unused break time is added at shift end for on-time attendance.',
       ),
       strings.text(
-        'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Breaks are not deducted.',
+        'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Recorded breaks are deducted.',
       ),
       strings.text(
         'Attendance days count distinct approved clock-in dates per employee. No attendance does not prove absence.',

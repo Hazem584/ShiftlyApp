@@ -178,8 +178,6 @@ const arabicGeneralWorkflowTranslations = <String, String>{
   'Policy minutes must be between 0 and 1440.':
       'عدد الدقائق في الإعدادات لازم يكون من 0 إلى 1440.',
   'EXTRA': 'إضافي',
-  'EXTRA (optional; no automatic BLUE)':
-      'إضافي (اختياري؛ مفيش نقاط زرقاء تلقائي)',
   'Duration not recorded': 'المدة مش متسجّلة',
   'Change active filters': 'عدّل التصفية الحالية',
   'Any date': 'أي تاريخ',
@@ -255,16 +253,7 @@ const arabicGeneralWorkflowTranslations = <String, String>{
   'Change confirmed. Saved recovery could not be cleared; recover before another change.': 'اتأكد التغيير، لكن معرفناش نمسح الطلب المحفوظ. اتأكد منه قبل ما تعمل تغيير تاني.',
   'Rejection confirmed; saved recovery could not be cleared.':
       'اتأكد رفض العملية، لكن معرفناش نمسح الطلب المحفوظ.',
-  'Saved redemption could not be checked. Try again before starting a new operation.':
-      'معرفناش نتأكد من التعويض المحفوظ. جرّب تاني قبل ما تبدأ عملية جديدة.',
   'Unable to load more history.': 'معرفناش نحمّل باقي السجل.',
-  'An earlier redemption is unresolved. Retry that operation before starting another.': 'فيه تعويض سابق لسه مش متأكدين من نتيجته. جرّب نفس العملية قبل ما تبدأ تعويض تاني.',
-  'The redemption could not be saved safely and was not submitted.':
-      'معرفناش نحفظ طلب التعويض بأمان، ومبعتناهوش.',
-  'Redemption succeeded, but its saved recovery record could not be cleared. Retry the same operation.':
-      'التعويض تم، بس معرفناش نمسح سجل استعادته. جرّب نفس العملية تاني.',
-  'My Performance, loading': 'أدائي، بنحمّل',
-  'My Performance, {green} available GREEN, {red} active RED, {streak} day streak': 'أدائي، {green} نقطة خضراء متاحة، {red} نقطة حمراء نشطة، {streak} أيام التزام متتالية',
   'Unable to load notifications.': 'معرفناش نحمّل التنبيهات.',
   'Unable to load more notifications.': 'معرفناش نحمّل باقي التنبيهات.',
   'Unable to refresh unread notifications.':
@@ -301,10 +290,6 @@ const arabicGeneralWorkflowTranslations = <String, String>{
   'Grace minutes must be between 0 and 1440.':
       'مهلة السماح لازم تكون من 0 إلى 1440 دقيقة.',
   'ABSENCE_CONFIRMED': 'غياب مؤكّد',
-  'BLUE_GREEN_BONUS': 'مكافأة خضراء مرتبطة بالنقاط الزرقاء',
-  'RED_COMPENSATION_GREEN_SPEND': 'استخدام نقاط خضراء لتعويض الحمراء',
-  'RED_COMPENSATED': 'تعويض نقاط حمراء',
   'MANAGER_ADJUSTMENT': 'تعديل بواسطة المدير',
-  'REVERSAL': 'عكس عملية',
   'QUALIFICATION_INVALIDATED': 'إلغاء استحقاق',
 };

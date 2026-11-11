@@ -41,22 +41,6 @@ void main() {
     expect(result.requestId, 'setup-request');
     expect(result.message, isNot(contains('constraint')));
   });
-  test('insufficient reversal balance explains recovery without exposing backend detail', () {
-    final result = ApiErrorParser.parse(
-      _error(
-        status: 409,
-        data: {
-          'code': 'POINTS_REVERSAL_INSUFFICIENT_BALANCE',
-          'message': 'database transaction detail',
-          'requestId': 'reversal-request',
-        },
-      ),
-    );
-    expect(result.message, contains('related deduction adjustment first'));
-    expect(result.message, isNot(contains('database transaction')));
-    expect(result.kind, FailureKind.validation);
-    expect(result.requestId, 'reversal-request');
-  });
   test(
     'unknown conflicts retain support metadata with a safe recovery action',
     () {

@@ -355,9 +355,7 @@ class ManagerAttendancePanel extends StatelessWidget {
                 if (record.source == AttendanceSource.template) ...[
                   Text(
                     record.occurrenceKind == 'EXTRA'
-                        ? context.tr(
-                            'EXTRA: no baseline substitution or automatic BLUE',
-                          )
+                        ? context.tr('Extra shift attendance')
                         : record.occurrenceKind == 'BASELINE'
                         ? context.tr('BASELINE attendance')
                         : context.tr(

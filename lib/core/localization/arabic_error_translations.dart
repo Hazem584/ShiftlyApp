@@ -162,20 +162,10 @@ const arabicErrorTranslations = <String, String>{
   'This message has no available media.': 'مفيش وسائط متاحة للرسالة دي.',
   'The selected message cannot be used as a read position.':
       'مينفعش استخدام الرسالة دي لتحديد موضع القراءة.',
-  'You do not have enough GREEN points for this redemption.':
-      'معندكش نقاط خضراء كافية للتعويض ده.',
-  'You do not have an active RED point to compensate.':
-      'معندكش نقطة حمراء نشطة تعوّضها.',
-  'This redemption conflicts with an earlier request. Refresh and retry.':
-      'التعويض ده متعارض مع طلب قبل كده. حدّث البيانات وجرّب تاني.',
-  'Points or compensation are currently disabled for this workspace.':
-      'النقاط أو التعويض مقفولين دلوقتي في مكان الشغل.',
   'Choose a future workspace-local policy date.':
       'اختار تاريخ بعد النهارده للسياسة، بتوقيت مكان الشغل.',
   'A policy already covers that date. Refresh the version history.':
       'فيه سياسة سارية في التاريخ ده بالفعل. حدّث سجل النسخ.',
-  'Another review already resolved this dispute. Refresh its canonical status.':
-      'الاعتراض ده اتحسم في مراجعة تانية بالفعل. حدّث وشوف حالته المؤكّدة.',
   'This record has already been reversed. Refresh its audit history.':
       'العملية دي اتعملها عكس بالفعل. حدّث سجلها.',
   'The saved operation conflicts with an existing UUID. Its outcome needs review before another change.': 'العملية المحفوظة متعارضة مع رقم طلب موجود. راجع نتيجتها قبل ما تغيّر حاجة تانية.',
@@ -183,7 +173,6 @@ const arabicErrorTranslations = <String, String>{
       'راجع العدد والسبب وبيانات الموظف المرتبطة.',
   'This date is unresolved because historical work context is unavailable.':
       'لسه مش متأكدين من حالة التاريخ ده عشان بيانات الشغل القديمة مش متاحة.',
-  'Your points balance needs support review.': 'رصيد نقاطك محتاج الدعم يراجعه.',
   'Please check the information you entered.': 'راجع البيانات اللي كتبتها.',
   'Your session has expired. Please sign in again.':
       'جلسة حسابك خلصت. ادخل تاني.',

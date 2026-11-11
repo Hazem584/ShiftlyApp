@@ -23,8 +23,7 @@ const arabicShiftsWorkflowTranslations = <String, String>{
   'Historical template attendance; assignment evidence not recorded':
       'حضور سابق لقالب شيفت؛ بيانات التعيين مش متسجّلة',
   'Rejected; occurrence remains used': 'مرفوض؛ الشيفت لسه محسوب إنه اتستخدم',
-  'EXTRA: no baseline substitution or automatic BLUE':
-      'إضافي: مش بديل للشيفت الأساسي، ومفيش نقاط زرقاء تلقائي',
+  'Extra shift attendance': 'حضور شيفت إضافي',
   'BASELINE attendance': 'حضور الشيفت الأساسي',
   'Create fixed shift': 'اعمل شيفت ثابت',
   'Edit fixed shift': 'عدّل الشيفت الثابت',

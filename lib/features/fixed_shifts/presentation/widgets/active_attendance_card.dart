@@ -65,7 +65,7 @@ class ActiveAttendanceCard extends StatelessWidget {
         Text(
           context.tr(
             attendance.occurrenceKind == 'EXTRA'
-                ? 'Authorized EXTRA ? no automatic BLUE award'
+                ? 'Authorized extra shift'
                 : attendance.occurrenceKind == 'BASELINE'
                 ? 'Assigned BASELINE'
                 : 'Historical attendance ? assignment evidence not recorded',

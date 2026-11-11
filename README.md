@@ -1,82 +1,69 @@
 # Shiftly
 
-Shiftly is a Flutter workforce management app for managers and employees. It brings workspaces, shifts, attendance, tasks, team chat, team updates into one place, with English and Arabic support.
+Flutter app for managing workspaces, shifts, attendance, personal tasks and team chat. Managers handle employee schedules and attendance reviews. Employees track their work, request corrections and communicate with their team. English and Arabic are supported, including RTL layouts and light/dark themes.
 
-## Requirements
+## Run locally
 
-- Flutter with Dart 3.13 or newer, compatible with `pubspec.yaml`.
-- Android Studio or Xcode for mobile builds; Xcode requires macOS.
-- A configured Supabase project and the running Shiftly backend.
-- Node.js 24 when preparing alternate app icons.
-
-## Setup
+Use the Flutter SDK compatible with `pubspec.yaml`, Android Studio or Xcode, and the same Supabase project as Shiftly Backend.
 
 ```sh
 flutter pub get
 ```
 
-Copy `config/dev.example.json` to `config/dev.json` and fill in:
-
-- `SUPABASE_URL`: your Supabase project URL.
-- `SUPABASE_PUBLISHABLE_KEY`: the public client key.
-- `SHIFTLY_API_BASE_URL`: the backend URL ending in `/api/v1`.
-
-Keep local configuration private. Use the same Supabase project as the backend and admin dashboard. For an Android emulator, use `10.0.2.2` instead of `localhost` to reach a local backend.
+Copy `config/dev.example.json` to `config/dev.json`. Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SHIFTLY_API_BASE_URL`. The API URL ends in `/api/v1`. On the Android emulator, use `10.0.2.2` to reach a local API.
 
 ```sh
 flutter run --dart-define-from-file=config/dev.json
 ```
 
-## Build and check
+For production, copy `config/prod.example.json` to `config/prod.json` and configure signing and Firebase platform files. Local configuration files contain deployment settings and should stay outside Git.
 
-Copy `config/prod.example.json` to `config/prod.json` and set the production values before building.
+```sh
+flutter build apk --release --dart-define-from-file=config/prod.json
+```
+
+For web, configure `config/web.local.json` from `config/web.example.json` and use `flutter build web --dart-define-from-file=config/web.local.json`.
+
+## Code map
+
+| Location | Responsibility |
+| --- | --- |
+| `lib/main.dart` | Startup and platform initialization |
+| `lib/app/app_repositories.dart` | Resolve injected repositories and preview implementations |
+| `lib/app/app_composition.dart` | Wire feature controllers and manage their lifecycle |
+| `lib/core/di/` | Production dependency registration |
+| `lib/core/routing/` | Routes, redirects and navigation |
+| `lib/core/session/` | Authentication and active workspace scope |
+| `lib/core/theme/` | Theme colors, component styles and appearance preferences |
+| `lib/core/localization/` | English keys and Arabic translations |
+| `lib/features/` | Feature-specific domain, data, application and presentation code |
+| `test/` | Unit, widget and architecture checks |
+| `scripts/`, `tool/ci/` | Build preparation and release utilities |
+
+A screen calls a cubit/controller, which uses a domain repository interface. The data implementation talks to the API or local storage. UI code depends on interfaces. Session changes rebind feature state so cached data stays scoped to its account and workspace.
+
+### Find common workflows
+
+- Attendance and monthly calendars live in `features/attendance/`. Correction requests and manager approvals live in `features/team_work/`.
+- Scheduling and daily exceptions live in `features/fixed_shifts/`. Reports live in `features/reports/`, with separate screen, table sources and totals widgets.
+- Chat history, attachments and the persistent outbox live in `features/chat/`. Private Supabase Realtime events update the view; REST reconciles missed events after reconnecting.
+- Personal tasks and Home Screen widgets live in `features/tasks/`. Widget snapshots contain display data and clear on account/workspace changes.
+
+## Make a change
+
+Start in the feature that owns the behavior. Keep business rules in domain/application code and API parsing in data code. Register new dependencies in `core/di/` and connect lifecycle changes in `app/`. Use shared theme styles and translation keys for new UI.
 
 ```sh
 flutter analyze
 flutter test
-flutter build apk --release --dart-define-from-file=config/prod.json
 ```
 
-For web, use `flutter build web --dart-define-from-file=config/web.local.json` after copying and configuring `config/web.example.json`. Configure Firebase platform files and Android signing separately for push notifications and release distribution.
+Architecture tests enforce independent domain code and small, focused UI files. Run the relevant feature tests while developing, then the complete suite before release.
 
-Alternate launcher icons must be bundled before release:
+## Release integrations
 
-```sh
-node scripts/prepare-app-icons.mjs --defines config/prod.json
-```
+Push notifications need Firebase configuration and signing. Alternate icons are prepared with `node scripts/prepare-app-icons.mjs --defines config/prod.json` before building. Uploaded images become selectable on devices after a release bundles them.
 
-## Project structure
+For iOS task widgets, configure the Runner and TaskWidget App Group entitlements in Xcode. The current shared group is `group.com.example.shiftly`. Keep the group and bundle identifiers aligned when changing signing settings.
 
-- `lib/features/`: feature modules with domain, data, and presentation layers.
-- `lib/core/`: shared configuration, authentication, navigation, and UI.
-- `assets/`: bundled fonts and images.
-- `test/`: automated tests.
-- `scripts/` and `tool/ci/`: build and release utilities.
-
-The companion projects are **ShiftlyBackend** (NestJS API) and **Shiftly-Admin** (React platform dashboard). Optional screenshot capture tests write to the ignored `.artifacts/ui-review/` directory.
-
-## Live chat
-
-Chat uses private Supabase Realtime Broadcast channels with REST reconciliation after reconnecting. Messages and reactions render directly from authorized events; cached history and a persistent outbox keep conversations usable during transient connection failures. Conversation summaries are cached for seven days, message history for thirty days, and downloaded media for fourteen days, subject to storage limits and account access.
-
-Active and Archived chat tabs filter the locally loaded group list without a new request on each switch. Cached conversations stay visible during background refreshes; a fresh authorization check is still required after a session restart. Text delivery has a separate, ordered queue so uploads cannot block it, and messages remain pending until a canonical server confirmation arrives.
-
-Supported document attachments: PDF, Excel (.xlsx/.xls), CSV, and plain text, up to 10 MiB per file. Use Attach → Document. Long-press a message or open its actions to add, change, or remove a reaction. Document downloads reuse the private media cache; use Download file to choose where to save a copy. Preview file opens PDFs in an in-app reader and shows bounded previews for XLSX, CSV, and text files. Legacy XLS and unsupported/corrupt files retain download access. Preview parsing runs outside the UI isolate on native platforms, and no document is sent to an external preview service.
-
-Deploy the matching backend migration before releasing this client. Supabase Realtime must be enabled for the project; the migration sets up private-channel authorization and publication entries. Changes are not deployed automatically. Test with two signed-in devices, including reconnecting, removing a member, and revoking a session, before production release.
-
-## Home screen task widget
-
-Android and iOS widgets show the remaining **personal tasks** count, up to three task titles, and native countdowns. Tap a task to open its details. On Android, use the widget button in Task manager or long-press the Home Screen and select Widgets → Shiftly tasks. On iOS, add Shiftly tasks from the Home Screen widget gallery.
-
-The app shares a local display snapshot when tasks refresh or change and when it resumes. Countdowns and scheduled occurrences advance locally; changes made on another device are fetched the next time this app refreshes. The widget shows its last update time, expires snapshots after 24 hours, and clears data on sign-out or account/workspace changes. It does not store authentication tokens or fetch the API in the background.
-
-For iOS signing, enable the **App Groups** capability for Runner and TaskWidget and register `group.com.example.shiftly` in the same Apple team. If the application bundle identifier changes, update both targets' group entitlements and the suite names in AppDelegate.swift and TaskWidget.swift. The WidgetKit target is included and embedded in the Xcode project. Build and test the iOS target on macOS/Xcode.
-
-## CPU-intensive work
-
-Attendance Excel/PDF generation runs through Flutter `compute`, using data-only requests. Translations and PDF font assets are resolved on the main isolate; document construction, formatting and encoding run in the worker. Large report preparation (200 records or employees) also sorts and calculates metrics before results reach the UI, with session revalidation after completion.
-
-Chat media validation and SHA-256 use one byte snapshot. Attachments of at least 256 KiB are inspected in a worker; smaller files stay inline to avoid startup overhead. Inspections are serialized before file reads to bound CPU work and buffer allocation. File/database/plugin operations stay outside workers, and existing authorization/cancellation checks remain in place.
-
-These cutoffs are conservative defaults, not measured performance guarantees for every device. On native mobile/desktop, `compute` runs in an isolate; on web it runs on the current event loop, so browser parallelism is not claimed. See [Flutter concurrency and isolates](https://docs.flutter.dev/perf/isolates). The installed Dio transformer already offloads sufficiently large JSON responses; ordinary network requests do not need an extra worker.
+Companion projects are **ShiftlyBackend** (NestJS API) and **Shiftly-Admin** (React platform dashboard). Database migrations are deployed from the backend repository before clients that require them.

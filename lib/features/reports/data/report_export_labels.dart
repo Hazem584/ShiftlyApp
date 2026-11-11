@@ -5,7 +5,7 @@ const reportExportLabelKeys = <String>[
   "Not recorded",
   "Hours include approved closed records only. Open, pending and rejected records do not add hours.",
   "Extra shift hours are part of worked hours. Schedule excess is time beyond the scheduled duration of regular shifts; it is an estimate, not payroll approval.",
-  "Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Breaks are not deducted.",
+  "Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Recorded breaks are deducted.",
   "Attendance days count distinct approved clock-in dates per employee. No attendance does not prove absence.",
   "Missing schedule",
   "Missing work duration",
