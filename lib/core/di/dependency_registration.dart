@@ -69,6 +69,8 @@ import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
 import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
+import 'package:shiftly/features/support/data/api_support_repository.dart';
+import 'package:shiftly/features/support/domain/support_repository.dart';
 import 'package:shiftly/features/tasks/data/api_task_repository.dart';
 import 'package:shiftly/features/tasks/data/device_task_reminders.dart';
 import 'package:shiftly/features/tasks/domain/task_reminders.dart';
@@ -144,6 +146,9 @@ abstract final class DependencyRegistration {
         dispose: (client) => client.dio.close(force: true),
       )
       ..registerLazySingleton<Dio>(() => target<ApiClient>().dio)
+      ..registerLazySingleton<SupportRepository>(
+        () => ApiSupportRepository(target<Dio>()),
+      )
       ..registerLazySingleton<AttendanceControlsRepository>(
         () => ApiAttendanceControlsRepository(target<Dio>()),
       )

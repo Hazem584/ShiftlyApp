@@ -69,3 +69,9 @@ Push notifications need Firebase configuration and signing. Alternate icons are 
 For iOS task widgets, configure the Runner and TaskWidget App Group entitlements in Xcode. The current shared group is `group.com.example.shiftly`. Keep the group and bundle identifiers aligned when changing signing settings.
 
 Companion projects are **ShiftlyBackend** (NestJS API) and **Shiftly-Admin** (React platform dashboard). Database migrations are deployed from the backend repository before clients that require them.
+
+## Problem reports
+
+Open **Profile → Help and problem reports** to submit a report, optionally select one of your tasks or shifts, and attach an image up to 2 MB. Track the status, assigned support person and replies from the same section. Staff replies create a notification that opens the report. Submission and reply IDs make network retries safe; a failed image upload can be retried without creating another report.
+
+This workflow requires the companion backend's administrator/support migration and server-side private image storage configuration. No service-role credentials belong in the app.

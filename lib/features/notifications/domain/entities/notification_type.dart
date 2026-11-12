@@ -1,4 +1,5 @@
 enum NotificationType {
+  supportReply,
   taskReminder,
   attendanceClockedIn,
   attendanceClockedOut,
@@ -27,6 +28,7 @@ enum NotificationType {
     'SHIFT_UPDATED' => shiftUpdated,
     'SHIFT_CANCELLED' => shiftCancelled,
     'SHIFT_REMINDER' => shiftReminder,
+    'SUPPORT_REPLY' => supportReply,
     'CHAT_MESSAGE' => chatMessage,
     'TEAM_ANNOUNCEMENT' => teamAnnouncement,
     'ATTENDANCE_CORRECTION_CREATED' => attendanceCorrectionCreated,
@@ -47,6 +49,7 @@ enum NotificationType {
     shiftUpdated => 'SHIFT_UPDATED',
     shiftCancelled => 'SHIFT_CANCELLED',
     shiftReminder => 'SHIFT_REMINDER',
+    supportReply => 'SUPPORT_REPLY',
     chatMessage => 'CHAT_MESSAGE',
     teamAnnouncement => 'TEAM_ANNOUNCEMENT',
     attendanceCorrectionCreated => 'ATTENDANCE_CORRECTION_CREATED',

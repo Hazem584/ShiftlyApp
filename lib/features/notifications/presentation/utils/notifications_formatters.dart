@@ -147,6 +147,11 @@ abstract final class NotificationsScreenNotificationNavigator {
           location: '/employee?tab=leave',
           kind: _DestinationKind.employeeLeave,
         ),
+      NotificationType.supportReply => _NotificationDestination(
+        id: _id(data, 'supportTicketId'),
+        location: '/support/${_id(data, 'supportTicketId')}',
+        kind: _DestinationKind.support,
+      ),
       NotificationType.chatMessage => _NotificationDestination(
         id: _id(data, 'groupId'),
         location: scope.isManager
@@ -163,7 +168,7 @@ abstract final class NotificationsScreenNotificationNavigator {
     FeatureSessionScope scope,
     _NotificationDestination destination,
   ) async => switch (destination.kind) {
-    _DestinationKind.teamWork => true,
+    _DestinationKind.teamWork || _DestinationKind.support => true,
     _DestinationKind.chatGroup => () async {
       final group = await context.read<ChatRepository>().getGroup(
         scope.workspaceId,
@@ -216,6 +221,7 @@ abstract final class NotificationsScreenNotificationNavigator {
 }
 
 enum _DestinationKind {
+  support,
   teamWork,
   chatGroup,
   managerAttendance,

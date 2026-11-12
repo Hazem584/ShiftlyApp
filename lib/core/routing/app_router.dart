@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/routing/route_not_found_screen.dart';
 import 'package:shiftly/core/routing/session_route_intent.dart';
@@ -20,12 +21,17 @@ import 'package:shiftly/features/employees/presentation/screens/employee_details
 import 'package:shiftly/features/fixed_shifts/presentation/screens/shift_templates_screen.dart';
 import 'package:shiftly/features/onboarding/presentation/cubit/onboarding_cubit.dart';
 import 'package:shiftly/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:shiftly/features/profile/domain/repositories/profile_image_picker.dart';
 import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/employee_shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/shell_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/team_hub_screen.dart';
 import 'package:shiftly/features/shell/presentation/screens/work_hub_screen.dart';
+import 'package:shiftly/features/support/domain/support_repository.dart';
+import 'package:shiftly/features/support/presentation/support_detail_screen.dart';
+import 'package:shiftly/features/support/presentation/support_inbox_screen.dart';
+import 'package:shiftly/features/support/presentation/support_session_boundary.dart';
 import 'package:shiftly/features/tasks/presentation/tasks_screen.dart';
 import 'package:shiftly/features/team_work/presentation/team_work_screen.dart';
 
@@ -53,6 +59,28 @@ GoRouter createAppRouter({
     errorBuilder: (context, state) =>
         RouteNotFoundScreen(routeName: state.uri.path),
     routes: [
+      GoRoute(
+        path: '/support',
+        builder: (_, _) => SupportSessionBoundary(
+          child: SupportInboxScreen(
+            repository: getIt<SupportRepository>(),
+            workspaceId:
+                sessionCoordinator?.state.activeMembership?.workspace.id ?? '',
+            picker: getIt<ProfileImagePicker>(),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/support/:ticketId',
+        builder: (_, state) => SupportSessionBoundary(
+          child: SupportDetailScreen(
+            key: ValueKey(state.pathParameters['ticketId']),
+            repository: getIt<SupportRepository>(),
+            id: state.pathParameters['ticketId']!,
+          ),
+        ),
+      ),
+
       GoRoute(
         path: '/attendance',
         redirect: (_, state) => state.uri.queryParameters['tab'] == 'calendar'
@@ -275,7 +303,9 @@ String? _redirect(
           : '/session-error',
     SessionStatus.authenticatedManager => _managerRedirect(location),
     SessionStatus.authenticatedEmployee =>
-      location == '/devices' ||
+      location == '/support' ||
+              location.startsWith('/support/') ||
+              location == '/devices' ||
               location == '/tasks' ||
               location == '/team-work' ||
               location == '/workspaces' ||
