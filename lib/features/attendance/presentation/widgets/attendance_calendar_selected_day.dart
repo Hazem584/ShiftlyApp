@@ -7,17 +7,20 @@ import 'package:shiftly/features/attendance/presentation/widgets/attendance_cale
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_selected_day_empty.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_day_entry_actions.dart';
 
+import 'attendance_day_breakdown.dart';
+
 class AttendanceCalendarSelectedDay extends StatelessWidget {
   const AttendanceCalendarSelectedDay({
     required this.date,
     required this.timezone,
     required this.entries,
     this.editable = false,
+    this.closed = false,
     super.key,
   });
 
   final DateTime? date;
-  final bool editable;
+  final bool editable, closed;
   final String timezone;
   final List<AttendanceCalendarEntry> entries;
 
@@ -52,7 +55,10 @@ class AttendanceCalendarSelectedDay extends StatelessWidget {
                   entry: entry,
                   timezone: timezone,
                 ),
-                if (editable)
+                if (entry.attendance != null)
+                  AttendanceDayBreakdown(record: entry.attendance!),
+                if (entry.decisionReason != null) Text(entry.decisionReason!),
+                if (editable && !closed)
                   AttendanceDayEntryActions(
                     entry: entry,
                     date: date!,

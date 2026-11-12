@@ -182,6 +182,7 @@ class AttendanceReport {
     var result = const ReportMetrics();
     final days = <String>{};
     for (final r in values) {
+      if (r.dayStatus == 'ABSENT' || r.dayStatus == 'LEAVE') continue;
       switch (r.reviewStatus) {
         case AttendanceReviewStatus.pending:
           result += const ReportMetrics(pending: 1);
@@ -190,7 +191,10 @@ class AttendanceReport {
         case AttendanceReviewStatus.unknown:
           result += const ReportMetrics(unknown: 1);
         case AttendanceReviewStatus.approved:
-          days.add(WorkspaceTime.dateKey(r.clockInAt, timezone));
+          days.add(
+            r.operationalDate?.split('T').first ??
+                WorkspaceTime.dateKey(r.clockInAt, timezone),
+          );
           final closed = r.clockOutAt != null;
           final work = closed ? r.netWorkedMinutes ?? r.workedMinutes ?? 0 : 0;
           final extra = r.occurrenceKind == 'EXTRA';
@@ -202,8 +206,12 @@ class AttendanceReport {
           result += ReportMetrics(
             approved: 1,
             open: closed ? 0 : 1,
-            late: r.minutesLate > 0 ? 1 : 0,
-            lateMinutes: r.minutesLate,
+            late:
+                r.dayStatus == 'LATE' ||
+                    r.dayStatus == null && r.minutesLate > 0
+                ? 1
+                : 0,
+            lateMinutes: r.dayStatus == 'PRESENT' ? 0 : r.minutesLate,
             workMinutes: work,
             extraMinutes: extra ? work : 0,
             excessMinutes: !extra && closed

@@ -15,9 +15,11 @@ import 'package:shiftly/core/storage/active_workspace_storage.dart';
 import 'package:shiftly/core/theme/preferences_theme_store.dart';
 import 'package:shiftly/core/theme/theme_preference_store.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/data/api_attendance_controls_repository.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_controls_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/auth/data/authentication_api_repository.dart';
@@ -142,6 +144,9 @@ abstract final class DependencyRegistration {
         dispose: (client) => client.dio.close(force: true),
       )
       ..registerLazySingleton<Dio>(() => target<ApiClient>().dio)
+      ..registerLazySingleton<AttendanceControlsRepository>(
+        () => ApiAttendanceControlsRepository(target<Dio>()),
+      )
       ..registerLazySingleton<TaskRepository>(
         () => ApiTaskRepository(target<Dio>()),
       )

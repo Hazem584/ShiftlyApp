@@ -30,10 +30,20 @@ AttendanceRecordApi reportRecord({
   bool open = false,
   bool scheduled = true,
   bool extra = false,
+  String? dayStatus,
+  String? operationalDate,
+  Map<String, Object?>? calculation,
+  int? netWork,
+  int overtime = 0,
   DateTime? clockIn,
 }) {
   final start = clockIn ?? DateTime.utc(2026, 10, 1, 7);
   return AttendanceRecordApi(
+    dayStatus: dayStatus,
+    operationalDate: operationalDate,
+    calculation: calculation,
+    netWorkedMinutes: netWork,
+    overtimeMinutes: overtime,
     id: id,
     workspaceId: workspaceId,
     shiftId: null,

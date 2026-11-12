@@ -16,6 +16,9 @@ class AttendanceRecordApi extends Equatable {
     required this.minutesLate,
     required this.createdAt,
     required this.updatedAt,
+    this.dayStatus,
+    this.dayDecisionReason,
+    this.calculation,
     this.occurrenceKind,
     this.assignmentId,
     this.scheduleExceptionId,
@@ -45,6 +48,8 @@ class AttendanceRecordApi extends Equatable {
     this.clockInClassification,
   });
 
+  final String? dayStatus, dayDecisionReason;
+  final Map<String, Object?>? calculation;
   final String? occurrenceKind,
       scheduleExceptionId,
       scheduleExceptionReason,
@@ -91,6 +96,9 @@ class AttendanceRecordApi extends Equatable {
   factory AttendanceRecordApi.fromJson(
     Map<String, Object?> json,
   ) => AttendanceRecordApi(
+    dayStatus: ApiModelParser.optionalString(json['dayStatus']),
+    dayDecisionReason: ApiModelParser.optionalString(json['dayDecisionReason']),
+    calculation: ApiModelParser.optionalMap(json['calculation']),
     occurrenceKind: ApiModelParser.optionalString(json['occurrenceKind']),
     assignmentId: ApiModelParser.optionalString(json['assignmentId']),
     scheduleExceptionId: ApiModelParser.optionalString(
@@ -156,6 +164,9 @@ class AttendanceRecordApi extends Equatable {
 
   @override
   List<Object?> get props => [
+    dayStatus,
+    dayDecisionReason,
+    calculation,
     occurrenceKind,
     assignmentId,
     scheduleExceptionId,

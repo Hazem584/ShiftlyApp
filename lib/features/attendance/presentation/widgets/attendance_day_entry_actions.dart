@@ -4,10 +4,13 @@ import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
+import 'package:shiftly/features/attendance/domain/repositories/attendance_controls_repository.dart';
 import 'package:shiftly/features/attendance/presentation/refresh_attendance_views.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/dialogs/edit_attendance_day_dialog.dart';
+
+import 'attendance_decision_dialog.dart';
 
 class AttendanceDayEntryActions extends StatelessWidget {
   const AttendanceDayEntryActions({
@@ -27,36 +30,66 @@ class AttendanceDayEntryActions extends StatelessWidget {
         .activeMembership;
     final end = entry.attendance?.clockOutAt ?? entry.shift?.endsAt;
     if (membership == null ||
-        end == null ||
-        end.isAfter(DateTime.now()) ||
-        entry.attendance?.isOpen == true) {
+        entry.attendance?.isOpen == true ||
+        date.isAfter(DateTime.now())) {
       return const SizedBox.shrink();
     }
+    final canEditTimes = end != null && !end.isAfter(DateTime.now());
     final manager = membership.role == WorkspaceRole.manager;
     return Align(
       alignment: AlignmentDirectional.centerStart,
-      child: OutlinedButton.icon(
-        key: Key('correct-attendance-${entry.employeeMembershipId}'),
-        icon: const Icon(Icons.edit_calendar_outlined),
-        label: Text(
-          context.tr(
-            manager ? 'Edit attendance' : 'Request attendance correction',
-          ),
-        ),
-        onPressed: () async {
-          final saved = await showDialog<bool>(
-            context: context,
-            builder: (_) => EditAttendanceDayDialog(
-              entry: entry,
-              date: date,
-              workspaceId: membership.workspace.id,
-              timezone: timezone,
-              manager: manager,
-              repository: getIt<TeamWorkRepository>(),
+      child: Wrap(
+        spacing: 8,
+        children: [
+          if (canEditTimes)
+            OutlinedButton.icon(
+              key: Key('correct-attendance-${entry.employeeMembershipId}'),
+              icon: const Icon(Icons.edit_calendar_outlined),
+              label: Text(
+                context.tr(
+                  manager ? 'Edit attendance' : 'Request attendance correction',
+                ),
+              ),
+              onPressed: () async {
+                final saved = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => EditAttendanceDayDialog(
+                    entry: entry,
+                    date: date,
+                    workspaceId: membership.workspace.id,
+                    timezone: timezone,
+                    manager: manager,
+                    repository: getIt<TeamWorkRepository>(),
+                  ),
+                );
+                if (saved == true && context.mounted) {
+                  refreshAttendanceViews(context);
+                }
+              },
             ),
-          );
-          if (saved == true && context.mounted) refreshAttendanceViews(context);
-        },
+          if (manager && getIt.isRegistered<AttendanceControlsRepository>())
+            OutlinedButton.icon(
+              icon: const Icon(Icons.rule_outlined),
+              label: Text(context.tr('Change attendance status')),
+              onPressed: () async {
+                final saved = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AttendanceDecisionDialog(
+                    repository: getIt<AttendanceControlsRepository>(),
+                    workspaceId: membership.workspace.id,
+                    year: date.year,
+                    month: date.month,
+                    revision: entry.decisionRevision,
+                    entry: entry,
+                    date: date,
+                  ),
+                );
+                if (saved == true && context.mounted) {
+                  refreshAttendanceViews(context);
+                }
+              },
+            ),
+        ],
       ),
     );
   }

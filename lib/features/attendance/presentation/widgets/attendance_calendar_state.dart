@@ -10,6 +10,8 @@ import 'package:shiftly/features/attendance/presentation/widgets/attendance_cale
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_month_header.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_selected_day.dart';
 
+import 'attendance_month_controls.dart';
+
 class AttendanceCalendarStateView extends StatelessWidget {
   const AttendanceCalendarStateView({this.editable = false, super.key});
   final bool editable;
@@ -94,7 +96,9 @@ class AttendanceCalendarStateView extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: AppSpacing.m),
+              AttendanceMonthControls(month: data),
               AttendanceCalendarSelectedDay(
+                closed: data.control?.closed ?? false,
                 editable: editable,
                 date: state.selectedDate,
                 timezone: data.timezone,

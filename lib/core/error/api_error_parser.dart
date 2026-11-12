@@ -215,6 +215,18 @@ abstract final class ApiErrorParser {
         'You are not scheduled to work on this operational date.',
       'SHIFT_TEMPLATE_NOT_ELIGIBLE' =>
         'This template is outside its current check-in window.',
+      'ATTENDANCE_MONTH_CLOSED' =>
+        'Reopen the approved month with a reason before editing attendance.',
+      'ATTENDANCE_MONTH_NOT_ENDED' => 'Only a completed month can be approved.',
+      'ATTENDANCE_MONTH_REVIEW_PENDING' =>
+        'Review open attendance and pending requests before closing the month.',
+      'ATTENDANCE_CONTROL_CONFLICT' =>
+        'Attendance changed. Refresh the calendar and retry.',
+      'ATTENDANCE_DAY_INVALID' =>
+        'Choose a valid attendance date that is not in the future.',
+      'ATTENDANCE_DAY_OPEN' =>
+        'Complete the open attendance before changing its day status.',
+      'ATTENDANCE_DAY_RECORD_REQUIRED' => 'Record or correct the attendance times before marking this day present or late.',
       'ATTENDANCE_ALREADY_OPEN' =>
         'You already have an open attendance. Refresh to view it.',
       'ATTENDANCE_OVERLAP' =>

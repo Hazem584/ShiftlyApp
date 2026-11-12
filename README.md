@@ -58,6 +58,8 @@ flutter analyze
 flutter test
 ```
 
+Managers can review and close completed attendance months from the calendar, reopen them with a reason, and change a completed employee day to present, late, absent or leave. Every decision is audited. Employees can expand a day to inspect recorded time, breaks, lateness deductions and credited overtime.
+
 Architecture tests enforce independent domain code and small, focused UI files. Run the relevant feature tests while developing, then the complete suite before release.
 
 ## Release integrations

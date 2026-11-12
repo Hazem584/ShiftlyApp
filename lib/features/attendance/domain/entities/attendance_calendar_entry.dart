@@ -12,8 +12,12 @@ class AttendanceCalendarEntry extends Equatable {
     this.shift,
     this.attendance,
     this.leave,
+    this.decisionReason,
+    this.decisionRevision = 0,
   });
 
+  final String? decisionReason;
+  final int decisionRevision;
   final String employeeMembershipId;
   final ShiftEmployeeSummary employee;
   final CalendarAttendanceStatus status;
@@ -29,5 +33,7 @@ class AttendanceCalendarEntry extends Equatable {
     shift,
     attendance,
     leave,
+    decisionReason,
+    decisionRevision,
   ];
 }

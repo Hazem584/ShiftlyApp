@@ -282,7 +282,9 @@ void main() {
             handler.resolve(
               Response(
                 requestOptions: options,
-                data: options.path.endsWith('attendance-schedule')
+                data: options.path.endsWith('attendance-controls')
+                    ? _emptyControls
+                    : options.path.endsWith('attendance-schedule')
                     ? {'data': [], 'evaluatedAt': '2026-11-10T16:00:00Z'}
                     : {
                         'data': [],
@@ -316,6 +318,7 @@ void main() {
         '/attendance/me',
         '/leave-requests/me',
         '/workspaces/workspace/attendance-schedule',
+        '/workspaces/workspace/attendance-controls',
       });
     },
   );
@@ -422,30 +425,32 @@ void main() {
           handler.resolve(
             Response(
               requestOptions: options,
-              data: {
-                'evaluatedAt': evaluatedAt.toIso8601String(),
-                'data': [
-                  {
-                    'id': 'schedule:pattern:2026-11-10',
-                    'workspaceId': _workspace,
-                    'employeeMembershipId': 'a',
-                    'createdByMembershipId': 'manager',
-                    'startsAt': '2026-11-10T07:00:00Z',
-                    'endsAt': '2026-11-10T15:00:00Z',
-                    'breakMinutes': 60,
-                    'graceMinutes': 0,
-                    'status': 'SCHEDULED',
-                    'createdAt': '2026-11-01T00:00:00Z',
-                    'updatedAt': '2026-11-01T00:00:00Z',
-                    'employee': {
-                      'id': 'a',
-                      'profileId': 'profile-a',
-                      'role': 'EMPLOYEE',
-                      'status': 'ACTIVE',
+              data: options.path.endsWith('attendance-controls')
+                  ? _emptyControls
+                  : {
+                      'evaluatedAt': evaluatedAt.toIso8601String(),
+                      'data': [
+                        {
+                          'id': 'schedule:pattern:2026-11-10',
+                          'workspaceId': _workspace,
+                          'employeeMembershipId': 'a',
+                          'createdByMembershipId': 'manager',
+                          'startsAt': '2026-11-10T07:00:00Z',
+                          'endsAt': '2026-11-10T15:00:00Z',
+                          'breakMinutes': 60,
+                          'graceMinutes': 0,
+                          'status': 'SCHEDULED',
+                          'createdAt': '2026-11-01T00:00:00Z',
+                          'updatedAt': '2026-11-01T00:00:00Z',
+                          'employee': {
+                            'id': 'a',
+                            'profileId': 'profile-a',
+                            'role': 'EMPLOYEE',
+                            'status': 'ACTIVE',
+                          },
+                        },
+                      ],
                     },
-                  },
-                ],
-              },
             ),
           );
         },
@@ -487,7 +492,15 @@ void main() {
       (await load()).days['2026-11-10']!.single.status,
       CalendarAttendanceStatus.present,
     );
-    expect(paths, everyElement('/workspaces/workspace/attendance-schedule'));
+    expect(
+      paths,
+      everyElement(
+        isIn([
+          '/workspaces/workspace/attendance-schedule',
+          '/workspaces/workspace/attendance-controls',
+        ]),
+      ),
+    );
   });
   testWidgets(
     'regular attendance shows today absence and approved leave without clock-ins',
@@ -1002,3 +1015,11 @@ void main() {
     expect(calendarRepository.calls, calendarCalls + 1);
   });
 }
+
+const _emptyControls = <String, Object?>{
+  'revision': 0,
+  'closedAt': null,
+  'overrides': [],
+  'events': [],
+  'summary': {'days': [], 'pending': 0, 'open': 0, 'pendingCorrections': 0},
+};

@@ -6,6 +6,9 @@ import 'package:shiftly/features/attendance/domain/repositories/attendance_repos
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
+import '../domain/entities/attendance_month_control.dart';
+import '../domain/services/apply_attendance_day_decisions.dart';
+
 class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
   ApiAttendanceCalendarRepository(
     this._shifts,
@@ -49,9 +52,10 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
       ),
       _allLeave(workspaceId, range.start, range.end),
       _scheduled(workspaceId, year, month),
+      _controls(workspaceId, year, month),
     ]);
     final scheduled = results[3] as ({List<ShiftRecord> shifts, DateTime now});
-    return deriveAttendanceCalendarMonth(
+    final derived = deriveAttendanceCalendarMonth(
       workspaceId: workspaceId,
       timezoneName: timezone,
       year: year,
@@ -61,6 +65,23 @@ class ApiAttendanceCalendarRepository implements AttendanceCalendarRepository {
       leaveRequests: results[2] as List<LeaveRequestRecord>,
       nowUtc: scheduled.now,
     );
+    return applyAttendanceDayDecisions(
+      derived,
+      results[4] as AttendanceMonthControl,
+    );
+  }
+
+  Future<AttendanceMonthControl> _controls(
+    String workspaceId,
+    int year,
+    int month,
+  ) async {
+    if (dio == null) return const AttendanceMonthControl();
+    final response = await dio!.get<Object?>(
+      '/workspaces/$workspaceId/attendance-controls',
+      queryParameters: {'year': year, 'month': month},
+    );
+    return AttendanceMonthControl.fromJson(ApiModelParser.map(response.data));
   }
 
   Future<({List<ShiftRecord> shifts, DateTime now})> _scheduled(
