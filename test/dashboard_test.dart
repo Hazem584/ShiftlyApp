@@ -12,6 +12,11 @@ import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.da
 import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
+import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
+import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
+import 'package:shiftly/features/tasks/data/memory_task_repository.dart';
+import 'package:shiftly/features/tasks/domain/task_reminders.dart';
 
 import 'dashboard_fixtures.dart';
 import 'support/attendance_test_cubit.dart';
@@ -199,17 +204,26 @@ void main() {
         value: cubit,
         child: BlocProvider<FlexibleAttendanceCubit>(
           create: (_) => AttendanceTestCubit(),
-          child: const MaterialApp(home: EmployeeDashboardScreen()),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    TasksCubit(MemoryTaskRepository(), const NoTaskReminders()),
+              ),
+              BlocProvider(
+                create: (_) => NotificationsCubit(MockNotificationRepository()),
+              ),
+            ],
+            child: const MaterialApp(home: EmployeeDashboardScreen()),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
     expect(find.text('Hello, Ahmed Mohamed'), findsOneWidget);
-    expect(find.textContaining('Africa/Cairo'), findsOneWidget);
-    expect(find.byKey(const Key('employee-quick-shifts')), findsOneWidget);
-    expect(find.byKey(const Key('employee-quick-leave')), findsOneWidget);
+    expect(find.byKey(const Key('employee-attendance-gate')), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Open My Shifts'),
+      find.byKey(const Key('employee-tasks-preview')),
       180,
       scrollable: find
           .descendant(
@@ -218,18 +232,8 @@ void main() {
           )
           .first,
     );
-    expect(find.text('Open My Shifts'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Pending leave'),
-      180,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const Key('employee-dashboard-content')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    expect(find.text('Pending leave'), findsOneWidget);
+    expect(find.byKey(const Key('employee-tasks-preview')), findsOneWidget);
+    expect(find.text('Pending leave'), findsNothing);
     expect(find.text('Total employees'), findsNothing);
   });
 
@@ -258,22 +262,23 @@ void main() {
         value: cubit,
         child: BlocProvider<FlexibleAttendanceCubit>(
           create: (_) => AttendanceTestCubit(),
-          child: const MaterialApp(home: EmployeeDashboardScreen()),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    TasksCubit(MemoryTaskRepository(), const NoTaskReminders()),
+              ),
+              BlocProvider(
+                create: (_) => NotificationsCubit(MockNotificationRepository()),
+              ),
+            ],
+            child: const MaterialApp(home: EmployeeDashboardScreen()),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Recorded'),
-      180,
-      scrollable: find
-          .descendant(
-            of: find.byKey(const Key('employee-dashboard-content')),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    expect(find.text('Recorded'), findsOneWidget);
+    expect(find.text('Your attendance needs a status check'), findsOneWidget);
     expect(find.text('Clocked in'), findsNothing);
   });
 }

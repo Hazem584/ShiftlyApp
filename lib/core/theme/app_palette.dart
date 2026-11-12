@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/employee_design.dart';
 
 /// Semantic colors for custom widgets that cannot inherit Material defaults.
 class AppPalette {
   const AppPalette(this.brightness);
   final Brightness brightness;
   bool get _dark => brightness == Brightness.dark;
-  static AppPalette of(BuildContext context) =>
-      AppPalette(Theme.of(context).brightness);
+  static AppPalette of(BuildContext context) => EmployeeDesign.applies(context)
+      ? _EmployeePalette(Theme.of(context).brightness)
+      : AppPalette(Theme.of(context).brightness);
   Color get ink => _dark ? const Color(0xFFEDF6F8) : AppColors.ink;
   Color get black => ink;
   Color get primaryColor =>
@@ -45,4 +47,34 @@ class AppPalette {
       _dark ? const Color(0xFF29353F) : AppColors.purpleSoft;
   Color get lightGreen => success;
   Color get secondaryColor => success;
+}
+
+class _EmployeePalette extends AppPalette {
+  const _EmployeePalette(super.brightness);
+  @override
+  Color get ink => _dark ? const Color(0xFFF2F4FC) : const Color(0xFF17213C);
+  @override
+  Color get primaryColor =>
+      _dark ? const Color(0xFFB1A7FF) : const Color(0xFF4338CA);
+  @override
+  Color get canvas => _dark ? const Color(0xFF101426) : const Color(0xFFF7F8FC);
+  @override
+  Color get surface => _dark ? const Color(0xFF1C233A) : Colors.white;
+  @override
+  Color get field => surface;
+  @override
+  Color get selected =>
+      _dark ? const Color(0xFF30285B) : const Color(0xFFEDEBFF);
+  @override
+  Color get textSecondary =>
+      _dark ? const Color(0xFFB2BDD4) : const Color(0xFF657087);
+  @override
+  Color get borderColor =>
+      _dark ? const Color(0xFF303B57) : const Color(0xFFE1E5EF);
+  @override
+  Color get success =>
+      _dark ? const Color(0xFF88E3BF) : const Color(0xFF116B57);
+  @override
+  Color get successSoft =>
+      _dark ? const Color(0xFF163D35) : const Color(0xFFDCF5EA);
 }

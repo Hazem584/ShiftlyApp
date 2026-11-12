@@ -75,3 +75,10 @@ Companion projects are **ShiftlyBackend** (NestJS API) and **Shiftly-Admin** (Re
 Open **Profile → Help and problem reports** to submit a report, optionally select one of your tasks or shifts, and attach an image up to 2 MB. Track the status, assigned support person and replies from the same section. Staff replies create a notification that opens the report. Submission and reply IDs make network retries safe; a failed image upload can be retried without creating another report.
 
 This workflow requires the companion backend's administrator/support migration and server-side private image storage configuration. No service-role credentials belong in the app.
+
+
+## Employee experience
+
+The employee workspace follows the approved Penpot Employee boards, with Home, My Shifts, Tasks, Chat and Profile navigation. My Shifts links to the schedule, attendance history/calendar, leave requests and correction history. Clock-in eligibility, recovery, break allowances and approval rules remain server-authoritative. The employee appearance supports English, Arabic RTL, light/dark mode and larger text.
+
+Run `flutter test test/employee_design_test.dart` for employee UI regressions. Add `--dart-define=EMPLOYEE_PREVIEWS=true` to export actual widget previews into `.artifacts/employee-design/`.

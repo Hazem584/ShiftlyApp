@@ -10,6 +10,8 @@ import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cu
 import 'package:shiftly/features/attendance/presentation/utils/leave_request_display_formatters.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_date_button.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_time_button.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_form_surface.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_notice.dart';
 
 class LeaveRequestFormDialog extends StatefulWidget {
   const LeaveRequestFormDialog({required this.timezone, super.key});
@@ -46,8 +48,8 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(context.tr('Request leave')),
+  Widget build(BuildContext context) => EmployeeFormSurface(
+    title: Text(context.tr('Request time off')),
     content: SizedBox(
       width: 480,
       child: Form(
@@ -125,6 +127,14 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
                     ? context.tr('A reason is required')
                     : null,
               ),
+              const SizedBox(height: 20),
+              EmployeeNotice(
+                child: Text(
+                  context.tr(
+                    'Your manager will review this request. It is pending until approved.',
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -148,7 +158,7 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
                     color: Colors.white,
                   ),
                 )
-              : Text(context.tr('Submit')),
+              : Text(context.tr('Submit request')),
         ),
       ),
     ],

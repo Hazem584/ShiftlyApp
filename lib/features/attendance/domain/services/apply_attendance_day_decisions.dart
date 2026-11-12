@@ -70,6 +70,7 @@ AttendanceCalendarMonth applyAttendanceDayDecisions(
     }
   }
   return AttendanceCalendarMonth(
+    scheduledShifts: month.scheduledShifts,
     year: month.year,
     month: month.month,
     timezone: month.timezone,

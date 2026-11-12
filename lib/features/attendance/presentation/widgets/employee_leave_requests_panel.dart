@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/theme/employee_design.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/employee_leave_card.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_form_dialog.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_leave_inbox.dart';
 
 class EmployeeLeaveRequestsPanel extends StatelessWidget {
   const EmployeeLeaveRequestsPanel({required this.timezone, super.key});
@@ -18,6 +20,9 @@ class EmployeeLeaveRequestsPanel extends StatelessWidget {
     BuildContext context,
   ) => BlocBuilder<EmployeeLeaveRequestsCubit, EmployeeLeaveRequestsState>(
     builder: (context, state) {
+      if (EmployeeDesign.applies(context)) {
+        return EmployeeLeaveInbox(timezone: timezone);
+      }
       if (state.initialLoading) {
         return const Center(
           child: Padding(

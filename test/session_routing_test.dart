@@ -9,7 +9,6 @@ import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
-import 'package:shiftly/core/widgets/app_tab_selector.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/employee_leave_requests_panel.dart';
 import 'package:shiftly/features/auth/domain/entities/auth_session.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
@@ -19,8 +18,8 @@ import 'package:shiftly/features/chat/data/mock_chat_repository.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_schedule_view.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/flexible_attendance_panel.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
@@ -255,7 +254,7 @@ void main() {
       );
       addTearDown(auth.events.close);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('employee-switch-workspace')));
+      await _openEmployeeWorkspaceSwitcher(tester);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('manage-workspace-invitations')));
       await tester.pumpAndSettle();
@@ -275,11 +274,7 @@ void main() {
         coordinator.state.activeMembership?.workspace.id,
         'accepted-workspace',
       );
-      expect(
-        find.byKey(const Key('employee-switch-workspace')),
-        findsOneWidget,
-      );
-      await tester.tap(find.byKey(const Key('employee-switch-workspace')));
+      await _openEmployeeWorkspaceSwitcher(tester);
       await tester.pumpAndSettle();
       expect(find.text('Current'), findsOneWidget);
       await tester.tap(
@@ -322,7 +317,10 @@ void main() {
   );
   testWidgets('employee leave shortcut opens leave directly', (tester) async {
     await _pumpRole(tester, WorkspaceRole.employee);
-    await tester.tap(find.byKey(const Key('employee-quick-leave')));
+    await tester.tap(find.text('My Shifts').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('employee-leave-link')));
+    await tester.tap(find.byKey(const Key('employee-leave-link')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('request-leave')), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -385,13 +383,13 @@ void main() {
     tester,
   ) async {
     await _pumpRole(tester, WorkspaceRole.employee);
-    expect(find.text('Employee workspace'), findsOneWidget);
+    expect(find.byKey(const Key('employee-dashboard-content')), findsOneWidget);
     expect(find.text('Hello, Preview employee'), findsOneWidget);
-    expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
     expect(find.byKey(const Key('notification-bell')), findsOneWidget);
-    expect(find.byKey(const Key('employee-switch-workspace')), findsOneWidget);
+    expect(find.byKey(const Key('employee-switch-workspace')), findsNothing);
     expect(
       find.descendant(
         of: find.byKey(const Key('notification-badge')),
@@ -414,40 +412,36 @@ void main() {
     final router = GoRouter.of(
       tester.element(find.byKey(const Key('employee-bottom-navigation'))),
     );
-    for (final tab in ['shifts', 'attendance', 'leave', 'chat', 'profile']) {
+    for (final tab in [
+      'shifts',
+      'attendance',
+      'leave',
+      'tasks',
+      'chat',
+      'profile',
+    ]) {
       router.go('/employee?tab=$tab');
       await tester.pumpAndSettle();
       final navigation = tester.widget<NavigationBar>(
         find.byKey(const Key('employee-bottom-navigation')),
       );
-      expect(navigation.destinations, hasLength(4));
+      expect(navigation.destinations, hasLength(5));
       expect(navigation.selectedIndex, switch (tab) {
-        'chat' => 2,
-        'profile' => 3,
+        'tasks' => 2,
+        'chat' => 3,
+        'profile' => 4,
         _ => 1,
       });
       if (tab == 'shifts' || tab == 'attendance') {
-        expect(find.byType(FlexibleAttendancePanel), findsOneWidget);
-        expect(
-          tester
-              .widget<AppTabSelector>(find.byType(AppTabSelector))
-              .selectedIndex,
-          0,
-        );
+        expect(find.byType(EmployeeScheduleView), findsOneWidget);
       } else if (tab == 'leave') {
         expect(find.byType(EmployeeLeaveRequestsPanel), findsOneWidget);
-        expect(
-          tester
-              .widget<AppTabSelector>(find.byType(AppTabSelector))
-              .selectedIndex,
-          1,
-        );
       }
       expect(tester.takeException(), isNull);
     }
   });
 
-  testWidgets('employee desktop navigation has the same four destinations', (
+  testWidgets('employee desktop navigation has the same five destinations', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1280, 900);
@@ -458,10 +452,10 @@ void main() {
     final rail = tester.widget<NavigationRail>(
       find.byKey(const Key('employee-navigation-rail')),
     );
-    expect(rail.destinations, hasLength(4));
+    expect(rail.destinations, hasLength(5));
     await tester.tap(find.text('My Shifts').last);
     await tester.pumpAndSettle();
-    expect(find.byType(FlexibleAttendancePanel), findsOneWidget);
+    expect(find.byType(EmployeeScheduleView), findsOneWidget);
     expect(
       tester
           .widget<NavigationRail>(
@@ -599,4 +593,22 @@ class _AcceptingInvitations implements InvitationRepository {
     required String workspaceId,
     InvitationStatus? status,
   }) => throw UnimplementedError();
+}
+
+Future<void> _openEmployeeWorkspaceSwitcher(WidgetTester tester) async {
+  await tester.tap(find.text('Profile').last);
+  await tester.pumpAndSettle();
+  await tester.scrollUntilVisible(
+    find.byKey(const Key('switch-workspace')),
+    250,
+    scrollable: find
+        .descendant(
+          of: find.byKey(const Key('profile-content')),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('switch-workspace')));
+  await tester.pumpAndSettle();
 }

@@ -10,9 +10,11 @@ import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
 import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
+import 'package:shiftly/features/attendance/domain/entities/attendance_month_control.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
+import 'package:shiftly/features/attendance/domain/services/apply_attendance_day_decisions.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
@@ -269,6 +271,31 @@ const _scope = FeatureSessionScope(
 );
 
 void main() {
+  test('future authorized shifts remain available to Schedule without marking absence', () {
+    final future = _shift(
+      id: 'future',
+      employeeId: 'employee',
+      start: DateTime.utc(2026, 11, 15, 6),
+      end: DateTime.utc(2026, 11, 15, 14),
+    );
+    final month = deriveAttendanceCalendarMonth(
+      workspaceId: _workspace,
+      timezoneName: 'Africa/Cairo',
+      year: 2026,
+      month: 11,
+      shifts: [future],
+      attendance: [],
+      leaveRequests: [],
+      nowUtc: DateTime.utc(2026, 11, 12),
+    );
+    final applied = applyAttendanceDayDecisions(
+      month,
+      const AttendanceMonthControl(),
+    );
+    expect(applied.scheduledShifts.single.id, 'future');
+    expect(applied.entriesFor(DateTime(2026, 11, 15)), isEmpty);
+  });
+
   test(
     'employee calendar calls only its own attendance, leave and shifts APIs',
     () async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_form_surface.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/eligible_shift_occurrence.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/attendance_period_fields.dart';
@@ -76,7 +77,7 @@ class _MissedAttendanceRequestDialogState
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
-    child: AlertDialog(
+    child: EmployeeFormSurface(
       title: Text(context.tr('Review missing attendance')),
       scrollable: true,
       content: SizedBox(

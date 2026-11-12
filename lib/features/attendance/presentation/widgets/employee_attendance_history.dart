@@ -17,8 +17,13 @@ import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_scr
 import 'package:shiftly/features/team_work/presentation/dialogs/correction_request_dialog.dart';
 
 class EmployeeAttendanceHistory extends StatelessWidget {
-  const EmployeeAttendanceHistory({super.key, required this.timezone});
+  const EmployeeAttendanceHistory({
+    super.key,
+    required this.timezone,
+    this.includeControls = true,
+  });
   final String timezone;
+  final bool includeControls;
 
   @override
   Widget build(
@@ -42,21 +47,22 @@ class EmployeeAttendanceHistory extends StatelessWidget {
               onRefresh: () =>
                   context.read<EmployeeAttendanceCubit>().load(refresh: true),
             ),
-            FlexibleAttendancePanel(timezone: timezone),
+            if (includeControls) FlexibleAttendancePanel(timezone: timezone),
             const SizedBox(height: AppSpacing.m),
-            OutlinedButton.icon(
-              key: const Key('legacy-shift-history'),
-              icon: const Icon(Icons.history),
-              label: Text(context.tr('Earlier shifts & clock-out')),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => Scaffold(
-                    appBar: AppBar(title: Text(context.tr('Earlier shifts'))),
-                    body: const EmployeeShiftsScreen(),
+            if (includeControls)
+              OutlinedButton.icon(
+                key: const Key('legacy-shift-history'),
+                icon: const Icon(Icons.history),
+                label: Text(context.tr('Earlier shifts & clock-out')),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: Text(context.tr('Earlier shifts'))),
+                      body: const EmployeeShiftsScreen(),
+                    ),
                   ),
                 ),
               ),
-            ),
             const SizedBox(height: AppSpacing.l),
             if (state.initialLoading)
               const AppContentLoading()

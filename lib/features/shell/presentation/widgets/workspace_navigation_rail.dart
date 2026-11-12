@@ -69,6 +69,11 @@ class WorkspaceNavigationRail extends StatelessWidget {
             ),
             label: Text(context.tr(employee ? 'My Shifts' : 'Employees')),
           ),
+          if (employee)
+            NavigationRailDestination(
+              icon: const Icon(Icons.check_outlined),
+              label: Text(context.tr('Tasks')),
+            ),
           if (!employee)
             NavigationRailDestination(
               icon: const Icon(Icons.work_outline_rounded),

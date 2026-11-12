@@ -19,6 +19,7 @@ import 'package:shiftly/core/platform/platform_gate.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/workspace_access_monitor.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/theme/employee_appearance.dart';
 import 'package:shiftly/core/theme/theme_cubit.dart';
 import 'package:shiftly/core/theme/theme_settings.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
@@ -237,7 +238,8 @@ class _AppProvidersState extends State<AppProviders> {
                   routerConfig: _composition.router,
                   builder: (context, child) {
                     final locator = widget.locator;
-                    if (locator == null) return child!;
+                    final content = EmployeeAppearance(child: child!);
+                    if (locator == null) return content;
                     return DeviceSessionsScope(
                       api: locator<Dio>(),
                       authentication: locator<AuthenticationService>(),
@@ -255,7 +257,7 @@ class _AppProvidersState extends State<AppProviders> {
                           ),
                           apiClient: locator<Dio>(),
                           authentication: locator<AuthenticationService>(),
-                          child: child!,
+                          child: content,
                         ),
                       ),
                     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
+import 'package:shiftly/core/theme/employee_design.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 
 class LeaveStatusBadge extends StatelessWidget {
@@ -12,8 +13,12 @@ class LeaveStatusBadge extends StatelessWidget {
     final (label, color, background) = switch (status) {
       LeaveRequestStatus.pending => (
         'Pending',
-        AppPalette.of(context).warning,
-        AppPalette.of(context).warningSoft,
+        EmployeeDesign.applies(context)
+            ? Theme.of(context).colorScheme.primary
+            : AppPalette.of(context).warning,
+        EmployeeDesign.applies(context)
+            ? Theme.of(context).colorScheme.primaryContainer
+            : AppPalette.of(context).warningSoft,
       ),
       LeaveRequestStatus.approved => (
         'Approved',

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/theme/employee_design.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_correction_details_screen.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_tile.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 
 class CorrectionRequestCard extends StatelessWidget {
@@ -11,11 +14,12 @@ class CorrectionRequestCard extends StatelessWidget {
     this.onApprove,
     this.onDecline,
     this.busy = false,
+    this.detailed = false,
   });
   final CorrectionRequest request;
   final String timezone;
   final VoidCallback? onApprove, onDecline;
-  final bool busy;
+  final bool busy, detailed;
   @override
   Widget build(BuildContext context) {
     String time(DateTime value) => WorkspaceTime.dateTime(
@@ -23,6 +27,28 @@ class CorrectionRequestCard extends StatelessWidget {
       timezone,
       locale: Localizations.localeOf(context).toString(),
     );
+    if (EmployeeDesign.applies(context) && !detailed) {
+      return EmployeeTile(
+        icon: Icons.edit_calendar_outlined,
+        title:
+            "${request.operationalDate ?? WorkspaceTime.dateKey(request.requestedIn, timezone)} · ${request.shiftName ?? context.tr('Request correction')}",
+        subtitle:
+            "${context.tr(request.status == 'PENDING'
+                ? 'Pending review'
+                : request.status == 'APPROVED'
+                ? 'Approved'
+                : 'Declined')} · ${time(request.requestedIn)} → ${time(request.requestedOut)}",
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (_) => EmployeeCorrectionDetailsScreen(
+              request: request,
+              timezone: timezone,
+            ),
+          ),
+        ),
+      );
+    }
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

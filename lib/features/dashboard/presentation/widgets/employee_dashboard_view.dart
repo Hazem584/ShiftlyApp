@@ -1,197 +1,141 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:shiftly/features/dashboard/presentation/utils/employee_dashboard_formatters.dart';
-import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_count_card.dart';
-import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_shift_card.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_active_attendance_screen.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_attendance_gate.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_attendance_hero.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_tasks_preview.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_tile.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/dashboard_announcements.dart';
-
-import 'shift_session_card.dart';
-import 'work_week_strip.dart';
 
 class EmployeeDashboardView extends StatelessWidget {
   const EmployeeDashboardView({
     super.key,
     required this.data,
     required this.state,
+    this.now,
   });
+  final DateTime Function()? now;
   final EmployeeDashboardData data;
   final DashboardLoaded state;
-
   @override
-  Widget build(BuildContext context) => RefreshIndicator(
-    onRefresh: () async {
-      await Future.wait([
-        context.read<DashboardCubit>().load(refresh: true),
-        context.read<FlexibleAttendanceCubit>().load(refresh: true),
-      ]);
-    },
-    child: ListView(
-      key: const Key('employee-dashboard-content'),
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
-      children: [
-        Text(
-          context.tr('Hello, {name}', {'name': data.employee.fullName}),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        Text(
-          context.tr('{value1} · {value2}', {
-            'value1': (data.date).toString(),
-            'value2': (data.timezone).toString(),
-          }),
-          style: TextStyle(color: AppPalette.of(context).textSecondary),
-        ),
-        if (state.failure != null) ...[
-          const SizedBox(height: AppSpacing.s),
-          Text(
-            state.failure!.message,
-            style: TextStyle(color: AppPalette.of(context).error, fontSize: 12),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.m),
-        BlocBuilder<FlexibleAttendanceCubit, FlexibleAttendanceState>(
-          builder: (context, attendance) =>
-              ShiftSessionCard(state: attendance, timezone: data.timezone),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            TextButton.icon(
-              key: const Key('employee-quick-shifts'),
-              onPressed: () => context.go('/employee?tab=shifts'),
-              icon: const Icon(Icons.calendar_today_outlined, size: 16),
-              label: Text(context.tr('My Shifts')),
-            ),
-            TextButton.icon(
-              key: const Key('employee-quick-leave'),
-              onPressed: () => context.go('/employee?tab=leave'),
-              icon: const Icon(Icons.event_note_outlined, size: 16),
-              label: Text(context.tr('Request leave')),
-            ),
-            TextButton.icon(
-              key: const Key('employee-quick-tasks'),
-              onPressed: () => context.push('/tasks'),
-              icon: const Icon(Icons.checklist_rounded, size: 16),
-              label: Text(context.tr('Tasks')),
-            ),
-          ],
-        ),
-        WorkWeekStrip(date: data.date),
-        if (data.todayShift != null) ...[
-          const SizedBox(height: AppSpacing.m),
-          EmployeeDashboardShiftCard(
-            title: context.tr('Scheduled shift'),
-            shift: data.todayShift,
-            timezone: data.timezone,
-            attendance: data.attendance,
-          ),
-        ],
-        if (data.nextShift != null) ...[
-          const SizedBox(height: AppSpacing.m),
-          EmployeeDashboardShiftCard(
-            title: context.tr('Next scheduled shift'),
-            shift: data.nextShift,
-            timezone: data.timezone,
-          ),
-        ],
-        const SizedBox(height: AppSpacing.m),
-        DashboardAnnouncements(refreshToken: data),
-        const SizedBox(height: AppSpacing.m),
-        Row(
-          children: [
-            Expanded(
-              child: EmployeeDashboardCountCard(
-                label: context.tr('Pending leave'),
-                value: data.summary.pendingLeaveRequests,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s),
-            Expanded(
-              child: EmployeeDashboardCountCard(
-                label: context.tr('Upcoming approved'),
-                value: data.summary.approvedLeaveRequests,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.l),
-        Text(
-          context.tr('Recent leave requests'),
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: AppSpacing.s),
-        SurfaceCard(
-          padding: data.recentLeaveRequests.isEmpty
-              ? const EdgeInsets.all(16)
-              : EdgeInsets.zero,
-          child: data.recentLeaveRequests.isEmpty
-              ? Text(
-                  context.tr('No leave requests yet.'),
-                  style: TextStyle(color: AppPalette.of(context).textSecondary),
-                )
-              : Column(
-                  children: [
-                    for (final request in data.recentLeaveRequests)
-                      ListTile(
-                        key: Key('employee-dashboard-leave-${request.id}'),
-                        title: Text(
-                          employeeDashboardScreenLeaveType(request.type),
-                        ),
-                        subtitle: Text(
-                          context.tr('{value1}\n{value2}', {
-                            'value1': (WorkspaceTime.dateTime(
-                              request.startsAt,
-                              data.timezone,
-                              locale: Localizations.localeOf(context)
-                                  .toString(),
-                            )).toString(),
-                            'value2': (request.reason).toString(),
-                          }),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Text(
-                          employeeDashboardScreenLeaveStatus(request.status),
-                        ),
-                      ),
-                  ],
-                ),
-        ),
-        const SizedBox(height: AppSpacing.m),
-        SurfaceCard(
-          padding: EdgeInsets.zero,
-          child: Column(
+  Widget build(BuildContext context) {
+    final colors = AppPalette.of(context);
+    final workspace = context
+        .watch<SessionCoordinator?>()
+        ?.state
+        .activeMembership
+        ?.workspace;
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Future.wait([
+          context.read<DashboardCubit>().load(refresh: true),
+          context.read<FlexibleAttendanceCubit>().load(refresh: true),
+        ]);
+      },
+      child: ListView(
+        key: const Key('employee-dashboard-content'),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+        children: [
+          Row(
             children: [
-              ListTile(
-                leading: const Icon(Icons.campaign_outlined),
-                title: Text(context.tr('Team announcements')),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => context.push('/team-work?tab=announcements'),
+              Expanded(
+                child: Text(
+                  (workspace?.name ?? context.tr('Employee workspace'))
+                      .toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textSecondary,
+                  ),
+                ),
               ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.edit_calendar_outlined),
-                title: Text(context.tr('Attendance corrections')),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => context.push('/team-work?tab=corrections'),
-              ),
+              const NotificationBell(),
             ],
           ),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 14),
+          Text(
+            context.tr('Hello, {name}', {'name': data.employee.fullName}),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            DateFormat(
+              'EEEE, d MMMM',
+              Localizations.localeOf(context).toString(),
+            ).format(DateTime.parse(data.date)),
+            style: TextStyle(color: colors.textSecondary, fontSize: 15),
+          ),
+          if (state.failure != null) ...[
+            const SizedBox(height: 12),
+            Text(state.failure!.message, style: TextStyle(color: colors.error)),
+          ],
+          const SizedBox(height: 32),
+          BlocBuilder<FlexibleAttendanceCubit, FlexibleAttendanceState>(
+            builder: (context, attendance) {
+              final active = attendance.current;
+              return active != null &&
+                      active.isOpen &&
+                      active.isActionable &&
+                      attendance.recovery == null &&
+                      !attendance.recoveryBlocked
+                  ? EmployeeAttendanceHero(
+                      attendance: active,
+                      now: now,
+                      timezone: data.timezone,
+                      overview: true,
+                      onOpen: () => Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                          builder: (_) => EmployeeActiveAttendanceScreen(
+                            timezone: data.timezone,
+                          ),
+                        ),
+                      ),
+                    )
+                  : EmployeeAttendanceGate(
+                      state: attendance,
+                      timezone: data.timezone,
+                    );
+            },
+          ),
+          const SizedBox(height: 24),
+          EmployeeTasksPreview(timezone: data.timezone),
+          const SizedBox(height: 14),
+          DashboardAnnouncements(refreshToken: data),
+          EmployeeTile(
+            icon: Icons.campaign_outlined,
+            title: context.tr('Team announcements'),
+            subtitle: context.tr('Read the latest updates from your team'),
+            onTap: () => context.push('/team-work?tab=announcements'),
+          ),
+          if (data.nextShift != null) ...[
+            const SizedBox(height: 14),
+            EmployeeTile(
+              icon: Icons.calendar_today_outlined,
+              title: context.tr('Next scheduled shift'),
+              subtitle: WorkspaceTime.dateTime(
+                data.nextShift!.startsAt,
+                data.timezone,
+                locale: Localizations.localeOf(context).toString(),
+              ),
+              onTap: () => context.go('/employee?tab=shifts'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }

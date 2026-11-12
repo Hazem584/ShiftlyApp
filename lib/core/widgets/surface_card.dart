@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/theme/employee_design.dart';
 
 class SurfaceCard extends StatelessWidget {
   const SurfaceCard({
@@ -18,8 +19,12 @@ class SurfaceCard extends StatelessWidget {
     decoration: BoxDecoration(
       color: AppPalette.of(context).surface,
       borderRadius: BorderRadius.circular(AppRadii.l),
-      border: Border.all(color: AppPalette.of(context).borderColor),
-      boxShadow: Theme.of(context).brightness == Brightness.dark
+      border: EmployeeDesign.applies(context)
+          ? null
+          : Border.all(color: AppPalette.of(context).borderColor),
+      boxShadow:
+          EmployeeDesign.applies(context) ||
+              Theme.of(context).brightness == Brightness.dark
           ? const []
           : AppShadows.soft,
     ),

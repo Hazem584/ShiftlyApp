@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
+import 'package:shiftly/core/theme/employee_design.dart';
 import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_record_tile.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
@@ -23,6 +25,9 @@ class AttendanceRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (EmployeeDesign.applies(context)) {
+      return EmployeeRecordTile(record: record, timezone: timezone);
+    }
     final savedTimezone = record.workspaceTimezone ?? timezone;
     final date = WorkspaceTime.inWorkspace(
       record.shift?.startsAt ?? record.scheduledStartAt ?? record.clockInAt,

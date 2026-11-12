@@ -143,14 +143,17 @@ GoRouter createAppRouter({
       GoRoute(
         path: '/employee',
         builder: (_, state) => EmployeeShellScreen(
-          key: ValueKey(state.uri.queryParameters['tab']),
-          initialAttendanceTab: state.uri.queryParameters['tab'] == 'leave'
-              ? 1
-              : 0,
+          initialAttendanceTab: switch (state.uri.queryParameters['tab']) {
+            'leave' => 1,
+            'calendar' => 2,
+            'history' => 3,
+            _ => 0,
+          },
           initialTab: switch (state.uri.queryParameters['tab']) {
-            'shifts' || 'attendance' || 'leave' => 1,
-            'chat' => 2,
-            'profile' => 3,
+            'shifts' || 'attendance' || 'leave' || 'calendar' || 'history' => 1,
+            'tasks' => 2,
+            'chat' => 3,
+            'profile' => 4,
             _ => 0,
           },
         ),

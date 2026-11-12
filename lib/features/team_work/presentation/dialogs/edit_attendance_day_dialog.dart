@@ -3,6 +3,7 @@ import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_form_surface.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/attendance_period_fields.dart';
 
@@ -120,7 +121,7 @@ class _EditAttendanceDayDialogState extends State<EditAttendanceDayDialog> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
-    child: AlertDialog(
+    child: EmployeeFormSurface(
       title: Text(
         context.tr(
           widget.manager ? 'Edit attendance' : 'Request attendance correction',

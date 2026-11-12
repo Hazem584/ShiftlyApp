@@ -105,7 +105,9 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
       title: Text(
         context.tr(
           widget.initialTab == 'corrections'
-              ? 'Attendance corrections'
+              ? widget.manager
+                    ? 'Attendance corrections'
+                    : 'My corrections'
               : widget.initialTab == 'tasks' && widget.manager
               ? 'Manager tasks'
               : 'Team announcements',

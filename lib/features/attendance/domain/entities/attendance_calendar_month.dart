@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_calendar_entry.dart';
+import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 import 'attendance_month_control.dart';
 
@@ -14,8 +15,10 @@ class AttendanceCalendarMonth extends Equatable {
     this.scheduledDates = const {},
     this.evaluatedAt,
     this.control,
+    this.scheduledShifts = const [],
   });
 
+  final List<ShiftRecord> scheduledShifts;
   final AttendanceMonthControl? control;
   final DateTime? nextRefreshAt, evaluatedAt;
   final Set<String> scheduledDates;
@@ -39,6 +42,7 @@ class AttendanceCalendarMonth extends Equatable {
     timezone,
     days,
     scheduledDates,
+    scheduledShifts,
     nextRefreshAt,
     evaluatedAt,
     control,

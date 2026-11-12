@@ -4,6 +4,7 @@ import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_form_surface.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 
 Future<bool?> showCorrectionRequest(
@@ -117,7 +118,7 @@ class _CorrectionRequestDialogState extends State<CorrectionRequestDialog> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
-    child: AlertDialog(
+    child: EmployeeFormSurface(
       title: Text(context.tr('Request attendance correction')),
       content: SizedBox(
         width: 460,

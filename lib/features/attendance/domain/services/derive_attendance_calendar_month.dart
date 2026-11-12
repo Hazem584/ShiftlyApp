@@ -187,6 +187,7 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
           .toList()
         ..sort();
   return AttendanceCalendarMonth(
+    scheduledShifts: List.unmodifiable(validShifts.values),
     nextRefreshAt: upcoming.firstOrNull,
     scheduledDates: Set.unmodifiable(
       validShifts.values.map(
