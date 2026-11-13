@@ -6,8 +6,14 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import '../../domain/personal_task.dart';
 
 class TaskCountdown extends StatefulWidget {
-  const TaskCountdown({required this.task, this.now, super.key});
+  const TaskCountdown({
+    required this.task,
+    this.now,
+    this.compact = false,
+    super.key,
+  });
   final PersonalTask task;
+  final bool compact;
   final DateTime Function()? now;
 
   @override
@@ -75,6 +81,28 @@ class _TaskCountdownState extends State<TaskCountdown> {
         '${((seconds ~/ 60) % 60).toString().padLeft(2, '0')}:'
         '${(seconds % 60).toString().padLeft(2, '0')}';
     final colors = Theme.of(context).colorScheme;
+    if (widget.compact) {
+      final minutes = (seconds / 60).ceil();
+      final hours = minutes ~/ 60;
+      final remaining = minutes % 60;
+      final duration = hours > 0
+          ? context.tr('{hours}h {minutes}m', {
+              'hours': '$hours',
+              'minutes': '$remaining',
+            })
+          : context.tr('{minutes} min', {'minutes': '$remaining'});
+      final text = waiting
+          ? context.tr('In {duration}', {'duration': duration})
+          : running
+          ? context.tr('{duration} left', {'duration': duration})
+          : context.tr('Overdue');
+      return Text(
+        text,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: waiting || running ? colors.primary : colors.error,
+        ),
+      );
+    }
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

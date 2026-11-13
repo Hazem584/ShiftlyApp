@@ -455,7 +455,8 @@ class ChatConversationCubit extends Cubit<ChatConversationState>
   Future<bool> retrySend() => _outgoing.retrySend();
   Future<String?> sendDocument(Uint8List bytes, String fileName) =>
       _outgoing.sendDocument(bytes, fileName);
-  Future<String?> sendImage(Uint8List bytes) => _outgoing.sendImage(bytes);
+  Future<String?> sendImage(Uint8List bytes, {String? caption}) =>
+      _outgoing.sendImage(bytes, caption: caption);
   Future<String?> sendVoice({
     required Uint8List bytes,
     required String mimeType,

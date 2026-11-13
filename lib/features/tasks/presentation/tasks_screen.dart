@@ -3,14 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/theme/collaboration_appearance.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 
 import '../application/tasks_cubit.dart';
-import '../domain/personal_task.dart';
+import 'task_actions.dart';
+import 'task_detail_screen.dart';
+import 'task_options_screen.dart';
 import 'widgets/task_card.dart';
 import 'widgets/task_editor.dart';
 import 'widgets/task_progress_overview.dart';
-import 'widgets/task_reminder_banner.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({this.taskId, super.key});
@@ -45,7 +47,7 @@ class _TasksScreenState extends State<TasksScreen> {
     final task = await cubit.resolveTap(owner, widget.taskId!);
     if (!mounted) return;
     if (task != null) {
-      await showTaskEditor(context, task: task);
+      await showTaskDetails(context, task);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.tr('Task is no longer available.'))),
@@ -59,296 +61,255 @@ class _TasksScreenState extends State<TasksScreen> {
     super.dispose();
   }
 
-  Future<void> _delete(PersonalTask task) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _options() async {
+    final cubit = context.read<TasksCubit>();
+    final choice = await showModalBottomSheet<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.tr('Delete task?')),
-        content: Text(
-          context.tr(
-            'This permanently deletes the task and cancels its reminder.',
-          ),
+      showDragHandle: true,
+      builder: (c) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(c.tr('Task options')),
+              subtitle: Text(c.tr('Your personal tasks')),
+            ),
+            for (final (value, label, icon) in [
+              ('reminders', 'Reminders', Icons.notifications_none),
+              ('widget', 'Home-screen widget', Icons.widgets_outlined),
+              ('completed', 'Completed tasks', Icons.check_circle_outline),
+            ])
+              ListTile(
+                leading: Icon(icon),
+                title: Text(c.tr(label)),
+                onTap: () => Navigator.pop(c, value),
+              ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(context.tr('Cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(context.tr('Delete')),
-          ),
-        ],
       ),
     );
-    if (confirmed == true && mounted) {
-      await context.read<TasksCubit>().remove(task);
+    if (!mounted || choice == null) return;
+    if (choice == 'completed') {
+      await cubit.load(completed: true, page: 1);
+      return;
     }
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => BlocProvider.value(
+          value: cubit,
+          child: TaskOptionsScreen(widgetHelp: choice == 'widget'),
+        ),
+      ),
+    );
   }
 
   @override
-  Widget build(BuildContext context) => BlocConsumer<TasksCubit, TasksState>(
+  Widget build(BuildContext context) =>
+      CollaborationAppearance(child: Builder(builder: _body));
+  Widget _body(BuildContext context) => BlocConsumer<TasksCubit, TasksState>(
     listenWhen: (before, after) =>
         after.error != null && before.error != after.error,
     listener: (context, state) =>
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(context.tr(state.error!)))),
     builder: (context, state) {
-      final cubit = context.read<TasksCubit>(),
-          colors = Theme.of(context).colorScheme;
-      if (state.loading && state.items.isEmpty) {
-        return Scaffold(
-          appBar: AppBar(title: Text(context.tr('Task manager'))),
-          body: const AppContentLoading(),
-        );
-      }
+      final cubit = context.read<TasksCubit>();
       return Scaffold(
-        appBar: AppBar(
-          title: Text(context.tr('Task manager')),
-          actions: [
-            if (cubit.canAddHomeWidget)
-              IconButton(
-                tooltip: context.tr('Add home screen widget'),
-                icon: const Icon(Icons.widgets_outlined),
-                onPressed: () async {
-                  final pinned = await cubit.requestHomeWidget();
-                  if (!pinned && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          context.tr(
-                            'Long-press your home screen, choose Widgets, then Shiftly tasks.',
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: FloatingActionButton.small(
-                heroTag: 'personal-create-task',
-                tooltip: context.tr('New task'),
-                onPressed: state.saving ? null : () => showTaskEditor(context),
-                child: const Icon(Icons.add_rounded),
-              ),
-            ),
-            IconButton(
-              onPressed: state.loading
-                  ? null
-                  : () => unawaited(cubit.refresh()),
-              tooltip: context.tr('Refresh'),
-              icon: const Icon(Icons.refresh_rounded),
-            ),
-          ],
-        ),
-        body: RefreshIndicator(
-          onRefresh: cubit.refresh,
-          child: LayoutBuilder(
-            builder: (context, box) {
-              final columns = box.maxWidth >= 1000
-                  ? 3
-                  : box.maxWidth >= 650
-                  ? 2
-                  : 1;
-              return CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    sliver: SliverToBoxAdapter(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1240),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 12, 24),
+                    child: Row(
+                      children: [
+                        if (Navigator.canPop(context)) const BackButton(),
+                        Expanded(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TaskProgressOverview(
-                                open: state.totalsAvailable
-                                    ? state.openTotal
-                                    : null,
-                                done: state.totalsAvailable
-                                    ? state.doneTotal
-                                    : null,
-                              ),
-                              const SizedBox(height: 16),
-                              TaskReminderBanner(
-                                permission: state.reminderPermission,
-                                failed: state.reminderError,
-                                onEnable: () => unawaited(
-                                  cubit.syncReminders(request: true),
+                              Text(
+                                context.tr(
+                                  state.completed
+                                      ? 'Completed'
+                                      : 'A little more done.',
                                 ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall,
                               ),
-                              const SizedBox(height: 20),
-                              Wrap(
-                                spacing: 10,
-                                runSpacing: 8,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  ChoiceChip(
-                                    label: Text(context.tr('Open tasks')),
-                                    selected: !state.completed,
-                                    onSelected: state.saving
-                                        ? null
-                                        : (_) => unawaited(
-                                            cubit.load(
-                                              completed: false,
-                                              page: 1,
-                                            ),
-                                          ),
-                                  ),
-                                  ChoiceChip(
-                                    label: Text(context.tr('Completed tasks')),
-                                    selected: state.completed,
-                                    onSelected: state.saving
-                                        ? null
-                                        : (_) => unawaited(
-                                            cubit.load(
-                                              completed: true,
-                                              page: 1,
-                                            ),
-                                          ),
-                                  ),
-                                  Text(
-                                    context.tr('{count} tasks', {
-                                      'count': state.total.toString(),
-                                    }),
-                                  ),
-                                ],
+                              const SizedBox(height: 6),
+                              Text(
+                                context.tr('Your personal tasks'),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
                               ),
-                              if (state.loading)
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 16),
-                                  child: AppContentLoading(rows: 1),
-                                ),
-                              const SizedBox(height: 16),
                             ],
                           ),
                         ),
-                      ),
+                        IconButton(
+                          tooltip: context.tr('Task options'),
+                          onPressed: _options,
+                          icon: const Icon(Icons.more_horiz),
+                        ),
+                      ],
                     ),
                   ),
-                  if (state.items.isEmpty && !state.loading)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.task_alt_rounded,
-                              size: 64,
-                              color: colors.primary,
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: cubit.refresh,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        children: [
+                          if (!state.completed) ...[
+                            TaskProgressOverview(
+                              open: state.totalsAvailable
+                                  ? state.openTotal
+                                  : null,
+                              done: state.totalsAvailable
+                                  ? state.doneTotal
+                                  : null,
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              context.tr(
-                                state.completed
-                                    ? 'Completed tasks will appear here.'
-                                    : 'A clear mind starts with a task.',
+                            const SizedBox(height: 20),
+                          ],
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
+                            children: [
+                              ChoiceChip(
+                                label: Text(
+                                  context.tr('Open {count}', {
+                                    'count': state.openTotal?.toString() ?? '—',
+                                  }),
+                                ),
+                                selected: !state.completed,
+                                onSelected: state.saving
+                                    ? null
+                                    : (_) =>
+                                          cubit.load(completed: false, page: 1),
                               ),
-                              textAlign: TextAlign.center,
+                              ChoiceChip(
+                                label: Text(
+                                  context.tr('Completed {count}', {
+                                    'count': state.doneTotal?.toString() ?? '—',
+                                  }),
+                                ),
+                                selected: state.completed,
+                                onSelected: state.saving
+                                    ? null
+                                    : (_) =>
+                                          cubit.load(completed: true, page: 1),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          if (state.loading && state.items.isEmpty)
+                            const AppContentLoading(),
+                          if (state.error != null) ...[
+                            Text(
+                              context.tr(state.error!),
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
                             ),
-                            const SizedBox(height: 16),
-                            TextButton.icon(
-                              onPressed: () => showTaskEditor(context),
-                              icon: const Icon(Icons.add),
-                              label: Text(context.tr('New task')),
+                            TextButton(
+                              onPressed: cubit.refresh,
+                              child: Text(context.tr('Try again')),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    sliver: columns == 1
-                        ? SliverList(
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              final task = state.items[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: TaskCard(
-                                  task: task,
-                                  busy: state.saving,
-                                  onOpen: () =>
-                                      showTaskEditor(context, task: task),
-                                  onToggle: () => unawaited(cubit.toggle(task)),
-                                  onDelete: () => unawaited(_delete(task)),
-                                ),
-                              );
-                            }, childCount: state.items.length),
-                          )
-                        : SliverGrid(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: columns,
-                                  mainAxisExtent:
-                                      238 *
-                                      MediaQuery.textScalerOf(context)
-                                          .scale(14) /
-                                      14,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                ),
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              final task = state.items[index];
-                              return TaskCard(
-                                task: task,
-                                busy: state.saving,
-                                onOpen: () =>
-                                    showTaskEditor(context, task: task),
-                                onToggle: () => unawaited(cubit.toggle(task)),
-                                onDelete: () => unawaited(_delete(task)),
-                              );
-                            }, childCount: state.items.length),
-                          ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            onPressed: state.loading || state.page <= 1
-                                ? null
-                                : () => unawaited(
-                                    cubit.load(page: state.page - 1),
+                          if (!state.loading &&
+                              state.items.isEmpty &&
+                              state.error == null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 44),
+                              child: Column(
+                                children: [
+                                  const Icon(Icons.task_alt_outlined, size: 48),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    context.tr(
+                                      state.completed
+                                          ? 'Completed tasks will appear here.'
+                                          : 'A clear start.',
+                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge,
                                   ),
-                            tooltip: context.tr('Previous page'),
-                            icon: const BackButtonIcon(),
-                          ),
-                          Text(
-                            context.tr('Page {page}', {
-                              'page': state.page.toString(),
-                            }),
-                          ),
-                          IconButton(
-                            onPressed:
-                                state.loading || state.page * 30 >= state.total
-                                ? null
-                                : () => unawaited(
-                                    cubit.load(page: state.page + 1),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    context.tr(
+                                      state.completed
+                                          ? 'A good day’s work. Open a completed task to reopen it.'
+                                          : 'No open tasks yet. Add one for your next small win.',
+                                    ),
                                   ),
-                            tooltip: context.tr('Next page'),
-                            icon: const RotatedBox(
-                              quarterTurns: 2,
-                              child: BackButtonIcon(),
+                                ],
+                              ),
                             ),
-                          ),
+                          for (final task in state.items) ...[
+                            TaskCard(
+                              task: task,
+                              busy: state.saving,
+                              onOpen: () => showTaskDetails(context, task),
+                              onToggle: () => togglePersonalTask(context, task),
+                              onDelete: () => deletePersonalTask(context, task),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          if (state.page > 1 || state.page * 30 < state.total)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  tooltip: context.tr('Previous page'),
+                                  onPressed: state.page > 1 && !state.loading
+                                      ? () => cubit.load(page: state.page - 1)
+                                      : null,
+                                  icon: const BackButtonIcon(),
+                                ),
+                                Text('${state.page}'),
+                                IconButton(
+                                  tooltip: context.tr('Next page'),
+                                  onPressed:
+                                      state.page * 30 < state.total &&
+                                          !state.loading
+                                      ? () => cubit.load(page: state.page + 1)
+                                      : null,
+                                  icon: const RotatedBox(
+                                    quarterTurns: 2,
+                                    child: BackButtonIcon(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          const SizedBox(height: 12),
                         ],
                       ),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 10),
+                    child: FilledButton(
+                      key: const Key('add-personal-task'),
+                      onPressed: state.saving
+                          ? null
+                          : () => showTaskEditor(context),
+                      child: Text(context.tr('Add task')),
+                    ),
+                  ),
                 ],
-              );
-            },
+              ),
+            ),
           ),
         ),
       );

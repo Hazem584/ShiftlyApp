@@ -415,7 +415,7 @@ void main() {
     },
   );
   testWidgets(
-    'chat search asks the repository for history and offers a reply',
+    'chat search asks the repository for history and opens the original message',
     (tester) async {
       final repository = _Search();
       await tester.pumpWidget(
@@ -433,7 +433,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(repository.queries, ['earlier']);
       expect(find.text('Earlier message from last month'), findsOneWidget);
-      expect(find.byTooltip('Reply'), findsOneWidget);
+      expect(find.byTooltip('Open message'), findsOneWidget);
     },
   );
 }

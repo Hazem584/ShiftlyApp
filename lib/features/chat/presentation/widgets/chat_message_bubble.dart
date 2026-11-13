@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:just_audio/just_audio.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/chat/presentation/chat_playback_coordinator.dart';
-import 'package:shiftly/features/chat/presentation/utils/chat_formatters.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_location_card.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_remote_image.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_voice_message.dart';
@@ -48,18 +49,18 @@ class ChatMessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final foreground = mine ? colors.onPrimary : colors.onSurface;
+    final foreground = colors.onSurface;
     final bubble = Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: mine ? colors.primary : colors.surface,
-        border: mine ? null : Border.all(color: colors.outlineVariant),
+        color: mine ? colors.primaryContainer : colors.surface,
+        border: null,
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(16),
           topRight: const Radius.circular(16),
-          bottomLeft: Radius.circular(mine ? 18 : 5),
-          bottomRight: Radius.circular(mine ? 5 : 18),
+          bottomLeft: const Radius.circular(16),
+          bottomRight: const Radius.circular(16),
         ),
       ),
       child: IconTheme(
@@ -87,6 +88,13 @@ class ChatMessageBubble extends StatelessWidget {
               message.deletedAt == null
                   ? _content(context)
                   : Text(context.tr('Message deleted')),
+              if (message.type == 'IMAGE' &&
+                  message.text?.isNotEmpty == true &&
+                  message.deletedAt == null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(message.text!),
+                ),
               if (message.reactions.isNotEmpty && message.deletedAt == null)
                 ChatReactions(
                   reactions: message.reactions,
@@ -114,54 +122,14 @@ class ChatMessageBubble extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      WorkspaceTime.time(
-                        message.createdAt,
-                        timezone,
-                        locale: Localizations.localeOf(context).toString(),
+                      DateFormat.Hm(
+                        Localizations.localeOf(context).toString(),
+                      ).format(
+                        WorkspaceTime.inWorkspace(message.createdAt, timezone),
                       ),
                       style: Theme.of(context).textTheme.labelSmall
                           ?.copyWith(color: foreground.withValues(alpha: .72)),
                     ),
-                    if (onReply != null || onPin != null || onReact != null)
-                      PopupMenuButton<String>(
-                        tooltip: context.tr('Message actions'),
-                        onSelected: (action) => action == 'react'
-                            ? _react(context)
-                            : action == 'reply'
-                            ? onReply?.call()
-                            : onPin?.call(),
-                        itemBuilder: (_) => [
-                          if (onReact != null)
-                            PopupMenuItem(
-                              value: 'react',
-                              child: Text(context.tr('React to message')),
-                            ),
-                          if (onReply != null)
-                            PopupMenuItem(
-                              value: 'reply',
-                              child: Text(context.tr('Reply')),
-                            ),
-                          if (onPin != null)
-                            PopupMenuItem(
-                              value: 'pin',
-                              child: Text(
-                                context.tr(
-                                  message.pinnedAt == null
-                                      ? 'Pin message'
-                                      : 'Unpin message',
-                                ),
-                              ),
-                            ),
-                        ],
-                        child: Padding(
-                          padding: const EdgeInsets.all(5),
-                          child: Icon(
-                            Icons.more_horiz,
-                            size: 18,
-                            color: foreground,
-                          ),
-                        ),
-                      ),
                     if (mine) ...[
                       const SizedBox(width: 5),
                       MessageDeliveryStatus(readByAll: readByAll),
@@ -179,35 +147,75 @@ class ChatMessageBubble extends StatelessWidget {
         alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: (constraints.maxWidth * .82).clamp(0, 560),
+            maxWidth: (constraints.maxWidth * .88).clamp(0, 560),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (!mine && showSender) ...[
-                CircleAvatar(
-                  radius: 15,
-                  backgroundImage: message.sender.avatarUrl == null
-                      ? null
-                      : NetworkImage(message.sender.avatarUrl!),
-                  child: message.sender.avatarUrl == null
-                      ? Text(
-                          chatScreenNameInitials(message.sender.displayName),
-                          style: Theme.of(context).textTheme.labelSmall,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 7),
-              ],
               Flexible(
                 child: GestureDetector(
-                  onLongPress: onReact == null ? null : () => _react(context),
+                  onLongPress: () => _actions(context),
                   child: bubble,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _actions(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (c) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(title: Text(c.tr('Message actions'))),
+            if (onReact != null)
+              ListTile(
+                leading: const Icon(Icons.add_reaction_outlined),
+                title: Text(c.tr('React to message')),
+                onTap: () {
+                  Navigator.pop(c);
+                  _react(context);
+                },
+              ),
+            if (onReply != null)
+              ListTile(
+                leading: const Icon(Icons.reply),
+                title: Text(c.tr('Reply')),
+                onTap: () {
+                  Navigator.pop(c);
+                  onReply!();
+                },
+              ),
+            if (message.text?.isNotEmpty == true)
+              ListTile(
+                leading: const Icon(Icons.copy),
+                title: Text(c.tr('Copy text')),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: message.text!));
+                  Navigator.pop(c);
+                },
+              ),
+            if (onPin != null)
+              ListTile(
+                leading: const Icon(Icons.push_pin_outlined),
+                title: Text(
+                  c.tr(
+                    message.pinnedAt == null ? 'Pin message' : 'Unpin message',
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(c);
+                  onPin!();
+                },
+              ),
+          ],
         ),
       ),
     );
@@ -224,7 +232,7 @@ class ChatMessageBubble extends StatelessWidget {
   }
 
   Widget _content(BuildContext context) => switch (message.type) {
-    'TEXT' => SelectableText(message.text ?? ''),
+    'TEXT' => Text(message.text ?? ''),
     'DOCUMENT' => ChatDocumentMessage(
       message: message,
       repository: repository,

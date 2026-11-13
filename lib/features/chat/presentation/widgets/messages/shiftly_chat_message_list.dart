@@ -21,6 +21,7 @@ class ShiftlyChatMessageList extends StatefulWidget {
     required this.messageBuilder,
     this.trailingMessages = const [],
     this.bottomPadding = 12,
+    this.focusMessageId,
     super.key,
   });
 
@@ -36,6 +37,7 @@ class ShiftlyChatMessageList extends StatefulWidget {
   messageBuilder;
   final List<Widget> trailingMessages;
   final double bottomPadding;
+  final String? focusMessageId;
 
   @override
   State<ShiftlyChatMessageList> createState() => _ShiftlyChatMessageListState();
@@ -73,6 +75,11 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
   @override
   void didUpdateWidget(covariant ShiftlyChatMessageList oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.focusMessageId != null &&
+        widget.focusMessageId != oldWidget.focusMessageId) {
+      _afterLayout(() => _focusMessage(widget.focusMessageId!));
+      return;
+    }
     final firstLoad =
         !_initialPositioned && !widget.loading && widget.messages.isNotEmpty;
     final appended =
@@ -111,6 +118,39 @@ class _ShiftlyChatMessageListState extends State<ShiftlyChatMessageList>
         });
       }
       setState(() => _showNewMessages = true);
+    }
+  }
+
+  Future<void> _focusMessage(String id) async {
+    _programmaticScroll = true;
+    try {
+      for (var step = 0; step <= widget.messages.length && mounted; step++) {
+        if (widget.focusMessageId != id || !_scroll.hasClients) return;
+        final target = _messageKeys[id]?.currentContext;
+        if (target != null && target.mounted) {
+          await Scrollable.ensureVisible(
+            target,
+            alignment: .45,
+            duration: const Duration(milliseconds: 180),
+          );
+          return;
+        }
+        final targetIndex = widget.messages.indexWhere((m) => m.id == id);
+        if (targetIndex < 0) return;
+        final visible = widget.messages.indexWhere(
+          (m) => _messageKeys[m.id]?.currentContext != null,
+        );
+        final direction = visible < 0 || targetIndex < visible ? 1 : -1;
+        final next =
+            (_scroll.offset +
+                    direction * _scroll.position.viewportDimension * .75)
+                .clamp(0.0, _scroll.position.maxScrollExtent);
+        if (next == _scroll.offset) return;
+        _scroll.jumpTo(next);
+        await WidgetsBinding.instance.endOfFrame;
+      }
+    } finally {
+      if (mounted) _programmaticScroll = false;
     }
   }
 

@@ -279,6 +279,7 @@ class ApiChatRepository extends ChatRepository {
     required String type,
     required String uploadId,
     required String clientMessageId,
+    String? caption,
   }) => _request(() async {
     if (!const ['IMAGE', 'VOICE', 'DOCUMENT'].contains(type) ||
         chatOptionalUuid(uploadId) == null ||
@@ -293,6 +294,7 @@ class ApiChatRepository extends ChatRepository {
             'type': type,
             'uploadId': uploadId,
             'clientMessageId': clientMessageId,
+            if (caption?.trim().isNotEmpty == true) 'caption': caption!.trim(),
           },
         )).data,
         'message',

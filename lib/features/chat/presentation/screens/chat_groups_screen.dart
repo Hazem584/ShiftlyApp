@@ -5,13 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
+import 'package:shiftly/core/theme/collaboration_appearance.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/chat/domain/usecases/load_active_chat_members.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/create_chat_group_dialog.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_screen.dart';
-import 'package:shiftly/features/chat/presentation/widgets/chat_cache_settings_tile.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_group_tile.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_message_state.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
@@ -27,15 +27,26 @@ class _ChatGroupsScreenState extends State<ChatGroupsScreen> {
   bool _archived = false;
   @override
   Widget build(BuildContext context) =>
+      CollaborationAppearance(child: Builder(builder: _build));
+  Widget _build(BuildContext context) =>
       BlocBuilder<ChatGroupsCubit, ChatGroupsState>(
         builder: (context, state) {
           final cubit = context.read<ChatGroupsCubit>();
           final manager = cubit.scope?.isManager == true;
           final content = _body(context, state);
-          if (widget.embedded) return content;
+
           return Scaffold(
             appBar: AppBar(
-              title: Text(context.tr('Chat')),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(context.tr('Groups')),
+                  Text(
+                    cubit.scope?.workspaceName ?? context.tr('Chat'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
               actions: [
                 IconButton(
                   tooltip: context.tr('Refresh chat'),
@@ -46,15 +57,20 @@ class _ChatGroupsScreenState extends State<ChatGroupsScreen> {
                 ),
               ],
             ),
-            floatingActionButton: manager
-                ? FloatingActionButton.extended(
-                    heroTag: 'chat-create-group',
-                    key: const Key('create-chat-group'),
-                    onPressed: state.mutating
-                        ? null
-                        : () => _showCreate(context),
-                    icon: const Icon(Icons.add_comment_outlined),
-                    label: Text(context.tr('New group')),
+            bottomNavigationBar: manager
+                ? SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+                      child: FilledButton.icon(
+                        key: const Key('create-chat-group'),
+                        onPressed: state.mutating
+                            ? null
+                            : () => _showCreate(context),
+                        icon: const Icon(Icons.add_comment_outlined),
+                        label: Text(context.tr('Create group')),
+                      ),
+                    ),
                   )
                 : null,
             body: content,
@@ -82,12 +98,12 @@ class _ChatGroupsScreenState extends State<ChatGroupsScreen> {
               ButtonSegment(
                 value: false,
                 icon: const Icon(Icons.chat_bubble_outline),
-                label: Text(context.tr('Active chats')),
+                label: Text(context.tr('Active')),
               ),
               ButtonSegment(
                 value: true,
                 icon: const Icon(Icons.archive_outlined),
-                label: Text(context.tr('Archived chats')),
+                label: Text(context.tr('Archived')),
               ),
             ],
             selected: {_archived},
@@ -95,8 +111,6 @@ class _ChatGroupsScreenState extends State<ChatGroupsScreen> {
                 setState(() => _archived = selection.single),
           ),
         ),
-        if (context.read<ChatGroupsCubit>().mediaCache != null)
-          const ChatCacheSettingsTile(),
         if (state.failure != null)
           MaterialBanner(
             content: Text(context.tr(state.failure!.message)),

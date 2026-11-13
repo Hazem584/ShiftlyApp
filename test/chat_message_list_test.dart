@@ -22,6 +22,7 @@ ChatMessage _message(int index, {bool mine = false}) => ChatMessage(
 Widget _app(
   List<ChatMessage> messages, {
   bool hasMore = false,
+  String? focusMessageId,
   Future<void> Function()? onLoadOlder,
 }) => MaterialApp(
   home: MediaQuery(
@@ -32,6 +33,7 @@ Widget _app(
     child: Scaffold(
       body: ShiftlyChatMessageList(
         messages: messages,
+        focusMessageId: focusMessageId,
         currentMembershipId: 'mine',
         loading: false,
         failureMessage: null,
@@ -55,6 +57,43 @@ Widget _app(
 );
 
 void main() {
+  testWidgets(
+    'a search result scrolls to an older lazy message without fetching',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final messages = [for (var i = 0; i < 100; i++) _message(i)];
+      var loads = 0;
+      await tester.pumpWidget(
+        _app(
+          messages,
+          hasMore: true,
+          onLoadOlder: () async {
+            loads++;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Message 5'), findsNothing);
+      await tester.pumpWidget(
+        _app(
+          messages,
+          hasMore: true,
+          focusMessageId: messages[5].id,
+          onLoadOlder: () async {
+            loads++;
+          },
+        ),
+      );
+      for (var i = 0; i < 80; i++) {
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+      expect(find.text('Message 5').hitTestable(), findsOneWidget);
+      expect(loads, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('chronological list opens at newest without compact overflow', (
     tester,
   ) async {

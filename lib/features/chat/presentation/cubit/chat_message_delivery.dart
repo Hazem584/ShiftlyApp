@@ -181,6 +181,7 @@ class ChatMessageDelivery {
               type: operation.type,
               uploadId: operation.uploadId!,
               clientMessageId: operation.id,
+              caption: operation.text,
             ),
             current,
           ),

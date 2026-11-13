@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <color name="task_widget_canvas">#1C233A</color>
+    <color name="task_widget_ink">#F2F4FC</color>
+    <color name="task_widget_muted">#B2BDD4</color>
+    <color name="task_widget_accent">#B1A7FF</color>
+    <color name="task_widget_border">#303B57</color>
+</resources>

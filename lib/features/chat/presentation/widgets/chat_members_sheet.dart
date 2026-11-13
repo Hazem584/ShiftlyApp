@@ -6,12 +6,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
-import 'package:shiftly/core/widgets/app_form_dialog.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/usecases/load_active_chat_members.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubit.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
+import 'package:shiftly/features/chat/presentation/widgets/chat_form_page.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
 class ChatMembersSheet extends StatelessWidget {
@@ -19,76 +19,59 @@ class ChatMembersSheet extends StatelessWidget {
   final bool canManage;
 
   @override
-  Widget build(BuildContext context) =>
-      BlocBuilder<ChatGroupDetailsCubit, ChatGroupDetailsState>(
-        builder: (context, state) {
-          final group = state.group;
-          return SafeArea(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: MediaQuery.viewInsetsOf(context).bottom + 16,
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<ChatGroupDetailsCubit, ChatGroupDetailsState>(
+    builder: (context, state) {
+      final group = state.group;
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(context.tr('Group members')),
+          actions: [
+            if (canManage && group != null)
+              TextButton(
+                onPressed: state.mutating ? null : () => _add(context, group),
+                child: Text(context.tr('Add members')),
               ),
-              child: SizedBox(
-                height: MediaQuery.sizeOf(context).height * .65,
-                child: Column(
+          ],
+        ),
+        body: SafeArea(
+          top: false,
+          child: group == null
+              ? const AppContentLoading()
+              : ListView(
+                  padding: const EdgeInsets.all(24),
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            context.tr('Members'),
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ),
-                        if (canManage && group != null)
-                          IconButton(
-                            onPressed: () => _add(context, group),
-                            tooltip: context.tr('Add members'),
-                            icon: const Icon(Icons.person_add_alt_1),
-                          ),
-                      ],
-                    ),
                     if (state.mutating) const AppContentLoading(rows: 1),
-                    Expanded(
-                      child: group == null
-                          ? const AppContentLoading()
-                          : ListView.builder(
-                              itemCount: group.members.length,
-                              itemBuilder: (_, index) {
-                                final member = group.members[index];
-                                return ListTile(
-                                  leading: const CircleAvatar(
-                                    child: Icon(Icons.person_outline),
-                                  ),
-                                  title: Text(member.displayName),
-                                  subtitle: member.email == null
-                                      ? null
-                                      : Text(member.email!),
-                                  trailing: canManage
-                                      ? IconButton(
-                                          tooltip: context.tr('Remove member'),
-                                          onPressed: state.mutating
-                                              ? null
-                                              : () => _remove(context, member),
-                                          icon: const Icon(
-                                            Icons.remove_circle_outline,
-                                          ),
-                                        )
-                                      : null,
-                                );
-                              },
+                    for (final member in group.members)
+                      Card(
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            child: Text(
+                              member.displayName.characters.take(1).toString(),
                             ),
-                    ),
+                          ),
+                          title: Text(member.displayName),
+                          subtitle: member.email == null
+                              ? null
+                              : Text(member.email!),
+                          trailing: canManage
+                              ? IconButton(
+                                  tooltip: context.tr('Remove member'),
+                                  onPressed: state.mutating
+                                      ? null
+                                      : () => _remove(context, member),
+                                  icon: const Icon(Icons.remove_circle_outline),
+                                )
+                              : null,
+                        ),
+                      ),
                   ],
                 ),
-              ),
-            ),
-          );
-        },
+        ),
       );
+    },
+  );
 
   Future<void> _remove(BuildContext context, ChatMember member) async {
     final confirmed = await ShiftlyChatDialog.confirm(
@@ -131,11 +114,12 @@ class ChatMembersSheet extends StatelessWidget {
     final selected = <String>{};
     var submitting = false;
     String? failure;
+    var query = "";
     final details = context.read<ChatGroupDetailsCubit>();
     await ShiftlyChatDialog.showBody<void>(
       context,
       body: StatefulBuilder(
-        builder: (dialogContext, setState) => AppFormDialog(
+        builder: (dialogContext, setState) => ChatFormPage(
           title: context.tr('Add members'),
           subtitle: context.tr('Choose the people you want to include.'),
           icon: Icons.person_add_alt_1_outlined,
@@ -156,7 +140,16 @@ class ChatMembersSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-                Flexible(
+                TextField(
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: context.tr('Search members'),
+                  ),
+                  onChanged: (value) =>
+                      setState(() => query = value.trim().toLowerCase()),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
                   child: choices.isEmpty
                       ? Text(
                           context.tr(
@@ -166,7 +159,10 @@ class ChatMembersSheet extends StatelessWidget {
                       : ListView(
                           shrinkWrap: true,
                           children: [
-                            for (final employee in choices)
+                            for (final employee in choices.where(
+                              (e) =>
+                                  e.displayName.toLowerCase().contains(query),
+                            ))
                               CheckboxListTile(
                                 value: selected.contains(employee.id),
                                 title: Text(employee.displayName),

@@ -185,7 +185,13 @@ class EmployeeDesign extends ThemeExtension<EmployeeDesign> {
         backgroundColor: surface,
         selectedColor: selected,
         side: BorderSide.none,
-        labelStyle: TextStyle(color: ink),
+        labelStyle: TextStyle(
+          color: primary,
+          fontFamily: arabic ? 'Cairo' : 'InterTight',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        showCheckmark: false,
         shape: const StadiumBorder(),
       ),
     );

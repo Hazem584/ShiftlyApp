@@ -19,7 +19,7 @@ class ChatDateSeparator extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 10),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(99),
         ),
         child: Text(text, style: Theme.of(context).textTheme.labelSmall),

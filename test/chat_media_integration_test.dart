@@ -775,6 +775,7 @@ class _MediaRepository extends ChatRepository {
     required String type,
     required String uploadId,
     required String clientMessageId,
+    String? caption,
   }) async {
     clientIds.add(clientMessageId);
     finalizedTypes.add(type);

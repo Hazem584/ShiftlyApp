@@ -28,7 +28,15 @@ class ChatGroupTile extends StatelessWidget {
       leading: CircleAvatar(
         backgroundColor: AppPalette.of(context).selected,
         foregroundColor: AppPalette.of(context).primaryColor,
-        child: Text(group.name.characters.first.toUpperCase()),
+        child: Text(
+          group.name
+              .trim()
+              .split(RegExp(r'\s+'))
+              .where((w) => w.isNotEmpty)
+              .take(2)
+              .map((w) => w.characters.first.toUpperCase())
+              .join(),
+        ),
       ),
       title: Row(
         children: [
@@ -60,7 +68,7 @@ class ChatGroupTile extends StatelessWidget {
                               : group.lastMessage!.type,
                         )
                       : group.lastMessage!.type.toLowerCase()),
-              maxLines: narrow ? 1 : 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           Text(

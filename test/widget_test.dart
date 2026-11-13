@@ -51,8 +51,8 @@ void main() {
     expect(find.text('Manager Profile'), findsOneWidget);
     await tester.tap(find.text('Chat').last);
     await tester.pumpAndSettle();
-    expect(find.text('Active chats'), findsOneWidget);
-    expect(find.text('Archived chats'), findsOneWidget);
+    expect(find.text('Active'), findsOneWidget);
+    expect(find.text('Archived'), findsOneWidget);
     expect(find.text('No active chats.'), findsOneWidget);
   });
 

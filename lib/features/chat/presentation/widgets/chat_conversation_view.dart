@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/theme/collaboration_appearance.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
@@ -16,12 +17,15 @@ import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubi
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/edit_chat_group_dialog.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_group_information_screen.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_recording_screen.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_members_sheet.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_message_bubble.dart';
 import 'package:shiftly/features/chat/presentation/widgets/messages/shiftly_chat_message_list.dart';
 import 'package:shiftly/features/chat/presentation/widgets/pending_media_bubble.dart';
 
 import '../controllers/chat_conversation_tools.dart';
+import 'chat_conversation_header.dart';
 import 'chat_message_composer.dart';
 import 'chat_reply_preview.dart';
 
@@ -48,6 +52,7 @@ class _ChatViewState extends State<ChatConversationView>
 
   bool _savingText = false;
   ChatMessage? _reply;
+  String? _focusMessageId;
 
   @override
   void initState() {
@@ -124,78 +129,23 @@ class _ChatViewState extends State<ChatConversationView>
             final manager =
                 context.read<ChatGroupsCubit>().scope?.isManager == true;
             return Scaffold(
-              appBar: AppBar(
-                titleSpacing: 0,
-                title: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Theme.of(context)
-                          .colorScheme
-                          .primaryContainer,
-                      child: Text(
-                        _initials(group?.name ?? context.tr('Chat')),
-                        style: Theme.of(context).textTheme.labelMedium,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            group?.name ?? context.tr('Chat'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (group != null)
-                            Text(
-                              group.isArchived
-                                  ? context.tr('{value1} members · Read only', {
-                                      'value1': (group.memberCount).toString(),
-                                    })
-                                  : context.tr('{value1} members', {
-                                      'value1': (group.memberCount).toString(),
-                                    }),
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  IconButton(
-                    tooltip: context.tr('Search conversation'),
-                    onPressed: () => _search(false),
-                    icon: const Icon(Icons.search),
-                  ),
-                  IconButton(
-                    tooltip: context.tr('Pinned messages'),
-                    onPressed: () => _search(true),
-                    icon: const Icon(Icons.push_pin_outlined),
-                  ),
-                  IconButton(
-                    tooltip: context.tr('Group members'),
-                    onPressed: group == null ? null : () => _showMembers(group),
-                    icon: const Icon(Icons.group_outlined),
-                  ),
-                  if (manager && group != null && !group.isArchived)
-                    PopupMenuButton<String>(
-                      onSelected: (value) =>
-                          value == 'edit' ? _edit(group) : _archive(group),
-                      itemBuilder: (_) => [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: Text(context.tr('Edit group')),
-                        ),
-                        PopupMenuItem(
-                          value: 'archive',
-                          child: Text(context.tr('Archive group')),
-                        ),
-                      ],
-                    ),
-                ],
+              appBar: ChatConversationHeader(
+                group: group,
+                manager: manager,
+                onInformation: () {
+                  if (group != null) _information(group);
+                },
+                onSearch: () => _search(false),
+                onPinned: () => _search(true),
+                onMembers: () {
+                  if (group != null) _showMembers(group);
+                },
+                onEdit: () {
+                  if (group != null) _edit(group);
+                },
+                onArchive: () {
+                  if (group != null) _archive(group);
+                },
               ),
               body: Column(
                 children: [
@@ -239,35 +189,42 @@ class _ChatViewState extends State<ChatConversationView>
                         onCancel: () => setState(() => _reply = null),
                       ),
                     ),
-                  ChatMessageComposer(
-                    disabled: group?.isArchived == true,
-                    loadingAccess: group == null,
-                    textController: _text,
-                    savingText: _savingText,
-                    mediaBusy: _media.mediaBusy,
-                    recording: _media.recording,
-                    hasPreparedMedia: _media.hasPreparedMedia,
-                    recordingLabel: _media.recordingLabel(),
-                    onTextChanged: () => setState(() {}),
-                    onSend: _send,
-                    onRetryPrepared: _media.retryPreparedMedia,
-                    onPickImage: _media.pickImage,
-                    onPickDocument: _media.pickDocument,
-                    onStartRecording: _media.startRecording,
-                    onShareLocation: _media.shareLocation,
-                    onFinishRecording: _media.finishRecording,
-                  ),
+                  if (group?.isArchived != true)
+                    ChatMessageComposer(
+                      disabled: group?.isArchived == true,
+                      loadingAccess: group == null,
+                      textController: _text,
+                      savingText: _savingText,
+                      mediaBusy: _media.mediaBusy,
+                      recording: _media.recording,
+                      hasPreparedMedia: _media.hasPreparedMedia,
+                      recordingLabel: _media.recordingLabel(),
+                      onTextChanged: () => setState(() {}),
+                      onSend: _send,
+                      onRetryPrepared: _media.retryPreparedMedia,
+                      onPickImage: _media.pickImage,
+                      onPickDocument: _media.pickDocument,
+                      onStartRecording: () async {
+                        await _media.startRecording();
+                        if (context.mounted && _media.recording) {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  ChatRecordingScreen(capture: _media),
+                            ),
+                          );
+                        }
+                      },
+                      onShareLocation: _media.shareLocation,
+                      onFinishRecording: _media.finishRecording,
+                    ),
                 ],
               ),
             );
           },
         ),
       );
-
-  String _initials(String value) {
-    final words = value.trim().split(RegExp(r'\s+'));
-    return words.take(2).map((word) => word[0].toUpperCase()).join();
-  }
 
   Widget _messages() =>
       BlocBuilder<ChatConversationCubit, ChatConversationState>(
@@ -301,6 +258,7 @@ class _ChatViewState extends State<ChatConversationView>
                     key: ValueKey(
                       '${scope.userId}:${scope.workspaceId}:${widget.groupId}',
                     ),
+                    focusMessageId: _focusMessageId,
                     messages: state.messages,
                     currentMembershipId: scope.membershipId,
                     loading: state.loading,
@@ -440,10 +398,25 @@ class _ChatViewState extends State<ChatConversationView>
       widget.groupId,
       pinned,
     );
-    if (mounted &&
-        message != null &&
-        context.read<ChatGroupDetailsCubit>().state.group?.isArchived != true) {
-      setState(() => _reply = message);
+    if (!mounted || message == null) return;
+    final found = await ChatConversationTools.loadMessage(
+      context.read<ChatConversationCubit>(),
+      message.id,
+    );
+    if (!mounted) return;
+    if (found) {
+      setState(() => _focusMessageId = null);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _focusMessageId = message.id);
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.tr('Could not open this message. Retry the search.'),
+          ),
+        ),
+      );
     }
   }
 
@@ -479,14 +452,46 @@ class _ChatViewState extends State<ChatConversationView>
     }
   }
 
+  Future<void> _information(ChatGroup group) async {
+    final details = context.read<ChatGroupDetailsCubit>();
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (infoContext) => ChatGroupInformationScreen(
+          details: details,
+          manager: context.read<ChatGroupsCubit>().scope?.isManager == true,
+          onMembers: () => _showMembers(details.state.group ?? group),
+          onSearch: () {
+            Navigator.pop(infoContext);
+            _search(false);
+          },
+          onPinned: () {
+            Navigator.pop(infoContext);
+            _search(true);
+          },
+          onEdit: () => _edit(details.state.group ?? group),
+          onArchive: () => _archive(details.state.group ?? group),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showMembers(ChatGroup group) async {
     final manager = context.read<ChatGroupsCubit>().scope?.isManager == true;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => BlocProvider.value(
-        value: context.read<ChatGroupDetailsCubit>(),
-        child: ChatMembersSheet(canManage: manager && !group.isArchived),
+    final details = context.read<ChatGroupDetailsCubit>(),
+        groups = context.read<ChatGroupsCubit>();
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: details),
+            BlocProvider.value(value: groups),
+          ],
+          child: CollaborationAppearance(
+            child: ChatMembersSheet(canManage: manager && !group.isArchived),
+          ),
+        ),
       ),
     );
   }

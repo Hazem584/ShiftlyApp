@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/theme/collaboration_appearance.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
@@ -85,7 +86,9 @@ class ChatScreen extends StatelessWidget {
                   .syncInboxGroup(state.group),
             ),
           ],
-          child: ChatConversationView(groupId: groupId),
+          child: CollaborationAppearance(
+            child: ChatConversationView(groupId: groupId),
+          ),
         ),
       ),
     );

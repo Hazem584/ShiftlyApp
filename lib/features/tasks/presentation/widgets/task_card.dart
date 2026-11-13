@@ -20,136 +20,93 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final color = task.completed
-        ? colors.primary
-        : task.overdue
-        ? colors.error
-        : colors.tertiary;
-    final locale = Localizations.localeOf(context).languageCode;
-    final date = DateFormat.yMMMd(locale)
-        .add_jm()
-        .format(task.nextDueAt(DateTime.now()).toLocal());
+    final locale = Localizations.localeOf(context).toString();
+    final date = task.nextDueAt(DateTime.now()).toLocal();
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: busy ? null : onOpen,
-        child: Container(
-          decoration: BoxDecoration(
-            border: BorderDirectional(
-              start: BorderSide(color: color, width: 3),
-            ),
-          ),
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Checkbox(
-                    value: task.completed,
-                    onChanged: busy ? null : (_) => onToggle(),
-                    semanticLabel: context.tr(
-                      task.completed ? 'Reopen task' : 'Complete task',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Text(
-                        task.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              decoration: task.completed
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
+        onLongPress: busy
+            ? null
+            : () => showModalBottomSheet<void>(
+                context: context,
+                showDragHandle: true,
+                builder: (c) => SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        title: Text(context.tr('Task details')),
+                        onTap: () {
+                          Navigator.pop(c);
+                          onOpen();
+                        },
                       ),
-                    ),
-                  ),
-                  PopupMenuButton<String>(
-                    enabled: !busy,
-                    tooltip: context.tr('Task actions'),
-                    onSelected: (value) =>
-                        value == 'delete' ? onDelete() : onOpen(),
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Text(context.tr('Edit task')),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(context.tr('Delete task')),
+                      ListTile(
+                        title: Text(context.tr('Delete task')),
+                        leading: Icon(
+                          Icons.delete_outline,
+                          color: colors.error,
+                        ),
+                        onTap: () {
+                          Navigator.pop(c);
+                          onDelete();
+                        },
                       ),
                     ],
                   ),
-                ],
-              ),
-              if (task.description.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(
-                    start: 8,
-                    top: 6,
-                    bottom: 8,
-                  ),
-                  child: Text(
-                    task.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: colors.onSurfaceVariant,
-                      height: 1.5,
-                    ),
-                  ),
                 ),
-              const SizedBox(height: 8),
-              TaskCountdown(task: task),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Icon(
-                    task.completed ? Icons.task_alt : Icons.schedule_rounded,
-                    size: 17,
-                    color: color,
+              ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 16, 20, 16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 36,
+                height: 32,
+                child: Checkbox(
+                  value: task.completed,
+                  onChanged: busy ? null : (_) => onToggle(),
+                  semanticLabel: context.tr(
+                    task.completed ? 'Reopen task' : 'Complete task',
                   ),
-                  Text(
-                    date,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(7),
                   ),
-                  if (task.durationMinutes != null)
+                  side: BorderSide(color: colors.outlineVariant),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      context.tr('{minutes} min', {
-                        'minutes': '${task.durationMinutes}',
-                      }),
-                      style: TextStyle(
-                        color: colors.onSurfaceVariant,
-                        fontSize: 12,
+                      task.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        decoration: task.completed
+                            ? TextDecoration.lineThrough
+                            : null,
                       ),
                     ),
-                  if (task.additionalDueAts.isNotEmpty)
+                    const SizedBox(height: 6),
                     Text(
-                      context.tr('{count} alarm times', {
-                        'count': '${task.scheduledDates.length}',
-                      }),
-                      style: TextStyle(color: colors.primary, fontSize: 12),
+                      '${DateFormat.MMMd(locale).format(date)} · ${DateFormat.Hm(locale).format(date)}${task.durationMinutes == null ? '' : ' · ${task.durationMinutes} ${context.tr('min')}'}',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
-                  if (task.overdue)
-                    Text(
-                      context.tr('Overdue'),
-                      style: TextStyle(color: color, fontSize: 12),
-                    ),
-                ],
+                    const SizedBox(height: 6),
+                    if (!task.completed)
+                      TaskCountdown(task: task, compact: true)
+                    else
+                      Text(
+                        context.tr('Completed'),
+                        style: TextStyle(color: colors.primary, fontSize: 13),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),

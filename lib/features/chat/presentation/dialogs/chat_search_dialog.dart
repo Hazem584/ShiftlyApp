@@ -5,6 +5,7 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/chat/presentation/widgets/chat_form_page.dart';
 import 'package:shiftly/features/chat/presentation/widgets/chat_reply_preview.dart';
 
 class ChatSearchDialog extends StatefulWidget {
@@ -79,9 +80,9 @@ class _ChatSearchDialogState extends State<ChatSearchDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(
-      context.tr(widget.pinned ? 'Pinned messages' : 'Search conversation'),
+  Widget build(BuildContext context) => ChatFormPage(
+    title: context.tr(
+      widget.pinned ? 'Pinned messages' : 'Search conversation',
     ),
     content: SizedBox(
       width: 620,
@@ -121,6 +122,7 @@ class _ChatSearchDialogState extends State<ChatSearchDialog> {
                   ),
                 for (final message in _messages)
                   ListTile(
+                    onTap: () => Navigator.pop(context, message),
                     title: Text(message.sender.displayName),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,9 +138,9 @@ class _ChatSearchDialogState extends State<ChatSearchDialog> {
                       ],
                     ),
                     trailing: IconButton(
-                      tooltip: context.tr('Reply'),
+                      tooltip: context.tr('Open message'),
                       onPressed: () => Navigator.pop(context, message),
-                      icon: const Icon(Icons.reply),
+                      icon: const Icon(Icons.arrow_forward),
                     ),
                   ),
                 if (_hasMore)

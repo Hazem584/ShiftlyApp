@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/widgets/app_form_dialog.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
+import 'package:shiftly/features/chat/presentation/widgets/chat_form_page.dart';
 
 class EditChatGroupDialog extends StatefulWidget {
   const EditChatGroupDialog({
@@ -55,7 +55,7 @@ class _EditChatGroupDialogState extends State<EditChatGroupDialog> {
     buildWhen: (before, after) => before.mutating != after.mutating,
     builder: (context, groupState) {
       final submitting = groupState.mutating;
-      return AppFormDialog(
+      return ChatFormPage(
         title: context.tr('Edit group'),
         subtitle: context.tr('Update the name and description your team sees.'),
         icon: Icons.edit_outlined,

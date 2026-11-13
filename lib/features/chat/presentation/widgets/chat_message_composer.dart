@@ -102,44 +102,87 @@ class ChatMessageComposer extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
+                        color: colors.surface,
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Row(
                         children: [
-                          PopupMenuButton<int>(
+                          IconButton(
                             tooltip: context.tr('Attach'),
-                            enabled: !effectiveDisabled && !mediaBusy,
-                            onSelected: (value) {
-                              if (value == 3 && onPickDocument != null) {
-                                unawaited(onPickDocument!());
-                              }
-                              if (value == 0) unawaited(onPickImage());
-                              if (value == 1) unawaited(onStartRecording());
-                              if (value == 2) unawaited(onShareLocation());
-                            },
-                            itemBuilder: (_) => [
-                              if (onPickDocument != null)
-                                PopupMenuItem(
-                                  value: 3,
-                                  child: Text(context.tr('Document')),
-                                ),
-                              PopupMenuItem(
-                                value: 0,
-                                child: Text(context.tr('Image')),
-                              ),
-                              PopupMenuItem(
-                                value: 1,
-                                child: Text(context.tr('Voice')),
-                              ),
-                              PopupMenuItem(
-                                value: 2,
-                                child: Text(context.tr('Location')),
-                              ),
-                            ],
-                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: effectiveDisabled || mediaBusy
+                                ? null
+                                : () async {
+                                    final choice = await showModalBottomSheet<int>(
+                                      context: context,
+                                      showDragHandle: true,
+                                      builder: (c) => SafeArea(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            ListTile(
+                                              title: Text(
+                                                c.tr('Share with the group'),
+                                              ),
+                                              subtitle: Text(
+                                                c.tr('Choose an attachment.'),
+                                              ),
+                                            ),
+                                            for (final (
+                                                  value,
+                                                  label,
+                                                  subtitle,
+                                                  icon,
+                                                )
+                                                in [
+                                                  (
+                                                    0,
+                                                    'Photos',
+                                                    'Choose an image',
+                                                    Icons.image_outlined,
+                                                  ),
+                                                  (
+                                                    1,
+                                                    'Voice message',
+                                                    'Record audio',
+                                                    Icons.mic_none,
+                                                  ),
+                                                  (
+                                                    2,
+                                                    'Location',
+                                                    'Share a location',
+                                                    Icons.location_on_outlined,
+                                                  ),
+                                                  if (onPickDocument != null)
+                                                    (
+                                                      3,
+                                                      'Document',
+                                                      'PDF, Excel, CSV or text',
+                                                      Icons
+                                                          .description_outlined,
+                                                    ),
+                                                ])
+                                              ListTile(
+                                                leading: Icon(icon),
+                                                title: Text(c.tr(label)),
+                                                subtitle: Text(c.tr(subtitle)),
+                                                onTap: () =>
+                                                    Navigator.pop(c, value),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                    if (!context.mounted || choice == null) {
+                                      return;
+                                    }
+                                    if (choice == 0) await onPickImage();
+                                    if (choice == 1) await onStartRecording();
+                                    if (choice == 2) await onShareLocation();
+                                    if (choice == 3 && onPickDocument != null) {
+                                      await onPickDocument!();
+                                    }
+                                  },
+                            icon: Icon(Icons.add, color: colors.primary),
                           ),
                           Expanded(
                             child: ChatComposerInput(
@@ -153,7 +196,7 @@ class ChatMessageComposer extends StatelessWidget {
                                   ? 'Loading conversation…'
                                   : disabled
                                   ? 'This group is read only'
-                                  : 'Message',
+                                  : 'Message the group',
                               onChanged: onTextChanged,
                               onSend: onSend,
                             ),
@@ -164,7 +207,10 @@ class ChatMessageComposer extends StatelessWidget {
                             onPressed: effectiveDisabled || mediaBusy
                                 ? null
                                 : onStartRecording,
-                            icon: const Icon(Icons.mic_none_rounded),
+                            icon: Icon(
+                              Icons.mic_none_rounded,
+                              color: colors.primary,
+                            ),
                           ),
                           IconButton.filled(
                             key: const Key('send-chat-message'),
@@ -197,7 +243,7 @@ class ChatMessageComposer extends StatelessWidget {
                           FilledButton.icon(
                             onPressed: () => onFinishRecording(send: true),
                             icon: const Icon(Icons.send),
-                            label: Text(context.tr('Send')),
+                            label: Text(context.tr('Finish recording')),
                           ),
                         ],
                       ),

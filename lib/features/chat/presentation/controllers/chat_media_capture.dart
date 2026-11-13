@@ -15,6 +15,7 @@ import 'package:shiftly/features/chat/domain/services/chat_document_validation.d
 import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
 import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
+import 'package:shiftly/features/chat/presentation/screens/chat_media_review_screen.dart';
 
 class ChatMediaCapture extends ChangeNotifier {
   ChatMediaCapture(this.context) {
@@ -35,6 +36,7 @@ class ChatMediaCapture extends ChangeNotifier {
   bool _mediaBusy = false;
   bool _disposed = false;
   Uint8List? _preparedImage;
+  String? _preparedCaption;
   String? _preparedVoicePath;
   int? _preparedVoiceDuration;
   String? _recordPath;
@@ -50,6 +52,7 @@ class ChatMediaCapture extends ChangeNotifier {
 
   void clearPreparedMedia() {
     _preparedImage = null;
+    _preparedCaption = null;
     if (_preparedVoicePath case final path?) {
       unawaited(
         ChatLocalFile(path)
@@ -81,6 +84,8 @@ class ChatMediaCapture extends ChangeNotifier {
 
   Future<void> pickImage() async {
     if (_mediaBusy) return;
+    final conversation = context.read<ChatConversationCubit>();
+    final generation = conversation.generation;
     _update(() => _mediaBusy = true);
     try {
       final selected = await _picker.pickImage(source: ImageSource.gallery);
@@ -103,8 +108,29 @@ class ChatMediaCapture extends ChangeNotifier {
         return;
       }
       if ((context.mounted && !_disposed)) {
+        final decision = await Navigator.push<ChatMediaDecision>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatMediaReviewScreen(kind: 'IMAGE', bytes: bytes),
+          ),
+        );
+        if (!context.mounted ||
+            _disposed ||
+            conversation.generation != generation ||
+            decision == null) {
+          return;
+        }
+        if (decision.reselect) {
+          _update(() => _mediaBusy = false);
+          await pickImage();
+          return;
+        }
         _preparedImage = bytes;
-        final id = await context.read<ChatConversationCubit>().sendImage(bytes);
+        _preparedCaption = decision.caption;
+        final id = await conversation.sendImage(
+          bytes,
+          caption: decision.caption,
+        );
         if (id != null) _preparedImage = null;
       }
     } catch (_) {
@@ -155,6 +181,27 @@ class ChatMediaCapture extends ChangeNotifier {
       }
       if (!ChatDocumentValidation.valid(bytes, file.name)) {
         throw const FormatException('Invalid document');
+      }
+      final decision = await Navigator.push<ChatMediaDecision>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatMediaReviewScreen(
+            kind: 'DOCUMENT',
+            bytes: bytes,
+            fileName: file.name,
+          ),
+        ),
+      );
+      if (!context.mounted ||
+          _disposed ||
+          conversation.generation != generation ||
+          decision == null) {
+        return;
+      }
+      if (decision.reselect) {
+        _update(() => _mediaBusy = false);
+        await pickDocument();
+        return;
       }
       final id = await conversation.sendDocument(bytes, file.name);
       if (id == null) throw StateError('Document not saved');
@@ -214,6 +261,8 @@ class ChatMediaCapture extends ChangeNotifier {
 
   Future<void> finishRecording({required bool send}) async {
     if (!_recording) return;
+    final conversation = context.read<ChatConversationCubit>();
+    final generation = conversation.generation;
     if (!send) {
       final discard = await ShiftlyChatDialog.confirm(
         context,
@@ -253,6 +302,22 @@ class ChatMediaCapture extends ChangeNotifier {
         return;
       }
       if ((context.mounted && !_disposed)) {
+        final decision = await Navigator.push<ChatMediaDecision>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatMediaReviewScreen(
+              kind: 'VOICE',
+              voicePath: path,
+              durationMs: duration,
+            ),
+          ),
+        );
+        if (!context.mounted ||
+            _disposed ||
+            conversation.generation != generation ||
+            decision == null) {
+          return;
+        }
         _preparedVoicePath = path;
         _preparedVoiceDuration = duration;
         final id = await context.read<ChatConversationCubit>().sendVoice(
@@ -310,7 +375,10 @@ class ChatMediaCapture extends ChangeNotifier {
     try {
       final conversation = context.read<ChatConversationCubit>();
       if (_preparedImage case final bytes?) {
-        if (await conversation.sendImage(bytes) != null) _preparedImage = null;
+        if (await conversation.sendImage(bytes, caption: _preparedCaption) !=
+            null) {
+          _preparedImage = null;
+        }
       }
       if (_preparedVoicePath case final path?) {
         final bytes = await ChatLocalFile(path).readAsBytes();
@@ -384,14 +452,26 @@ class ChatMediaCapture extends ChangeNotifier {
         longitude: _sixDecimals(position.longitude),
       );
       if (!location.isValid || !(context.mounted && !_disposed)) return;
-      final confirmed = await ShiftlyChatDialog.confirm(
+      final conversation = context.read<ChatConversationCubit>();
+      final generation = conversation.generation;
+      final decision = await Navigator.push<ChatMediaDecision>(
         context,
-        title: 'Share this location?',
-        message: 'Your current coordinates will be visible to this group.',
-        confirmText: 'Share',
+        MaterialPageRoute(
+          builder: (_) =>
+              ChatMediaReviewScreen(kind: 'LOCATION', location: location),
+        ),
       );
-      if (confirmed && (context.mounted && !_disposed)) {
-        await context.read<ChatConversationCubit>().sendLocation(location);
+      if (decision != null &&
+          context.mounted &&
+          !_disposed &&
+          conversation.generation == generation) {
+        await conversation.sendLocation(
+          ChatLocation(
+            latitude: location.latitude,
+            longitude: location.longitude,
+            label: decision.caption?.isEmpty == true ? null : decision.caption,
+          ),
+        );
       }
     } on TimeoutException {
       if (!(context.mounted && !_disposed)) return;

@@ -43,11 +43,17 @@ class ChatOutboxController {
     return true;
   }
 
-  Future<String?> sendImage(Uint8List bytes) async {
+  Future<String?> sendImage(Uint8List bytes, {String? caption}) async {
+    if ((caption?.trim().length ?? 0) > 1000) return null;
     final owned = Uint8List.fromList(bytes);
     final mime = ChatMediaValidation.imageMime(owned);
     if (mime == null) return null;
-    return _acceptMedia('IMAGE', owned, mime);
+    return _acceptMedia(
+      'IMAGE',
+      owned,
+      mime,
+      caption: caption?.trim().isEmpty == true ? null : caption?.trim(),
+    );
   }
 
   Future<String?> sendVoice({
@@ -84,6 +90,7 @@ class ChatOutboxController {
     String mime, {
     int? durationMs,
     String? fileName,
+    String? caption,
   }) async {
     final scope = host.cacheScope;
     final generation = host.generation;
@@ -100,6 +107,7 @@ class ChatOutboxController {
         sizeBytes: bytes.length,
         durationMs: durationMs,
         fileName: fileName,
+        text: caption,
       );
       if (generation != host.generation ||
           host.cacheScope?.key != scope.key ||

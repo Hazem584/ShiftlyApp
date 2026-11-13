@@ -119,16 +119,18 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.byType(FloatingActionButton));
+        await tester.tap(find.byKey(const Key('add-personal-task')));
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextFormField).first, 'Options');
+        await tester.tap(find.byKey(const Key('save-personal-task')));
+        await tester.pumpAndSettle();
         for (final entry in {
           'task-remind-day': day,
           'task-remind-hour': hour,
         }.entries) {
           final finder = find.byKey(Key(entry.key));
           await tester.ensureVisible(finder);
-          if (tester.widget<SwitchListTile>(finder).value != entry.value) {
+          if (tester.widget<CheckboxListTile>(finder).value != entry.value) {
             await tester.tap(finder);
             await tester.pumpAndSettle();
           }
@@ -217,6 +219,8 @@ void main() {
       ),
     );
     await tester.enterText(find.byType(TextFormField).first, 'Edited title');
+    await tester.tap(find.byKey(const Key('save-personal-task')));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Save task'));
     await tester.tap(find.text('Save task'));
     await tester.pumpAndSettle();
@@ -353,13 +357,16 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.byType(FloatingActionButton));
+        await tester.tap(find.byKey(const Key('add-personal-task')));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byType(TextFormField).first,
           locale == 'ar' ? 'مهمة تجريبية' : 'Test task',
         );
-        await tester.enterText(find.byType(TextFormField).last, 'Task details');
+        await tester.enterText(
+          find.byKey(const Key('task-description')),
+          'Task details',
+        );
         final timePicker = find.byKey(const Key('task-time-picker'));
         await tester.ensureVisible(timePicker);
         await tester.tap(timePicker);
@@ -370,6 +377,8 @@ void main() {
         expect(confirmTime, findsOneWidget);
         expect(tester.takeException(), isNull);
         await tester.tap(confirmTime);
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('save-personal-task')));
         await tester.pumpAndSettle();
         for (var i = 0; i < 2; i++) {
           final addWeek = find.byKey(const Key('add-task-week'));

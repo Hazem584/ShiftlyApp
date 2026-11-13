@@ -68,6 +68,7 @@ abstract class ChatRepository {
     required String type,
     required String uploadId,
     required String clientMessageId,
+    String? caption,
   }) => throw UnsupportedError('Chat media is unavailable');
   Future<void> cancelUpload(
     String workspaceId,

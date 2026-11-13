@@ -502,6 +502,7 @@ void main() {
     final operation = ChatOutboxOperation(
       id: '77777777-7777-4777-8777-777777777777',
       type: 'IMAGE',
+      text: 'Shelf layout',
       createdAt: DateTime.now().toUtc(),
       file: file,
       mimeType: 'image/jpeg',
@@ -523,6 +524,7 @@ void main() {
     expect(repository.finalizeCalls, 0);
     await cubit.retryMedia(operation.id);
     expect(repository.finalizeCalls, 1);
+    expect(repository.captions, ['Shelf layout']);
     expect(repository.uploadCalls, 0);
     expect(repository.cancelCalls, 0);
     expect(cubit.state.pending, isEmpty);
@@ -965,6 +967,7 @@ class FixtureRepository extends ChatRepository {
       uploadCalls = 0,
       cancelCalls = 0;
   int listCalls = 0;
+  final captions = <String?>[];
   @override
   Future<ChatMessagePage> listMessages(
     String workspaceId,
@@ -1034,8 +1037,10 @@ class FixtureRepository extends ChatRepository {
     required String type,
     required String uploadId,
     required String clientMessageId,
+    String? caption,
   }) async {
     finalizeCalls++;
+    captions.add(caption);
     return message(30, type: type, clientId: clientMessageId);
   }
 

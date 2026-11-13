@@ -1,15 +1,17 @@
 import 'package:day_night_time_picker/day_night_time_picker.dart'
     as clock_picker;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
+import 'package:shiftly/core/theme/collaboration_appearance.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_page.dart';
 
 import '../../application/tasks_cubit.dart';
 import '../../domain/personal_task.dart';
-import 'task_additional_times.dart';
+import '../task_actions.dart';
+import 'task_basics_fields.dart';
+import 'task_reminder_fields.dart';
 
 Future<void> showTaskEditor(BuildContext context, {PersonalTask? task}) =>
     showDialog<void>(
@@ -64,6 +66,7 @@ class _TaskEditorState extends State<TaskEditor> {
             initial.hour,
             initial.minute,
           );
+    _initialSignature = _signature;
   }
 
   @override
@@ -157,13 +160,14 @@ class _TaskEditorState extends State<TaskEditor> {
       title: _title.text,
       description: _description.text,
       dueAt: _dueAt,
-      durationMinutes: int.parse(_duration.text),
+      durationMinutes: int.tryParse(_duration.text),
       remindDayBefore: _remindDayBefore,
       remindHourBefore: _remindHourBefore,
       additionalDueAts: _additionalDueAts,
     );
     if (!mounted) return;
     if (success) {
+      setState(() => _allowPop = true);
       Navigator.of(context).pop();
       return;
     }
@@ -175,192 +179,138 @@ class _TaskEditorState extends State<TaskEditor> {
     });
   }
 
+  int _step = 0;
+  bool _allowPop = false;
+  late String _initialSignature;
+  String get _signature => [
+    _title.text,
+    _description.text,
+    _duration.text,
+    _dueAt.toIso8601String(),
+    _remindHourBefore,
+    _remindDayBefore,
+    ..._additionalDueAts.map((d) => d.toIso8601String()),
+  ].join('|');
+  Future<void> _back() async {
+    if (_saving) return;
+    if (_step == 1) {
+      setState(() => _step = 0);
+      return;
+    }
+    if (_signature != _initialSignature) {
+      final discard = await confirmTaskAction(
+        context,
+        title: 'Leave without saving?',
+        message: context.tr('Your changes to this task will be lost.'),
+        action: 'Discard changes',
+      );
+      if (!discard || !mounted) return;
+    }
+    setState(() => _allowPop = true);
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final locale = Localizations.localeOf(context).languageCode;
-    return BlocListener<TasksCubit, TasksState>(
-      listener: (context, state) {
-        if (context.read<TasksCubit>().scope != _scope) {
-          final route = ModalRoute.of(context);
-          if (route != null) Navigator.of(context).removeRoute(route);
-        }
-      },
-      child: PopScope(
-        canPop: !_saving,
-        child: Dialog(
-          insetPadding: const EdgeInsets.all(16),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 580),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _form,
+    return CollaborationAppearance(
+      child: BlocListener<TasksCubit, TasksState>(
+        listener: (context, state) {
+          if (context.read<TasksCubit>().scope != _scope) {
+            final route = ModalRoute.of(context);
+            if (route != null) Navigator.of(context).removeRoute(route);
+          }
+        },
+        child: PopScope(
+          canPop: _allowPop,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) _back();
+          },
+          child: Builder(
+            builder: (context) {
+              return EmployeePage(
+                title: _step == 1
+                    ? 'Dates and reminders'
+                    : widget.task == null
+                    ? 'Create task'
+                    : 'Edit task',
+                footer: FilledButton(
+                  key: const Key('save-personal-task'),
+                  onPressed: _saving
+                      ? null
+                      : _step == 1
+                      ? _save
+                      : () {
+                          if (_form.currentState!.validate()) {
+                            FocusScope.of(context).unfocus();
+                            setState(() => _step = 1);
+                          }
+                        },
+                  child: Text(
+                    context.tr(
+                      _saving
+                          ? 'Saving…'
+                          : _step == 0
+                          ? 'Continue to reminders'
+                          : 'Save task',
+                    ),
+                  ),
+                ),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.edit_calendar_rounded),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            context.tr(
-                              widget.task == null ? 'New task' : 'Edit task',
-                            ),
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _saving
-                              ? null
-                              : () => Navigator.pop(context),
-                          tooltip: context.tr('Close'),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _title,
-                      enabled: !_saving,
-                      autofocus: true,
-                      maxLength: 160,
-                      decoration: InputDecoration(
-                        labelText: context.tr('Task title'),
-                        prefixIcon: const Icon(Icons.title_rounded),
-                      ),
-                      validator: (value) => (value ?? '').trim().isEmpty
-                          ? context.tr('Enter a task title.')
-                          : null,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      key: const Key('task-duration'),
-                      controller: _duration,
-                      enabled: !_saving,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: InputDecoration(
-                        labelText: context.tr('Task duration in minutes'),
-                        prefixIcon: const Icon(Icons.timer_outlined),
-                      ),
-                      validator: (text) {
-                        final minutes = int.tryParse(text ?? '');
-                        return minutes == null || minutes < 1 || minutes > 10080
-                            ? context.tr(
-                                'Choose a duration from 1 to 10080 minutes.',
-                              )
-                            : null;
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [5, 15, 25, 45, 60]
-                          .map(
-                            (minutes) => ActionChip(
-                              label: Text(
-                                context.tr('{minutes} min', {
-                                  'minutes': '$minutes',
-                                }),
-                              ),
-                              onPressed: _saving
-                                  ? null
-                                  : () => _duration.text = '$minutes',
-                            ),
-                          )
-                          .toList(),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _description,
-                      enabled: !_saving,
-                      minLines: 4,
-                      maxLines: 8,
-                      maxLength: 5000,
-                      decoration: InputDecoration(
-                        labelText: context.tr('Task details'),
-                        alignLabelWithHint: true,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _saving ? null : _pickDate,
-                          icon: const Icon(Icons.event_outlined),
-                          label: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            child: Text(
-                              DateFormat.yMMMd(locale).format(_dueAt),
-                            ),
-                          ),
-                        ),
-                        OutlinedButton.icon(
-                          key: const Key('task-time-picker'),
-                          onPressed: _saving ? null : _pickTime,
-                          icon: const Icon(Icons.schedule_rounded),
-                          label: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            child: Text(DateFormat.jm(locale).format(_dueAt)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      context.tr('Time is shown in your device timezone.'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 12),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      key: const Key('task-remind-day'),
-                      value: _remindDayBefore,
-                      onChanged: _saving
-                          ? null
-                          : (value) => setState(() => _remindDayBefore = value),
-                      title: Text(context.tr('Remind me one day before')),
-                      subtitle: Text(
-                        context.tr('A notification 24 hours before the task.'),
-                      ),
-                    ),
-                    SwitchListTile.adaptive(
-                      key: const Key('task-remind-hour'),
-                      contentPadding: EdgeInsets.zero,
-                      value: _remindHourBefore,
-                      onChanged: _saving
-                          ? null
-                          : (value) =>
-                                setState(() => _remindHourBefore = value),
-                      title: Text(context.tr('Remind me one hour before')),
-                      subtitle: Text(
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+                      child: Text(
                         context.tr(
-                          'A notification 60 minutes before the task.',
+                          _step == 0
+                              ? 'Step 1 of 2 · Personal to you'
+                              : 'Step 2 of 2 · Device timezone',
                         ),
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    TaskAdditionalTimes(
-                      primary: _dueAt,
-                      dates: _additionalDueAts,
-                      enabled: !_saving,
-                      onChanged: (dates) =>
-                          setState(() => _additionalDueAts = dates),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      context.tr(
-                        'An alarm at the task time and when its duration ends.',
+                    Expanded(
+                      child: IndexedStack(
+                        index: _step,
+                        children: [
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Form(
+                              key: _form,
+                              child: TaskBasicsFields(
+                                title: _title,
+                                description: _description,
+                                duration: _duration,
+                                dueAt: _dueAt,
+                                busy: _saving,
+                                pickDate: _pickDate,
+                                pickTime: _pickTime,
+                              ),
+                            ),
+                          ),
+                          SingleChildScrollView(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: TaskReminderFields(
+                              dueAt: _dueAt,
+                              duration: int.tryParse(_duration.text),
+                              day: _remindDayBefore,
+                              hour: _remindHourBefore,
+                              dates: _additionalDueAts,
+                              busy: _saving,
+                              onDay: (v) =>
+                                  setState(() => _remindDayBefore = v),
+                              onHour: (v) =>
+                                  setState(() => _remindHourBefore = v),
+                              onDates: (v) =>
+                                  setState(() => _additionalDueAts = v),
+                            ),
+                          ),
+                        ],
                       ),
-                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                     if (_error != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.all(24),
                         child: Text(
                           _error!,
                           style: TextStyle(
@@ -368,22 +318,10 @@ class _TaskEditorState extends State<TaskEditor> {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: _saving ? null : _save,
-                      icon: _saving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.check_rounded),
-                      label: Text(context.tr('Save task')),
-                    ),
                   ],
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),

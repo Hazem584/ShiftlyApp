@@ -61,7 +61,10 @@ struct TaskProvider: TimelineProvider {
 struct TaskWidgetView: View {
     let entry: TaskEntry
     @Environment(\.widgetFamily) private var family
-    private let accent = Color(red: 0.28, green: 0.85, blue: 0.75)
+    @Environment(\.colorScheme) private var colorScheme
+    private var accent: Color { colorScheme == .dark ? Color(red: 0.69, green: 0.65, blue: 1) : Color(red: 0.26, green: 0.22, blue: 0.79) }
+    private var ink: Color { colorScheme == .dark ? Color(red: 0.95, green: 0.96, blue: 0.99) : Color(red: 0.09, green: 0.13, blue: 0.24) }
+    private var canvas: Color { colorScheme == .dark ? Color(red: 0.11, green: 0.14, blue: 0.23) : .white }
     private var arabic: Bool { Locale.current.languageCode == "ar" }
     private func url(_ task: TaskItem? = nil) -> URL {
         var parts = URLComponents()
@@ -75,24 +78,24 @@ struct TaskWidgetView: View {
     }
     var body: some View {
         if #available(iOSApplicationExtension 17.0, *) {
-            content.containerBackground(Color(red: 0.06, green: 0.11, blue: 0.13), for: .widget)
+            content.containerBackground(canvas, for: .widget)
         } else {
-            content.padding().background(Color(red: 0.06, green: 0.11, blue: 0.13))
+            content.padding().background(canvas)
         }
     }
     private var content: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("SHIFTLY").font(.caption2.bold()).foregroundColor(accent)
+            Text(arabic ? "مهام شيفتلي" : "Shiftly tasks").font(.caption2.bold()).foregroundColor(accent)
             if let snapshot = entry.snapshot {
                 Text(arabic ? "متبقي \(snapshot.total) مهمة" : "\(snapshot.total) tasks remaining")
-                    .font(.headline).foregroundColor(.white).lineLimit(1).minimumScaleFactor(0.75)
+                    .font(.headline).foregroundColor(ink).lineLimit(1).minimumScaleFactor(0.75)
                 if snapshot.tasks.isEmpty {
                     Text(arabic ? "خلصت كل مهامك!" : "All done!").foregroundColor(accent)
                 }
                 ForEach(Array(snapshot.tasks.prefix(family == .systemSmall ? 1 : 3))) { task in
                     Link(destination: url(task)) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(task.title).font(.subheadline.bold()).foregroundColor(.white).lineLimit(1)
+                            Text(task.title).font(.subheadline.bold()).foregroundColor(ink).lineLimit(1)
                             let now = entry.date.timeIntervalSince1970 * 1000
                             let due = task.nextDue(now)
                             let end = due + task.durationMs
@@ -114,7 +117,7 @@ struct TaskWidgetView: View {
                     Text(Date(timeIntervalSince1970: snapshot.updatedAt / 1000), style: .time)
                 }.font(.system(size: 9)).foregroundColor(.gray)
             } else {
-                Text(arabic ? "مهامك في لمحة" : "Your tasks, at a glance").font(.headline).foregroundColor(.white)
+                Text(arabic ? "مهامك في لمحة" : "Your tasks, at a glance").font(.headline).foregroundColor(ink)
                 Text(arabic ? "افتح شيفتلي لتحديث المهام" : "Open Shiftly to refresh tasks")
                     .font(.caption).foregroundColor(.gray)
             }

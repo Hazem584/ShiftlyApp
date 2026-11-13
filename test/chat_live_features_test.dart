@@ -114,6 +114,7 @@ class RepositoryFixture extends MockChatRepository {
     required String type,
     required String uploadId,
     required String clientMessageId,
+    String? caption,
   }) async {
     finalizes++;
     if (!sent.isCompleted) sent.complete();

@@ -74,16 +74,18 @@ class ChatComposerInput extends StatelessWidget {
         hintText: context.tr(hint),
         counterText: '',
         filled: true,
-        fillColor: Theme.of(context).colorScheme.surface,
+        fillColor: Theme.of(context).scaffoldBackgroundColor,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 12,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(26),
+          borderSide: BorderSide.none,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+          borderRadius: BorderRadius.circular(26),
+          borderSide: BorderSide.none,
         ),
       ),
       onChanged: (_) => onChanged(),

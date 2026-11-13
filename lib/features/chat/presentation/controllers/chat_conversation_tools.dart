@@ -28,6 +28,29 @@ abstract final class ChatConversationTools {
     );
   }
 
+  static Future<bool> loadMessage(
+    ChatConversationCubit conversation,
+    String id,
+  ) async {
+    final generation = conversation.generation;
+    for (var page = 0; page < 40; page++) {
+      if (conversation.isClosed ||
+          conversation.generation != generation ||
+          conversation.state.accessLost) {
+        return false;
+      }
+      if (conversation.state.messages.any((m) => m.id == id)) return true;
+      final state = conversation.state;
+      if (!state.hasMore || state.loadingOlder) return false;
+      await conversation.loadOlder();
+      if (conversation.state.messages.length == state.messages.length &&
+          conversation.state.nextCursor == state.nextCursor) {
+        return false;
+      }
+    }
+    return false;
+  }
+
   static Future<void> react(
     BuildContext context,
     String groupId,

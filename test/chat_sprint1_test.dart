@@ -21,6 +21,7 @@ import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_cubi
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
 import 'package:shiftly/features/chat/presentation/screens/chat_screen.dart';
+import 'package:shiftly/features/chat/presentation/widgets/chat_form_page.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 
 const _workspace = '11111111-1111-4111-8111-111111111111';
@@ -945,11 +946,11 @@ void main() {
       final requests = repository.groupLoadCount;
       expect(find.text('Operations'), findsOneWidget);
       expect(find.text('Archived fixture'), findsNothing);
-      await tester.tap(find.text('Archived chats'));
+      await tester.tap(find.text('Archived'));
       await tester.pumpAndSettle();
       expect(find.text('Operations'), findsNothing);
       expect(find.text('Archived fixture'), findsOneWidget);
-      await tester.tap(find.text('Active chats'));
+      await tester.tap(find.text('Active'));
       await tester.pumpAndSettle();
       expect(find.text('Operations'), findsOneWidget);
       expect(repository.groupLoadCount, requests);
@@ -1361,7 +1362,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('create-chat-group')));
         await tester.pumpAndSettle();
-        expect(find.byType(Dialog), findsOneWidget);
+        expect(find.byType(ChatFormPage), findsOneWidget);
         expect(find.byType(AlertDialog), findsNothing);
         expect(
           tester.getSize(find.byKey(const Key('create-group-name'))).width,
@@ -1731,12 +1732,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('read only'), findsWidgets);
-      expect(
-        tester
-            .widget<TextField>(find.byKey(const Key('chat-message-input')))
-            .enabled,
-        isFalse,
-      );
+      expect(find.byKey(const Key('chat-message-input')), findsNothing);
       expect(tester.takeException(), isNull);
       await groups.close();
     });
