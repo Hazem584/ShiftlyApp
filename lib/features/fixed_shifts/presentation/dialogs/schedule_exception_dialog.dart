@@ -7,6 +7,7 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/active_template_selector.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 import 'package:uuid/uuid.dart';
 
 class ScheduleExceptionDialog extends StatefulWidget {
@@ -96,7 +97,7 @@ class _ScheduleExceptionDialogState extends State<ScheduleExceptionDialog> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
-    child: AlertDialog(
+    child: ManagerDialog(
       title: Text(
         context.tr(
           widget.employeeMembershipId == null

@@ -9,6 +9,7 @@ import 'package:shiftly/features/fixed_shifts/domain/entities/schedule_exception
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/dialogs/schedule_exception_dialog.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class ScheduleExceptionsSection extends StatefulWidget {
   const ScheduleExceptionsSection({
@@ -145,7 +146,7 @@ class _ScheduleExceptionsSectionState extends State<ScheduleExceptionsSection> {
     final controller = TextEditingController();
     final reason = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => ManagerDialog(
         title: Text(context.tr('Cancel day exception?')),
         content: TextField(
           controller: controller,

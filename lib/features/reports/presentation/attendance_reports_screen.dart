@@ -34,7 +34,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.tr('Attendance reports'))),
+    appBar: AppBar(title: Text(context.tr('Attendance summary'))),
     body: BlocConsumer<AttendanceReportsCubit, AttendanceReportsState>(
       listenWhen: (before, after) =>
           before.range != null && after.range == null,

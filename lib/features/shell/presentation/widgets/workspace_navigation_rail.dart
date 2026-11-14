@@ -58,7 +58,7 @@ class WorkspaceNavigationRail extends StatelessWidget {
           NavigationRailDestination(
             icon: const Icon(Icons.home_outlined),
             selectedIcon: const Icon(Icons.home_rounded),
-            label: Text(context.tr(employee ? 'Overview' : 'Dashboard')),
+            label: Text(context.tr(employee ? 'Overview' : 'Home')),
           ),
           NavigationRailDestination(
             icon: Icon(
@@ -67,7 +67,7 @@ class WorkspaceNavigationRail extends StatelessWidget {
             selectedIcon: Icon(
               employee ? Icons.calendar_month_rounded : Icons.groups_rounded,
             ),
-            label: Text(context.tr(employee ? 'My Shifts' : 'Employees')),
+            label: Text(context.tr(employee ? 'My Shifts' : 'Team')),
           ),
           if (employee)
             NavigationRailDestination(
@@ -78,7 +78,7 @@ class WorkspaceNavigationRail extends StatelessWidget {
             NavigationRailDestination(
               icon: const Icon(Icons.work_outline_rounded),
               selectedIcon: const Icon(Icons.work_rounded),
-              label: Text(context.tr('Work management')),
+              label: Text(context.tr('Work')),
             ),
           NavigationRailDestination(
             icon: Badge(

@@ -3,6 +3,7 @@ import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
@@ -33,7 +34,7 @@ class AnnouncementsView extends StatelessWidget {
     if (!context.mounted) return;
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => ManagerDialog(
         title: Text(item.title),
         content: SizedBox(
           width: 560,
@@ -52,7 +53,7 @@ class AnnouncementsView extends StatelessWidget {
   Future<void> _readers(BuildContext context, TeamAnnouncement item) async {
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => ManagerDialog(
         title: Text(context.tr('Read and acknowledgment status')),
         content: SizedBox(
           width: 540,

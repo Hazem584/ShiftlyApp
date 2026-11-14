@@ -57,7 +57,7 @@ void main() {
     )..bindSession(reportScope);
     addTearDown(cubit.close);
     await mount(tester, cubit, locale: const Locale('ar'));
-    expect(find.text('تقارير الحضور'), findsOneWidget);
+    expect(find.text('ملخص الحضور'), findsOneWidget);
     expect(find.text('شهري'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -650));
     await tester.pumpAndSettle();

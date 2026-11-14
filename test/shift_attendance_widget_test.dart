@@ -26,8 +26,8 @@ void main() {
     router.go(AppRoutes.managerShifts);
     await tester.pumpAndSettle();
 
-    expect(find.text('Fixed shift templates'), findsOneWidget);
-    expect(find.text('New template'), findsOneWidget);
+    expect(find.text('Shift templates'), findsOneWidget);
+    expect(find.text('Create template'), findsOneWidget);
     expect(find.byKey(const Key('create-shift')), findsNothing);
     expect(find.byKey(const Key('edit-shift')), findsNothing);
     expect(find.byKey(const Key('cancel-shift')), findsNothing);

@@ -5,11 +5,8 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/offline/read_sync_banner.dart';
 import 'package:shiftly/core/offline/read_sync_state.dart';
 import 'package:shiftly/core/services/toast_service.dart';
-import 'package:shiftly/core/session/session_coordinator.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
-import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
@@ -17,6 +14,7 @@ import 'package:shiftly/features/fixed_shifts/presentation/dialogs/shift_templat
 import 'package:shiftly/features/fixed_shifts/presentation/utils/shift_templates_formatters.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/schedule_exceptions_section.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/shift_template_card.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class ShiftTemplatesScreen extends StatelessWidget {
   const ShiftTemplatesScreen({this.workspaceName, this.timezone, super.key});
@@ -26,20 +24,8 @@ class ShiftTemplatesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final workspace = workspaceName == null && timezone == null
-        ? context.watch<SessionCoordinator>().state.activeMembership?.workspace
-        : null;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('Fixed shift templates')),
-        actions: [
-          IconButton(
-            tooltip: context.tr('Create template'),
-            onPressed: () => _openEditor(context),
-            icon: const Icon(Icons.add_rounded),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(context.tr('Shift templates'))),
       body: BlocConsumer<ManagerTemplatesCubit, ManagerTemplatesState>(
         listenWhen: (a, b) => a.failure != b.failure && b.failure != null,
         listener: (context, state) => ToastService.error(
@@ -60,56 +46,26 @@ class ShiftTemplatesScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
-              child: SurfaceCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const CircleAvatar(child: Icon(Icons.schedule_rounded)),
-                        const SizedBox(width: AppSpacing.m),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                workspaceName ??
-                                    workspace?.name ??
-                                    context.tr('Current workspace'),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              Text(
-                                context.tr(
-                                  '{value1} • {value2} active templates',
-                                  {
-                                    'value1':
-                                        (timezone ??
-                                                workspace?.timezone ??
-                                                'Etc/UTC')
-                                            .toString(),
-                                    'value2':
-                                        (state.templates
-                                                .where((item) => item.active)
-                                                .length)
-                                            .toString(),
-                                  },
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: FilterChip(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    context.tr('Reusable hours and attendance policies'),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: Text(context.tr('Active')),
+                        selected: !state.includeArchived,
+                        onSelected: (_) => context
+                            .read<ManagerTemplatesCubit>()
+                            .load(includeArchived: false),
+                      ),
+                      ChoiceChip(
                         key: const Key('show-archived-templates'),
                         label: Text(context.tr('Archived')),
                         selected: state.includeArchived,
@@ -117,29 +73,37 @@ class ShiftTemplatesScreen extends StatelessWidget {
                             .read<ManagerTemplatesCubit>()
                             .load(includeArchived: value),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
             Expanded(child: _body(context, state)),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'shift-create-template',
-        onPressed: () => _openEditor(context),
-        icon: const Icon(Icons.add_rounded),
-        label: Text(context.tr('New template')),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: FilledButton(
+            key: const Key('create-shift-template'),
+            onPressed: () => _openEditor(context),
+            child: Text(context.tr('Create template')),
+          ),
+        ),
       ),
     );
   }
 
   Widget _body(BuildContext context, ManagerTemplatesState state) {
+    final templates = state.templates
+        .where((t) => state.includeArchived ? !t.active : t.active)
+        .toList();
     if (state.loading) {
       return const AppContentLoading();
     }
-    if (state.templates.isEmpty) {
+    if (templates.isEmpty) {
       return RefreshIndicator(
         onRefresh: () =>
             context.read<ManagerTemplatesCubit>().load(refresh: true),
@@ -151,7 +115,9 @@ class ShiftTemplatesScreen extends StatelessWidget {
                   ? Icons.schedule_outlined
                   : Icons.cloud_off_outlined,
               title: state.failure == null
-                  ? 'No fixed shifts yet'
+                  ? state.includeArchived
+                        ? 'No archived templates'
+                        : 'No fixed shifts yet'
                   : 'Templates unavailable',
               message:
                   state.failure?.message ??
@@ -197,7 +163,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  for (final template in state.templates)
+                  for (final template in templates)
                     SizedBox(
                       width: cardWidth,
                       child: ShiftTemplateCard(
@@ -252,7 +218,7 @@ class ShiftTemplatesScreen extends StatelessWidget {
     }
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => ManagerDialog(
         title: Text(context.tr('Archive template?')),
         content: Text(
           context.tr(

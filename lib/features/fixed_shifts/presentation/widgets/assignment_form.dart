@@ -4,6 +4,7 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/active_template_selector.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class AssignmentForm extends StatefulWidget {
   const AssignmentForm({
@@ -71,7 +72,7 @@ class _AssignmentFormState extends State<AssignmentForm> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => ManagerDialog(
     title: Text(context.tr('Assign a fixed shift')),
     scrollable: true,
     content: SizedBox(
@@ -186,7 +187,7 @@ class _AssignmentFormState extends State<AssignmentForm> {
     );
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
+      builder: (c) => ManagerDialog(
         title: Text(context.tr('Replace the baseline assignment?')),
         content: Text(
           context.tr(

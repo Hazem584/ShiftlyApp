@@ -48,6 +48,7 @@ class _DashboardFake implements DashboardRepository {
 
 ManagerDashboardData dashboardManagerForPreview({
   int totalEmployees = 12,
+  int clockedInNow = 2,
   int scheduledToday = 4,
   int lateToday = 1,
   int missedToday = 0,
@@ -56,6 +57,7 @@ ManagerDashboardData dashboardManagerForPreview({
   managerDashboardJson(
     timezone: 'Etc/UTC',
     totalEmployees: totalEmployees,
+    clockedInNow: clockedInNow,
     scheduledToday: scheduledToday,
     lateToday: lateToday,
     missedToday: missedToday,
@@ -70,17 +72,17 @@ void main() {
     final repository = _DashboardFake();
     await tester.pumpWidget(_app(repository));
     await tester.pumpAndSettle();
-    expect(find.text('Total employees'), findsOneWidget);
-    expect(find.text('Scheduled today'), findsOneWidget);
-    expect(find.text('Clocked in now'), findsOneWidget);
-    expect(find.text('Completed today'), findsOneWidget);
-    expect(find.text('12'), findsOneWidget);
-    expect(find.text('4'), findsOneWidget);
+    expect(find.text('TODAY’S ATTENDANCE'), findsOneWidget);
+    expect(find.text('of 4 on shift'), findsOneWidget);
+    expect(find.text('Needs your review'), findsOneWidget);
+    expect(find.text('1 late'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('1 on leave'), findsOneWidget);
     expect(find.textContaining('%'), findsNothing);
     expect(find.byKey(const Key('notification-badge')), findsOneWidget);
-    expect(find.byType(CircleAvatar), findsWidgets);
+    expect(find.byKey(const Key('notification-bell')), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Workspace sections'),
+      find.text('Team update'),
       300,
       scrollable: find
           .descendant(
@@ -89,7 +91,7 @@ void main() {
           )
           .first,
     );
-    expect(find.text('Workspace sections'), findsOneWidget);
+    expect(find.text('Team update'), findsOneWidget);
     expect(find.text('Quick actions'), findsNothing);
     expect(find.byKey(const Key('today-at-a-glance-card')), findsNothing);
   });
@@ -107,7 +109,7 @@ void main() {
     expect(find.text('Offline'), findsOneWidget);
     await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
-    expect(find.text('Total employees'), findsOneWidget);
+    expect(find.text('TODAY’S ATTENDANCE'), findsOneWidget);
   });
 
   testWidgets(
@@ -120,6 +122,7 @@ void main() {
       final repository = _DashboardFake(
         manager: dashboardManagerForPreview(
           totalEmployees: 0,
+          clockedInNow: 0,
           scheduledToday: 999999999,
           lateToday: 999999999,
           missedToday: 888888888,
@@ -130,11 +133,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.text('0'), findsWidgets);
-      expect(find.text('999999999'), findsOneWidget);
+      expect(find.text('999999999 late'), findsOneWidget);
       expect(find.textContaining('Preview Workspace'), findsOneWidget);
-      expect(find.text('Etc/UTC'), findsOneWidget);
+      expect(find.text('777777777 on leave'), findsOneWidget);
       await tester.scrollUntilVisible(
-        find.byKey(const Key('dashboard-section-tasks')),
+        find.byKey(const Key('manager-action-inbox')),
         250,
         scrollable: find
             .descendant(
@@ -144,8 +147,8 @@ void main() {
             .first,
       );
       expect(
-        tester.getSize(find.byKey(const Key('dashboard-section-tasks'))).width,
-        284,
+        tester.getSize(find.byKey(const Key('manager-action-inbox'))).width,
+        272,
       );
       expect(tester.takeException(), isNull);
     },
@@ -165,7 +168,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(repository.calls, calls + 1);
-    expect(find.text('Total employees'), findsOneWidget);
+    expect(find.text('TODAY’S ATTENDANCE'), findsOneWidget);
     expect(find.text('Refresh failed'), findsOneWidget);
   });
 
@@ -234,7 +237,7 @@ void main() {
     );
     expect(find.byKey(const Key('employee-tasks-preview')), findsOneWidget);
     expect(find.text('Pending leave'), findsNothing);
-    expect(find.text('Total employees'), findsNothing);
+    expect(find.text('TODAY’S ATTENDANCE'), findsNothing);
   });
 
   testWidgets('unknown employee attendance uses a neutral label', (

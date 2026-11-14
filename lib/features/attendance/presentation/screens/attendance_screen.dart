@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/offline/read_sync_banner.dart';
 import 'package:shiftly/core/offline/read_sync_state.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
-import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_state.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_daily_status_panel.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/attendance_metrics_section.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_tab_selector.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_requests_panel.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/manager_attendance_panel.dart';
@@ -93,26 +90,24 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   ),
                 },
               ),
-              ScreenHeader(
-                icon: Icons.fact_check_rounded,
-                title: context.tr('Attendance'),
-                subtitle: context.tr(
-                  'Check attendance records and the team calendar',
+              Text(
+                context.tr(
+                  _selectedTab == 2
+                      ? 'Monthly calendar'
+                      : _selectedTab == 1
+                      ? 'Team requests'
+                      : 'Team records',
                 ),
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
-              const SizedBox(height: AppSpacing.m),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: OutlinedButton.icon(
-                  key: const Key('attendance-open-reports'),
-                  onPressed: () => context.push('/attendance/reports'),
-                  icon: const Icon(Icons.assessment_outlined),
-                  label: Text(context.tr('Attendance reports')),
-                ),
+              const SizedBox(height: 8),
+              Text(
+                context.tr('Workspace time · {timezone}', {
+                  'timezone': widget.timezone,
+                }),
+                style: Theme.of(context).textTheme.bodySmall,
               ),
-              const SizedBox(height: AppSpacing.m),
-              const AttendanceMetricsSection(),
-              const SizedBox(height: AppSpacing.m),
+              const SizedBox(height: 20),
               AttendanceTabSelector(
                 selectedTab: _selectedTab,
                 onSelected: (tab) {

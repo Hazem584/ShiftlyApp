@@ -8,7 +8,7 @@ import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_form_actions.dart';
-import 'package:shiftly/features/employees/presentation/widgets/employee_form_header.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class AddEmployeeScreen extends StatefulWidget {
   const AddEmployeeScreen({this.onDone, super.key});
@@ -72,7 +72,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   Future<void> _showToken(String token) => showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (dialogContext) => AlertDialog(
+    builder: (dialogContext) => ManagerDialog(
       title: Text(context.tr('Invitation created')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -116,6 +116,18 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
         child: Divider(height: 1, color: AppPalette.of(context).borderColor),
       ),
     ),
+    bottomNavigationBar: SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: EmployeeFormActions(
+          submitting: _submitting,
+          canSubmit: _valid,
+          onCancel: widget.onDone ?? context.pop,
+          onSubmit: _submit,
+        ),
+      ),
+    ),
     body: SafeArea(
       top: false,
       child: Form(
@@ -126,7 +138,10 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
           key: const Key('add-employee-form'),
           padding: const EdgeInsets.fromLTRB(18, 20, 18, 32),
           children: [
-            const EmployeeFormHeader(),
+            Text(
+              context.tr('An invitation gives access after acceptance.'),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(height: 18),
             TextFormField(
               key: const Key('email-field'),
@@ -153,12 +168,6 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
                 labelText: context.tr('Job title (optional)'),
                 prefixIcon: const Icon(Icons.badge_outlined),
               ),
-            ),
-            EmployeeFormActions(
-              submitting: _submitting,
-              canSubmit: _valid,
-              onCancel: widget.onDone ?? context.pop,
-              onSubmit: _submit,
             ),
           ],
         ),

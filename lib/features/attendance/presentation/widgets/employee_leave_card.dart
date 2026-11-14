@@ -11,6 +11,7 @@ import 'package:shiftly/features/attendance/presentation/utils/leave_request_dis
 import 'package:shiftly/features/attendance/presentation/widgets/leave_detail_row.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_details_dialog.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class EmployeeLeaveCard extends StatelessWidget {
   const EmployeeLeaveCard({
@@ -26,7 +27,7 @@ class EmployeeLeaveCard extends StatelessWidget {
   Future<void> _cancel(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => ManagerDialog(
         title: Text(context.tr('Cancel leave request?')),
         content: Text(
           context.tr(

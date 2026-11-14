@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/widgets/workspace_content_frame.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_appearance.dart';
 import 'package:shiftly/features/shell/presentation/widgets/app_bottom_navigation.dart';
 import 'package:shiftly/features/shell/presentation/widgets/workspace_navigation_rail.dart';
 
@@ -10,7 +11,9 @@ class ShellScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
+  Widget build(BuildContext context) =>
+      ManagerAppearance(child: Builder(builder: _build));
+  Widget _build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       final wide = constraints.maxWidth >= 840 && constraints.maxHeight >= 600;
       void select(int index) => navigationShell.goBranch(

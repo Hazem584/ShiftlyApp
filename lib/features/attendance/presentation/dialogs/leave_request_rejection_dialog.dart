@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class LeaveRequestRejectionDialog extends StatefulWidget {
   const LeaveRequestRejectionDialog({super.key, required this.employeeName});
@@ -20,7 +21,7 @@ class _RejectionDialogState extends State<LeaveRequestRejectionDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => ManagerDialog(
     title: Text(context.tr('Reject request?')),
     content: SingleChildScrollView(
       child: Column(

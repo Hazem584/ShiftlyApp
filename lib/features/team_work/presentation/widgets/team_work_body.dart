@@ -109,7 +109,7 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
                     ? 'Attendance corrections'
                     : 'My corrections'
               : widget.initialTab == 'tasks' && widget.manager
-              ? 'Manager tasks'
+              ? 'Action inbox'
               : 'Team announcements',
         ),
       ),

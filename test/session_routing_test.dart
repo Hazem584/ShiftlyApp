@@ -329,7 +329,7 @@ void main() {
   testWidgets('backend manager role opens the manager shell', (tester) async {
     await _pumpRole(tester, WorkspaceRole.manager);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsOneWidget);
-    expect(find.textContaining('Good morning'), findsOneWidget);
+    expect(find.text('TODAY’S ATTENDANCE'), findsOneWidget);
     expect(find.byKey(const Key('notification-bell')), findsOneWidget);
     expect(
       find.descendant(
@@ -357,9 +357,7 @@ void main() {
         await tester.tap(find.text('View attendance and shifts'));
         await tester.pumpAndSettle();
         expect(
-          find.text(
-            kind == 'SHIFT' ? 'Fixed shift templates' : 'Team & attendance',
-          ),
+          find.text(kind == 'SHIFT' ? 'Shift templates' : 'Team records'),
           findsOneWidget,
         );
         expect(
@@ -373,7 +371,7 @@ void main() {
 
   testWidgets('dashboard avatar opens the manager profile', (tester) async {
     await _pumpRole(tester, WorkspaceRole.manager);
-    await tester.tap(find.byKey(const Key('dashboard-open-profile')));
+    await tester.tap(find.byKey(const Key('nav-4')));
     await tester.pumpAndSettle();
     expect(find.text('Manager Profile'), findsOneWidget);
     expect(tester.takeException(), isNull);

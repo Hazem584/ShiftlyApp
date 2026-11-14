@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 Future<String?> requestReviewNote(
   BuildContext context, {
@@ -9,7 +10,7 @@ Future<String?> requestReviewNote(
   final form = GlobalKey<FormState>();
   final route = DialogRoute<String>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) => ManagerDialog(
       title: Text(context.tr('Reason for declining')),
       content: Form(
         key: form,

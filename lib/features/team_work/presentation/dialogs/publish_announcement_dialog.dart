@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_message_uuid.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 
 class PublishAnnouncementDialog extends StatefulWidget {
@@ -58,7 +59,7 @@ class _PublishAnnouncementDialogState extends State<PublishAnnouncementDialog> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
-    child: AlertDialog(
+    child: ManagerDialog(
       title: Text(context.tr('Publish team announcement')),
       content: SizedBox(
         width: 540,

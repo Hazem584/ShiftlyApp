@@ -95,7 +95,7 @@ void main() {
     );
     expect(find.byKey(const Key('approve-leave-1')), findsNothing);
     expect(find.text('Approved'), findsAtLeastNWidgets(1));
-    expect(find.text('1 pending'), findsOneWidget);
+    expect(find.byKey(const Key('approve-leave-2')), findsOneWidget);
     ToastService.dismissAll();
   });
 
@@ -175,9 +175,9 @@ void main() {
     expect(find.text('Layla Mostafa'), findsOneWidget);
     expect(find.text('Profile updated successfully'), findsOneWidget);
 
-    await tester.tap(find.text('Dashboard').last);
+    await tester.tap(find.text('Home').last);
     await tester.pumpAndSettle();
-    expect(find.textContaining('Good morning'), findsOneWidget);
+    expect(find.text('TODAY’S ATTENDANCE'), findsOneWidget);
     ToastService.dismissAll();
   });
 }

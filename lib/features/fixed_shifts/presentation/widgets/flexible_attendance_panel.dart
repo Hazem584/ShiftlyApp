@@ -17,6 +17,7 @@ import 'package:shiftly/features/fixed_shifts/presentation/widgets/day_exception
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/eligibility_tile.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/legacy_clock_in_review_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/saved_schedule_list.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/dialogs/missed_attendance_request_dialog.dart';
 
@@ -333,7 +334,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
   ) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => ManagerDialog(
         title: Text(
           context.tr('Clock in to {value1}?', {
             'value1': (entry.template.name).toString(),
@@ -400,7 +401,7 @@ class FlexibleAttendancePanel extends StatelessWidget {
   Future<void> _clockOut(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (dialogContext) => ManagerDialog(
         title: Text(context.tr('Clock out now?')),
         content: Text(
           context.tr(

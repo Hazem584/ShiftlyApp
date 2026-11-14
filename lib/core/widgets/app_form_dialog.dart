@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/theme/manager_design.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/core/widgets/manager_form_page.dart';
 
 /// One dialog surface with a scrolling form and always-visible actions.
 class AppFormDialog extends StatelessWidget {
@@ -27,6 +29,15 @@ class AppFormDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (ManagerDesign.applies(context)) {
+      return ManagerFormPage(
+        title: title,
+        subtitle: subtitle,
+        content: content,
+        actions: actions,
+        busy: busy,
+      );
+    }
     final media = MediaQuery.of(context);
     return PopScope(
       canPop: !busy,

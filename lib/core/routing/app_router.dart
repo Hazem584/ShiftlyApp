@@ -224,7 +224,7 @@ GoRouter createAppRouter({
               GoRoute(
                 path: '/work',
                 builder: (_, state) => WorkHubScreen(
-                  section: state.uri.queryParameters['tab'] ?? 'tasks',
+                  section: state.uri.queryParameters['tab'] ?? 'hub',
                 ),
                 routes: [
                   GoRoute(

@@ -36,7 +36,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('الرئيسية'), findsOneWidget);
-      expect(find.text('إجمالي الموظفين'), findsOneWidget);
+      expect(find.text('حضور النهارده'), findsOneWidget);
       await tester.tap(find.byKey(const Key('nav-4')));
       await tester.pumpAndSettle();
       expect(find.text('بروفايل المدير'), findsOneWidget);

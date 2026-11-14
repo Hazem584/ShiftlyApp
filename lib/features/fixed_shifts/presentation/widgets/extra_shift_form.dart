@@ -5,6 +5,7 @@ import 'package:shiftly/core/utils/workspace_timestamp_input.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/active_template_selector.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class ExtraShiftForm extends StatefulWidget {
   const ExtraShiftForm({
@@ -94,7 +95,7 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => ManagerDialog(
     title: Text(
       widget.actual
           ? context.tr('Record extra attendance')
@@ -305,7 +306,7 @@ class _ExtraShiftFormState extends State<ExtraShiftForm> {
     }
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
+      builder: (c) => ManagerDialog(
         title: Text(context.tr('Confirm extra shift')),
         scrollable: true,
         content: Text(

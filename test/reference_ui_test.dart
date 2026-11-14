@@ -30,8 +30,8 @@ void main() {
       tester.element(find.byKey(const Key('manager-bottom-navigation'))),
     ).go('/attendance');
     await tester.pumpAndSettle();
-    expect(find.text('Team & attendance'), findsOneWidget);
-    expect(find.text('Attendance records'), findsOneWidget);
+    expect(find.text('Team records'), findsOneWidget);
+    expect(find.byKey(const Key('attendance-tab-records')), findsOneWidget);
     expect(find.text('94.2%'), findsNothing);
     await tester.scrollUntilVisible(
       find.text('Recent Attendance'),
@@ -70,7 +70,7 @@ void main() {
       _appWith(MockEmployeeRepository(delay: Duration.zero)),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Employees').last);
+    await tester.tap(find.text('Team').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mariam Hassan'));
     await tester.pumpAndSettle();
@@ -108,7 +108,7 @@ void main() {
       _appWith(MockEmployeeRepository(delay: Duration.zero)),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Employees').last);
+    await tester.tap(find.text('Team').last);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Mariam Hassan'));
     await tester.pumpAndSettle();
@@ -182,7 +182,7 @@ void main() {
     );
     await tester.pumpWidget(_appWith(employees));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Employees').last);
+    await tester.tap(find.text('Team').last);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.textContaining('Alexandria Very Long'), findsOneWidget);
@@ -198,9 +198,9 @@ void main() {
         _appWith(MockEmployeeRepository(delay: Duration.zero)),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Employees').last);
+      await tester.tap(find.text('Team').last);
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('section-invite')));
+      await tester.tap(find.byKey(const Key('invite-employee')));
       await tester.pumpAndSettle();
       expect(find.text('Invite Employee'), findsWidgets);
       expect(tester.takeException(), isNull, reason: 'Top failed at $size');

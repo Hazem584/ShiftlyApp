@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/employee_design.dart';
+import 'package:shiftly/core/theme/manager_design.dart';
 import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
@@ -25,7 +26,7 @@ class AttendanceRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (EmployeeDesign.applies(context)) {
+    if (EmployeeDesign.applies(context) && !ManagerDesign.applies(context)) {
       return EmployeeRecordTile(record: record, timezone: timezone);
     }
     final savedTimezone = record.workspaceTimezone ?? timezone;

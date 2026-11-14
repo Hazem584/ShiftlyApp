@@ -5,6 +5,7 @@ import 'package:shiftly/features/attendance/domain/repositories/leave_request_re
 import 'package:shiftly/features/attendance/presentation/utils/leave_request_display_formatters.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_detail_row.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class LeaveRequestDetailsDialog extends StatelessWidget {
   const LeaveRequestDetailsDialog({
@@ -16,7 +17,7 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
   final String timezone;
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => ManagerDialog(
     title: Row(
       children: [
         Expanded(child: Text(context.tr(leaveTypeLabel(request.type)))),

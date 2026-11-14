@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/employee_design.dart';
+import 'package:shiftly/core/theme/manager_design.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_correction_details_screen.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_tile.dart';
@@ -27,7 +28,9 @@ class CorrectionRequestCard extends StatelessWidget {
       timezone,
       locale: Localizations.localeOf(context).toString(),
     );
-    if (EmployeeDesign.applies(context) && !detailed) {
+    if (EmployeeDesign.applies(context) &&
+        !ManagerDesign.applies(context) &&
+        !detailed) {
       return EmployeeTile(
         icon: Icons.edit_calendar_outlined,
         title:

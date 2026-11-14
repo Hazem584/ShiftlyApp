@@ -11,6 +11,7 @@ import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cu
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_state.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_authorization_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shift_form.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class ExtraShiftsView extends StatelessWidget {
   const ExtraShiftsView({
@@ -183,7 +184,7 @@ class ExtraShiftsView extends StatelessWidget {
   Future<void> _revoke(BuildContext context, ExtraAuthorization value) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (c) => AlertDialog(
+      builder: (c) => ManagerDialog(
         title: Text(context.tr('Revoke extra authorization?')),
         content: Text(
           context.tr(

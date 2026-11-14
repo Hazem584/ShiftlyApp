@@ -6,10 +6,14 @@ class EmployeeSearchBar extends StatelessWidget {
   const EmployeeSearchBar({
     required this.onChanged,
     this.status,
+    this.onShift = false,
+    this.onShiftChanged,
     this.onStatusChanged,
     super.key,
   });
   final ValueChanged<String> onChanged;
+  final bool onShift;
+  final ValueChanged<bool>? onShiftChanged;
   final EmployeeStatusFilter? status;
   final ValueChanged<EmployeeStatusFilter?>? onStatusChanged;
 
@@ -28,25 +32,39 @@ class EmployeeSearchBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<EmployeeStatusFilter?>(
-          key: const Key('employee-status-filter'),
-          initialValue: status,
-          decoration: InputDecoration(labelText: context.tr('Employee status')),
-          onChanged: onStatusChanged,
-          items: [
-            DropdownMenuItem(
-              value: null,
-              child: Text(context.tr('All statuses')),
-            ),
-            DropdownMenuItem(
-              value: EmployeeStatusFilter.active,
-              child: Text(context.tr('Active')),
-            ),
-            DropdownMenuItem(
-              value: EmployeeStatusFilter.suspended,
-              child: Text(context.tr('Suspended')),
-            ),
-          ],
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Wrap(
+            key: const Key('employee-status-filter'),
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                label: Text(context.tr('All')),
+                selected: status == null && !onShift,
+                onSelected: (_) {
+                  onShiftChanged?.call(false);
+                  onStatusChanged?.call(null);
+                },
+              ),
+              ChoiceChip(
+                label: Text(context.tr('On shift')),
+                selected: onShift,
+                onSelected: (value) {
+                  onShiftChanged?.call(value);
+                  onStatusChanged?.call(null);
+                },
+              ),
+              ChoiceChip(
+                label: Text(context.tr('Inactive')),
+                selected: status == EmployeeStatusFilter.suspended,
+                onSelected: (_) {
+                  onShiftChanged?.call(false);
+                  onStatusChanged?.call(EmployeeStatusFilter.suspended);
+                },
+              ),
+            ],
+          ),
         ),
       ],
     ),

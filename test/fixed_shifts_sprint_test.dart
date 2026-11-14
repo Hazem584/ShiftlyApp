@@ -839,7 +839,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await tester.scrollUntilVisible(
-        find.text('Read-only history'),
+        find.text(
+          'Extremely long overnight customer support and operations shift',
+        ),
         250,
         scrollable: find
             .descendant(
@@ -853,8 +855,12 @@ void main() {
         const Offset(0, -180),
       );
       await tester.pumpAndSettle();
-      final finalField = tester.getRect(find.text('Read-only history'));
-      final floatingButton = tester.getRect(find.text('New template'));
+      final finalField = tester.getRect(
+        find.text(
+          'Extremely long overnight customer support and operations shift',
+        ),
+      );
+      final floatingButton = tester.getRect(find.text('Create template'));
       expect(finalField.bottom, lessThan(floatingButton.top));
       expect(tester.takeException(), isNull);
     },

@@ -5,6 +5,7 @@ import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
+import 'package:shiftly/core/widgets/manager_form_page.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employee_details_cubit.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
@@ -14,6 +15,7 @@ import 'package:shiftly/features/employees/presentation/widgets/employee_informa
 import 'package:shiftly/features/employees/presentation/widgets/employee_work_section.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shifts_section.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/work_pattern_section.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class EmployeeDetailsView extends StatelessWidget {
   const EmployeeDetailsView({
@@ -31,7 +33,7 @@ class EmployeeDetailsView extends StatelessWidget {
     if (suspending) {
       final confirmed = await showDialog<bool>(
         context: context,
-        builder: (dialogContext) => AlertDialog(
+        builder: (dialogContext) => ManagerDialog(
           title: Text(context.tr('Deactivate employee?')),
           content: Text(
             context.tr('The employee will lose active workspace access.'),
@@ -102,20 +104,48 @@ class EmployeeDetailsView extends StatelessWidget {
             const SizedBox(height: AppSpacing.l),
             EmployeeWorkSection(employee: employee),
             const SizedBox(height: AppSpacing.l),
-            WorkPatternSection(
-              workspaceId: workspaceId,
-              membershipId: membershipId,
-              timezone: timezone,
-              canEdit: employee.employmentStatus == EmploymentStatus.active,
-            ),
-            const SizedBox(height: AppSpacing.l),
-            ExtraShiftsSection(
-              workspaceId: workspaceId,
-              membershipId: membershipId,
-              timezone: timezone,
-              canEdit: employee.employmentStatus == EmploymentStatus.active,
-            ),
-            const SizedBox(height: AppSpacing.l),
+            for (final item in [
+              (
+                'Baseline schedule',
+                'Working weekdays and assignment history',
+                WorkPatternSection(
+                  workspaceId: workspaceId,
+                  membershipId: membershipId,
+                  timezone: timezone,
+                  canEdit: employee.employmentStatus == EmploymentStatus.active,
+                ),
+              ),
+              (
+                'Extra shifts',
+                'Authorizations and recorded extra attendance',
+                ExtraShiftsSection(
+                  workspaceId: workspaceId,
+                  membershipId: membershipId,
+                  timezone: timezone,
+                  canEdit: employee.employmentStatus == EmploymentStatus.active,
+                ),
+              ),
+            ]) ...[
+              Card(
+                child: ListTile(
+                  title: Text(context.tr(item.$1)),
+                  subtitle: Text(context.tr(item.$2)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (_) => ManagerFormPage(
+                        title: item.$1,
+                        subtitle: employee.displayName,
+                        content: item.$3,
+                        actions: const [],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
             if (employee.employmentStatus == EmploymentStatus.active ||
                 employee.employmentStatus == EmploymentStatus.suspended)
               FilledButton.tonalIcon(

@@ -7,6 +7,7 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/refresh_attendance_views.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_action_links.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
@@ -57,13 +58,7 @@ class ManagerTasksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => WorkFeedView(
     cubit: cubit,
-    header: Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Text(
-        context.tr('Requests first, then today’s attendance follow-up.'),
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
-    ),
+    header: const ManagerActionLinks(),
     itemBuilder: (context, task, busy) {
       final (label, icon) = switch (task.kind) {
         'CORRECTION' => ('Attendance correction', Icons.edit_calendar_outlined),

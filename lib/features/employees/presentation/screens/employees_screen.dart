@@ -2,19 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
-import 'package:shiftly/core/widgets/screen_header.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_list.dart';
-import 'package:shiftly/features/employees/presentation/widgets/employee_metrics_section.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_pending_invitations.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_search_bar.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employees_loading.dart';
 
-class EmployeesScreen extends StatelessWidget {
+class EmployeesScreen extends StatefulWidget {
   const EmployeesScreen({this.embedded = false, super.key});
   final bool embedded;
+  @override
+  State<EmployeesScreen> createState() => _EmployeesScreenState();
+}
+
+class _EmployeesScreenState extends State<EmployeesScreen> {
+  bool _onShift = false;
 
   Future<void> _openAddEmployee(BuildContext context) async {
     final added = await context.push<bool>('/employees/add');
@@ -29,29 +34,33 @@ class EmployeesScreen extends StatelessWidget {
       child: BlocBuilder<EmployeesCubit, EmployeesState>(
         builder: (context, state) => Column(
           children: [
-            if (!embedded)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-                child: ScreenHeader(
-                  icon: Icons.groups_rounded,
-                  title: context.tr('Employee Management'),
-                  subtitle: context.tr(
-                    'Search, invite, and manage your team in one place',
-                  ),
-                  action: FilledButton.icon(
-                    onPressed: () => _openAddEmployee(context),
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: Text(context.tr('Add')),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(80, 44),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      context.tr('Your team'),
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Text(
+                      state is EmployeesLoaded
+                          ? context.tr('{count} people', {
+                              'count': '${state.total}',
+                            })
+                          : context.tr('Manage your workspace team'),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
               ),
-            if (state case EmployeesLoaded(:final employees, :final total))
-              EmployeeMetricsSection(employees: employees, total: total),
+            ),
             EmployeeSearchBar(
+              onShift: _onShift,
+              onShiftChanged: (value) => setState(() => _onShift = value),
               status: state is EmployeesLoaded ? state.status : null,
               onChanged: (query) => context.read<EmployeesCubit>().load(
                 query: query,
@@ -63,6 +72,17 @@ class EmployeesScreen extends StatelessWidget {
               ),
             ),
             Expanded(child: _stateBody(context, state)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  key: const Key('invite-employee'),
+                  onPressed: () => _openAddEmployee(context),
+                  child: Text(context.tr('Invite employee')),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -84,50 +104,60 @@ class EmployeesScreen extends StatelessWidget {
         EmployeesLoaded() => _loadedBody(context, state),
       };
 
-  Widget _loadedBody(BuildContext context, EmployeesLoaded state) => Column(
-    children: [
-      if (state.pendingInvitations.isNotEmpty)
-        EmployeePendingInvitations(invitations: state.pendingInvitations),
-      if (state.failure != null)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          child: Text(
-            state.failure!.message,
-            style: const TextStyle(color: Colors.red),
+  Widget _loadedBody(BuildContext context, EmployeesLoaded state) {
+    final visible = state.employees
+        .where(
+          (employee) =>
+              !_onShift ||
+              employee.attendanceStatus == AttendanceStatus.present ||
+              employee.attendanceStatus == AttendanceStatus.late,
+        )
+        .toList();
+    return Column(
+      children: [
+        if (state.pendingInvitations.isNotEmpty)
+          EmployeePendingInvitations(invitations: state.pendingInvitations),
+        if (state.failure != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Text(
+              state.failure!.message,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
-        ),
-      Expanded(
-        child: state.employees.isEmpty
-            ? EmptyState(
-                icon: state.query.isEmpty
-                    ? Icons.group_add_outlined
-                    : Icons.person_search_outlined,
-                title: state.query.isEmpty
-                    ? 'No employees yet'
-                    : 'No matching employees',
-                message: state.query.isEmpty
-                    ? 'Invite your first team member to get started.'
-                    : 'Try another name or clear your search.',
-                action: state.query.isEmpty
-                    ? FilledButton.icon(
-                        onPressed: () => _openAddEmployee(context),
-                        icon: const Icon(Icons.add_rounded),
-                        label: Text(context.tr('Invite employee')),
-                      )
-                    : null,
-              )
-            : EmployeeList(
-                employees: state.employees,
-                hasMore: state.hasMore,
-                loadingMore: state.loadingMore,
-                onLoadMore: context.read<EmployeesCubit>().loadMore,
-                onRefresh: () => context.read<EmployeesCubit>().load(
-                  query: state.query,
-                  status: state.status,
-                  refresh: true,
+        Expanded(
+          child: visible.isEmpty
+              ? EmptyState(
+                  icon: state.query.isEmpty
+                      ? Icons.group_add_outlined
+                      : Icons.person_search_outlined,
+                  title: state.query.isEmpty
+                      ? 'No employees yet'
+                      : 'No matching employees',
+                  message: state.query.isEmpty
+                      ? 'Invite your first team member to get started.'
+                      : 'Try another name or clear your search.',
+                  action: state.query.isEmpty
+                      ? FilledButton.icon(
+                          onPressed: () => _openAddEmployee(context),
+                          icon: const Icon(Icons.add_rounded),
+                          label: Text(context.tr('Invite employee')),
+                        )
+                      : null,
+                )
+              : EmployeeList(
+                  employees: visible,
+                  hasMore: state.hasMore,
+                  loadingMore: state.loadingMore,
+                  onLoadMore: context.read<EmployeesCubit>().loadMore,
+                  onRefresh: () => context.read<EmployeesCubit>().load(
+                    query: state.query,
+                    status: state.status,
+                    refresh: true,
+                  ),
                 ),
-              ),
-      ),
-    ],
-  );
+        ),
+      ],
+    );
+  }
 }

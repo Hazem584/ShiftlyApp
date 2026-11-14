@@ -90,25 +90,14 @@ void main() {
       expect(find.byKey(const Key('today-at-a-glance-card')), findsNothing);
       await tester.tap(find.byKey(const Key('nav-1')));
       await tester.pumpAndSettle();
-      for (final name in [
-        'employees',
-        'invite',
-        'attendance',
-        'corrections',
-        'reports',
-      ]) {
-        expect(find.byKey(Key('section-$name')), findsOneWidget);
-      }
-      await tester.tap(find.byKey(const Key('section-attendance')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('attendance-content')), findsOneWidget);
-      expect(find.byKey(const Key('attendance-tab-requests')), findsNothing);
+      expect(find.byKey(const Key('employee-search')), findsOneWidget);
+      expect(find.byKey(const Key('invite-employee')), findsOneWidget);
       await tester.tap(find.byKey(const Key('nav-2')));
       await tester.pumpAndSettle();
       for (final name in ['tasks', 'shifts', 'announcements', 'personal']) {
-        expect(find.byKey(Key('section-$name')), findsOneWidget);
+        expect(find.byKey(Key('work-destination-$name')), findsOneWidget);
       }
-      await tester.tap(find.byKey(const Key('section-shifts')));
+      await tester.tap(find.byKey(const Key('work-destination-shifts')));
       await tester.pumpAndSettle();
       final router = GoRouter.of(
         tester.element(find.byKey(const Key('manager-bottom-navigation'))),
@@ -117,7 +106,7 @@ void main() {
         router.routeInformationProvider.value.uri.toString(),
         '/work?tab=shifts',
       );
-      expect(find.text('Fixed shift templates'), findsOneWidget);
+      expect(find.text('Shift templates'), findsOneWidget);
       router.go('/attendance/reports');
       await tester.pumpAndSettle();
       expect(

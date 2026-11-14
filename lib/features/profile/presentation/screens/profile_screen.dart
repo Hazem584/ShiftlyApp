@@ -4,6 +4,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_settings_tile.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/theme/employee_design.dart';
+import 'package:shiftly/core/theme/manager_design.dart';
 import 'package:shiftly/core/theme/theme_settings_tile.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
@@ -72,7 +73,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ScreenHeader(
                         icon: Icons.person_rounded,
                         title: context.tr(
-                          EmployeeDesign.applies(context)
+                          EmployeeDesign.applies(context) &&
+                                  !ManagerDesign.applies(context)
                               ? 'Profile'
                               : 'Manager Profile',
                         ),

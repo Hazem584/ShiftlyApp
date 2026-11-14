@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/attendance/presentation/refresh_attendance_views.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/attendance_period_fields.dart';
@@ -85,7 +86,7 @@ class _CorrectionApprovalDialogState extends State<CorrectionApprovalDialog> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
-    child: AlertDialog(
+    child: ManagerDialog(
       title: Text(context.tr('Approve attendance and hours')),
       scrollable: true,
       content: SizedBox(

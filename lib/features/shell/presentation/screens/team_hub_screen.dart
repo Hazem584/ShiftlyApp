@@ -7,30 +7,13 @@ import 'package:shiftly/features/attendance/presentation/screens/attendance_scre
 import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employees_screen.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
-import 'package:shiftly/features/shell/presentation/widgets/section_navigation.dart';
 import 'package:shiftly/features/team_work/presentation/team_work_screen.dart';
 
 class TeamHubScreen extends StatelessWidget {
   const TeamHubScreen({this.section = 'employees', super.key});
   final String section;
-  static const tabs = [
-    ('employees', 'Employees'),
-    ('invite', 'Add employee'),
-    ('attendance', 'Attendance'),
-    ('corrections', 'Attendance corrections'),
-    ('reports', 'Attendance reports'),
-  ];
   @override
   Widget build(BuildContext context) {
-    final selected = tabs
-        .indexWhere(
-          (t) =>
-              t.$1 ==
-              (section == 'calendar' || section == 'leaveRequests'
-                  ? 'attendance'
-                  : section),
-        )
-        .clamp(0, tabs.length - 1);
     final timezone =
         context
             .read<SessionCoordinator?>()
@@ -39,43 +22,28 @@ class TeamHubScreen extends StatelessWidget {
             ?.workspace
             .timezone ??
         'Etc/UTC';
-    return Scaffold(
-      appBar: AppBar(title: Text(context.tr('Team & attendance'))),
-      body: Column(
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.sizeOf(context).height * .34,
-            ),
-            child: SingleChildScrollView(
-              child: SectionNavigation(
-                items: tabs,
-                selected: selected,
-                onSelected: (index) =>
-                    context.go('/employees?tab=${tabs[index].$1}'),
-              ),
-            ),
+    if (section == 'employees') return const EmployeesScreen();
+    final child = switch (section) {
+      'invite' => AddEmployeeScreen(onDone: () => context.go('/employees')),
+      'attendance' => AttendanceScreen(timezone: timezone),
+      'calendar' => AttendanceScreen(timezone: timezone, initialTab: 2),
+      'leaveRequests' => AttendanceScreen(timezone: timezone, initialTab: 1),
+      'corrections' => const TeamWorkScreen(initialTab: 'corrections'),
+      'reports' => const AttendanceReportsScreen(),
+      _ => const EmployeesScreen(),
+    };
+    return Column(
+      children: [
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton.icon(
+            onPressed: () => context.go('/employees'),
+            icon: const BackButtonIcon(),
+            label: Text(context.tr('Your team')),
           ),
-          Expanded(
-            child: switch (tabs[selected].$1) {
-              'attendance' => AttendanceScreen(
-                timezone: timezone,
-                initialTab: section == 'calendar'
-                    ? 2
-                    : section == 'leaveRequests'
-                    ? 1
-                    : 0,
-              ),
-              'invite' => AddEmployeeScreen(
-                onDone: () => context.go('/employees'),
-              ),
-              'corrections' => const TeamWorkScreen(initialTab: 'corrections'),
-              'reports' => const AttendanceReportsScreen(),
-              _ => const EmployeesScreen(embedded: true),
-            },
-          ),
-        ],
-      ),
+        ),
+        Expanded(child: child),
+      ],
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class AttendanceRejectionDialog extends StatefulWidget {
   const AttendanceRejectionDialog({
@@ -66,7 +67,7 @@ class _AttendanceRejectionDialogState extends State<AttendanceRejectionDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
+  Widget build(BuildContext context) => ManagerDialog(
     title: Text(context.tr('Reject attendance?')),
     content: TextField(
       key: const Key('attendance-rejection-reason'),

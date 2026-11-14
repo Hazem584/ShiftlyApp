@@ -3,6 +3,7 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_calendar_entry.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_controls_repository.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class AttendanceDecisionDialog extends StatefulWidget {
   const AttendanceDecisionDialog({
@@ -97,7 +98,7 @@ class _AttendanceDecisionDialogState extends State<AttendanceDecisionDialog> {
         : widget.closeMonth
         ? 'Approve and close month'
         : 'Reopen attendance month';
-    return AlertDialog(
+    return ManagerDialog(
       title: Text(context.tr(title)),
       content: SingleChildScrollView(
         child: Form(

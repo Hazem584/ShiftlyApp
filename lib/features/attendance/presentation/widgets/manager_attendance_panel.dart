@@ -15,6 +15,7 @@ import 'package:shiftly/features/attendance/presentation/widgets/attendance_reco
 import 'package:shiftly/features/attendance/presentation/widgets/attendance_rejection_dialog.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 class ManagerAttendancePanel extends StatelessWidget {
@@ -191,7 +192,7 @@ class ManagerAttendancePanel extends StatelessWidget {
     final query = await showDialog<AttendanceQuery>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (context, setDialogState) => ManagerDialog(
           title: Text(context.tr('Attendance filters')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
