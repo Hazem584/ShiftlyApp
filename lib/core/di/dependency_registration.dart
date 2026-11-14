@@ -36,6 +36,9 @@ import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/data/outbox/chat_outbox_storage.dart';
 import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
+import 'package:shiftly/features/chat/data/stream/stream_chat_connection.dart';
+import 'package:shiftly/features/chat/data/stream/stream_chat_realtime.dart';
+import 'package:shiftly/features/chat/data/stream/stream_chat_repository.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/chat/domain/services/chat_outbox_coordinator.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
@@ -233,14 +236,24 @@ abstract final class DependencyRegistration {
       ..registerLazySingleton<SupabaseChatStorageUploader>(
         () => SupabaseChatStorageUploader(target()),
       )
+      ..registerLazySingleton<StreamChatConnection>(
+        () => StreamChatConnection(target()),
+        dispose: (connection) => connection.dispose(),
+      )
       ..registerLazySingleton<ChatRepository>(
-        () => ApiChatRepository(
-          target(),
-          storageUploader: target<SupabaseChatStorageUploader>(),
+        () => StreamChatRepository(
+          ApiChatRepository(
+            target(),
+            storageUploader: target<SupabaseChatStorageUploader>(),
+          ),
+          target<StreamChatConnection>(),
         ),
       )
       ..registerLazySingleton<ChatRealtime>(
-        () => SupabaseChatRealtime(target()),
+        () => StreamChatRealtime(
+          target<StreamChatConnection>(),
+          SupabaseChatRealtime(target()),
+        ),
       )
       ..registerFactory<DashboardCubit>(() => DashboardCubit(target()))
       ..registerFactory<NotificationsCubit>(() => NotificationsCubit(target()))

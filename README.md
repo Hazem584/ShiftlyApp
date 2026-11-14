@@ -46,7 +46,7 @@ A screen calls a cubit/controller, which uses a domain repository interface. The
 
 - Attendance and monthly calendars live in `features/attendance/`. Correction requests and manager approvals live in `features/team_work/`.
 - Scheduling and daily exceptions live in `features/fixed_shifts/`. Reports live in `features/reports/`, with separate screen, table sources and totals widgets.
-- Chat history, attachments and the persistent outbox live in `features/chat/`. Private Supabase Realtime events update the view; REST reconciles missed events after reconnecting.
+- Chat history, attachments and the persistent outbox live in `features/chat/`. Stream delivers new messages when enabled by the backend; Supabase and REST retain access to earlier history and workspace membership changes.
 - Personal tasks and Home Screen widgets live in `features/tasks/`. Widget snapshots contain display data and clear on account/workspace changes.
 
 ## Make a change
@@ -82,3 +82,11 @@ This workflow requires the companion backend's administrator/support migration a
 The employee workspace follows the approved Penpot Employee boards, with Home, My Shifts, Tasks, Chat and Profile navigation. My Shifts links to the schedule, attendance history/calendar, leave requests and correction history. Clock-in eligibility, recovery, break allowances and approval rules remain server-authoritative. The employee appearance supports English, Arabic RTL, light/dark mode and larger text.
 
 Run `flutter test test/employee_design_test.dart` for employee UI regressions. Add `--dart-define=EMPLOYEE_PREVIEWS=true` to export actual widget previews into `.artifacts/employee-design/`.
+
+## Stream Chat
+
+The app uses `stream_chat_flutter` 10.7.0 through its chat transport, retaining Shiftly's UI, media previews, local message cache and persistent outbox. Native builds also persist Stream state in a background isolate. Each workspace membership has a separate Stream identity; logout flushes that SDK identity. No Stream secret or extra Flutter define is required.
+
+Deploy the companion backend with `STREAM_CHAT_ENABLED=false` first, then release this client before enabling Stream. The client discovers the provider through `/workspaces/:workspaceId/chat/stream/configuration`. Existing messages remain readable through paginated legacy history; new messages, reactions, pins and attachments use Stream after activation. Do not toggle providers back and forth after accepting new messages, because Stream history remains in Stream.
+
+Backend setup and the signed webhook used by Firebase push notifications are documented in the backend README. Confirm message delivery on two real accounts, reconnect recovery and a background push before enabling the service for everyone. Older clients must update before sending when Stream is enabled.

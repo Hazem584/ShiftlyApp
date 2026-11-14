@@ -4,13 +4,18 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
+  connectivity_plus
+  desktop_drop
   file_saver
   file_selector_windows
   firebase_core
+  gal
   geolocator_windows
   pdfx
   record_windows
   share_plus
+  sqlite3_flutter_libs
+  stream_thumbnail
   url_launcher_windows
 )
 

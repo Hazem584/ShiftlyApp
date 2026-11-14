@@ -14,6 +14,7 @@ import 'package:shiftly/features/chat/domain/repositories/chat_message_store.dar
 import 'package:shiftly/features/chat/domain/repositories/chat_outbox_store.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/chat/domain/repositories/chat_session_repository.dart';
 
 class ChatGroupsState extends Equatable {
   const ChatGroupsState({
@@ -106,6 +107,9 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
     _groupsRestored = false;
     messageCache?.storage.bindSession(authorized);
     _scope = authorized;
+    if (_repository case final ChatSessionRepository sessionAware) {
+      sessionAware.bindChatSession(authorized);
+    }
     _generation++;
     _request++;
     _loading = false;
@@ -390,6 +394,9 @@ class ChatGroupsCubit extends Cubit<ChatGroupsState> {
 
   @override
   Future<void> close() {
+    if (_repository case final ChatSessionRepository sessionAware) {
+      sessionAware.bindChatSession(null);
+    }
     unawaited(_inbox?.cancel());
     _inboxDebounce?.cancel();
     _generation++;
