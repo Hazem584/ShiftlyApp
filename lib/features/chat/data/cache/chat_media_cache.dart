@@ -110,7 +110,12 @@ class ChatMediaCache implements ChatMediaStore {
           (existing['access'] as int) >=
               DateTime.now().subtract(retention).millisecondsSinceEpoch &&
           existing['digest'] is String &&
-          await _inspect(file, message) == existing['digest']) {
+          await _inspect(
+                file,
+                message,
+                transformedImage: existing['transformedImage'] == true,
+              ) ==
+              existing['digest']) {
         check();
         await record.update(storage.database, {
           'access': DateTime.now().millisecondsSinceEpoch,
@@ -133,6 +138,7 @@ class ChatMediaCache implements ChatMediaStore {
     );
     try {
       check();
+      var transformedImage = false;
       for (var attempt = 0; attempt < 2; attempt++) {
         final media = await repository.mediaUrl(
           scope.workspaceId,
@@ -143,6 +149,8 @@ class ChatMediaCache implements ChatMediaStore {
         if (media.url.scheme != 'https' || media.url.userInfo.isNotEmpty) {
           throw const FormatException('Invalid media URL');
         }
+        transformedImage =
+            message.type == 'IMAGE' && media.allowImageTransformation;
         try {
           await _download(
             media.url,
@@ -150,6 +158,7 @@ class ChatMediaCache implements ChatMediaStore {
             attachment.sizeBytes,
             attachment.mimeType,
             token,
+            transformedImage: transformedImage,
           );
           break;
         } on DioException catch (error) {
@@ -160,7 +169,11 @@ class ChatMediaCache implements ChatMediaStore {
         }
       }
       check();
-      final digest = await _inspect(temporary, message);
+      final digest = await _inspect(
+        temporary,
+        message,
+        transformedImage: transformedImage,
+      );
       if (digest == null) {
         throw const FormatException('Invalid chat media');
       }
@@ -172,7 +185,8 @@ class ChatMediaCache implements ChatMediaStore {
         'scope': scope.key,
         'user': scope.userId,
         'file': name,
-        'size': attachment.sizeBytes,
+        'size': await target.length(),
+        'transformedImage': transformedImage,
         'digest': digest,
         'access': DateTime.now().millisecondsSinceEpoch,
       });
@@ -206,8 +220,9 @@ class ChatMediaCache implements ChatMediaStore {
     ChatLocalFile target,
     int size,
     String mime,
-    CancelToken token,
-  ) async {
+    CancelToken token, {
+    bool transformedImage = false,
+  }) async {
     final response = await _downloadClient.get<ResponseBody>(
       uri.toString(),
       options: Options(
@@ -221,7 +236,28 @@ class ChatMediaCache implements ChatMediaStore {
         ?.split(';')
         .first
         .trim();
-    if (type != null && type != mime && type != 'application/octet-stream') {
+    final responseMime = _canonicalMime(type);
+    final expectedMime = _canonicalMime(mime);
+    const audioTypes = {
+      'audio/mp4',
+      'audio/webm',
+      'audio/ogg',
+      'audio/mpeg',
+      'audio/aac',
+    };
+    // Older uploads used .m4a even for WebM/Ogg. Validate their real bytes below.
+    final audioContainer =
+        audioTypes.contains(expectedMime) && audioTypes.contains(responseMime);
+    if (responseMime != null &&
+        responseMime != expectedMime &&
+        responseMime != 'application/octet-stream' &&
+        !audioContainer &&
+        !(transformedImage &&
+            const [
+              'image/jpeg',
+              'image/png',
+              'image/webp',
+            ].contains(responseMime))) {
       throw const FormatException('Invalid media type');
     }
     final body = response.data;
@@ -232,20 +268,37 @@ class ChatMediaCache implements ChatMediaStore {
       await for (final bytes in body.stream) {
         if (token.isCancelled) throw token.cancelError!;
         length += bytes.length;
-        if (length > size) throw const FormatException('Invalid media size');
+        if (length >
+            (transformedImage ? ChatMediaValidation.imageMaxBytes : size)) {
+          throw const FormatException('Invalid media size');
+        }
         sink.add(bytes);
       }
       await sink.flush();
     } finally {
       await sink.close();
     }
-    if (length != size) throw const FormatException('Invalid media size');
+    if (length == 0 || (!transformedImage && length != size)) {
+      throw const FormatException('Invalid media size');
+    }
   }
 
-  Future<String?> _inspect(ChatLocalFile file, ChatMessage message) {
+  String? _canonicalMime(String? mime) => switch (mime?.toLowerCase()) {
+    'audio/x-m4a' || 'audio/m4a' || 'video/mp4' => 'audio/mp4',
+    'image/jpg' => 'image/jpeg',
+    final value => value,
+  };
+
+  Future<String?> _inspect(
+    ChatLocalFile file,
+    ChatMessage message, {
+    bool transformedImage = false,
+  }) {
     // Bound CPU work and memory even when a list opens many cached attachments.
     // Wait before reading the next file, not after allocating its byte buffer.
-    final operation = _inspections.then((_) => _readAndInspect(file, message));
+    final operation = _inspections.then(
+      (_) => _readAndInspect(file, message, transformedImage: transformedImage),
+    );
     _inspections = operation.then<void>(
       (_) {},
       onError: (Object _, StackTrace _) {},
@@ -255,20 +308,31 @@ class ChatMediaCache implements ChatMediaStore {
 
   Future<String?> _readAndInspect(
     ChatLocalFile file,
-    ChatMessage message,
-  ) async {
+    ChatMessage message, {
+    bool transformedImage = false,
+  }) async {
     final attachment = message.attachment!;
-    if (!await file.exists() || await file.length() != attachment.sizeBytes) {
+    if (!await file.exists()) return null;
+    final size = await file.length();
+    if ((!transformedImage && size != attachment.sizeBytes) ||
+        (transformedImage &&
+            (message.type != 'IMAGE' ||
+                size > ChatMediaValidation.imageMaxBytes))) {
       return null;
     }
     // File/database/plugin access stays here; the worker receives only bytes
     // and metadata. Hash the same snapshot used for content validation.
+    final bytes = await file.readAsBytes();
+    final mime = transformedImage
+        ? ChatMediaValidation.imageMime(bytes)
+        : _canonicalMime(attachment.mimeType);
+    if (mime == null) return null;
     return inspectChatMedia(
       ChatMediaInspection(
-        bytes: await file.readAsBytes(),
+        bytes: bytes,
         type: message.type,
-        mimeType: attachment.mimeType,
-        sizeBytes: attachment.sizeBytes,
+        mimeType: mime,
+        sizeBytes: size,
         fileName: attachment.fileName ?? '',
         durationMs: attachment.durationMs ?? 0,
       ),

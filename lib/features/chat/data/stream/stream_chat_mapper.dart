@@ -41,8 +41,15 @@ abstract final class StreamChatMapper {
                   (file.extraData['shiftly_attachment_id'] as String?) ??
                   file.id,
               category: type,
-              mimeType: file.mimeType ?? 'application/octet-stream',
-              sizeBytes: file.fileSize ?? 1,
+              mimeType: _mime(
+                file.extraData['shiftly_mime_type'] as String? ??
+                    file.mimeType ??
+                    'application/octet-stream',
+              ),
+              sizeBytes:
+                  (file.extraData['shiftly_size_bytes'] as num?)?.toInt() ??
+                  file.fileSize ??
+                  1,
               fileName: file.title,
               durationMs: file.extraData['shiftly_duration_ms'] as int?,
             ),
@@ -75,7 +82,17 @@ abstract final class StreamChatMapper {
     );
   }
 
-  static ChatGroup group(ChatGroup base, stream.Channel channel) {
+  static String _mime(String value) => switch (value.toLowerCase()) {
+    'audio/x-m4a' || 'audio/m4a' || 'video/mp4' => 'audio/mp4',
+    'image/jpg' => 'image/jpeg',
+    final value => value,
+  };
+
+  static ChatGroup group(
+    ChatGroup base,
+    stream.Channel channel, {
+    int? streamUnreadCount,
+  }) {
     final messages = channel.state?.messages.where(supported).toList() ?? [];
     messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     final reads = channel.state?.read ?? [];
@@ -89,7 +106,9 @@ abstract final class StreamChatMapper {
       archivedAt: base.archivedAt,
       archived: base.archived,
       memberCount: base.memberCount,
-      unreadCount: base.unreadCount + channel.state!.unreadCount,
+      unreadCount:
+          base.unreadCount +
+          (streamUnreadCount ?? channel.state?.unreadCount ?? 0),
       lastMessage: messages.isEmpty
           ? base.lastMessage
           : message(messages.first, base.id),

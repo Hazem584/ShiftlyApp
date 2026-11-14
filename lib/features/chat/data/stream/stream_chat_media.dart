@@ -88,13 +88,7 @@ class StreamChatMedia {
     final file = stream.AttachmentFile(
       size: bytes.length,
       bytes: bytes,
-      name:
-          value.fileName ??
-          (value.type == 'IMAGE'
-              ? 'image.jpg'
-              : value.type == 'VOICE'
-              ? 'voice.m4a'
-              : 'document.bin'),
+      name: value.fileName ?? _defaultName(value.type, value.mime),
     );
     try {
       final response = value.type == 'IMAGE'
@@ -134,10 +128,31 @@ class StreamChatMedia {
       extraData: {
         'shiftly_attachment_id': id,
         'file_size': value.size,
+        'shiftly_size_bytes': value.size,
         'mime_type': value.mime,
+        'shiftly_mime_type': value.mime,
         if (value.duration != null) 'shiftly_duration_ms': value.duration,
       },
     );
+  }
+
+  String _defaultName(String type, String mime) {
+    final extension = switch (mime.toLowerCase()) {
+      'image/png' => 'png',
+      'image/webp' => 'webp',
+      'image/jpeg' => 'jpg',
+      'audio/webm' => 'webm',
+      'audio/ogg' => 'ogg',
+      'audio/mpeg' => 'mp3',
+      'audio/aac' => 'aac',
+      'audio/mp4' || 'audio/x-m4a' => 'm4a',
+      _ => 'bin',
+    };
+    return '${type == 'VOICE'
+        ? 'voice'
+        : type == 'IMAGE'
+        ? 'image'
+        : 'document'}.$extension';
   }
 
   void complete(String id) => _pending.remove(id);

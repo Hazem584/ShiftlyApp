@@ -32,6 +32,7 @@ ChatMessage _image({int size = 4}) => ChatMessage(
 
 class _Repository implements ChatRepository {
   int signedRequests = 0;
+  bool transformed = false;
   @override
   Future<ChatMediaUrl> mediaUrl(
     String workspaceId,
@@ -42,6 +43,7 @@ class _Repository implements ChatRepository {
     return ChatMediaUrl(
       url: Uri.parse('https://storage.example/image?token=$signedRequests'),
       expiresAt: DateTime.utc(2099),
+      allowImageTransformation: transformed,
     );
   }
 
@@ -110,6 +112,22 @@ void main() {
     expect(arguments['mimeType'], 'image/jpeg');
     expect(arguments['name'], matches(r'^shiftly_\d+\.jpg$'));
   });
+
+  test(
+    'exports a verified CDN representation with its detected image format',
+    () async {
+      final repository = _Repository()..transformed = true;
+      final optimized = [0xff, 0xd8, 0xff, 0, 0xff, 0xd9];
+      await ChatImageGallery(downloadClient: client(bytes: optimized)).save(
+        message: _image(),
+        repository: repository,
+        session: _scope,
+        hasAccess: () => true,
+      );
+      expect((calls.single.arguments as Map)['bytes'], optimized);
+      expect((calls.single.arguments as Map)['mimeType'], 'image/jpeg');
+    },
+  );
 
   test('lost access while downloading prevents gallery export', () async {
     var authorized = true;

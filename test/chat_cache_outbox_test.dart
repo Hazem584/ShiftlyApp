@@ -96,6 +96,138 @@ void main() {
     await directory.delete(recursive: true);
   });
 
+  test('CDN optimized images validate and remain warm without matching original byte size', () async {
+    final repository = FixtureRepository()..transformedImage = true;
+    final adapter = FixtureDownloadAdapter()
+      ..bytes = Uint8List.fromList([0xff, 0xd8, 0xff, 0, 0xff, 0xd9])
+      ..contentType = 'image/jpeg';
+    final media = ChatMediaCache(
+      storage,
+      downloadClient: Dio()..httpClientAdapter = adapter,
+    );
+    final file = await media.resolve(
+      scope,
+      message(1, type: 'IMAGE'),
+      repository,
+    );
+    expect(await file.length(), 6);
+    await media.resolve(scope, message(1, type: 'IMAGE'), repository);
+    expect(adapter.calls, 1);
+    expect(await media.size(), 6);
+    media.close();
+  });
+
+  test('audio MIME aliases do not reject a valid M4A recording', () async {
+    final bytes = Uint8List.fromList([
+      0,
+      0,
+      0,
+      12,
+      ...'ftyp'.codeUnits,
+      0,
+      0,
+      0,
+      0,
+    ]);
+    final recording = ChatMessage(
+      id: message(1).id,
+      groupId: group,
+      type: 'VOICE',
+      sender: message(1).sender,
+      createdAt: message(1).createdAt,
+      attachment: ChatAttachment(
+        id: message(1, type: 'IMAGE').attachment!.id,
+        category: 'VOICE',
+        mimeType: 'audio/mp4',
+        sizeBytes: bytes.length,
+        durationMs: 1000,
+      ),
+    );
+    final adapter = FixtureDownloadAdapter()
+      ..bytes = bytes
+      ..contentType = 'audio/x-m4a';
+    final media = ChatMediaCache(
+      storage,
+      downloadClient: Dio()..httpClientAdapter = adapter,
+    );
+    expect(
+      await (await media.resolve(
+        scope,
+        recording,
+        FixtureRepository(),
+      )).length(),
+      bytes.length,
+    );
+    media.close();
+  });
+
+  test(
+    'CDN images still reject invalid content and oversized downloads',
+    () async {
+      final repository = FixtureRepository()..transformedImage = true;
+      final adapter = FixtureDownloadAdapter()
+        ..bytes = Uint8List.fromList([1, 2, 3, 4, 5])
+        ..contentType = 'image/jpeg';
+      final media = ChatMediaCache(
+        storage,
+        downloadClient: Dio()..httpClientAdapter = adapter,
+      );
+      await expectLater(
+        media.resolve(scope, message(1, type: 'IMAGE'), repository),
+        throwsFormatException,
+      );
+      expect(await media.size(), 0);
+      adapter.bytes = Uint8List(5 * 1024 * 1024 + 1);
+      await expectLater(
+        media.resolve(scope, message(1, type: 'IMAGE'), repository),
+        throwsFormatException,
+      );
+      expect(await media.size(), 0);
+      media.close();
+    },
+  );
+
+  test('old WebM recordings with an MP4 header still validate the real audio bytes', () async {
+    final bytes = Uint8List.fromList([0x1a, 0x45, 0xdf, 0xa3]);
+    final recording = ChatMessage(
+      id: message(1).id,
+      groupId: group,
+      type: 'VOICE',
+      sender: message(1).sender,
+      createdAt: message(1).createdAt,
+      attachment: ChatAttachment(
+        id: message(1, type: 'IMAGE').attachment!.id,
+        category: 'VOICE',
+        mimeType: 'audio/webm',
+        sizeBytes: 4,
+        durationMs: 1000,
+      ),
+    );
+    final adapter = FixtureDownloadAdapter()
+      ..bytes = bytes
+      ..contentType = 'audio/mp4';
+    final media = ChatMediaCache(
+      storage,
+      downloadClient: Dio()..httpClientAdapter = adapter,
+    );
+    expect(
+      await (await media.resolve(
+        scope,
+        recording,
+        FixtureRepository(),
+      )).length(),
+      4,
+    );
+    await media.clear();
+    adapter.bytes = Uint8List.fromList([1, 2, 3, 4]);
+    await expectLater(
+      media.resolve(scope, recording, FixtureRepository()),
+      throwsFormatException,
+    );
+    expect(await media.size(), 0);
+    media.close();
+  });
+
   test('workspace departure purges private records and queued messages for only that workspace', () async {
     await cache.write(
       scope,
@@ -951,6 +1083,7 @@ void main() {
 }
 
 class FixtureRepository extends ChatRepository {
+  bool transformedImage = false;
   ChatMessagePage page = const ChatMessagePage(messages: []);
   ChatMessagePage olderPage = const ChatMessagePage(messages: []);
   Future<ChatMessagePage>? nextPage;
@@ -1062,6 +1195,7 @@ class FixtureRepository extends ChatRepository {
     urlCalls++;
     return ChatMediaUrl(
       url: Uri.parse('https://fixture.invalid/media'),
+      allowImageTransformation: transformedImage,
       expiresAt: DateTime.now().add(const Duration(minutes: 1)),
     );
   }
@@ -1101,6 +1235,7 @@ class GatedMessageCache extends ChatMessageCache {
 
 class FixtureDownloadAdapter implements HttpClientAdapter {
   int calls = 0, denials = 0;
+  String contentType = 'application/octet-stream';
   Uint8List bytes = jpeg;
   Completer<void>? gate;
   final List<Map<String, dynamic>> headers = [];
@@ -1119,7 +1254,7 @@ class FixtureDownloadAdapter implements HttpClientAdapter {
       bytes,
       200,
       headers: {
-        'content-type': ['application/octet-stream'],
+        'content-type': [contentType],
       },
     );
   }

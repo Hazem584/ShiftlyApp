@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -271,6 +272,111 @@ void main() {
     await connection.dispose();
   });
 
+  test(
+    'inbox uses server unread counts even when watched channel state is stale',
+    () async {
+      final connection = TestConnection()..bind(session);
+      connection.testClient.unread = [
+        sdk.UnreadCountsChannel(
+          channelId: 'shiftly:$group',
+          unreadCount: 5,
+          lastRead: DateTime.utc(2026),
+        ),
+        sdk.UnreadCountsChannel(
+          channelId: 'shiftly:another-workspace',
+          unreadCount: 100,
+          lastRead: DateTime.utc(2026),
+        ),
+      ];
+      final repository = StreamChatRepository(GroupRepository(), connection);
+      final results = await Future.wait<Object>([
+        repository.listGroups(workspace),
+        repository.unreadCount(workspace),
+      ]);
+      expect((results[0] as List<ChatGroup>).single.unreadCount, 7);
+      expect(results[1], 7);
+      connection.testClient.unread = [];
+      expect((await repository.listGroups(workspace)).single.unreadCount, 2);
+      await connection.dispose();
+    },
+  );
+
+  test(
+    'image and voice retries request fresh signed URLs, with group validation',
+    () async {
+      final connection = TestConnection()..bind(session);
+      final repository = StreamChatRepository(
+        const MockChatRepository(),
+        connection,
+      );
+      for (final type in ['image', 'audio']) {
+        for (var attempt = 0; attempt < 2; attempt++) {
+          final url = 'https://cdn.example.invalid/$type?signature=$attempt';
+          connection.testClient.lookup = message(1).copyWith(
+            extraData: {'cid': 'shiftly:$group'},
+            attachments: [
+              sdk.Attachment(
+                type: type,
+                assetUrl: type == 'audio' ? url : '',
+                imageUrl: type == 'image' ? url : null,
+              ),
+            ],
+          );
+          final media = await repository.mediaUrl(
+            workspace,
+            group,
+            messageId(1),
+          );
+          expect(media.url.toString(), url);
+          expect(media.allowImageTransformation, type == 'image');
+        }
+      }
+      expect(connection.testClient.lookupCalls, 4);
+      connection.testClient.lookup = message(1)
+          .copyWith(extraData: {'cid': 'shiftly:another-group'});
+      await expectLater(
+        repository.mediaUrl(workspace, group, messageId(1)),
+        throwsA(isA<ApiException>()),
+      );
+      await connection.dispose();
+    },
+  );
+
+  test('old voice MIME aliases and original upload metadata survive server normalization', () {
+    final source = message(1).copyWith(
+      attachments: [
+        sdk.Attachment(
+          type: 'audio',
+          extraData: {
+            'mime_type': 'audio/x-m4a',
+            'file_size': 12,
+            'shiftly_duration_ms': 1000,
+          },
+        ),
+      ],
+    );
+    expect(
+      StreamChatMapper.message(source, group).attachment!.mimeType,
+      'audio/mp4',
+    );
+    final image = message(1).copyWith(
+      attachments: [
+        sdk.Attachment(
+          type: 'image',
+          extraData: {
+            'mime_type': 'application/octet-stream',
+            'file_size': 9,
+            'shiftly_mime_type': 'image/jpeg',
+            'shiftly_size_bytes': 12,
+          },
+        ),
+      ],
+    );
+    final attachment = StreamChatMapper.message(image, group).attachment!;
+    expect(attachment.mimeType, 'image/jpeg');
+    expect(attachment.sizeBytes, 12);
+  });
+
   test('attachment cache identity survives repeated SDK deserialization', () {
     sdk.Message attached() => message(1).copyWith(
       attachments: [
@@ -291,6 +397,35 @@ void main() {
     expect(first.attachment!.mimeType, 'application/pdf');
     expect(first.type, 'DOCUMENT');
   });
+
+  test(
+    'voice uploads preserve their actual audio container extension',
+    () async {
+      final connection = TestConnection()..bind(session);
+      final media = StreamChatMedia(connection);
+      for (final entry in {
+        'audio/webm': 'voice.webm',
+        'audio/ogg': 'voice.ogg',
+        'audio/mp4': 'voice.m4a',
+      }.entries) {
+        final upload = media.prepare(
+          workspace,
+          group,
+          type: 'VOICE',
+          mimeType: entry.key,
+          sizeBytes: 4,
+          durationMs: 1000,
+        );
+        await media.upload(upload, Uint8List(4), entry.key);
+        expect(connection.testChannel.uploaded!.name, entry.value);
+        expect(
+          media.attachment(upload.uploadId, workspace, group).mimeType,
+          entry.key,
+        );
+      }
+      await connection.dispose();
+    },
+  );
 
   test(
     'staged uploads cannot be finalized under a different session',
@@ -347,12 +482,21 @@ void main() {
 }
 
 class TestClient implements sdk.StreamChatClient {
-  int connections = 0;
+  int connections = 0, lookupCalls = 0;
+  sdk.Message? lookup;
+  List<sdk.UnreadCountsChannel> unread = [];
   final flushes = <bool>[];
   Future<String> Function(String)? tokenProvider;
   final incoming = StreamController<sdk.Event>.broadcast();
   @override
   dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #getUnreadCount) {
+      return Future.value(sdk.GetUnreadCountResponse()..channels = unread);
+    }
+    if (invocation.memberName == #getMessage) {
+      lookupCalls++;
+      return Future.value(sdk.GetMessageResponse()..message = lookup!);
+    }
     if (invocation.memberName == #connectUserWithProvider) {
       connections++;
       final user = invocation.positionalArguments[0] as sdk.User;
@@ -373,8 +517,18 @@ class TestChannel implements sdk.Channel {
   final sent = <sdk.Message>[];
   List<sdk.Message> page = [];
   int searches = 0;
+  sdk.AttachmentFile? uploaded;
   @override
   dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #state) return TestChannelState();
+    if (invocation.memberName == #sendFile) {
+      uploaded = invocation.positionalArguments.first as sdk.AttachmentFile;
+      return Future.value(
+        sdk.SendFileResponse.fromJson({
+          'file': 'https://cdn.example.invalid/voice',
+        }),
+      );
+    }
     if (invocation.memberName == #sendMessage) {
       final input = invocation.positionalArguments[0] as sdk.Message;
       sent.add(input);
@@ -412,6 +566,11 @@ class TestConnection extends StreamChatConnection {
   @override
   Future<sdk.Channel> channel(String workspaceId, String groupId) async =>
       testChannel;
+  @override
+  Future<Map<String, sdk.Channel>> channels(
+    String workspaceId,
+    Set<String> allowed,
+  ) async => {for (final id in allowed) id: testChannel};
   @override
   Future<void> dispose() async {
     await incoming.close();
@@ -453,4 +612,30 @@ class TestLegacyRealtime implements ChatLiveRealtime, ChatGroupStateRealtime {
 class TestSubscription implements ChatRealtimeSubscription {
   @override
   Future<void> cancel() async {}
+}
+
+class TestChannelState implements sdk.ChannelClientState {
+  @override
+  List<sdk.Message> get messages => [];
+  @override
+  List<sdk.Read> get read => [];
+  @override
+  int get unreadCount => 0;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class GroupRepository extends MockChatRepository {
+  @override
+  Future<List<ChatGroup>> listGroups(String workspaceId) async => [
+    ChatGroup(
+      id: group,
+      workspaceId: workspace,
+      name: 'Team',
+      memberCount: 2,
+      unreadCount: 2,
+      createdAt: DateTime.utc(2026),
+      updatedAt: DateTime.utc(2026),
+    ),
+  ];
 }

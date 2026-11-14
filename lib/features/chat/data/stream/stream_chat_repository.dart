@@ -41,14 +41,29 @@ class StreamChatRepository extends ChatRepository
         streamChatRequest(() async {
           final base = await legacy.listGroups(workspaceId);
           if (!await _enabled(workspaceId)) return base;
+          final client = (await connection.clientFor(workspaceId))!;
+          final counts = client.getUnreadCount().then<Map<String, int>?>(
+            (value) => {
+              for (final item in value.channels)
+                item.channelId: item.unreadCount,
+            },
+            onError: (Object _) => null,
+          );
           final channels = await connection.channels(
             workspaceId,
             base.map((g) => g.id).toSet(),
           );
+          final unread = await counts;
           return [
             for (final group in base)
               if (channels[group.id] != null)
-                StreamChatMapper.group(group, channels[group.id]!),
+                StreamChatMapper.group(
+                  group,
+                  channels[group.id]!,
+                  streamUnreadCount: unread == null
+                      ? null
+                      : unread['shiftly:${group.id}'] ?? 0,
+                ),
           ];
         }).whenComplete(() {
           if (identical(_listing, request)) _listing = null;
@@ -317,18 +332,42 @@ class StreamChatRepository extends ChatRepository
     if (!await _enabled(workspaceId)) {
       return legacy.mediaUrl(workspaceId, groupId, messageId);
     }
-    final message = await history.find(workspaceId, groupId, messageId);
-    if (message == null) {
+    // A single-message lookup refreshes Stream's expiring CDN signatures.
+    // Do not reuse the channel's cached attachment URL when the user retries.
+    final client = (await connection.clientFor(workspaceId))!;
+    stream.GetMessageResponse response;
+    try {
+      response = await client.getMessage(messageId);
+    } on stream.StreamChatNetworkError catch (error) {
+      if (error.statusCode != 404) rethrow;
       return legacy.mediaUrl(workspaceId, groupId, messageId);
     }
-    final attachment = message.attachments.firstOrNull,
-        uri = Uri.tryParse(attachment?.assetUrl ?? attachment?.imageUrl ?? '');
-    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
-      throw const FormatException('Invalid chat attachment URL');
+    final message = response.message;
+    final cid = response.channel?.cid ?? message.extraData['cid'];
+    if (cid != 'shiftly:$groupId' || message.deletedAt != null) {
+      throw const FormatException('Chat attachment is no longer available');
     }
+    final attachment = message.attachments.firstOrNull;
+    final image = attachment?.type == 'image';
+    final candidates = image
+        ? [attachment?.imageUrl, attachment?.assetUrl]
+        : [attachment?.assetUrl];
+    final uri = candidates
+        .whereType<String>()
+        .map(Uri.tryParse)
+        .whereType<Uri>()
+        .where(
+          (value) =>
+              value.scheme == 'https' &&
+              value.host.isNotEmpty &&
+              value.userInfo.isEmpty,
+        )
+        .firstOrNull;
+    if (uri == null) throw const FormatException('Invalid chat attachment URL');
     return ChatMediaUrl(
       url: uri,
       expiresAt: DateTime.now().toUtc().add(const Duration(minutes: 5)),
+      allowImageTransformation: image,
     );
   });
   @override

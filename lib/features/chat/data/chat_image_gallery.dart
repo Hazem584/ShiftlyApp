@@ -70,10 +70,17 @@ class ChatImageGallery implements ChatGallery {
     }
     checkAccess();
     final mime = ChatMediaValidation.imageMime(bytes);
-    if (bytes.length != attachment.sizeBytes ||
-        mime == null ||
-        mime != attachment.mimeType) {
-      throw const FormatException('Invalid chat image');
+    if (mime == null) throw const FormatException('Invalid chat image');
+    if (bytes.length != attachment.sizeBytes || mime != attachment.mimeType) {
+      final representation = await repository.mediaUrl(
+        session.workspaceId,
+        message.groupId,
+        message.id,
+      );
+      checkAccess();
+      if (!representation.allowImageTransformation) {
+        throw const FormatException('Invalid chat image');
+      }
     }
     final extension = switch (mime) {
       'image/jpeg' => 'jpg',
@@ -122,7 +129,10 @@ class ChatImageGallery implements ChatGallery {
         final buffer = BytesBuilder(copy: false);
         await for (final chunk in body.stream) {
           checkAccess();
-          if (buffer.length + chunk.length > message.attachment!.sizeBytes) {
+          if (buffer.length + chunk.length >
+              (signed.allowImageTransformation
+                  ? ChatMediaValidation.imageMaxBytes
+                  : message.attachment!.sizeBytes)) {
             throw const FormatException('Invalid image size');
           }
           buffer.add(chunk);
