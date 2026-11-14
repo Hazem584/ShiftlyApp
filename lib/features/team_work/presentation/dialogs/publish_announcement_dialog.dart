@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/manager_form_page.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_message_uuid.dart';
-import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
+import 'package:shiftly/features/communication/presentation/communication_appearance.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 
 class PublishAnnouncementDialog extends StatefulWidget {
@@ -59,74 +60,77 @@ class _PublishAnnouncementDialogState extends State<PublishAnnouncementDialog> {
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !_busy,
-    child: ManagerDialog(
-      title: Text(context.tr('Publish team announcement')),
-      content: SizedBox(
-        width: 540,
-        child: SingleChildScrollView(
-          child: Form(
-            key: _form,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _title,
-                  enabled: !_busy,
-                  maxLength: 160,
-                  decoration: InputDecoration(labelText: context.tr('Title')),
-                  validator: (v) => v?.trim().isNotEmpty == true
-                      ? null
-                      : context.tr('Please enter a title.'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _body,
-                  enabled: !_busy,
-                  minLines: 4,
-                  maxLines: 8,
-                  maxLength: 4000,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Announcement'),
+    child: CommunicationAppearance(
+      child: ManagerFormPage(
+        title: 'Publish update',
+        busy: _busy,
+        content: SizedBox(
+          width: 540,
+          child: SingleChildScrollView(
+            child: Form(
+              key: _form,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _title,
+                    enabled: !_busy,
+                    maxLength: 160,
+                    decoration: InputDecoration(labelText: context.tr('Title')),
+                    validator: (v) => v?.trim().isNotEmpty == true
+                        ? null
+                        : context.tr('Please enter a title.'),
                   ),
-                  validator: (v) => v?.trim().isNotEmpty == true
-                      ? null
-                      : context.tr('Please enter your announcement.'),
-                ),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(context.tr('Require acknowledgment')),
-                  subtitle: Text(
-                    context.tr(
-                      'Each recipient must confirm they have read this announcement.',
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _body,
+                    enabled: !_busy,
+                    minLines: 4,
+                    maxLines: 8,
+                    maxLength: 4000,
+                    decoration: InputDecoration(
+                      labelText: context.tr('Announcement'),
                     ),
+                    validator: (v) => v?.trim().isNotEmpty == true
+                        ? null
+                        : context.tr('Please enter your announcement.'),
                   ),
-                  value: _acknowledge,
-                  onChanged: _busy
-                      ? null
-                      : (v) => setState(() => _acknowledge = v),
-                ),
-                if (_error != null)
-                  Text(
-                    context.tr(_error!),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(context.tr('Require acknowledgment')),
+                    subtitle: Text(
+                      context.tr(
+                        'Each recipient must confirm they have read this announcement.',
+                      ),
                     ),
+                    value: _acknowledge,
+                    onChanged: _busy
+                        ? null
+                        : (v) => setState(() => _acknowledge = v),
                   ),
-              ],
+                  if (_error != null)
+                    Text(
+                      context.tr(_error!),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: _busy ? null : () => Navigator.pop(context),
+            child: Text(context.tr('Cancel')),
+          ),
+          FilledButton(
+            onPressed: _busy ? null : _publish,
+            child: Text(context.tr(_busy ? 'Saving…' : 'Publish')),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.pop(context),
-          child: Text(context.tr('Cancel')),
-        ),
-        FilledButton(
-          onPressed: _busy ? null : _publish,
-          child: Text(context.tr(_busy ? 'Saving…' : 'Publish')),
-        ),
-      ],
     ),
   );
 }

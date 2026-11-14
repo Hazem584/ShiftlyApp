@@ -205,7 +205,7 @@ void main() {
       const Offset(0, -500),
     );
     await tester.pumpAndSettle();
-    final switchButton = find.byKey(const Key('switch-workspace'));
+    final switchButton = find.byKey(const Key('profile-workspace'));
     final signOut = find.byKey(const Key('manager-logout'));
     expect(switchButton, findsOneWidget);
     expect(signOut, findsOneWidget);
@@ -215,11 +215,13 @@ void main() {
     );
     await tester.tap(switchButton);
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('switch-workspace')));
+    await tester.pumpAndSettle();
     expect(
       find.byKey(const Key('manage-workspace-invitations')),
       findsOneWidget,
     );
-    expect(find.text('Current'), findsOneWidget);
+    expect(find.textContaining('Currently active'), findsOneWidget);
     expect(coordinator.state.isAuthenticated, isTrue);
     await tester.pump(const Duration(seconds: 4));
   });
@@ -248,13 +250,15 @@ void main() {
       const Offset(0, -500),
     );
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('profile-workspace')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('switch-workspace')));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const Key('workspace-membership-chooser')),
       findsOneWidget,
     );
-    expect(find.text('Current'), findsOneWidget);
+    expect(find.textContaining('Currently active'), findsOneWidget);
     expect(find.text('Workspace two'), findsOneWidget);
   });
 
@@ -266,9 +270,19 @@ void main() {
       selection: ProfileImageSelection(fileName: 'unused', bytes: Uint8List(0)),
     );
     expect(find.text('Backend User'), findsOneWidget);
+    await _edit(tester);
     expect(find.text('backend@example.com'), findsOneWidget);
-    expect(find.text('Not provided'), findsOneWidget);
-    expect(find.text('Cairo Operations'), findsAtLeastNWidgets(1));
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(
+              of: find.byKey(const Key('profile-email-field')),
+              matching: find.byType(TextField),
+            ),
+          )
+          .readOnly,
+      isTrue,
+    );
   });
 
   testWidgets('oversized avatar is rejected before upload', (tester) async {
@@ -281,7 +295,9 @@ void main() {
     );
     await _edit(tester);
     await tester.tap(find.byKey(const Key('change-photo')));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('replace-profile-photo')));
+    await tester.pumpAndSettle();
     expect(find.text('Avatar must not exceed 2 MiB.'), findsOneWidget);
     expect(repository.uploadCalls, 0);
     await tester.pump(const Duration(seconds: 4));
@@ -302,7 +318,19 @@ void main() {
 
     expect(repository.lastPhone, isNull);
     expect(repository.profile.phone, isNull);
-    expect(find.text('Not provided'), findsOneWidget);
+    await _edit(tester);
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(
+              of: find.byKey(const Key('profile-phone-field')),
+              matching: find.byType(TextField),
+            ),
+          )
+          .controller!
+          .text,
+      isEmpty,
+    );
     await tester.pump(const Duration(seconds: 4));
   });
 
@@ -329,7 +357,19 @@ void main() {
     await tester.ensureVisible(cancel);
     await tester.tap(cancel);
     await tester.pumpAndSettle();
-    expect(find.text('+201234567890'), findsOneWidget);
+    await _edit(tester);
+    expect(
+      tester
+          .widget<TextField>(
+            find.descendant(
+              of: find.byKey(const Key('profile-phone-field')),
+              matching: find.byType(TextField),
+            ),
+          )
+          .controller!
+          .text,
+      '+201234567890',
+    );
     await tester.pump(const Duration(seconds: 4));
   });
 
@@ -343,7 +383,9 @@ void main() {
     );
     await _edit(tester);
     await tester.tap(find.byKey(const Key('change-photo')));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('replace-profile-photo')));
+    await tester.pumpAndSettle();
     expect(find.text('Choose a JPEG, PNG, or WebP image.'), findsOneWidget);
     expect(repository.uploadCalls, 0);
     await tester.pump(const Duration(seconds: 4));
@@ -368,8 +410,12 @@ void main() {
     );
     await _edit(tester);
     await tester.tap(find.byKey(const Key('change-photo')));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('replace-profile-photo')));
+    await tester.pumpAndSettle();
     expect(repository.uploadCalls, 1);
+    await tester.tap(find.byKey(const Key('change-photo')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('delete-avatar')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('delete-avatar')));
@@ -405,7 +451,9 @@ void main() {
     );
     await _edit(tester);
     await tester.tap(find.byKey(const Key('change-photo')));
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('replace-profile-photo')));
+    await tester.pumpAndSettle();
     expect(
       find.text('You appear to be offline. Check your connection and retry.'),
       findsOneWidget,

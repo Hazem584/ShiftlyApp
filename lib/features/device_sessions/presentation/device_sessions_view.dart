@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/features/communication/presentation/communication_page.dart';
 import 'package:shiftly/features/device_sessions/application/device_sessions_cubit.dart';
 import 'package:shiftly/features/device_sessions/domain/device_sessions_repository.dart';
 import 'package:shiftly/features/device_sessions/presentation/device_session_card.dart';
@@ -48,41 +49,27 @@ class DeviceSessionsView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.tr('Devices and sessions'))),
-    body: BlocBuilder<DeviceSessionsCubit, DeviceSessionsState>(
-      builder: (context, state) {
-        final blocked = state.busy || state.loading;
-        return RefreshIndicator(
+  Widget build(
+    BuildContext context,
+  ) => BlocBuilder<DeviceSessionsCubit, DeviceSessionsState>(
+    builder: (context, state) {
+      final blocked = state.busy || state.loading;
+      return CommunicationPage(
+        title: 'Devices and sessions',
+        footer: OutlinedButton.icon(
+          key: const Key('logout-all-devices'),
+          onPressed: blocked || state.items.isEmpty
+              ? null
+              : () => _revoke(context, null),
+          icon: const Icon(Icons.logout),
+          label: Text(context.tr('Sign out all devices')),
+        ),
+        child: RefreshIndicator(
           onRefresh: () => context.read<DeviceSessionsCubit>().load(),
           child: ListView(
             padding: const EdgeInsets.all(20),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              Text(
-                context.tr(
-                  'You can use your account on multiple devices. Manage each sign-in below.',
-                ),
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                context.tr(
-                  'Devices are listed from the earliest active sign-in. Device details may be unavailable for older app versions.',
-                ),
-              ),
-              const SizedBox(height: 20),
-              OutlinedButton.icon(
-                key: const Key('logout-all-devices'),
-                onPressed: blocked || state.items.isEmpty
-                    ? null
-                    : () => _revoke(context, null),
-                icon: const Icon(Icons.logout),
-                label: Text(context.tr('Sign out all devices')),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-              ),
               if (state.loading || state.busy)
                 const Padding(
                   padding: EdgeInsets.all(20),
@@ -130,10 +117,22 @@ class DeviceSessionsView extends StatelessWidget {
                         ),
                   child: Text(context.tr('Load more devices')),
                 ),
+              const SizedBox(height: 12),
+              Card(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    context.tr(
+                      'Revoke any session you no longer recognize. Tap a device to view its details.',
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
-        );
-      },
-    ),
+        ),
+      );
+    },
   );
 }

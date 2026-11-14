@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/utils/notification_display_text.dart';
@@ -28,25 +27,20 @@ class NotificationCard extends StatelessWidget {
     final presentation = notificationPresentation(notification.type);
     return Material(
       key: Key('notification-${notification.id}'),
-      color: notification.isUnread
-          ? AppPalette.of(context).selected
-          : AppPalette.of(context).surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.l),
-        side: BorderSide(color: AppPalette.of(context).borderColor),
-      ),
+      color: AppPalette.of(context).surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: mutating ? null : onOpen,
-        borderRadius: BorderRadius.circular(AppRadii.l),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                backgroundColor: presentation.color.withValues(alpha: .12),
-                foregroundColor: presentation.color,
-                child: Icon(presentation.icon, size: 20),
+              Icon(
+                presentation.icon,
+                size: 24,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -59,8 +53,9 @@ class NotificationCard extends StatelessWidget {
                           child: Text(
                             context.tr(notification.title),
                             style: TextStyle(
+                              fontSize: 15,
                               fontWeight: notification.isUnread
-                                  ? FontWeight.w800
+                                  ? FontWeight.w600
                                   : FontWeight.w600,
                             ),
                           ),
@@ -69,7 +64,7 @@ class NotificationCard extends StatelessWidget {
                           DecoratedBox(
                             key: Key('unread-indicator'),
                             decoration: BoxDecoration(
-                              color: AppPalette.of(context).orange,
+                              color: Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle,
                             ),
                             child: SizedBox.square(dimension: 8),
@@ -85,12 +80,15 @@ class NotificationCard extends StatelessWidget {
                       ),
                       style: TextStyle(
                         color: AppPalette.of(context).textSecondary,
+                        fontSize: 13,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       context.tr('{value1} · {value2}', {
-                        'value1': context.tr(presentation.label),
+                        'value1': context.tr(
+                          notification.isUnread ? 'Unread' : 'Read',
+                        ),
                         'value2': (WorkspaceTime.dateTime(
                           notification.createdAt,
                           timezone,
@@ -98,7 +96,7 @@ class NotificationCard extends StatelessWidget {
                         )).toString(),
                       }),
                       style: TextStyle(
-                        color: AppPalette.of(context).lighterGray,
+                        color: AppPalette.of(context).textSecondary,
                         fontSize: 11,
                       ),
                     ),

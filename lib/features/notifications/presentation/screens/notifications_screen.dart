@@ -6,11 +6,13 @@ import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
+import 'package:shiftly/features/communication/presentation/communication_actions.dart';
+import 'package:shiftly/features/communication/presentation/communication_appearance.dart';
+import 'package:shiftly/features/communication/presentation/notification_permission_screen.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/notifications/presentation/utils/notifications_formatters.dart';
 import 'package:shiftly/features/notifications/presentation/widgets/notification_card.dart';
-import 'package:shiftly/features/notifications/presentation/widgets/push_notification_settings.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -20,6 +22,7 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
+  bool _unreadOnly = false;
   @override
   void initState() {
     super.initState();
@@ -29,28 +32,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) =>
+      CommunicationAppearance(child: Builder(builder: _build));
+  Widget _build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(context.tr('Notifications')),
+      title: Text(context.tr('Inbox')),
       actions: [
-        BlocBuilder<NotificationsCubit, NotificationsState>(
-          buildWhen: (previous, current) =>
-              previous.unreadCount != current.unreadCount ||
-              previous.markingAll != current.markingAll,
+        IconButton(
+          key: const Key('notification-permission-settings'),
+          tooltip: context.tr('Stay informed'),
+          onPressed: () => openCommunicationPage(
+            context,
+            const NotificationPermissionScreen(),
+          ),
+          icon: const Icon(Icons.notifications_outlined),
+        ),
+      ],
+    ),
+    bottomNavigationBar: SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        child: BlocBuilder<NotificationsCubit, NotificationsState>(
           builder: (context, state) => TextButton(
             key: const Key('mark-all-notifications-read'),
             onPressed: state.unreadCount == 0 || state.markingAll
                 ? null
                 : _markAll,
-            child: state.markingAll
-                ? const SizedBox.square(
-                    dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(context.tr('Mark all read')),
+            child: Text(
+              context.tr(state.markingAll ? 'Saving…' : 'Mark all as read'),
+            ),
           ),
         ),
-      ],
+      ),
     ),
     body: BlocBuilder<NotificationsCubit, NotificationsState>(
       builder: (context, state) {
@@ -76,7 +90,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
-              const PushNotificationSettings(),
+              Text(
+                context.tr('Your workspace activity'),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 8,
+                children: [
+                  ChoiceChip(
+                    key: const Key('notifications-unread-filter'),
+                    label: Text(
+                      context.tr('Unread {count}', {
+                        'count': '${state.unreadCount}',
+                      }),
+                    ),
+                    selected: _unreadOnly,
+                    onSelected: (_) => setState(() => _unreadOnly = true),
+                  ),
+                  ChoiceChip(
+                    label: Text(context.tr('All')),
+                    selected: !_unreadOnly,
+                    onSelected: (_) => setState(() => _unreadOnly = false),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
               if (state.failure != null) ...[
                 Text(
                   state.failure!.message,
@@ -84,6 +123,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
                 const SizedBox(height: AppSpacing.s),
               ],
+              if (_unreadOnly &&
+                  state.notifications.isNotEmpty &&
+                  !state.notifications.any((n) => n.isUnread))
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    context.tr(
+                      state.hasMore
+                          ? 'Load more to see earlier notifications.'
+                          : 'You’re all caught up.',
+                    ),
+                  ),
+                ),
               if (state.notifications.isEmpty)
                 EmptyState(
                   icon: Icons.notifications_none_rounded,
@@ -91,7 +143,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   message: 'Workspace updates will appear here. Pull down to refresh.',
                 )
               else
-                for (final notification in state.notifications) ...[
+                for (final notification in state.notifications.where(
+                  (n) => !_unreadOnly || n.isUnread,
+                )) ...[
                   NotificationCard(
                     notification: notification,
                     timezone:

@@ -1,11 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/communication/presentation/communication_actions.dart';
+import 'package:shiftly/features/communication/presentation/notification_unavailable_screen.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
@@ -49,14 +52,7 @@ abstract final class NotificationsScreenNotificationNavigator {
     }
     final destination = _destination(scope, notification);
     if (destination == null) {
-      if ({
-        NotificationType.shiftAssigned,
-        NotificationType.shiftUpdated,
-        NotificationType.shiftCancelled,
-        NotificationType.shiftReminder,
-      }.contains(notification.type)) {
-        _unavailable(context);
-      }
+      _unavailable(context);
       return;
     }
     if (!_uuid.hasMatch(destination.id)) {
@@ -214,10 +210,11 @@ abstract final class NotificationsScreenNotificationNavigator {
   static String _id(Map<String, Object?> data, String key) =>
       data[key] is String ? data[key]! as String : '';
 
-  static void _unavailable(BuildContext context) => ToastService.warning(
-    context,
-    message: 'This notification destination is no longer available.',
-  );
+  static void _unavailable(BuildContext context) {
+    unawaited(
+      openCommunicationPage(context, const NotificationUnavailableScreen()),
+    );
+  }
 }
 
 enum _DestinationKind {

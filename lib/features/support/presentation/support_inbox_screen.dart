@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/features/communication/presentation/communication_appearance.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_image_picker.dart';
 
 import '../domain/support_models.dart';
@@ -83,7 +84,9 @@ class _SupportInboxScreenState extends State<SupportInboxScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) =>
+      CommunicationAppearance(child: Builder(builder: _build));
+  Widget _build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(context.tr('Help and problem reports')),
       actions: [

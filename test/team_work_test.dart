@@ -162,53 +162,49 @@ void main() {
 
   for (final dark in [false, true]) {
     testWidgets(
-      'dashboard announcement hides only after explicit confirmation (dark: $dark)',
+      'announcement read retries and acknowledgment stays explicit (dark: $dark)',
       (tester) async {
-        tester.view.physicalSize = const Size(320, 750);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        final repository = _Announcements()..requiresAcknowledgment = dark;
-        final button = dark ? 'Confirm I have read this' : 'I have read this';
-        Widget screen(String workspaceId) => MaterialApp(
-          theme: dark ? AppTheme.darkTheme() : AppTheme.lightTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: PendingAnnouncements(
-                key: const ValueKey('pending'),
+        final repository = _Announcements()
+          ..requiresAcknowledgment = true
+          ..failRead = true;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: dark ? AppTheme.darkTheme() : AppTheme.lightTheme(),
+            home: Scaffold(
+              body: PendingAnnouncements(
                 repository: repository,
-                workspaceId: workspaceId,
+                workspaceId: 'one',
                 timezone: 'Africa/Cairo',
               ),
             ),
           ),
         );
-        await tester.pumpWidget(screen('one'));
         await tester.pumpAndSettle();
-        expect(find.text(announcementJson['body'] as String), findsOneWidget);
-        expect(repository.reads + repository.confirms, 0);
-        expect(repository.pendingQueries, [true]);
-        repository.failRead = true;
-        await tester.tap(find.text(button));
+        await tester.tap(find.text('Open update'));
         await tester.pumpAndSettle();
-        expect(find.text(announcementJson['body'] as String), findsOneWidget);
-        expect(
-          find.text('Could not update team announcements.'),
-          findsOneWidget,
-        );
+        expect(find.text('Try again'), findsOneWidget);
+        expect(repository.reads, 0);
         repository.failRead = false;
-        repository.failRefreshAfterRead = dark;
-        await tester.tap(find.text(button));
+        await tester.tap(find.text('Retry'));
         await tester.pumpAndSettle();
-        expect(repository.confirms, dark ? 1 : 0);
-        expect(repository.reads, dark ? 0 : 1);
-        expect(find.text(announcementJson['body'] as String), findsNothing);
-        await tester.pumpWidget(screen('one'));
+        expect(repository.reads, 1);
+        expect(repository.confirms, 0);
+        await tester.tap(find.byKey(const Key('acknowledge-announcement')));
         await tester.pumpAndSettle();
-        expect(find.text(announcementJson['body'] as String), findsNothing);
-        await tester.pumpWidget(screen('two'));
+        await tester.tap(find.text('Cancel'));
         await tester.pumpAndSettle();
-        expect(find.text(announcementJson['body'] as String), findsOneWidget);
+        expect(repository.confirms, 0);
+        await tester.tap(find.byKey(const Key('acknowledge-announcement')));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('confirm-announcement-acknowledgment')),
+        );
+        await tester.pumpAndSettle();
+        expect(repository.confirms, 1);
+        expect(find.text('Acknowledgment saved.'), findsOneWidget);
+        await tester.tap(find.text('Back to announcements'));
+        await tester.pumpAndSettle();
+        expect(find.text('Open update'), findsNothing);
         expect(tester.takeException(), isNull);
       },
     );
@@ -403,13 +399,17 @@ void main() {
       );
       expect(repository.reads, 0);
       expect(find.text('I have read and understood'), findsNothing);
-      await tester.tap(find.text('Read announcement'));
+      await tester.tap(
+        find.byKey(Key('announcement-${announcementJson['id']}')),
+      );
       await tester.pumpAndSettle();
       expect(repository.reads, 1);
       expect(repository.confirms, 0);
-      await tester.tap(find.text('Close'));
+      await tester.tap(find.byKey(const Key('acknowledge-announcement')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('I have read and understood'));
+      await tester.tap(
+        find.byKey(const Key('confirm-announcement-acknowledgment')),
+      );
       await tester.pumpAndSettle();
       expect(repository.confirms, 1);
     },

@@ -48,7 +48,7 @@ void main() {
     expect(find.text('Mariam'), findsOneWidget);
     await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
-    expect(find.text('Manager Profile'), findsOneWidget);
+    expect(find.byKey(const Key('profile-preferences')), findsOneWidget);
     await tester.tap(find.text('Chat').last);
     await tester.pumpAndSettle();
     expect(find.text('Active'), findsOneWidget);

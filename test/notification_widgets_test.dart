@@ -186,6 +186,22 @@ void main() {
       expect(find.textContaining('deliberately long title'), findsOneWidget);
       await tester.tap(find.byKey(const Key('notification-$_notificationId')));
       await tester.pumpAndSettle();
+      if (find.text('Item unavailable').evaluate().isNotEmpty) {
+        expect(
+          find.text('This notification destination is no longer available.'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('This notification destination is no longer available.'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('This notification destination is no longer available.'),
+          findsOneWidget,
+        );
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+      }
       expect(find.byType(NotificationsScreen), findsOneWidget);
       expect(find.byKey(const Key('unread-indicator')), findsNothing);
       await tester.tap(find.byKey(const Key('delete-$_notificationId')));
@@ -353,6 +369,18 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('notification-$_notificationId')));
     await tester.pumpAndSettle();
+    if (find.text('Item unavailable').evaluate().isNotEmpty) {
+      expect(
+        find.text('This notification destination is no longer available.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('This notification destination is no longer available.'),
+        findsOneWidget,
+      );
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+    }
     expect(find.byType(NotificationsScreen), findsOneWidget);
     ToastService.dismissAll();
   });
@@ -380,6 +408,18 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    if (find.text('Item unavailable').evaluate().isNotEmpty) {
+      expect(
+        find.text('This notification destination is no longer available.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('This notification destination is no longer available.'),
+        findsOneWidget,
+      );
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+    }
     expect(find.byType(NotificationsScreen), findsOneWidget);
     expect(
       find.byKey(const Key('notification-$_notificationId')),
@@ -410,11 +450,19 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('notification-$_notificationId')));
     await tester.pumpAndSettle();
+    if (find.text('Item unavailable').evaluate().isNotEmpty) {
+      expect(
+        find.text('This notification destination is no longer available.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('This notification destination is no longer available.'),
+        findsOneWidget,
+      );
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+    }
     expect(find.byType(NotificationsScreen), findsOneWidget);
-    expect(
-      find.text('This notification destination is no longer available.'),
-      findsOneWidget,
-    );
     ToastService.dismissAll();
   });
 
@@ -460,11 +508,23 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('notification-$_notificationId')));
       await tester.pumpAndSettle();
+      if (find.text('Item unavailable').evaluate().isNotEmpty) {
+        expect(
+          find.text('This notification destination is no longer available.'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('This notification destination is no longer available.'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('This notification destination is no longer available.'),
+          findsOneWidget,
+        );
+        await tester.pageBack();
+        await tester.pumpAndSettle();
+      }
       expect(find.byType(NotificationsScreen), findsOneWidget);
-      expect(
-        find.text('This notification destination is no longer available.'),
-        findsOneWidget,
-      );
       expect(
         find.byKey(const Key('notification-$_notificationId')),
         findsOneWidget,

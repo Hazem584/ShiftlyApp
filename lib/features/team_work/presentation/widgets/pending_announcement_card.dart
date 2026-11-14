@@ -72,13 +72,7 @@ class PendingAnnouncementCard extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: busy ? null : onRead,
                 icon: const Icon(Icons.done_all),
-                label: Text(
-                  context.tr(
-                    announcement.requiresAcknowledgment
-                        ? 'Confirm I have read this'
-                        : 'I have read this',
-                  ),
-                ),
+                label: Text(context.tr('Open update')),
               ),
             ),
           ],

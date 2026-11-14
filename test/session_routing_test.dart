@@ -276,12 +276,14 @@ void main() {
       );
       await _openEmployeeWorkspaceSwitcher(tester);
       await tester.pumpAndSettle();
-      expect(find.text('Current'), findsOneWidget);
+      expect(find.textContaining('Currently active'), findsOneWidget);
       await tester.tap(
         find.byKey(
           Key('workspace-${original.memberships.single.workspace.id}'),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('apply-workspace-switch')));
       await tester.pumpAndSettle();
       expect(
         coordinator.state.activeMembership?.workspace.id,
@@ -373,7 +375,7 @@ void main() {
     await _pumpRole(tester, WorkspaceRole.manager);
     await tester.tap(find.byKey(const Key('nav-4')));
     await tester.pumpAndSettle();
-    expect(find.text('Manager Profile'), findsOneWidget);
+    expect(find.byKey(const Key('profile-preferences')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -486,6 +488,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('manager-logout')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-sign-out')));
+    await tester.pumpAndSettle();
     expect(find.text('Welcome to Shiftly'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
   });
@@ -597,7 +601,7 @@ Future<void> _openEmployeeWorkspaceSwitcher(WidgetTester tester) async {
   await tester.tap(find.text('Profile').last);
   await tester.pumpAndSettle();
   await tester.scrollUntilVisible(
-    find.byKey(const Key('switch-workspace')),
+    find.byKey(const Key('profile-workspace')),
     250,
     scrollable: find
         .descendant(
@@ -606,6 +610,8 @@ Future<void> _openEmployeeWorkspaceSwitcher(WidgetTester tester) async {
         )
         .first,
   );
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('profile-workspace')));
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('switch-workspace')));
   await tester.pumpAndSettle();

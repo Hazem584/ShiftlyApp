@@ -31,9 +31,11 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
   late final WorkFeedCubit<CorrectionRequest> _corrections;
   late final WorkFeedCubit<TeamAnnouncement> _announcements;
   String? _status;
+  late bool _pendingAnnouncements;
   @override
   void initState() {
     super.initState();
+    _pendingAnnouncements = !widget.manager;
     _tasks = WorkFeedCubit((_) => widget.repository.tasks(widget.workspaceId));
     _corrections = WorkFeedCubit(
       (page) => widget.repository.corrections(
@@ -43,7 +45,11 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
       ),
     );
     _announcements = WorkFeedCubit(
-      (page) => widget.repository.announcements(widget.workspaceId, page: page),
+      (page) => widget.repository.announcements(
+        widget.workspaceId,
+        page: page,
+        pendingOnly: _pendingAnnouncements,
+      ),
     );
     if (widget.initialTab == 'tasks' && widget.manager) _tasks.load();
     if (widget.initialTab == 'corrections') _corrections.load();
@@ -158,6 +164,10 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
             ),
           ),
           _ => AnnouncementsView(
+            onPendingChanged: (pending) {
+              _pendingAnnouncements = pending;
+              _announcements.load();
+            },
             repository: widget.repository,
             cubit: _announcements,
             workspaceId: widget.workspaceId,

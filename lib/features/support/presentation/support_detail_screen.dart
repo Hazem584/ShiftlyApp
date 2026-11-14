@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/features/communication/presentation/communication_appearance.dart';
 import 'package:uuid/uuid.dart';
 
 import '../domain/support_models.dart';
@@ -103,7 +104,9 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      CommunicationAppearance(child: Builder(builder: _build));
+  Widget _build(BuildContext context) {
     final ticket = _ticket;
     return Scaffold(
       appBar: AppBar(

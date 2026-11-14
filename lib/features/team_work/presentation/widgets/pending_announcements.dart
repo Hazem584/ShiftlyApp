@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/features/communication/presentation/announcement_detail_screen.dart';
+import 'package:shiftly/features/communication/presentation/communication_actions.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
@@ -26,10 +28,8 @@ class PendingAnnouncements extends StatefulWidget {
 class _PendingAnnouncementsState extends State<PendingAnnouncements>
     with WidgetsBindingObserver {
   late WorkFeedCubit<TeamAnnouncement> _feed;
-  final _dismissed = <String>{};
 
   void _bind() {
-    _dismissed.clear();
     final repository = widget.repository;
     final workspaceId = widget.workspaceId;
     _feed = WorkFeedCubit(
@@ -102,20 +102,23 @@ class _PendingAnnouncementsState extends State<PendingAnnouncements>
                 ),
               ),
             for (final item in state.items)
-              if (!_dismissed.contains(item.id))
-                PendingAnnouncementCard(
-                  announcement: item,
-                  timezone: widget.timezone,
-                  busy: state.busyId != null || state.loading,
-                  onRead: () => _feed.mutate(item.id, () async {
-                    await widget.repository.markAnnouncement(
-                      widget.workspaceId,
-                      item.id,
-                      acknowledge: item.requiresAcknowledgment,
-                    );
-                    _dismissed.add(item.id);
-                  }),
+              PendingAnnouncementCard(
+                announcement: item,
+                timezone: widget.timezone,
+                busy: state.busyId != null || state.loading,
+                onRead: () => openCommunicationPage(
+                  context,
+                  AnnouncementDetailScreen(
+                    item: item,
+                    repository: widget.repository,
+                    workspaceId: widget.workspaceId,
+                    timezone: widget.timezone,
+                    onChanged: () async {
+                      if (!_feed.isClosed) await _feed.load();
+                    },
+                  ),
                 ),
+              ),
             if (state.hasMore)
               TextButton(
                 onPressed:

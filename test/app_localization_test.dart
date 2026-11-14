@@ -39,17 +39,9 @@ void main() {
       expect(find.text('حضور النهارده'), findsOneWidget);
       await tester.tap(find.byKey(const Key('nav-4')));
       await tester.pumpAndSettle();
-      expect(find.text('بروفايل المدير'), findsOneWidget);
-      await tester.scrollUntilVisible(
-        find.byKey(const Key('language-selector')),
-        200,
-        scrollable: find
-            .descendant(
-              of: find.byKey(const Key('profile-content')),
-              matching: find.byType(Scrollable),
-            )
-            .first,
-      );
+      expect(find.byKey(const Key('profile-preferences')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('profile-preferences')));
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('language-selector')), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());

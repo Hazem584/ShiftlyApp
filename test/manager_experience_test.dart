@@ -131,13 +131,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Profile').last);
     await tester.pumpAndSettle();
-    expect(find.text('Manager Profile'), findsOneWidget);
-    expect(find.byKey(const Key('profile-initials')), findsOneWidget);
+    expect(find.byKey(const Key('profile-preferences')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('edit-profile')));
     await tester.pumpAndSettle();
-    expect(find.text('Edit Profile'), findsOneWidget);
+    expect(find.text('Edit information'), findsOneWidget);
     await tester.tap(find.byKey(const Key('change-photo')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel').last);
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('profile-initials')), findsOneWidget);
     await tester.enterText(find.byKey(const Key('profile-name-field')), '');
@@ -151,7 +152,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('cancel-profile-edit')));
     await tester.pumpAndSettle();
-    expect(find.text('Manager Profile'), findsOneWidget);
+    expect(find.byKey(const Key('profile-preferences')), findsOneWidget);
   });
 
   testWidgets('profile updates manager text for the current session', (
