@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
+import 'package:shiftly/core/widgets/confirm_action.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 
-import 'communication_actions.dart';
 import 'communication_page.dart';
 
 class ChatCacheScreen extends StatefulWidget {
@@ -29,7 +29,7 @@ class _ChatCacheScreenState extends State<ChatCacheScreen> {
       await context.read<ChatGroupsCubit?>()?.mediaCache?.size() ?? 0;
   Future<void> _clear() async {
     if (_busy) return;
-    final confirmed = await confirmCommunicationAction(
+    final confirmed = await confirmAction(
       context,
       title: 'Clear cached media?',
       message: 'Remove downloaded chat media from this device. Open an attachment again to download it when online.',

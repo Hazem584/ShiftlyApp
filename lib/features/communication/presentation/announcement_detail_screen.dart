@@ -4,6 +4,7 @@ import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/confirm_action.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 
@@ -55,7 +56,7 @@ class _AnnouncementDetailScreenState extends State<AnnouncementDetailScreen> {
   Future<void> _record(bool acknowledge) async {
     if (_busy || !_current) return;
     if (acknowledge) {
-      final confirmed = await confirmCommunicationAction(
+      final confirmed = await confirmAction(
         context,
         title: 'Acknowledge this update?',
         message: 'Confirm that you have read and understood this update. Your manager can see your acknowledgment.',

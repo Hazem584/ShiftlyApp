@@ -60,7 +60,7 @@ flutter test
 
 Managers can review and close completed attendance months from the calendar, reopen them with a reason, and change a completed employee day to present, late, absent or leave. Every decision is audited. Employees can expand a day to inspect recorded time, breaks, lateness deductions and credited overtime.
 
-Architecture tests enforce independent domain code and small, focused UI files. Run the relevant feature tests while developing, then the complete suite before release.
+Architecture tests enforce independent domain code, small UI files, and production libraries reachable from `lib/main.dart`. Remove retired screens and their dedicated dependencies instead of keeping detached implementations. Run the relevant feature tests while developing, then the complete suite before release.
 
 ## Release integrations
 
@@ -72,7 +72,7 @@ Companion projects are **ShiftlyBackend** (NestJS API) and **Shiftly-Admin** (Re
 
 ## Problem reports
 
-Open **Profile → Help and problem reports** to submit a report, optionally select one of your tasks or shifts, and attach an image up to 2 MB. Track the status, assigned support person and replies from the same section. Staff replies create a notification that opens the report. Submission and reply IDs make network retries safe; a failed image upload can be retried without creating another report.
+Open **Profile → Support and service → Help and problem reports** to submit a report, optionally select one of your tasks or shifts, and attach an image up to 2 MB. Track the status, assigned support person and replies from the same section. Staff replies create a notification that opens the report. Submission and reply IDs make network retries safe; a failed image upload can be retried without creating another report.
 
 This workflow requires the companion backend's administrator/support migration and server-side private image storage configuration. No service-role credentials belong in the app.
 

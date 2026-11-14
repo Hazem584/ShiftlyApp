@@ -5,13 +5,13 @@ import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/confirm_action.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/eligible_shift_occurrence.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/dialogs/missed_attendance_request_dialog.dart';
 
 import 'employee_active_attendance_screen.dart';
-import 'employee_attendance_actions.dart';
 import 'employee_page.dart';
 import 'employee_tile.dart';
 
@@ -28,7 +28,7 @@ class EmployeeShiftDetailsScreen extends StatelessWidget {
     EligibleShiftOccurrence value,
   ) async {
     final cubit = context.read<FlexibleAttendanceCubit>();
-    final confirmed = await confirmEmployeeAction(
+    final confirmed = await confirmAction(
       context,
       title: 'Start your shift?',
       message: '${value.template.name} · ${value.operationalDate} · $timezone',

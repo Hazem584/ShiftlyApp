@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/confirm_action.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/utils/leave_request_display_formatters.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
 
-import 'employee_attendance_actions.dart';
 import 'employee_page.dart';
 import 'employee_tile.dart';
 
@@ -41,7 +41,7 @@ class _EmployeeLeaveDetailsScreenState
 
   Future<void> _cancel() async {
     final cubit = context.read<EmployeeLeaveRequestsCubit>();
-    final ok = await confirmEmployeeAction(
+    final ok = await confirmAction(
       context,
       title: 'Cancel leave request?',
       message: context.tr(

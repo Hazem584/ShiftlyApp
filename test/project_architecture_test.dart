@@ -26,6 +26,41 @@ void main() {
     expect(sources.keys.where((path) => path.contains('/parts/')), isEmpty);
   });
 
+  test(
+    'production libraries are reachable from the application entry point',
+    () {
+      final references = RegExp(
+        r'''^\s*(?:import|export)\s+([^;]+);''',
+        multiLine: true,
+      );
+      final uris = RegExp(r'''['"]([^'"]+)['"]''');
+      final reachable = <String>{};
+      final pending = ['lib/main.dart'];
+      while (pending.isNotEmpty) {
+        final path = pending.removeLast();
+        if (!reachable.add(path)) continue;
+        for (final directive in references.allMatches(sources[path] ?? '')) {
+          for (final match in uris.allMatches(directive[1]!)) {
+            final uri = match[1]!;
+            final target = uri.startsWith('package:shiftly/')
+                ? 'lib/${uri.substring('package:shiftly/'.length)}'
+                : !uri.contains(':')
+                ? Uri.parse(path).resolve(uri).toString()
+                : null;
+            if (target != null && sources.containsKey(target)) {
+              pending.add(target);
+            }
+          }
+        }
+      }
+      expect(
+        sources.keys.where((path) => !reachable.contains(path)).toList(),
+        isEmpty,
+        reason: 'Remove unused production libraries or connect them to the application.',
+      );
+    },
+  );
+
   test('production files stay below 500 lines', () {
     for (final entry in sources.entries) {
       final lines = entry.value.split('\n').length;

@@ -5,10 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/confirm_action.dart';
 import 'package:shiftly/features/breaks/application/shift_break_controller.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/flexible_attendance.dart';
 
-import 'employee_attendance_actions.dart';
 import 'employee_tile.dart';
 
 class EmployeeBreakPanel extends StatefulWidget {
@@ -79,7 +79,7 @@ class _EmployeeBreakPanelState extends State<EmployeeBreakPanel> {
       return;
     }
     if (!b.canStart) return;
-    final ok = await confirmEmployeeAction(
+    final ok = await confirmAction(
       context,
       title: 'Start a break?',
       message: context.tr('Available break: {duration}', {

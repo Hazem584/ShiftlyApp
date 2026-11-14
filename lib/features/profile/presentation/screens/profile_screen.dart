@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/core/widgets/confirm_action.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/communication/presentation/communication_actions.dart';
 import 'package:shiftly/features/communication/presentation/communication_page.dart';
@@ -24,7 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _error;
   Future<void> _logout() async {
     if (_signingOut || widget.onLogout == null) return;
-    final confirmed = await confirmCommunicationAction(
+    final confirmed = await confirmAction(
       context,
       title: 'Sign out of Shiftly?',
       message: 'You’ll need to sign in again to access your workspaces. Your account and team records stay saved.',
