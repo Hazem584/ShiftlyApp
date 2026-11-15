@@ -1,3 +1,5 @@
+export 'chat_storage_path.dart';
+
 final RegExp chatModelsUuid = RegExp(
   r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
 );
@@ -42,29 +44,6 @@ String chatModelsText(
 
 String? chatModelsOptionalText(Object? value) =>
     value is String && value.trim().isNotEmpty ? value : null;
-
-bool chatModelsValidStoragePath(Object? value) {
-  if (value is! String ||
-      value.trim() != value ||
-      value.isEmpty ||
-      value.startsWith('/') ||
-      value.endsWith('/') ||
-      value.contains(r'\')) {
-    return false;
-  }
-  try {
-    return value.split('/').every((segment) {
-      final decoded = Uri.decodeComponent(segment);
-      return decoded.isNotEmpty &&
-          decoded != '.' &&
-          decoded != '..' &&
-          !decoded.contains('/') &&
-          !decoded.contains(r'\');
-    });
-  } on FormatException {
-    return false;
-  }
-}
 
 int chatModelsCount(Object? value, String label) {
   if (value is! int || value < 0) throw FormatException('Invalid $label');

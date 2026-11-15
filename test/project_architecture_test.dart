@@ -61,6 +61,15 @@ void main() {
     },
   );
 
+  test('refactored Stream integration stays within 70 lines', () {
+    for (final entry in sources.entries.where(
+      (entry) => entry.key.startsWith('lib/features/chat/data/stream/'),
+    )) {
+      final lines = entry.value.trimRight().split('\n').length;
+      expect(lines, lessThanOrEqualTo(70), reason: entry.key);
+    }
+  });
+
   test('production files stay below 500 lines', () {
     for (final entry in sources.entries) {
       final lines = entry.value.split('\n').length;
