@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/routing/route_back_boundary.dart';
 import 'package:shiftly/core/widgets/workspace_content_frame.dart';
 import 'package:shiftly/features/manager_experience/presentation/manager_appearance.dart';
 import 'package:shiftly/features/shell/presentation/widgets/app_bottom_navigation.dart';
@@ -20,31 +21,42 @@ class ShellScreen extends StatelessWidget {
         index,
         initialLocation: index == navigationShell.currentIndex,
       );
-      return Scaffold(
-        body: Row(
-          children: [
-            if (wide) ...[
-              WorkspaceNavigationRail(
-                extended: constraints.maxWidth >= 1200,
-                selectedIndex: navigationShell.currentIndex,
-                onSelected: select,
+      final uri = GoRouterState.of(context).uri;
+      final fallback = switch (uri.path) {
+        '/work' when uri.queryParameters.containsKey('tab') => '/work',
+        '/employees' when uri.queryParameters.containsKey('tab') =>
+          '/employees',
+        '/dashboard' => null,
+        _ => '/dashboard',
+      };
+      return RouteBackBoundary(
+        fallback: fallback,
+        child: Scaffold(
+          body: Row(
+            children: [
+              if (wide) ...[
+                WorkspaceNavigationRail(
+                  extended: constraints.maxWidth >= 1200,
+                  selectedIndex: navigationShell.currentIndex,
+                  onSelected: select,
+                ),
+                const VerticalDivider(width: 1),
+              ],
+              Expanded(
+                child: WorkspaceContentFrame(
+                  framed: wide,
+                  child: navigationShell,
+                ),
               ),
-              const VerticalDivider(width: 1),
             ],
-            Expanded(
-              child: WorkspaceContentFrame(
-                framed: wide,
-                child: navigationShell,
-              ),
-            ),
-          ],
+          ),
+          bottomNavigationBar: wide
+              ? null
+              : AppBottomNavigation(
+                  selectedIndex: navigationShell.currentIndex,
+                  onDestinationSelected: select,
+                ),
         ),
-        bottomNavigationBar: wide
-            ? null
-            : AppBottomNavigation(
-                selectedIndex: navigationShell.currentIndex,
-                onDestinationSelected: select,
-              ),
       );
     },
   );

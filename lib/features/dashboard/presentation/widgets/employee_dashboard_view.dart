@@ -131,7 +131,7 @@ class EmployeeDashboardView extends StatelessWidget {
                 data.timezone,
                 locale: Localizations.localeOf(context).toString(),
               ),
-              onTap: () => context.go('/employee?tab=shifts'),
+              onTap: () => context.push('/employee?tab=shifts'),
             ),
           ],
         ],

@@ -344,6 +344,10 @@ void main() {
       await tester.tap(find.byKey(const Key('notification-$_notificationId')));
       await tester.pumpAndSettle();
       expect(find.text('Attendance destination'), findsOneWidget);
+      expect(router.canPop(), isTrue);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byType(NotificationsScreen), findsOneWidget);
     },
   );
 

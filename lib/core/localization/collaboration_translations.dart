@@ -98,4 +98,7 @@ const collaborationTranslations = <String, String>{
   'No open tasks yet. Add one for your next small win.':
       'مفيش مهام مفتوحة. ضيف مهمة وابدأ خطوة جديدة.',
   'Leave without saving?': 'تخرج من غير حفظ؟',
+  'Photo': 'صورة',
+  'No messages yet': 'لا توجد رسائل بعد',
+  'New message': 'رسالة جديدة',
 };

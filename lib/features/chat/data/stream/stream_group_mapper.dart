@@ -13,22 +13,26 @@ ChatGroup mapStreamGroup(
       channel.state?.messages.where(isSupportedStreamMessage).toList() ?? [];
   messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
   final reads = channel.state?.read ?? [];
+  var latest = base.lastMessage;
+  if (messages.isNotEmpty &&
+      (latest == null ||
+          !messages.first.createdAt.isBefore(latest.createdAt))) {
+    latest = mapStreamMessage(messages.first, base.id);
+  }
   return ChatGroup(
     id: base.id,
     workspaceId: base.workspaceId,
     name: base.name,
     description: base.description,
     createdAt: base.createdAt,
-    updatedAt: messages.isEmpty ? base.updatedAt : messages.first.createdAt,
+    updatedAt: latest?.createdAt ?? base.updatedAt,
     archivedAt: base.archivedAt,
     archived: base.archived,
     memberCount: base.memberCount,
     unreadCount:
         base.unreadCount +
         (streamUnreadCount ?? channel.state?.unreadCount ?? 0),
-    lastMessage: messages.isEmpty
-        ? base.lastMessage
-        : mapStreamMessage(messages.first, base.id),
+    lastMessage: latest,
     members: [
       for (final member in base.members)
         ChatMember(

@@ -64,7 +64,7 @@ class _ManagerReviewSummaryState extends State<ManagerReviewSummary> {
                         },
                       ),
               ),
-              onTap: () => context.go('/work?tab=tasks'),
+              onTap: () => context.push('/work?tab=tasks'),
             ),
           ),
           if (snapshot.hasError)

@@ -151,7 +151,7 @@ class EmployeeShiftDetailsScreen extends StatelessWidget {
               ),
             if (e.alreadyUsed)
               OutlinedButton(
-                onPressed: () => context.go('/employee?tab=history'),
+                onPressed: () => context.push('/employee?tab=history'),
                 child: Text(context.tr('View attendance history')),
               ),
             if (e.pendingReview)

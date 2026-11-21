@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/routing/app_routes.dart';
+import 'package:shiftly/core/routing/open_app_route.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
@@ -144,7 +145,8 @@ class ManagerTasksView extends StatelessWidget {
                     ),
                   ] else
                     OutlinedButton(
-                      onPressed: () => context.go(
+                      onPressed: () => openAppRoute(
+                        GoRouter.of(context),
                         task.kind == 'SHIFT'
                             ? AppRoutes.managerShifts
                             : AppRoutes.attendance,

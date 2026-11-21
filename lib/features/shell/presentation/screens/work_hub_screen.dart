@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
+import 'package:shiftly/core/widgets/hub_section_frame.dart';
 import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/screens/shift_templates_screen.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
@@ -50,18 +51,10 @@ class WorkHubScreen extends StatelessWidget {
       _ => null,
     };
     if (selected != null) {
-      return Column(
-        children: [
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton.icon(
-              onPressed: () => context.go('/work'),
-              icon: const BackButtonIcon(),
-              label: Text(context.tr('Work hub')),
-            ),
-          ),
-          Expanded(child: selected),
-        ],
+      return HubSectionFrame(
+        title: 'Work hub',
+        fallback: '/work',
+        child: selected,
       );
     }
     return Scaffold(
@@ -84,7 +77,7 @@ class WorkHubScreen extends StatelessWidget {
                 ),
                 title: Text(context.tr(item.$1)),
                 subtitle: Text(context.tr(item.$2)),
-                onTap: () => context.go('/work?tab=${item.$3}'),
+                onTap: () => context.push('/work?tab=${item.$3}'),
               ),
             ),
             const SizedBox(height: 12),

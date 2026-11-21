@@ -47,7 +47,7 @@ class WorkspaceNavigationRail extends StatelessWidget {
                 child: SizedBox(
                   width: 200,
                   child: OutlinedButton.icon(
-                    onPressed: () => context.go('/attendance/reports'),
+                    onPressed: () => context.push('/attendance/reports'),
                     icon: const Icon(Icons.bar_chart_rounded),
                     label: Text(context.tr('Attendance reports')),
                   ),

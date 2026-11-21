@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shiftly/core/routing/open_app_route.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
@@ -73,7 +74,7 @@ abstract final class NotificationsScreenNotificationNavigator {
         await route?.completed;
       }
       if (notifications.scope == scope) {
-        router.go(destination.location);
+        openAppRoute(router, destination.location);
       }
     } catch (_) {
       if (context.mounted) _unavailable(context);

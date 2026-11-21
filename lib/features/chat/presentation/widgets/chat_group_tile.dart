@@ -4,6 +4,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
+import 'package:shiftly/features/chat/domain/services/chat_message_summary.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 
 class ChatGroupTile extends StatelessWidget {
@@ -18,91 +19,86 @@ class ChatGroupTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: ListTile(
-      onTap: onTap,
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: narrow ? 10 : 16,
-        vertical: 6,
-      ),
-      leading: CircleAvatar(
-        backgroundColor: AppPalette.of(context).selected,
-        foregroundColor: AppPalette.of(context).primaryColor,
-        child: Text(
-          group.name
-              .trim()
-              .split(RegExp(r'\s+'))
-              .where((w) => w.isNotEmpty)
-              .take(2)
-              .map((w) => w.characters.first.toUpperCase())
-              .join(),
+  Widget build(BuildContext context) {
+    final summary = chatMessageSummary(group.lastMessage);
+    return Card(
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: narrow ? 10 : 16,
+          vertical: 6,
         ),
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              group.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
+        leading: CircleAvatar(
+          backgroundColor: AppPalette.of(context).selected,
+          foregroundColor: AppPalette.of(context).primaryColor,
+          child: Text(
+            group.name
+                .trim()
+                .split(RegExp(r'\s+'))
+                .where((w) => w.isNotEmpty)
+                .take(2)
+                .map((w) => w.characters.first.toUpperCase())
+                .join(),
           ),
-          if (group.isArchived)
-            const Padding(
-              padding: EdgeInsets.only(left: 6),
-              child: Icon(Icons.archive_outlined, size: 18),
-            ),
-        ],
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (group.lastMessage != null)
-            Text(
-              group.lastMessage!.text ??
-                  (Localizations.localeOf(context).languageCode == 'ar'
-                      ? context.tr(
-                          group.lastMessage!.type == 'DOCUMENT'
-                              ? 'Document'
-                              : group.lastMessage!.type,
-                        )
-                      : group.lastMessage!.type.toLowerCase()),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          Text(
-            context.tr('{value1} members', {
-              'value1': (group.memberCount).toString(),
-            }),
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
-        ],
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (group.lastMessage != null)
-            Text(
-              WorkspaceTime.time(
-                group.lastMessage!.createdAt,
-                context.read<ChatGroupsCubit>().scope?.timezone ?? 'Etc/UTC',
-                locale: Localizations.localeOf(context).toString(),
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                group.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
+            ),
+            if (group.isArchived)
+              const Padding(
+                padding: EdgeInsets.only(left: 6),
+                child: Icon(Icons.archive_outlined, size: 18),
+              ),
+          ],
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              summary.text ?? context.tr(summary.label),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              context.tr('{value1} members', {
+                'value1': (group.memberCount).toString(),
+              }),
               style: Theme.of(context).textTheme.labelSmall,
             ),
-          if (group.unreadCount > 0)
-            Badge(
-              label: Text(
-                group.unreadCount > 99
-                    ? '99+'
-                    : context.tr('{value1}', {
-                        'value1': (group.unreadCount).toString(),
-                      }),
+          ],
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (group.lastMessage != null)
+              Text(
+                WorkspaceTime.time(
+                  group.lastMessage!.createdAt,
+                  context.read<ChatGroupsCubit>().scope?.timezone ?? 'Etc/UTC',
+                  locale: Localizations.localeOf(context).toString(),
+                ),
+                style: Theme.of(context).textTheme.labelSmall,
               ),
-            ),
-        ],
+            if (group.unreadCount > 0)
+              Badge(
+                label: Text(
+                  group.unreadCount > 99
+                      ? '99+'
+                      : context.tr('{value1}', {
+                          'value1': (group.unreadCount).toString(),
+                        }),
+                ),
+              ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -19,7 +19,7 @@ class ManagerActionLinks extends StatelessWidget {
         ])
           ActionChip(
             label: Text(context.tr(item.$1)),
-            onPressed: () => context.go('/work?tab=${item.$2}'),
+            onPressed: () => context.push('/work?tab=${item.$2}'),
           ),
       ],
     ),

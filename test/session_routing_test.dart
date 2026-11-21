@@ -510,6 +510,35 @@ void main() {
       ToastService.dismissAll();
     },
   );
+  testWidgets(
+    'employee back returns to home from a tab but pops pushed sections first',
+    (tester) async {
+      tester.view.physicalSize = const Size(430, 932);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await _pumpRole(tester, WorkspaceRole.employee);
+      final router = GoRouter.of(
+        tester.element(find.byKey(const Key('employee-bottom-navigation'))),
+      );
+      router.go('/employee?tab=chat');
+      await tester.pumpAndSettle();
+      NavigationBar navigation() => tester.widget<NavigationBar>(
+        find.byKey(const Key('employee-bottom-navigation')),
+      );
+      expect(navigation().selectedIndex, 3);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(navigation().selectedIndex, 0);
+      router.push('/employee?tab=shifts');
+      await tester.pumpAndSettle();
+      expect(navigation().selectedIndex, 1);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(navigation().selectedIndex, 0);
+      expect(router.canPop(), isFalse);
+    },
+  );
 }
 
 class _RoutingChat extends MockChatRepository {

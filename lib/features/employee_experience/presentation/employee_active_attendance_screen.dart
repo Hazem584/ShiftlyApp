@@ -43,7 +43,7 @@ class EmployeeActiveAttendanceScreen extends StatelessWidget {
         title: complete ? 'Shift complete' : 'Active attendance',
         footer: complete
             ? FilledButton(
-                onPressed: () => context.go('/employee?tab=history'),
+                onPressed: () => context.push('/employee?tab=history'),
                 child: Text(context.tr('View attendance history')),
               )
             : FilledButton(

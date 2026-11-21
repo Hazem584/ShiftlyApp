@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/app.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/hub_section_frame.dart';
 import 'package:shiftly/features/dashboard/data/mock_dashboard_repository.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_action_links.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/team_work_body.dart';
@@ -103,10 +105,14 @@ void main() {
         tester.element(find.byKey(const Key('manager-bottom-navigation'))),
       );
       expect(
-        router.routeInformationProvider.value.uri.toString(),
+        GoRouterState.of(tester.element(find.text('Shift templates').last)).uri
+            .toString(),
         '/work?tab=shifts',
       );
       expect(find.text('Shift templates'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('work-destination-shifts')), findsOneWidget);
       router.go('/attendance/reports');
       await tester.pumpAndSettle();
       expect(
@@ -114,6 +120,102 @@ void main() {
         '/employees?tab=reports',
       );
       expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('system back returns from team records to action inbox', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/work?tab=tasks',
+      routes: [
+        GoRoute(
+          path: '/work',
+          builder: (_, state) => Scaffold(
+            body: state.uri.queryParameters['tab'] == 'attendance'
+                ? const Text('Team records page')
+                : const ManagerActionLinks(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Team records'));
+    await tester.pumpAndSettle();
+    expect(find.text('Team records page'), findsOneWidget);
+    expect(router.canPop(), isTrue);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byType(ManagerActionLinks), findsOneWidget);
+  });
+  testWidgets(
+    'manager direct section returns to hub then home on system back',
+    (tester) async {
+      final employees = MockEmployeeRepository(delay: Duration.zero);
+      await tester.pumpWidget(
+        ShiftlyApp.preview(
+          employeeRepository: employees,
+          dashboardRepository: MockDashboardRepository(
+            employeeRepository: employees,
+            delay: Duration.zero,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final router = GoRouter.of(
+        tester.element(find.byKey(const Key('manager-bottom-navigation'))),
+      );
+      router.go('/work?tab=tasks');
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.toString(), '/work');
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(
+        router.routeInformationProvider.value.uri.toString(),
+        '/dashboard',
+      );
+    },
+  );
+  testWidgets(
+    'hub back button stays below status bar and pops to previous section',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      tester.view.padding = FakeViewPadding(top: 44);
+      addTearDown(tester.view.resetPadding);
+      final router = GoRouter(
+        initialLocation: '/work',
+        routes: [
+          GoRoute(
+            path: '/work',
+            builder: (context, state) => Scaffold(
+              body: state.uri.queryParameters.isEmpty
+                  ? TextButton(
+                      onPressed: () => context.push('/work?tab=tasks'),
+                      child: const Text('Open inbox'),
+                    )
+                  : const HubSectionFrame(
+                      title: 'Work hub',
+                      fallback: '/work',
+                      child: Text('Action inbox'),
+                    ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Open inbox'));
+      await tester.pumpAndSettle();
+      final back = find.widgetWithText(TextButton, 'Work hub');
+      expect(tester.getTopLeft(back).dy, greaterThanOrEqualTo(44));
+      await tester.tap(back);
+      await tester.pumpAndSettle();
+      expect(find.text('Open inbox'), findsOneWidget);
     },
   );
 }

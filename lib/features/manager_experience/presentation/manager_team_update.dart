@@ -33,7 +33,7 @@ class _ManagerTeamUpdateState extends State<ManagerTeamUpdate> {
               Card(
                 color: Theme.of(context).colorScheme.primaryContainer,
                 child: InkWell(
-                  onTap: () => context.go('/work?tab=announcements'),
+                  onTap: () => context.push('/work?tab=announcements'),
                   borderRadius: BorderRadius.circular(16),
                   child: Padding(
                     padding: const EdgeInsets.all(16),

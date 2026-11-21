@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
+import 'package:shiftly/core/widgets/hub_section_frame.dart';
 import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/add_employee_screen.dart';
 import 'package:shiftly/features/employees/presentation/screens/employees_screen.dart';
@@ -32,18 +32,10 @@ class TeamHubScreen extends StatelessWidget {
       'reports' => const AttendanceReportsScreen(),
       _ => const EmployeesScreen(),
     };
-    return Column(
-      children: [
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: TextButton.icon(
-            onPressed: () => context.go('/employees'),
-            icon: const BackButtonIcon(),
-            label: Text(context.tr('Your team')),
-          ),
-        ),
-        Expanded(child: child),
-      ],
+    return HubSectionFrame(
+      title: 'Your team',
+      fallback: '/employees',
+      child: child,
     );
   }
 }

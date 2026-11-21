@@ -39,7 +39,7 @@ class EmployeeTasksPreview extends StatelessWidget {
                   locale: Localizations.localeOf(context).toString(),
                 ),
               }),
-        onTap: () => context.go('/employee?tab=tasks'),
+        onTap: () => context.push('/employee?tab=tasks'),
       );
     },
   );

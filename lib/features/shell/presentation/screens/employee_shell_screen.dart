@@ -45,62 +45,68 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final wide = size.width >= 840 && size.height >= 600;
-    return Scaffold(
-      body: Row(
-        children: [
-          if (wide) ...[
-            WorkspaceNavigationRail(
-              extended: size.width >= 1200,
-              employee: true,
-              selectedIndex: _selectedIndex,
-              onSelected: (index) => setState(() => _selectedIndex = index),
-            ),
-            const VerticalDivider(width: 1),
-          ],
-          Expanded(
-            child: WorkspaceContentFrame(
-              framed: wide,
-              child: SafeArea(
-                child: IndexedStack(
-                  index: _selectedIndex,
-                  children: [
-                    TickerMode(
-                      enabled: _selectedIndex == 0,
-                      child: const EmployeeDashboardScreen(),
-                    ),
-                    TickerMode(
-                      enabled: _selectedIndex == 1,
-                      child: EmployeeAttendanceScreen(
-                        initialTab: widget.initialAttendanceTab,
+    return PopScope<Object?>(
+      canPop: _selectedIndex == 0 || Navigator.of(context).canPop(),
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) setState(() => _selectedIndex = 0);
+      },
+      child: Scaffold(
+        body: Row(
+          children: [
+            if (wide) ...[
+              WorkspaceNavigationRail(
+                extended: size.width >= 1200,
+                employee: true,
+                selectedIndex: _selectedIndex,
+                onSelected: (index) => setState(() => _selectedIndex = index),
+              ),
+              const VerticalDivider(width: 1),
+            ],
+            Expanded(
+              child: WorkspaceContentFrame(
+                framed: wide,
+                child: SafeArea(
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: [
+                      TickerMode(
+                        enabled: _selectedIndex == 0,
+                        child: const EmployeeDashboardScreen(),
                       ),
-                    ),
-                    TickerMode(
-                      enabled: _selectedIndex == 2,
-                      child: const TasksScreen(),
-                    ),
-                    TickerMode(
-                      enabled: _selectedIndex == 3,
-                      child: const ChatGroupsScreen(embedded: true),
-                    ),
-                    TickerMode(
-                      enabled: _selectedIndex == 4,
-                      child: ProfileScreen(
-                        onLogout: context.read<SessionCoordinator>().signOut,
+                      TickerMode(
+                        enabled: _selectedIndex == 1,
+                        child: EmployeeAttendanceScreen(
+                          initialTab: widget.initialAttendanceTab,
+                        ),
                       ),
-                    ),
-                  ],
+                      TickerMode(
+                        enabled: _selectedIndex == 2,
+                        child: const TasksScreen(),
+                      ),
+                      TickerMode(
+                        enabled: _selectedIndex == 3,
+                        child: const ChatGroupsScreen(embedded: true),
+                      ),
+                      TickerMode(
+                        enabled: _selectedIndex == 4,
+                        child: ProfileScreen(
+                          onLogout: context.read<SessionCoordinator>().signOut,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+        bottomNavigationBar: wide
+            ? null
+            : EmployeeBottomNavigation(
+                selectedIndex: _selectedIndex,
+                onSelected: (index) => setState(() => _selectedIndex = index),
+              ),
       ),
-      bottomNavigationBar: wide
-          ? null
-          : EmployeeBottomNavigation(
-              selectedIndex: _selectedIndex,
-              onSelected: (index) => setState(() => _selectedIndex = index),
-            ),
     );
   }
 }
