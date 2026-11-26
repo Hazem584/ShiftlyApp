@@ -76,7 +76,9 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
   }
 
   Future<void> _send() async {
-    if (_sending || _reply.text.trim().isEmpty) return;
+    if (_sending || _ticket?.canReply != true || _reply.text.trim().isEmpty) {
+      return;
+    }
     setState(() {
       _sending = true;
       _error = null;
@@ -97,6 +99,12 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
               ? e.message
               : 'Could not send the reply. Retry safely.',
         );
+      }
+      if (mounted && e is ApiException && e.statusCode == 409) {
+        await _load();
+        if (mounted && _ticket?.canReply == true) {
+          setState(() => _error = e.message);
+        }
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -201,22 +209,28 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _reply,
-                  enabled: !_sending,
-                  minLines: 2,
-                  maxLines: 6,
-                  maxLength: 5000,
-                  onChanged: (_) => _replyId = const Uuid().v4(),
-                  decoration: InputDecoration(
-                    labelText: context.tr('Write a reply'),
+                if (!ticket.canReply)
+                  Text(context.tr('This report is closed.'))
+                else ...[
+                  TextField(
+                    controller: _reply,
+                    enabled: !_sending,
+                    minLines: 2,
+                    maxLines: 6,
+                    maxLength: 5000,
+                    onChanged: (_) => _replyId = const Uuid().v4(),
+                    decoration: InputDecoration(
+                      labelText: context.tr('Write a reply'),
+                    ),
                   ),
-                ),
-                FilledButton.icon(
-                  onPressed: _sending ? null : _send,
-                  icon: const Icon(Icons.send_outlined),
-                  label: Text(context.tr(_sending ? 'Sending…' : 'Send reply')),
-                ),
+                  FilledButton.icon(
+                    onPressed: _sending ? null : _send,
+                    icon: const Icon(Icons.send_outlined),
+                    label: Text(
+                      context.tr(_sending ? 'Sending…' : 'Send reply'),
+                    ),
+                  ),
+                ],
               ],
             ),
     );

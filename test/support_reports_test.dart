@@ -20,6 +20,7 @@ class _Picker implements ProfileImagePicker {
 }
 
 class _Repository implements SupportRepository {
+  String status = 'WAITING_REPORTER';
   int creates = 0, uploads = 0;
   bool failUpload = false, failCreate = false;
   final nonces = <String>[];
@@ -27,7 +28,7 @@ class _Repository implements SupportRepository {
     id: '00000000-0000-4000-8000-000000000001',
     title: 'Attendance report',
     description: 'The attendance calendar needs correction.',
-    status: 'WAITING_REPORTER',
+    status: status,
     updatedAt: DateTime.utc(2026, 11, 12),
     assignee: 'Support agent',
     replies: [
@@ -131,6 +132,21 @@ Future<void> _openForm(
 }
 
 void main() {
+  testWidgets('closed report retains history and hides the reply composer', (
+    tester,
+  ) async {
+    final repo = _Repository()..status = 'CLOSED';
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SupportDetailScreen(repository: repo, id: repo.ticket.id),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Please confirm the shift date.'), findsOneWidget);
+    expect(find.text('This report is closed.'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
   testWidgets('retries only the image after the report was saved', (
     tester,
   ) async {

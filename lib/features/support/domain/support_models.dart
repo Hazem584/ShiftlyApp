@@ -53,6 +53,7 @@ class SupportTicket {
   final String id, title, description, status;
   final String? assignee, relatedLabel;
   final bool hasImage;
+  bool get canReply => status != 'CLOSED';
   final DateTime updatedAt;
   final List<SupportReply> replies;
   factory SupportTicket.fromJson(Map<String, Object?> j) => SupportTicket(

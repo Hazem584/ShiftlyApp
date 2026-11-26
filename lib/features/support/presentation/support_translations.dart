@@ -1,4 +1,5 @@
 const supportTranslations = <String, String>{
+  "This report is closed.": "البلاغ ده اتقفل نهائيًا.",
   "Help and problem reports": "الدعم وبلاغات المشاكل",
   "Report a problem and follow replies from support":
       "ابعت بلاغ وتابع ردود فريق الدعم",
