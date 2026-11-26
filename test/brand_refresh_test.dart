@@ -63,11 +63,22 @@ void main() {
           home: const Scaffold(body: DashboardLoadingView()),
         ),
       );
-      expect(tester.widget<Shimmer>(find.byType(Shimmer)).enabled, isTrue);
+      final dashboardShimmers = find.descendant(
+        of: find.byType(DashboardLoadingView),
+        matching: find.byType(Shimmer),
+      );
+      expect(dashboardShimmers, findsNWidgets(4));
+      expect(
+        tester
+            .widgetList<Shimmer>(dashboardShimmers)
+            .map((shimmer) => shimmer.enabled),
+        everyElement(isTrue),
+      );
       await tester.pump(const Duration(milliseconds: 600));
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
     },
   );
   testWidgets('capture refreshed splash and shimmer for review', (
