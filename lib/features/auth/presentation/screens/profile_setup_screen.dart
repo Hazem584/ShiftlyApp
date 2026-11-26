@@ -38,7 +38,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           final loading = state.status == SessionStatus.loadingCurrentUser;
           return Scaffold(
             appBar: AppBar(
-              title: Text(context.tr('Complete your profile')),
+              title: Text(context.tr('Your profile')),
               actions: [
                 TextButton(
                   onPressed: loading
@@ -49,7 +49,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               ],
             ),
             body: SafeArea(
-              child: Center(
+              child: Align(
+                alignment: Alignment.topCenter,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(AppSpacing.l),
                   child: ConstrainedBox(
@@ -60,7 +61,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           AuthBrandHeader(
-                            title: context.tr('Complete your profile'),
+                            title: context.tr('How should your team know you?'),
                             subtitle: context.tr(
                               'Tell us how your name and phone should appear in Shiftly.',
                             ),

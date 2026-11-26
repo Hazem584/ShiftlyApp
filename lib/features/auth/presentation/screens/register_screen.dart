@@ -46,10 +46,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final loading = state.status == SessionStatus.registering;
       return AuthPageLayout(
         child: Scaffold(
+          appBar: AppBar(title: Text(context.tr('Create account'))),
           body: SafeArea(
             child: GestureDetector(
               onTap: () => FocusScope.of(context).unfocus(),
-              child: Center(
+              child: Align(
+                alignment: Alignment.topCenter,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(AppSpacing.l),
                   child: ConstrainedBox(
@@ -60,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           AuthBrandHeader(
-                            title: context.tr('Create your Shiftly account'),
+                            title: context.tr('A few details to get started.'),
                             subtitle: context.tr(
                               'Use the exact email address your manager invited.',
                             ),

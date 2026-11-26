@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/localization/language_selector.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/theme/theme_selector.dart';
+import 'package:shiftly/core/widgets/access_screen.dart';
 import 'package:shiftly/core/widgets/auth_brand_header.dart';
 import 'package:shiftly/core/widgets/auth_page_layout.dart';
 
@@ -22,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _obscurePassword = true;
+  bool _acknowledgedExpiry = false;
 
   @override
   void dispose() {
@@ -42,6 +46,29 @@ class _LoginScreenState extends State<LoginScreen> {
     ),
     builder: (context, state) {
       final loading = state.status == SessionStatus.authenticating;
+      if (!_acknowledgedExpiry && state == const SessionState.expired()) {
+        return AccessScreen(
+          title: 'Session expired',
+          actions: [
+            FilledButton(
+              onPressed: () => setState(() => _acknowledgedExpiry = true),
+              child: Text(context.tr('Sign in')),
+            ),
+          ],
+          children: [
+            Text(
+              context.tr('Let’s sign you in again.'),
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 18),
+            Text(
+              context.tr(state.failure!.message),
+              key: const Key('login-session-message'),
+            ),
+          ],
+        );
+      }
+
       return AuthPageLayout(
         child: Scaffold(
           body: SafeArea(
@@ -58,13 +85,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           AuthBrandHeader(
-                            title: context.tr('Welcome to Shiftly'),
+                            showWordmark: true,
+                            title: context.tr('Good work\nstarts here.'),
                             subtitle: context.tr(
-                              'Sign in to continue to your workspace. Use the email your manager invited.',
+                              'Sign in to your everyday workspace.',
                             ),
                           ),
                           if (state.status == SessionStatus.unauthenticated &&
-                              state.failure != null) ...[
+                              state.failure != null &&
+                              !_acknowledgedExpiry) ...[
                             const SizedBox(height: AppSpacing.m),
                             Text(
                               state.failure!.message,
@@ -87,7 +116,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: context.tr('Email'),
                               hintText: context.tr('you@company.com'),
-                              prefixIcon: const Icon(Icons.email_outlined),
                             ),
                             validator: (value) {
                               final email = value?.trim() ?? '';
@@ -112,9 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             onFieldSubmitted: (_) => _submit(loading),
                             decoration: InputDecoration(
                               labelText: context.tr('Password'),
-                              prefixIcon: const Icon(
-                                Icons.lock_outline_rounded,
-                              ),
+
                               suffixIcon: IconButton(
                                 onPressed: loading
                                     ? null
@@ -133,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ? context.tr('Password is required')
                                 : null,
                           ),
-                          const SizedBox(height: AppSpacing.l),
+                          const SizedBox(height: 32),
                           FilledButton(
                             key: const Key('login-submit'),
                             onPressed: loading ? null : () => _submit(false),
@@ -158,6 +184,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Don\u2019t have an account? Create account',
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 24),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [LanguageSelector(), ThemeSelector()],
                           ),
                         ],
                       ),

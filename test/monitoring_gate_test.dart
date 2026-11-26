@@ -77,7 +77,8 @@ void main() {
     await mount(tester, _ReleaseAdapter()..release = release());
     expect(find.text('Application content'), findsNothing);
     expect(find.text('Please install the latest fixes'), findsOneWidget);
-    expect(find.text('Update now'), findsOneWidget);
+    expect(find.text('Update Shiftly'), findsOneWidget);
+    await tester.ensureVisible(find.text('Later'));
     await tester.tap(find.text('Later'));
     await tester.pumpAndSettle();
     expect(find.text('Application content'), findsOneWidget);
@@ -106,7 +107,7 @@ void main() {
           _ReleaseAdapter()..release = release(required: true),
           openRelease: (_) async => opened,
         );
-        await tester.tap(find.text('Update now'));
+        await tester.tap(find.text('Update Shiftly'));
         await tester.pumpAndSettle();
         expect(find.text('Continue temporarily'), findsOneWidget);
         await tester.ensureVisible(find.text('Continue temporarily'));

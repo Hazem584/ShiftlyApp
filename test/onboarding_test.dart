@@ -9,7 +9,6 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/storage/active_workspace_storage.dart';
-import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/brand_logo.dart';
 import 'package:shiftly/core/widgets/brand_session_loading.dart';
@@ -213,7 +212,7 @@ void main() {
       expect(find.text('Sign in'), findsNothing);
       storage.readGate!.complete(false);
       await tester.pumpAndSettle();
-      expect(find.text('Your shifts, clearly organized'), findsOneWidget);
+      expect(find.text('Know your next shift'), findsOneWidget);
       expect(find.text('Sign in'), findsNothing);
       addTearDown(auth.events.close);
     },
@@ -242,11 +241,11 @@ void main() {
           await tester.ensureVisible(find.text('Next'));
           await tester.tap(find.text('Next'));
           await tester.pumpAndSettle();
-          expect(find.text('Manage your tasks'), findsOneWidget);
+          expect(find.text('Make space for your day'), findsOneWidget);
           await tester.ensureVisible(find.text('Next'));
           await tester.tap(find.text('Next'));
           await tester.pumpAndSettle();
-          expect(find.text('Stay connected'), findsOneWidget);
+          expect(find.text('Stay in the loop'), findsOneWidget);
         }
         final button = find.text(skip ? 'Skip' : 'Get Started');
         await tester.ensureVisible(button);
@@ -390,7 +389,7 @@ void main() {
       expect(
         find.text(
           failure.code == 'PROFILE_NOT_INITIALIZED'
-              ? 'Complete your profile'
+              ? 'Your profile'
               : 'You are offline',
         ),
         findsWidgets,
@@ -467,7 +466,7 @@ void main() {
             await tester.pumpAndSettle();
           }
         }
-        expect(find.text('Stay connected'), findsOneWidget);
+        expect(find.text('Stay in the loop'), findsOneWidget);
         expect(
           tester
               .widget<PageView>(find.byKey(const Key('onboarding-pager')))
@@ -497,21 +496,16 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: MediaQuery(
-          data: MediaQueryData(platformBrightness: Brightness.dark),
-          child: BrandSessionLoading(),
-        ),
-      ),
+      MaterialApp(theme: ThemeData.dark(), home: const BrandSessionLoading()),
     );
     await tester.pump();
     expect(
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
-      const AppPalette(Brightness.dark).canvas,
+      const Color(0xFF101426),
     );
     expect(
       tester.widget<Text>(find.text(BrandSessionLoading.tagline)).style!.color,
-      const Color(0xFFA0B4BF),
+      const Color(0xFFB2BDD4),
     );
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);

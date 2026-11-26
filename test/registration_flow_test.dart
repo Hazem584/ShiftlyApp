@@ -267,9 +267,10 @@ void main() {
       await tester.pumpAndSettle();
       addTearDown(auth.events.close);
 
+      await tester.ensureVisible(find.byKey(const Key('login-create-account')));
       await tester.tap(find.byKey(const Key('login-create-account')));
       await tester.pumpAndSettle();
-      expect(find.text('Create your Shiftly account'), findsOneWidget);
+      expect(find.text('A few details to get started.'), findsOneWidget);
 
       await tester.enterText(
         find.byKey(const Key('register-email')),
@@ -368,7 +369,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('verification-back-to-login')));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome to Shiftly'), findsOneWidget);
+    expect(find.text('Good work\nstarts here.'), findsOneWidget);
     expect(auth.signOutCalls, 1);
   });
 
@@ -420,6 +421,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
     addTearDown(auth.events.close);
+    await tester.ensureVisible(find.byKey(const Key('login-create-account')));
     await tester.tap(find.byKey(const Key('login-create-account')));
     await tester.pumpAndSettle();
     await tester.enterText(

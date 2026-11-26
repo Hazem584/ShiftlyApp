@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shiftly/core/app_icons/app_icon_sync.dart';
 import 'package:shiftly/core/monitoring/app_monitor.dart';
+import 'package:shiftly/core/widgets/access_screen.dart';
 import 'package:shiftly/core/widgets/brand_session_loading.dart';
 import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -207,82 +208,68 @@ class _MonitoringGateState extends State<MonitoringGate>
     if (release == null || _deferred.contains(release['build'])) {
       return widget.child;
     }
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.system_update, size: 64),
-                  const SizedBox(height: 24),
-                  Text(
-                    ar ? 'تحديث جديد للتطبيق' : 'App update available',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 12),
-                  Text('${release['version']} (${release['build']})'),
-                  const SizedBox(height: 16),
-                  Text(
-                    release['message'] as String,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    ar
-                        ? 'هيفتح Firebase App Distribution لتنزيل الإصدار. التثبيت يحتاج موافقة الجهاز وحساب مختبر مصرح له.'
-                        : 'Opens Firebase App Distribution to download this release. Installation requires device approval and an authorized tester account.',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  if (_launchFailed)
-                    Text(
-                      ar
-                          ? 'تعذر فتح رابط التحديث. حاول مرة أخرى.'
-                          : 'Could not open the update link. Try again.',
-                    ),
-                  FilledButton(
-                    onPressed: _launching ? null : _update,
-                    child: Text(ar ? 'حدّث الآن' : 'Update now'),
-                  ),
-                  TextButton(
-                    onPressed: () => unawaited(_check()),
-                    child: Text(
-                      ar ? 'إعادة التحقق من التحديث' : 'Check update again',
-                    ),
-                  ),
-                  if (_attemptedUpdate)
-                    Text(
-                      ar
-                          ? 'لو حساب المختبر أو الجهاز مش قادر يثبت الإصدار، تقدر تكمل مؤقتًا وتحاول لاحقًا.'
-                          : 'If your tester account or device cannot install this release, continue temporarily and retry later.',
-                    ),
-                  if (release['required'] != true || _attemptedUpdate)
-                    TextButton(
-                      onPressed: () => setState(
-                        () => _deferred.add(release['build'] as int),
-                      ),
-                      child: Text(
-                        release['required'] == true
-                            ? (ar ? 'المتابعة مؤقتًا' : 'Continue temporarily')
-                            : (ar ? 'لاحقًا' : 'Later'),
-                      ),
-                    ),
-                  if (release['required'] == true)
-                    Text(
-                      ar
-                          ? 'التحديث مطلوب للمتابعة.'
-                          : 'Update required to continue.',
-                    ),
-                ],
-              ),
+    return AccessScreen(
+      title: release['required'] == true ? 'Update required' : 'App update',
+      actions: [
+        FilledButton(
+          onPressed: _launching ? null : _update,
+          child: Text(ar ? 'حدّث شيفتلي' : 'Update Shiftly'),
+        ),
+        TextButton(
+          onPressed: () => unawaited(_check()),
+          child: Text(ar ? 'إعادة التحقق من التحديث' : 'Check update again'),
+        ),
+        if (_attemptedUpdate)
+          Text(
+            ar
+                ? 'لو حساب المختبر أو الجهاز مش قادر يثبت الإصدار، تقدر تكمل مؤقتًا وتحاول لاحقًا.'
+                : 'If your tester account or device cannot install this release, continue temporarily and retry later.',
+          ),
+        if (release['required'] != true || _attemptedUpdate)
+          TextButton(
+            onPressed: () =>
+                setState(() => _deferred.add(release['build'] as int)),
+            child: Text(
+              release['required'] == true
+                  ? (ar ? 'المتابعة مؤقتًا' : 'Continue temporarily')
+                  : (ar ? 'لاحقًا' : 'Later'),
             ),
           ),
+        if (release['required'] == true)
+          Text(ar ? 'التحديث مطلوب للمتابعة.' : 'Update required to continue.'),
+      ],
+      children: [
+        const Icon(Icons.system_update, size: 64),
+        const SizedBox(height: 24),
+        Text(
+          ar
+              ? (release['required'] == true
+                    ? 'حدّث التطبيق للمتابعة'
+                    : 'نسخة جديدة من شيفتلي جاهزة')
+              : (release['required'] == true
+                    ? 'Update to continue.'
+                    : 'A fresh Shiftly is ready.'),
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
-      ),
+        const SizedBox(height: 12),
+        Text('${release['version']} (${release['build']})'),
+        const SizedBox(height: 16),
+        Text(release['message'] as String, textAlign: TextAlign.center),
+        const SizedBox(height: 16),
+        Text(
+          ar
+              ? 'هيفتح Firebase App Distribution لتنزيل الإصدار. التثبيت يحتاج موافقة الجهاز وحساب مختبر مصرح له.'
+              : 'Opens Firebase App Distribution to download this release. Installation requires device approval and an authorized tester account.',
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        if (_launchFailed)
+          Text(
+            ar
+                ? 'تعذر فتح رابط التحديث. حاول مرة أخرى.'
+                : 'Could not open the update link. Try again.',
+          ),
+      ],
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:shiftly/core/routing/route_not_found_screen.dart';
 import 'package:shiftly/core/routing/session_route_intent.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
+import 'package:shiftly/core/theme/collaboration_appearance.dart';
 import 'package:shiftly/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/login_screen.dart';
 import 'package:shiftly/features/auth/presentation/screens/profile_setup_screen.dart';
@@ -117,20 +118,33 @@ GoRouter createAppRouter({
         path: '/session',
         builder: (_, _) => const SessionStatusScreen.loading(),
       ),
-      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
-      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(
+        path: '/onboarding',
+        builder: (_, _) =>
+            const CollaborationAppearance(child: OnboardingScreen()),
+      ),
+      GoRoute(
+        path: '/login',
+        builder: (_, _) => const CollaborationAppearance(child: LoginScreen()),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (_, _) =>
+            const CollaborationAppearance(child: RegisterScreen()),
+      ),
       GoRoute(
         path: '/verify-email',
         builder: (_, _) => const EmailVerificationScreen(),
       ),
       GoRoute(
         path: '/profile-setup',
-        builder: (_, _) => const ProfileSetupScreen(),
+        builder: (_, _) =>
+            const CollaborationAppearance(child: ProfileSetupScreen()),
       ),
       GoRoute(
         path: '/workspaces',
-        builder: (_, _) => const WorkspaceSelectionScreen(),
+        builder: (_, _) =>
+            const CollaborationAppearance(child: WorkspaceSelectionScreen()),
       ),
       GoRoute(
         path: '/offline',

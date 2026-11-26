@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/access_screen.dart';
 import 'package:shiftly/core/widgets/brand_session_loading.dart';
 
 enum SessionStatusView { loading, offline, failure, verification }
@@ -25,59 +25,60 @@ class SessionStatusScreen extends StatelessWidget {
       return const BrandSessionLoading();
     }
     final state = context.watch<SessionCoordinator>().state;
-    final (icon, title, message) = switch (view) {
+    final (title, heading, icon) = switch (view) {
       SessionStatusView.offline => (
-        Icons.cloud_off_outlined,
+        'Offline startup',
         'You are offline',
-        state.failure?.message ?? 'Connect to the internet and retry.',
+        Icons.cloud_off_outlined,
       ),
       SessionStatusView.verification => (
-        Icons.mark_email_read_outlined,
         'Verify your email',
-        'Open the verification email, then return and sign in.',
+        'Check your inbox.',
+        Icons.mark_email_read_outlined,
       ),
-      _ => (
-        Icons.error_outline_rounded,
-        'Could not load your account',
-        state.failure?.message ?? 'Please try again.',
-      ),
+      _ => ('Service unavailable', 'We’ll be back shortly.', Icons.cloud_queue),
     };
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.l),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 52),
-                const SizedBox(height: AppSpacing.m),
-                Text(
-                  context.tr(title),
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: AppSpacing.s),
-                Text(context.tr(message), textAlign: TextAlign.center),
-                const SizedBox(height: AppSpacing.l),
-                if (view != SessionStatusView.verification)
-                  FilledButton.icon(
-                    onPressed: context.read<SessionCoordinator>().retry,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: Text(context.tr('Retry')),
-                  ),
-                TextButton(
-                  onPressed: context.read<SessionCoordinator>().signOut,
-                  child: Text(
-                    view == SessionStatusView.verification
-                        ? context.tr('Back to sign in')
-                        : context.tr('Sign out'),
-                  ),
-                ),
-              ],
+    final session = context.read<SessionCoordinator>();
+    return AccessScreen(
+      title: title,
+      actions: [
+        if (view != SessionStatusView.verification)
+          FilledButton(
+            onPressed: session.retry,
+            child: Text(context.tr('Try again')),
+          ),
+        TextButton(
+          onPressed: session.signOut,
+          child: Text(
+            context.tr(
+              view == SessionStatusView.verification
+                  ? 'Back to sign in'
+                  : 'Sign out',
             ),
           ),
         ),
-      ),
+      ],
+      children: [
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Icon(
+            icon,
+            size: 42,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          context.tr(heading),
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
+        const SizedBox(height: 14),
+        Text(
+          context.tr(
+            state.failure?.message ?? 'Connect to the internet and retry.',
+          ),
+        ),
+      ],
     );
   }
 }

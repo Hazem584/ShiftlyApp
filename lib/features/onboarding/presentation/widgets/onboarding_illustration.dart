@@ -1,74 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_palette.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/onboarding/presentation/models/onboarding_page_content.dart';
 
 class OnboardingIllustration extends StatelessWidget {
   const OnboardingIllustration({required this.content, super.key});
   final OnboardingPageContent content;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadii.xl),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppPalette.of(context).orangeSoft.withValues(alpha: .9),
-            colors.surfaceContainerLow,
-          ],
+    return ExcludeSemantics(
+      child: Container(
+        height: (MediaQuery.sizeOf(context).height * 0.32).clamp(145.0, 276.0),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: colors.primaryContainer,
+          borderRadius: BorderRadius.circular(24),
         ),
-      ),
-      child: Column(
-        children: [
-          ExcludeSemantics(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: colors.primary,
-                shape: BoxShape.circle,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Icon(content.icon, size: 48, color: colors.onPrimary),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          for (final feature in content.features)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: colors.surface,
-                  borderRadius: BorderRadius.circular(AppRadii.m),
-                  border: Border.all(color: AppPalette.of(context).borderColor),
-                ),
-                child: Row(
-                  children: [
-                    ExcludeSemantics(
-                      child: Icon(
-                        feature.$1,
-                        color: AppPalette.of(context).orange,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        context.tr(feature.$2),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
+        child: Icon(content.icon, size: 84, color: colors.onPrimaryContainer),
       ),
     );
   }

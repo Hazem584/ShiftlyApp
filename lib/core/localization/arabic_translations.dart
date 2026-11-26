@@ -1,3 +1,4 @@
+import 'package:shiftly/core/localization/access_translations.dart';
 import 'package:shiftly/core/localization/arabic_error_translations.dart';
 import 'package:shiftly/core/localization/arabic_interface_translations.dart';
 import 'package:shiftly/core/localization/arabic_report_translations.dart';
@@ -16,6 +17,7 @@ import 'package:shiftly/features/tasks/presentation/task_translations.dart';
 // Egyptian Arabic: friendly everyday copy, with precise review and hours rules.
 // Keep source keys and placeholders stable; employee-written content stays as is.
 const arabicTranslations = <String, String>{
+  ...accessTranslations,
   ...communicationTranslations,
   ...managerTranslations,
   ...collaborationTranslations,

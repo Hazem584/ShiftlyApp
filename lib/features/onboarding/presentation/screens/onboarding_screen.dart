@@ -30,14 +30,8 @@ class OnboardingScreen extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const BrandLogo(),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                context.tr('Shiftly'),
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                            ),
+                            const BrandLogo(size: 36),
+                            const Spacer(),
                             TextButton(
                               onPressed: state.saving || state.loading
                                   ? null

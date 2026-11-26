@@ -135,7 +135,7 @@ void main() {
           Failure(message: 'The email or password is incorrect.'),
         );
       await _pump(tester, auth, locale: const Locale('ar'));
-      expect(find.text('نوّرت Shiftly يا صاحبي'), findsOneWidget);
+      expect(find.text('كل يوم عمل\nيبدأ بخطوة.'), findsOneWidget);
       expect(
         tester
             .widget<TextField>(

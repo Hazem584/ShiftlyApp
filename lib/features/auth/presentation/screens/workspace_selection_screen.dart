@@ -6,10 +6,13 @@ import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/session/session_state.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/core/widgets/access_screen.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/ease_hint.dart';
 import 'package:shiftly/features/auth/domain/entities/current_user.dart';
-import 'package:shiftly/features/auth/presentation/widgets/workspace_invitation_card.dart';
+import 'package:shiftly/features/auth/presentation/screens/workspace_entry_screen.dart';
+import 'package:shiftly/features/auth/presentation/screens/workspace_invitation_list_screen.dart';
+import 'package:shiftly/features/auth/presentation/widgets/workspace_access_link.dart';
 import 'package:shiftly/features/auth/presentation/widgets/workspace_membership_chooser.dart';
 import 'package:shiftly/features/workspaces/presentation/cubit/workspaces_cubit.dart';
 
@@ -21,8 +24,6 @@ class WorkspaceSelectionScreen extends StatefulWidget {
 }
 
 class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
-  final _inviteToken = TextEditingController();
-  bool _obscureInviteToken = true;
   WorkspaceMembership? _selectedWorkspace;
 
   @override
@@ -33,58 +34,16 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _inviteToken.dispose();
-    super.dispose();
-  }
-
   Future<void> _createWorkspace() async {
-    final name = TextEditingController();
-    final timezone = TextEditingController(text: 'Africa/Cairo');
-    final submitted = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(context.tr('Create workspace')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              key: const Key('workspace-name'),
-              controller: name,
-              decoration: InputDecoration(
-                labelText: context.tr('Workspace name'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const Key('workspace-timezone'),
-              controller: timezone,
-              decoration: InputDecoration(labelText: context.tr('Timezone')),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(context.tr('Cancel')),
-          ),
-          FilledButton(
-            key: const Key('submit-workspace'),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(context.tr('Create')),
-          ),
-        ],
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute<({String value, String timezone})>(
+        builder: (_) => const WorkspaceEntryScreen(),
       ),
     );
-    final workspaceName = name.text;
-    final workspaceTimezone = timezone.text;
-    name.dispose();
-    timezone.dispose();
-    if (submitted != true || !mounted || workspaceName.trim().isEmpty) return;
+    if (!mounted || result == null) return;
     final success = await context.read<WorkspacesCubit>().create(
-      name: workspaceName,
-      timezone: workspaceTimezone,
+      name: result.value,
+      timezone: result.timezone,
     );
     if (!mounted) return;
     if (success) {
@@ -95,12 +54,16 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
   }
 
   Future<void> _acceptInvitation() async {
-    final token = _inviteToken.text.trim();
-    if (token.isEmpty) return;
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute<({String value, String timezone})>(
+        builder: (_) => const WorkspaceEntryScreen(join: true),
+      ),
+    );
+    if (!mounted || result == null) return;
+    final token = result.value;
     final success = await context.read<WorkspacesCubit>().accept(token);
     if (!mounted) return;
     if (success) {
-      _inviteToken.clear();
       _openWorkspace();
     } else {
       ToastService.error(
@@ -152,170 +115,161 @@ class _WorkspaceSelectionScreenState extends State<WorkspaceSelectionScreen> {
     final result = await context.read<SessionCoordinator>().selectWorkspace(
       membership.workspace.id,
     );
-    if (mounted && result == WorkspaceSwitchResult.success) _openWorkspace();
-  }
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) => BlocBuilder<SessionCoordinator, SessionState>(
-    builder: (context, session) {
-      final memberships =
-          session.currentUser?.memberships
-              .where(
-                (item) =>
-                    item.status == MembershipStatus.active &&
-                    item.role != WorkspaceRole.unknown,
-              )
-              .toList(growable: false) ??
-          const <WorkspaceMembership>[];
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            memberships.isEmpty
-                ? context.tr('Workspace access')
-                : context.tr('Choose workspace'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: context.read<SessionCoordinator>().signOut,
-              child: Text(context.tr('Sign out')),
-            ),
-          ],
-        ),
-        bottomNavigationBar: memberships.isEmpty
-            ? null
-            : SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: FilledButton(
-                    key: const Key('continue-workspace'),
-                    onPressed: () => _selectWorkspace(
-                      _selectedWorkspace ?? memberships.first,
-                    ),
-                    child: Text(context.tr('Continue to workspace')),
-                  ),
-                ),
+    if (!mounted) return;
+    if (result == WorkspaceSwitchResult.success) {
+      _openWorkspace();
+    } else if (result == WorkspaceSwitchResult.failure ||
+        result == WorkspaceSwitchResult.invalid ||
+        result == WorkspaceSwitchResult.noAlternative) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (pageContext) => AccessScreen(
+            title: 'Workspace unavailable',
+            actions: [
+              FilledButton(
+                onPressed: () => Navigator.of(pageContext).pop(),
+                child: Text(context.tr('Choose another workspace')),
               ),
-        body: BlocBuilder<WorkspacesCubit, WorkspacesState>(
-          builder: (context, state) => ListView(
-            key: Key(
-              memberships.isEmpty
-                  ? 'no-workspace-onboarding'
-                  : 'workspace-access',
-            ),
-            padding: const EdgeInsets.all(AppSpacing.m),
+            ],
             children: [
-              if (memberships.isNotEmpty) ...[
-                WorkspaceMembershipChooser(
-                  memberships: memberships,
-                  currentWorkspaceId: session.activeMembership?.workspace.id,
-                  shrinkWrap: true,
-                  currentSelectionId: _selectedWorkspace?.workspace.id,
-                  onSelected: (membership) =>
-                      setState(() => _selectedWorkspace = membership),
-                ),
-                const Divider(),
-              ],
-              if (memberships.isEmpty)
-                const EaseHint(
-                  icon: Icons.apartment_outlined,
-                  message: 'Create a workspace for your team, or accept an invitation sent by a manager.',
-                ),
-              const SizedBox(height: AppSpacing.m),
-              if (state.invitations.isNotEmpty) ...[
-                Text(
-                  context.tr('Invitations for your account'),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                for (final invitation in state.invitations)
-                  WorkspaceInvitationCard(
-                    invitation: invitation,
-                    disabled: state.busy,
-                    accepting:
-                        state.accepting &&
-                        state.respondingInvitationId == invitation.id,
-                    declining:
-                        state.declining &&
-                        state.respondingInvitationId == invitation.id,
-                    onAccept: () =>
-                        _respondToInvitation(invitation.id, accept: true),
-                    onDecline: () =>
-                        _respondToInvitation(invitation.id, accept: false),
-                  ),
-              ],
-              const SizedBox(height: AppSpacing.l),
-              FilledButton.icon(
-                key: const Key('create-workspace'),
-                onPressed: state.busy ? null : _createWorkspace,
-                icon: const Icon(Icons.add_business_outlined),
-                label: Text(context.tr('Create workspace')),
+              Text(
+                context.tr('This workspace is unavailable.'),
+                style: Theme.of(context).textTheme.headlineMedium,
               ),
-              const SizedBox(height: AppSpacing.l),
-              const SizedBox(height: AppSpacing.s),
-              ExpansionTile(
-                key: const Key('invitation-code-expander'),
-                title: Text(context.tr('Have an invitation code?')),
-                children: [
-                  TextField(
-                    key: const Key('invitation-token-field'),
-                    controller: _inviteToken,
-                    enabled: !state.busy,
-                    obscureText: _obscureInviteToken,
-                    enableSuggestions: false,
-                    autocorrect: false,
-                    decoration: InputDecoration(
-                      labelText: context.tr('One-time invitation token'),
-                      prefixIcon: const Icon(Icons.key_outlined),
-                      suffixIcon: IconButton(
-                        tooltip: _obscureInviteToken
-                            ? 'Show invitation token'
-                            : 'Hide invitation token',
-                        onPressed: state.busy
-                            ? null
-                            : () => setState(
-                                () =>
-                                    _obscureInviteToken = !_obscureInviteToken,
-                              ),
-                        icon: Icon(
-                          _obscureInviteToken
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s),
-                  OutlinedButton.icon(
-                    key: const Key('accept-invitation'),
-                    onPressed: state.busy ? null : _acceptInvitation,
-                    icon: state.accepting
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.mark_email_read_outlined),
-                    label: Text(context.tr('Accept invitation')),
-                  ),
-                ],
+              const SizedBox(height: 16),
+              Text(
+                context.tr('Choose another workspace or contact your manager.'),
               ),
-              if (state.loading)
-                const AppContentLoading(rows: 2),
-              if (state.failure != null) ...[
-                const SizedBox(height: AppSpacing.m),
-                Text(
-                  context.tr(state.failure!.message),
-                  textAlign: TextAlign.center,
-                ),
-                TextButton(
-                  onPressed: context.read<WorkspacesCubit>().load,
-                  child: Text(context.tr('Retry')),
-                ),
-              ],
             ],
           ),
         ),
       );
-    },
-  );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      BlocBuilder<SessionCoordinator, SessionState>(
+        builder: (context, session) {
+          final memberships =
+              session.currentUser?.memberships
+                  .where(
+                    (item) =>
+                        item.status == MembershipStatus.active &&
+                        item.role != WorkspaceRole.unknown,
+                  )
+                  .toList(growable: false) ??
+              const <WorkspaceMembership>[];
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(
+                memberships.isEmpty
+                    ? context.tr('Workspace access')
+                    : context.tr('Choose workspace'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: context.read<SessionCoordinator>().signOut,
+                  child: Text(context.tr('Sign out')),
+                ),
+              ],
+            ),
+            bottomNavigationBar: memberships.isEmpty
+                ? null
+                : SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: FilledButton(
+                        key: const Key('continue-workspace'),
+                        onPressed: () => _selectWorkspace(
+                          _selectedWorkspace ?? memberships.first,
+                        ),
+                        child: Text(context.tr('Continue to workspace')),
+                      ),
+                    ),
+                  ),
+            body: BlocBuilder<WorkspacesCubit, WorkspacesState>(
+              builder: (context, state) => ListView(
+                key: Key(
+                  memberships.isEmpty
+                      ? 'no-workspace-onboarding'
+                      : 'workspace-access',
+                ),
+                padding: const EdgeInsets.all(AppSpacing.m),
+                children: [
+                  Text(context.tr('Your role belongs to each workspace.')),
+                  const SizedBox(height: 16),
+                  if (memberships.isNotEmpty) ...[
+                    WorkspaceMembershipChooser(
+                      memberships: memberships,
+                      currentWorkspaceId:
+                          session.activeMembership?.workspace.id,
+                      shrinkWrap: true,
+                      currentSelectionId: _selectedWorkspace?.workspace.id,
+                      onSelected: (membership) =>
+                          setState(() => _selectedWorkspace = membership),
+                    ),
+                    const Divider(),
+                  ],
+                  if (memberships.isEmpty)
+                    const EaseHint(
+                      icon: Icons.apartment_outlined,
+                      message: 'Create a workspace for your team, or accept an invitation sent by a manager.',
+                    ),
+                  const SizedBox(height: AppSpacing.m),
+                  WorkspaceAccessLink(
+                    icon: Icons.mail_outline,
+                    title: 'Pending invitations',
+                    subtitle: 'Invitations for your account',
+                    onTap: state.busy
+                        ? null
+                        : () async {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute<({String id, bool accept})>(
+                                builder: (_) => WorkspaceInvitationListScreen(
+                                  invitations: state.invitations,
+                                ),
+                              ),
+                            );
+                            if (mounted && result != null) {
+                              await _respondToInvitation(
+                                result.id,
+                                accept: result.accept,
+                              );
+                            }
+                          },
+                  ),
+                  const SizedBox(height: 12),
+                  WorkspaceAccessLink(
+                    key: const Key('invitation-code-expander'),
+                    icon: Icons.key_outlined,
+                    title: 'Join with a token',
+                    subtitle: 'Use your one-time invitation',
+                    onTap: state.busy ? null : _acceptInvitation,
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    key: const Key('create-workspace'),
+                    onPressed: state.busy ? null : _createWorkspace,
+                    icon: const Icon(Icons.add_business_outlined),
+                    label: Text(context.tr('Create workspace')),
+                  ),
+                  if (state.loading) const AppContentLoading(rows: 2),
+                  if (state.failure != null) ...[
+                    const SizedBox(height: AppSpacing.m),
+                    Text(
+                      context.tr(state.failure!.message),
+                      textAlign: TextAlign.center,
+                    ),
+                    TextButton(
+                      onPressed: context.read<WorkspacesCubit>().load,
+                      child: Text(context.tr('Retry')),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
+      );
 }

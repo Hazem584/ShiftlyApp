@@ -174,11 +174,23 @@ Future<(_RoutingAuth, _AcceptingInvitations)> _pumpNoWorkspace(
   return (auth, invitations);
 }
 
+Future<void> _openInvitationDetails(WidgetTester tester) async {
+  final invitations = find.text('Pending invitations');
+  await tester.ensureVisible(invitations);
+  await tester.tap(invitations);
+  await tester.pumpAndSettle();
+  expect(find.text('My invitations'), findsOneWidget);
+  await tester.tap(find.byKey(const Key('open-invitation-invitation-id')));
+  await tester.pumpAndSettle();
+  expect(find.text('Invitation details'), findsOneWidget);
+}
+
 void main() {
   testWidgets(
     'decline removes a listed invitation and keeps workspace selection open',
     (tester) async {
       final (_, invitations) = await _pumpNoWorkspace(tester);
+      await _openInvitationDetails(tester);
       await tester.tap(
         find.byKey(const Key('decline-invitation-invitation-id')),
       );
@@ -261,10 +273,7 @@ void main() {
       expect(find.byKey(const Key('workspace-access')), findsOneWidget);
       expect(find.text('Cairo Operations'), findsOneWidget);
       expect(find.byKey(const Key('invitation-token-field')), findsNothing);
-      await tester.ensureVisible(
-        find.byKey(const Key('accept-invitation-invitation-id')),
-      );
-      await tester.pumpAndSettle();
+      await _openInvitationDetails(tester);
       await tester.tap(
         find.byKey(const Key('accept-invitation-invitation-id')),
       );
@@ -490,7 +499,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('confirm-sign-out')));
     await tester.pumpAndSettle();
-    expect(find.text('Welcome to Shiftly'), findsOneWidget);
+    expect(find.text('Good work\nstarts here.'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
   });
 
@@ -501,6 +510,7 @@ void main() {
       expect(find.byKey(const Key('no-workspace-onboarding')), findsOneWidget);
       expect(find.byKey(const Key('create-workspace')), findsOneWidget);
 
+      await _openInvitationDetails(tester);
       await tester.tap(
         find.byKey(const Key('accept-invitation-invitation-id')),
       );
