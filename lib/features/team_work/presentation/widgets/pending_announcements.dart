@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/core/widgets/dashboard_card_loading.dart';
 import 'package:shiftly/features/communication/presentation/announcement_detail_screen.dart';
 import 'package:shiftly/features/communication/presentation/communication_actions.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
@@ -82,7 +82,9 @@ class _PendingAnnouncementsState extends State<PendingAnnouncements>
             if (state.loading && state.items.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),
-                child: AppContentLoading(rows: 1),
+                child: DashboardCardLoading(
+                  kind: DashboardCardKind.announcement,
+                ),
               ),
             if (state.error != null)
               Padding(

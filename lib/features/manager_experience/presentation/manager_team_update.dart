@@ -2,20 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/di/service_locator.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/widgets/dashboard_card_loading.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 
 class ManagerTeamUpdate extends StatefulWidget {
-  const ManagerTeamUpdate({required this.workspaceId, super.key});
+  const ManagerTeamUpdate({
+    required this.workspaceId,
+    this.refreshToken,
+    super.key,
+  });
   final String workspaceId;
+  final Object? refreshToken;
   @override
   State<ManagerTeamUpdate> createState() => _ManagerTeamUpdateState();
 }
 
 class _ManagerTeamUpdateState extends State<ManagerTeamUpdate> {
-  late final _future = getIt.isRegistered<TeamWorkRepository>()
+  late Future<WorkPage<TeamAnnouncement>>? _future = _load();
+  Future<WorkPage<TeamAnnouncement>>? _load() =>
+      getIt.isRegistered<TeamWorkRepository>()
       ? getIt<TeamWorkRepository>().announcements(widget.workspaceId, page: 1)
       : null;
+  @override
+  void didUpdateWidget(covariant ManagerTeamUpdate oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshToken != widget.refreshToken ||
+        oldWidget.workspaceId != widget.workspaceId) {
+      _future = _load();
+    }
+  }
+
   @override
   Widget build(BuildContext context) =>
       FutureBuilder<WorkPage<TeamAnnouncement>>(
@@ -30,47 +47,51 @@ class _ManagerTeamUpdateState extends State<ManagerTeamUpdate> {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 14),
-              Card(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: InkWell(
-                  onTap: () => context.push('/work?tab=announcements'),
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item?.title ??
-                              context.tr('Keep your team in the loop'),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          item?.body ??
-                              context.tr(
-                                'Publish updates and track acknowledgment',
-                              ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          context.tr(
-                            item == null
-                                ? 'Open announcements'
-                                : 'View announcement →',
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData)
+                const DashboardCardLoading(kind: DashboardCardKind.announcement)
+              else
+                Card(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  child: InkWell(
+                    onTap: () => context.push('/work?tab=announcements'),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item?.title ??
+                                context.tr('Keep your team in the loop'),
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(height: 8),
+                          Text(
+                            item?.body ??
+                                context.tr(
+                                  'Publish updates and track acknowledgment',
+                                ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          Text(
+                            context.tr(
+                              item == null
+                                  ? 'Open announcements'
+                                  : 'View announcement →',
+                            ),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           );
         },

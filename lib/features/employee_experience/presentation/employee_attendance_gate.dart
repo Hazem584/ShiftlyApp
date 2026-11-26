@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/employee_design.dart';
-import 'package:shiftly/core/widgets/app_content_loading.dart';
+import 'package:shiftly/core/widgets/dashboard_card_loading.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/attendance_source.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/models/attendance_status_summary.dart';
@@ -25,7 +25,7 @@ class EmployeeAttendanceGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.loading && state.current == null) {
-      return const SizedBox(height: 200, child: AppContentLoading());
+      return const DashboardCardLoading(kind: DashboardCardKind.attendance);
     }
     final summary = AttendanceStatusSummary.fromState(
       state,
@@ -139,7 +139,8 @@ class EmployeeAttendanceGate extends StatelessWidget {
             if (recovery == null) ...[
               const SizedBox(height: 18),
               OutlinedButton(
-                onPressed: busy
+                onPressed:
+                    state.submittingTemplateId != null || state.clockingOut
                     ? null
                     : summary.occurrence != null
                     ? () => Navigator.push(

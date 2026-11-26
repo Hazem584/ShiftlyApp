@@ -1,49 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/widgets/app_shimmer.dart';
 
-import 'dashboard_skeleton.dart';
+import 'package:shiftly/core/widgets/dashboard_card_loading.dart';
+import 'package:shiftly/core/widgets/dashboard_skeleton.dart';
 
 class DashboardLoadingView extends StatelessWidget {
-  const DashboardLoadingView({super.key});
+  const DashboardLoadingView({super.key, this.employee = false});
+  final bool employee;
+
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(18),
-    children: [
-      Semantics(
-        liveRegion: true,
-        child: Text(
-          context.tr('Preparing your dashboard…'),
-          style: TextStyle(color: AppPalette.of(context).textSecondary),
+  Widget build(BuildContext context) => Semantics(
+    label: context.tr('Preparing your dashboard…'),
+    liveRegion: true,
+    child: ListView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+      children: [
+        const AppShimmer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DashboardSkeleton(height: 12, width: 108),
+              SizedBox(height: 16),
+              DashboardSkeleton(height: 28, width: 176),
+              SizedBox(height: 8),
+              DashboardSkeleton(height: 14, width: 135),
+            ],
+          ),
         ),
-      ),
-      const SizedBox(height: 16),
-      AppShimmer(
-        child: Column(
-          children: [
-            const DashboardSkeleton(height: 42, width: 180),
-            const SizedBox(height: 16),
-            const DashboardSkeleton(height: 160),
-            const SizedBox(height: 16),
-            const Row(
-              children: [
-                Expanded(child: DashboardSkeleton(height: 120)),
-                SizedBox(width: 12),
-                Expanded(child: DashboardSkeleton(height: 120)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Row(
-              children: [
-                Expanded(child: DashboardSkeleton(height: 120)),
-                SizedBox(width: 12),
-                Expanded(child: DashboardSkeleton(height: 120)),
-              ],
-            ),
-          ],
+        const SizedBox(height: 28),
+        const DashboardCardLoading(kind: DashboardCardKind.attendance),
+        const SizedBox(height: 24),
+        const DashboardCardLoading(kind: DashboardCardKind.tile),
+        const SizedBox(height: 16),
+        DashboardCardLoading(
+          kind: employee
+              ? DashboardCardKind.tile
+              : DashboardCardKind.announcement,
         ),
-      ),
-    ],
+      ],
+    ),
   );
 }

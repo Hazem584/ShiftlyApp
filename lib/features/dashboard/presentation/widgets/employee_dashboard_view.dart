@@ -113,14 +113,6 @@ class EmployeeDashboardView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           EmployeeTasksPreview(timezone: data.timezone),
-          const SizedBox(height: 14),
-          DashboardAnnouncements(refreshToken: data),
-          EmployeeTile(
-            icon: Icons.campaign_outlined,
-            title: context.tr('Team announcements'),
-            subtitle: context.tr('Read the latest updates from your team'),
-            onTap: () => context.push('/team-work?tab=announcements'),
-          ),
           if (data.nextShift != null) ...[
             const SizedBox(height: 14),
             EmployeeTile(
@@ -134,6 +126,14 @@ class EmployeeDashboardView extends StatelessWidget {
               onTap: () => context.push('/employee?tab=shifts'),
             ),
           ],
+          const SizedBox(height: 14),
+          EmployeeTile(
+            icon: Icons.campaign_outlined,
+            title: context.tr('Team announcements'),
+            subtitle: context.tr('Read the latest updates from your team'),
+            onTap: () => context.push('/team-work?tab=announcements'),
+          ),
+          DashboardAnnouncements(refreshToken: data),
         ],
       ),
     );

@@ -113,12 +113,14 @@ class DashboardScreen extends StatelessWidget {
           ManagerAttendanceOverview(summary: data.summary),
           const SizedBox(height: 28),
           ManagerReviewSummary(
-            key: ValueKey(('reviews', scope, data.generatedAt)),
+            key: ValueKey(('reviews', scope)),
+            refreshToken: data.generatedAt,
             workspaceId: scope?.workspaceId ?? '',
           ),
           const SizedBox(height: 28),
           ManagerTeamUpdate(
-            key: ValueKey(('announcements', scope, data.generatedAt)),
+            key: ValueKey(('announcements', scope)),
+            refreshToken: data.generatedAt,
             workspaceId: scope?.workspaceId ?? '',
           ),
         ],

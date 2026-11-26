@@ -34,11 +34,7 @@ class EmployeeActiveAttendanceScreen extends StatelessWidget {
       }
       final complete = !a.isOpen;
       final safe =
-          !state.clockingOut &&
-          !state.refreshing &&
-          !state.loading &&
-          !state.recoveryBlocked &&
-          state.failure == null;
+          !state.clockingOut && !state.recoveryBlocked && state.failure == null;
       return EmployeePage(
         title: complete ? 'Shift complete' : 'Active attendance',
         footer: complete
@@ -98,7 +94,11 @@ class EmployeeActiveAttendanceScreen extends StatelessWidget {
                 now: now,
               ),
               const SizedBox(height: 30),
-              if (safe) EmployeeBreakPanel(attendance: a, timezone: timezone),
+              EmployeeBreakPanel(
+                attendance: a,
+                timezone: timezone,
+                enabled: safe,
+              ),
             ],
             if (state.failure != null) ...[
               const SizedBox(height: 16),

@@ -1065,6 +1065,9 @@ void correctiveSprintTests() {
     addTearDown(cubit.close);
     final old = cubit.load();
     await repository.eligibilityStarted!.future;
+    if (cubit.state.recovery == null) {
+      await cubit.stream.firstWhere((state) => state.recovery != null);
+    }
     expect(cubit.state.recovery, isNotNull);
     expect(await cubit.recoverClockIn(), FixedShiftMutationResult.success);
     held.complete(_eligibility(repository));
@@ -1118,6 +1121,32 @@ void correctiveSprintTests() {
       held.complete(_eligibility(repository, status: 'UNKNOWN'));
       await first;
       expect(cubit.state.eligibility!.status, 'SHIFT_ASSIGNMENT_REQUIRED');
+    },
+  );
+
+  test(
+    'restores active attendance while schedule requests are pending',
+    () async {
+      final catalog = Completer<ShiftTemplatePage>();
+      final eligibility = Completer<TemplateEligibility>();
+      final repository = _ControlledRepository()
+        ..current = FlexibleAttendance.fromJson(_attendance())
+        ..catalogRead = catalog
+        ..eligibilityReads.add(eligibility);
+      final cubit = FlexibleAttendanceCubit(repository)
+        ..bindSession(_employeeScope);
+      addTearDown(cubit.close);
+      final reading = cubit.load();
+      await cubit.stream.firstWhere(
+        (state) => state.current?.isOpen == true && !state.recoveryBlocked,
+      );
+      expect(cubit.state.eligibility, isNull);
+      expect(cubit.state.loading, isTrue);
+      expect(catalog.isCompleted, isFalse);
+      catalog.complete(repository.page);
+      eligibility.complete(_eligibility(repository));
+      await reading;
+      expect(cubit.state.loading, isFalse);
     },
   );
 

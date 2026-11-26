@@ -101,7 +101,7 @@ void main() {
       ..pending = Completer<ManagerDashboardData>();
     await tester.pumpWidget(_app(repository));
     await tester.pump();
-    expect(find.textContaining('Preparing your dashboard'), findsOneWidget);
+    expect(find.bySemanticsLabel('Preparing your dashboard…'), findsOneWidget);
     repository.pending!.completeError(const ApiException(message: 'Offline'));
     repository.pending = null;
     await tester.pumpAndSettle();

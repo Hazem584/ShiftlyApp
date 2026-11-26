@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
+import 'package:shiftly/core/widgets/dashboard_card_loading.dart';
 import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
 
 import 'employee_tile.dart';
@@ -13,6 +14,9 @@ class EmployeeTasksPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocBuilder<TasksCubit, TasksState>(
     builder: (context, state) {
+      if (state.loading && state.openTotal == null && state.items.isEmpty) {
+        return const DashboardCardLoading(kind: DashboardCardKind.tile);
+      }
       final available = state.items.where((t) => !t.completed).toList()
         ..sort(
           (a, b) => a

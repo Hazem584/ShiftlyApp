@@ -15,10 +15,12 @@ class EmployeeBreakPanel extends StatefulWidget {
   const EmployeeBreakPanel({
     required this.attendance,
     required this.timezone,
+    this.enabled = true,
     super.key,
   });
   final FlexibleAttendance attendance;
   final String timezone;
+  final bool enabled;
   @override
   State<EmployeeBreakPanel> createState() => _EmployeeBreakPanelState();
 }
@@ -73,7 +75,7 @@ class _EmployeeBreakPanelState extends State<EmployeeBreakPanel> {
 
   Future<void> _toggle() async {
     final b = _breaks;
-    if (b == null || b.busy) return;
+    if (!widget.enabled || b == null || b.busy) return;
     if (b.running) {
       await b.end();
       return;
@@ -90,7 +92,7 @@ class _EmployeeBreakPanelState extends State<EmployeeBreakPanel> {
       }),
       action: 'Start break',
     );
-    if (ok && mounted && b.canStart) {
+    if (ok && mounted && widget.enabled && b.canStart) {
       await b.start(
         arabic: Localizations.localeOf(context).languageCode == 'ar',
       );
@@ -118,13 +120,15 @@ class _EmployeeBreakPanelState extends State<EmployeeBreakPanel> {
                         Localizations.localeOf(context).languageCode == 'ar',
                   ),
                 }),
-          onTap: !b.busy && (running || b.canStart) ? _toggle : null,
+          onTap: widget.enabled && !b.busy && (running || b.canStart)
+              ? _toggle
+              : null,
         ),
         const SizedBox(height: 12),
         if (running || b.canStart)
           OutlinedButton(
             key: const Key('employee-break-action'),
-            onPressed: b.busy ? null : _toggle,
+            onPressed: !widget.enabled || b.busy ? null : _toggle,
             child: Text(context.tr(running ? 'End break' : 'Start break')),
           ),
         if (b.reminderAt != null && !running)

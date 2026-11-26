@@ -8,7 +8,7 @@ class DashboardSkeleton extends StatelessWidget {
   final double? width;
   @override
   Widget build(BuildContext context) => Align(
-    alignment: Alignment.centerLeft,
+    alignment: AlignmentDirectional.centerStart,
     child: Container(
       width: width ?? double.infinity,
       height: height,

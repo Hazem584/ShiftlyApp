@@ -123,78 +123,22 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
       ),
     );
     try {
-      final templatePage = await _repository.listMyTemplates(scope.workspaceId);
-      if (!_current(scope, generation, revision)) return;
-      if (templatePage.data.any(
-        (item) => item.workspaceId != scope.workspaceId,
-      )) {
-        throw const FormatException('Cross-scope schedule');
-      }
-      emit(state.copyWith(templates: templatePage.data));
-      final restored = await _repository.getCurrentAttendance(
-        scope.workspaceId,
-      );
-      if (!_current(scope, generation, revision)) {
-        return;
-      }
-      if (restored != null &&
-          (restored.workspaceId != scope.workspaceId ||
-              restored.employeeMembershipId != scope.membershipId)) {
-        throw const FormatException('Cross-scope attendance');
-      }
-      emit(
-        state.copyWith(
-          current: restored,
-          clearCurrent: restored == null && state.current?.isOpen != false,
-        ),
-      );
-      final pending = await _repository.loadPendingClockIn(
-        userId: scope.userId,
-        workspaceId: scope.workspaceId,
-        membershipId: scope.membershipId,
-        templateId: '',
-      );
-      if (!_current(scope, generation, revision)) {
-        return;
-      }
-      emit(
-        state.copyWith(
-          recovery: pending,
-          clearRecovery: pending == null,
-          recoveryBlocked: pending != null,
-        ),
-      );
-      final legacyRepository = _repository;
-      final reviews = legacyRepository is LegacyClockInRepository
-          ? await (legacyRepository as LegacyClockInRepository)
-                .inspectLegacyClockIns(scope)
-          : <LegacyClockInReview>[];
-      if (!_current(scope, generation, revision)) {
-        return;
-      }
-      emit(
-        state.copyWith(
-          legacyReviews: reviews,
-          recoveryBlocked:
-              pending != null || reviews.any((v) => v.requiresReview),
-        ),
-      );
       final values = await Future.wait<Object?>([
-        Future.value(restored),
+        _restoreAttendance(scope, generation, revision),
         _repository.getEligibility(scope.workspaceId),
-        Future.value(templatePage),
+        _repository.listMyTemplates(scope.workspaceId).then<void>((page) {
+          if (!_current(scope, generation, revision)) return;
+          if (page.data.any((item) => item.workspaceId != scope.workspaceId)) {
+            throw const FormatException('Cross-scope schedule');
+          }
+          emit(state.copyWith(templates: page.data));
+        }),
       ]);
-      if (!_current(scope, generation, revision)) {
-        return;
-      }
-      final current = values[0] as FlexibleAttendance?;
+      if (!_current(scope, generation, revision)) return;
+      final current = state.current;
       final eligibility = values[1] as TemplateEligibility;
-      final templates = (values[2] as ShiftTemplatePage).data;
-      if ((current != null &&
-              (current.workspaceId != scope.workspaceId ||
-                  current.employeeMembershipId != scope.membershipId)) ||
-          eligibility.workspaceId != scope.workspaceId ||
-          templates.any((v) => v.workspaceId != scope.workspaceId) ||
+      final templates = state.templates;
+      if (eligibility.workspaceId != scope.workspaceId ||
           eligibility.authorizedOccurrences.any(
             (v) => v.template.workspaceId != scope.workspaceId,
           )) {
@@ -203,13 +147,10 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
       emit(
         FlexibleAttendanceState(
           loading: false,
-          recovery: pending,
-          legacyReviews: reviews,
-          recoveryBlocked:
-              pending != null || reviews.any((v) => v.requiresReview),
-          current:
-              current ??
-              (state.current?.isOpen == false ? state.current : null),
+          recovery: state.recovery,
+          legacyReviews: state.legacyReviews,
+          recoveryBlocked: state.recoveryBlocked,
+          current: current,
           eligibility: eligibility,
           templates: templates,
         ),
@@ -229,6 +170,59 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
         );
       }
     }
+  }
+
+  Future<void> _restoreAttendance(
+    FeatureSessionScope scope,
+    int generation,
+    int revision,
+  ) async {
+    final restored = await _repository.getCurrentAttendance(scope.workspaceId);
+    if (!_current(scope, generation, revision)) {
+      return;
+    }
+    if (restored != null &&
+        (restored.workspaceId != scope.workspaceId ||
+            restored.employeeMembershipId != scope.membershipId)) {
+      throw const FormatException('Cross-scope attendance');
+    }
+    emit(
+      state.copyWith(
+        current: restored,
+        clearCurrent: restored == null && state.current?.isOpen != false,
+      ),
+    );
+    final pending = await _repository.loadPendingClockIn(
+      userId: scope.userId,
+      workspaceId: scope.workspaceId,
+      membershipId: scope.membershipId,
+      templateId: '',
+    );
+    if (!_current(scope, generation, revision)) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        recovery: pending,
+        clearRecovery: pending == null,
+        recoveryBlocked: true,
+      ),
+    );
+    final legacyRepository = _repository;
+    final reviews = legacyRepository is LegacyClockInRepository
+        ? await (legacyRepository as LegacyClockInRepository)
+              .inspectLegacyClockIns(scope)
+        : <LegacyClockInReview>[];
+    if (!_current(scope, generation, revision)) {
+      return;
+    }
+    emit(
+      state.copyWith(
+        legacyReviews: reviews,
+        recoveryBlocked:
+            pending != null || reviews.any((v) => v.requiresReview),
+      ),
+    );
   }
 
   Future<FixedShiftMutationResult> clockOut() async {

@@ -14,7 +14,7 @@ class EmployeeDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) =>
       BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) => switch (state) {
-          DashboardLoading() => const DashboardLoadingView(),
+          DashboardLoading() => const DashboardLoadingView(employee: true),
           DashboardLoaded(:final data) when data is EmployeeDashboardData =>
             EmployeeDashboardView(data: data, state: state),
           DashboardLoaded() => const SizedBox.shrink(),
