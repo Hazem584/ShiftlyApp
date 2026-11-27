@@ -206,4 +206,32 @@ const arabicShiftsWorkflowTranslations = <String, String>{
   'Check-in blocked': 'تعذّر تسجيل الحضور',
   'Could not complete check-in. Please verify your location and try again.':
       'معرفناش نسجّل الحضور. اتأكد من وجودك في موقع العمل وجرّب تاني.',
+  'My salary & earnings': 'راتبي ومستحقاتي هذا الشهر',
+  'Approvals & attendance': 'المراجعات والحضور',
+  'Action inbox, attendance records, leave, corrections & calendar':
+      'صندوق المراجعات، سجل الحضور، الإجازات، تصحيحات المواعيد والتقويم الشهري',
+  'Shifts & locations': 'الشفتات والفروع',
+  'Shift templates, workplace GPS geofence & selfie rules':
+      'قوالب الشفتات، مواقع العمل (GPS) وإعدادات التحقق بالسيلفي',
+  'Tasks & announcements': 'المهام والإعلانات',
+  'Personal tasks, team assigned tasks & announcements':
+      'مهامك الشخصية، توزيع مهام الفريق وإعلانات الفريق',
+  'Reports & payroll': 'التقارير والمرتبات',
+  'Attendance analytics, payroll calculations & Excel/PDF export':
+      'إحصائيات الحضور، حساب المرتبات والخصومات والإضافي وتصدير Excel وPDF',
+  'Covering a colleague': 'تغطية مكان زميل',
+  'Additional shift': 'شفت إضافي',
+  'Approved overtime': 'عمل إضافي معتمد',
+  'Emergency support': 'دعم طارئ',
+  'High workload support': 'دعم ضغط عمل',
+  'Authorized by': 'تم التصريح بواسطة',
+  'Completed at': 'تم الحضور في',
+  'Cancelled by': 'أُلغي بواسطة',
+  'Cancel extra shift': 'إلغاء الشفت الإضافي',
+  'Could not save extra shift. Please review the details and try again.':
+      'معرفناش نحفظ الشفت الإضافي. راجع البيانات وجرّب تاني.',
+  'Unable to load extra shifts. Please try again.':
+      'معرفناش نحمّل الشفتات الإضافية. جرّب تاني.',
+  'This occurrence already has an active or completed authorization':
+      'الشفت ده متسجّل بالفعل للموظف في نفس اليوم.',
 };

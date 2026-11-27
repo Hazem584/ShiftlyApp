@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_attendance_section.dart';
 import 'package:shiftly/features/dashboard/presentation/widgets/employee_dashboard_header.dart';
+import 'package:shiftly/features/employee_experience/presentation/employee_my_payroll_sheet.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_tasks_preview.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_tile.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
@@ -47,19 +47,15 @@ class EmployeeDashboardView extends StatelessWidget {
           subtitle: context.tr('Tasks from your manager'),
           onTap: () => context.push('/assigned-tasks'),
         ),
-        if (data.nextShift != null) ...[
-          const SizedBox(height: 14),
-          EmployeeTile(
-            icon: Icons.calendar_today_outlined,
-            title: context.tr('Next scheduled shift'),
-            subtitle: WorkspaceTime.dateTime(
-              data.nextShift!.startsAt,
-              data.timezone,
-              locale: Localizations.localeOf(context).toString(),
-            ),
-            onTap: () => context.push('/employee?tab=shifts'),
-          ),
-        ],
+        const SizedBox(height: 14),
+        EmployeeTile(
+          key: const Key('employee-my-payroll'),
+          icon: Icons.account_balance_wallet_outlined,
+          title: context.tr('My salary & earnings'),
+          subtitle:
+              '${context.tr('Net payable')}: ${data.summary.netPayMonth.toStringAsFixed(2)} ${data.summary.currency}',
+          onTap: () => showEmployeeMyPayrollSheet(context, data.summary),
+        ),
         const SizedBox(height: 14),
         EmployeeTile(
           icon: Icons.campaign_outlined,

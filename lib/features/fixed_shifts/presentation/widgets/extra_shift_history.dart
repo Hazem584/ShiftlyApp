@@ -15,11 +15,6 @@ List<Widget> extraShiftHistory(
 }) {
   final pagination = state.page?.pagination;
   return [
-    if (state.canonical != null)
-      ExpansionTile(
-        title: Text(context.tr('Last saved canonical result')),
-        children: [ExtraAuthorizationCard(value: state.canonical!)],
-      ),
     if (state.page?.data.isEmpty == true)
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),

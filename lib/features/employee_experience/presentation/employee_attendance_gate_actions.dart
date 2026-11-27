@@ -3,14 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/employee_design.dart';
-import 'package:shiftly/features/fixed_shifts/domain/entities/attendance_source.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/models/attendance_status_summary.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/legacy_clock_in_review_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/saved_schedule_list.dart';
-import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
 
 import 'employee_shift_details_screen.dart';
+
+export 'package:shiftly/features/fixed_shifts/presentation/widgets/legacy_clock_in_review_card.dart';
+export 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
 
 class EmployeeAttendanceGateActions extends StatelessWidget {
   const EmployeeAttendanceGateActions({
@@ -67,31 +67,6 @@ class EmployeeAttendanceGateActions extends StatelessWidget {
             context.tr('Refresh'),
             style: const TextStyle(color: EmployeeDesign.mint),
           ),
-        ),
-      if (state.current?.isOpen == true &&
-          state.current?.source == AttendanceSource.legacyShift)
-        TextButton(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) => Scaffold(
-                appBar: AppBar(title: Text(context.tr('Earlier shifts'))),
-                body: const EmployeeShiftsScreen(),
-              ),
-            ),
-          ),
-          child: Text(
-            context.tr('Earlier shifts & clock-out'),
-            style: const TextStyle(color: EmployeeDesign.mint),
-          ),
-        ),
-      if (state.legacyReviews.isNotEmpty)
-        LegacyClockInReviewCard(
-          reviews: state.legacyReviews,
-          onRefresh: busy
-              ? null
-              : () =>
-                    context.read<FlexibleAttendanceCubit>().load(refresh: true),
         ),
       if (state.failure != null && state.templates.isNotEmpty)
         SavedScheduleList(templates: state.templates),

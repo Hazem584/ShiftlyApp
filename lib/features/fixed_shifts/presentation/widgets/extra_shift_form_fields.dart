@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_authorization_card.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shift_form_actual_fields.dart';
 
 Widget buildExtraShiftFormContent({
@@ -28,13 +29,6 @@ Widget buildExtraShiftFormContent({
   child: Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text(
-        context.tr(
-          'Times and operational dates in {value1}. Overnight shifts use their start date.',
-          {'value1': timezone},
-        ),
-      ),
-      const SizedBox(height: 12),
       buildExtraTemplateField(
         context: context,
         templates: templates,
@@ -43,45 +37,39 @@ Widget buildExtraShiftFormContent({
         onLoadTemplates: onLoadTemplates,
         onTemplateChanged: onTemplateChanged,
       ),
-      OutlinedButton(
+      const SizedBox(height: 10),
+      OutlinedButton.icon(
         onPressed: busy ? null : onPickDate,
-        child: Text(
-          context.tr('Operational date {value1}', {
-            'value1': WorkspaceTime.localDateKey(
-              year: date.year,
-              month: date.month,
-              day: date.day,
-            ),
-          }),
+        icon: const Icon(Icons.calendar_today_outlined, size: 18),
+        label: Text(
+          '${context.tr('Date')}: ${WorkspaceTime.localDateKey(year: date.year, month: date.month, day: date.day)}',
         ),
       ),
+      const SizedBox(height: 10),
       DropdownButtonFormField<String>(
         initialValue: reason,
         isExpanded: true,
-        decoration: InputDecoration(labelText: context.tr('Structured reason')),
+        decoration: InputDecoration(labelText: context.tr('Reason')),
         items: [
           for (final v in extraShiftReasons)
             DropdownMenuItem(
               value: v,
               child: Text(
-                Localizations.localeOf(context).languageCode == 'ar'
-                    ? context.tr(v)
-                    : v.replaceAll('_', ' '),
+                extraShiftReasonLabel(context, v),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
         ],
         onChanged: busy ? null : (v) => onReasonChanged(v!),
       ),
+      const SizedBox(height: 10),
       TextField(
         controller: explanation,
         enabled: !busy,
         maxLength: 1000,
         minLines: 2,
         maxLines: 4,
-        decoration: InputDecoration(
-          labelText: context.tr('Explanation (3–1000 characters)'),
-        ),
+        decoration: InputDecoration(labelText: context.tr('Notes')),
       ),
       if (actual)
         ...buildExtraShiftActualFields(
@@ -90,15 +78,13 @@ Widget buildExtraShiftFormContent({
           actualOut: actualOut,
           busy: busy,
         ),
-      if (hasIntent)
-        FilledButton.tonal(
-          onPressed: busy ? null : onRecover,
-          child: Text(context.tr('Recover saved extra operation')),
-        ),
       if (error != null)
-        Text(
-          error,
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(
+            context.tr(error),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ),
     ],
   ),

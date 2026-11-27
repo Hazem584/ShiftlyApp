@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_authorization_card.dart';
 import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 Future<bool?> showExtraShiftConfirmDialog({
@@ -36,17 +37,7 @@ Future<bool?> showExtraShiftConfirmDialog({
       title: Text(context.tr('Confirm extra shift')),
       scrollable: true,
       content: Text(
-        context.tr(
-          '{value1}\n{value2} · {value3}\n{value4}\n{value5}{value6}',
-          {
-            'value1': templateName,
-            'value2': payload['operationalDate'].toString(),
-            'value3': timezone,
-            'value4': context.tr(reason),
-            'value5': text,
-            'value6': actualDetails,
-          },
-        ),
+        '$templateName\n${payload['operationalDate']}\n${extraShiftReasonLabel(context, reason)}\n$text$actualDetails',
       ),
       actions: [
         TextButton(

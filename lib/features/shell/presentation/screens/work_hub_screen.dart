@@ -10,15 +10,26 @@ class WorkHubScreen extends StatelessWidget {
   const WorkHubScreen({this.section = 'hub', super.key});
   final String section;
   static const destinations = [
-    ('Action inbox', 'Attendance, leave and correction decisions', 'tasks'),
-    ('Shift templates', 'Hours and check-in policies', 'shifts'),
-    ('My personal tasks', 'Your own to-dos and reminders', 'personal'),
     (
-      'Announcements',
-      'Publish updates and track acknowledgment',
-      'announcements',
+      'Approvals & attendance',
+      'Action inbox, attendance records, leave, corrections & calendar',
+      'tasks',
     ),
-    ('Reports', 'Attendance summaries and exports', 'reports'),
+    (
+      'Shifts & locations',
+      'Shift templates, workplace GPS geofence & selfie rules',
+      'shifts',
+    ),
+    (
+      'Tasks & announcements',
+      'Personal tasks, team assigned tasks & announcements',
+      'personal',
+    ),
+    (
+      'Reports & payroll',
+      'Attendance analytics, payroll calculations & Excel/PDF export',
+      'reports',
+    ),
   ];
 
   @override
