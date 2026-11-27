@@ -9,13 +9,19 @@ ReportMetrics calculateEmployeeMetrics(
   String timezone,
 ) {
   var result = const ReportMetrics();
-  final days = <String>{};
+  final days = <String>{}, absent = <String>{}, leave = <String>{};
   for (final r in values) {
+    final day =
+        r.operationalDate?.split('T').first ??
+        WorkspaceTime.dateKey(r.clockInAt, timezone);
     if (r.dayStatus == 'ABSENT') {
-      result += const ReportMetrics(absentDays: 1);
+      absent.add(day);
       continue;
     }
-    if (r.dayStatus == 'LEAVE') continue;
+    if (r.dayStatus == 'LEAVE') {
+      leave.add(day);
+      continue;
+    }
     switch (r.reviewStatus) {
       case AttendanceReviewStatus.pending:
         result += const ReportMetrics(pending: 1);
@@ -24,14 +30,16 @@ ReportMetrics calculateEmployeeMetrics(
       case AttendanceReviewStatus.unknown:
         result += const ReportMetrics(unknown: 1);
       case AttendanceReviewStatus.approved:
-        days.add(
-          r.operationalDate?.split('T').first ??
-              WorkspaceTime.dateKey(r.clockInAt, timezone),
-        );
+        days.add(day);
         result += _approvedRecordMetrics(r);
     }
   }
-  return result + ReportMetrics(attendanceDays: days.length);
+  return result +
+      ReportMetrics(
+        attendanceDays: days.length,
+        absentDays: absent.difference(days).difference(leave).length,
+        paidLeaveDays: leave.difference(days).length,
+      );
 }
 
 ReportMetrics _approvedRecordMetrics(AttendanceRecordApi r) {

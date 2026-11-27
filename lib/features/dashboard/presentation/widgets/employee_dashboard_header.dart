@@ -6,7 +6,6 @@ import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 
 class EmployeeDashboardHeader extends StatelessWidget {
   const EmployeeDashboardHeader({
@@ -41,7 +40,6 @@ class EmployeeDashboardHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const NotificationBell(),
           ],
         ),
         const SizedBox(height: 14),

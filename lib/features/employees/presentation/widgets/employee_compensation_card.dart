@@ -22,7 +22,7 @@ class EmployeeCompensationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final monthly = employee.monthlySalary;
-    final rate = employee.effectiveHourlyRate();
+    final rate = employee.hourlyRate;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -38,8 +38,20 @@ class EmployeeCompensationCard extends StatelessWidget {
             ),
             EmployeeDetail(
               icon: Icons.timer_outlined,
-              title: context.tr('Hourly rate'),
-              value: rate > 0 ? rate.toStringAsFixed(2) : context.tr('Not set'),
+              title: context.tr('Overtime hourly rate'),
+              value: rate?.toStringAsFixed(2) ?? context.tr('Not set'),
+            ),
+            EmployeeDetail(
+              icon: Icons.calendar_today_outlined,
+              title: context.tr('Payroll workdays per month'),
+              value: employee.payrollWorkDays.toString(),
+            ),
+            EmployeeDetail(
+              icon: Icons.payments_outlined,
+              title: context.tr('Daily rate'),
+              value:
+                  employee.dailyRate?.toStringAsFixed(2) ??
+                  context.tr('Not set'),
             ),
           ],
         ),

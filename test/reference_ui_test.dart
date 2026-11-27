@@ -113,7 +113,7 @@ void main() {
     await tester.tap(find.text('Mariam Hassan'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.byKey(const Key('deactivate-employee')),
+      find.byKey(const Key('deactivate-employee')).hitTestable(),
       250,
       scrollable: find
           .descendant(
@@ -129,7 +129,7 @@ void main() {
     await tester.tap(find.byKey(const Key('confirm-deactivate-employee')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.byKey(const Key('reactivate-employee')),
+      find.byKey(const Key('reactivate-employee')).hitTestable(),
       200,
       scrollable: find
           .descendant(
@@ -143,7 +143,7 @@ void main() {
     await tester.tap(find.byKey(const Key('reactivate-employee')));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
-      find.byKey(const Key('deactivate-employee')),
+      find.byKey(const Key('deactivate-employee')).hitTestable(),
       200,
       scrollable: find
           .descendant(

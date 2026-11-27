@@ -76,15 +76,15 @@ void initializeCoreComposition(
   c.dashboardCubit =
       registered<DashboardCubit>() ?? DashboardCubit(repos.dashboard);
   final dio = registered<Dio>();
-  c.attendanceCalendarCubit = AttendanceCalendarCubit(
-    registered<AttendanceCalendarRepository>() ??
-        ApiAttendanceCalendarRepository(
-          c.shifts,
-          c.attendance,
-          c.leaveRequests,
-          dio: dio,
-        ),
-  );
+  final calendar =
+      registered<AttendanceCalendarRepository>() ??
+      ApiAttendanceCalendarRepository(
+        c.shifts,
+        c.attendance,
+        c.leaveRequests,
+        dio: dio,
+      );
+  c.attendanceCalendarCubit = AttendanceCalendarCubit(calendar);
   c.employeeAttendanceCalendarCubit = EmployeeAttendanceCalendarCubit(
     ApiAttendanceCalendarRepository(
       c.shifts,
@@ -95,6 +95,10 @@ void initializeCoreComposition(
     ),
   );
   c.attendanceReportsCubit = AttendanceReportsCubit(
-    ApiAttendanceReportRepository(c.attendance, c.employees),
+    ApiAttendanceReportRepository(
+      c.attendance,
+      c.employees,
+      calendar: calendar,
+    ),
   );
 }

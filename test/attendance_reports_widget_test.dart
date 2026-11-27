@@ -99,6 +99,11 @@ void main() {
       });
       await tester.pumpAndSettle();
       expect(delivery.files.single.name, endsWith('_employee.xlsx'));
+      final loaded = cubit.state.report;
+      await tester.pumpWidget(const SizedBox.shrink());
+      await mount(tester, cubit, delivery: delivery);
+      expect(cubit.state.report, same(loaded));
+      expect(cubit.state.employeeId, 'second');
       expect(tester.takeException(), isNull);
     },
   );

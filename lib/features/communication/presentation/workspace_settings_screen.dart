@@ -6,6 +6,7 @@ import 'package:shiftly/features/auth/presentation/widgets/workspace_switcher.da
 import 'package:shiftly/features/workspaces/presentation/widgets/workspace_exit_tile.dart';
 
 import 'communication_page.dart';
+import 'device_notification_toggle.dart';
 
 class WorkspaceSettingsScreen extends StatelessWidget {
   const WorkspaceSettingsScreen({super.key});
@@ -44,6 +45,8 @@ class WorkspaceSettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+          const DeviceNotificationToggle(),
+          const SizedBox(height: 12),
           const WorkspaceExitTile(),
         ],
       ),

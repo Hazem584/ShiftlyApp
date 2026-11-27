@@ -3,8 +3,6 @@ import 'package:shiftly/app/app_composition.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/notifications/domain/entities/push_notice.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
-import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
-import 'package:shiftly/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:shiftly/features/notifications/presentation/utils/notifications_formatters.dart';
 
 Future<void> openAppPushNotice({
@@ -13,91 +11,63 @@ Future<void> openAppPushNotice({
   required bool Function() isMounted,
   required PushNotice notice,
 }) async {
-  if (notice.taskId != null) {
-    await _openTaskNotice(composition, isMounted, notice);
-    return;
-  }
-  final scope = composition.notificationsCubit.scope;
-  if (!isMounted() ||
-      scope == null ||
-      notice.recipientProfileId != scope.userId ||
-      notice.workspaceId != scope.workspaceId) {
-    return;
-  }
-  BuildContext? overlayContext() => composition
-      .router
-      .routerDelegate
-      .navigatorKey
-      .currentState
-      ?.overlay
-      ?.context;
-  try {
-    final record = await composition.pushDevices!.getNotification(
-      notice.notificationId,
-    );
-    if (!isMounted() ||
-        composition.notificationsCubit.scope != scope ||
-        record.id != notice.notificationId ||
-        record.workspaceId != scope.workspaceId) {
-      return;
-    }
-    if (record.isUnread) {
-      final result = await composition.notificationsCubit.markRead(record.id);
-      if (result != NotificationMutationResult.success) return;
-    }
-    final context = overlayContext();
-    if (!isMounted() ||
-        context == null ||
-        !context.mounted ||
-        composition.notificationsCubit.scope != scope) {
-      return;
-    }
-    if (record.type == NotificationType.unknown) {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-      );
-      return;
-    }
-    await NotificationsScreenNotificationNavigator.open(context, scope, record);
-  } catch (_) {
-    final context = overlayContext();
-    if (!isMounted() ||
-        composition.notificationsCubit.scope != scope ||
-        context == null ||
-        !context.mounted) {
-      return;
-    }
-    messengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: Text(
-          context.tr('This notification destination is no longer available.'),
-        ),
-      ),
-    );
-  }
-}
-
-Future<void> _openTaskNotice(
-  AppComposition c,
-  bool Function() isMounted,
-  PushNotice notice,
-) async {
-  final scope = c.tasksCubit.scope;
+  final scope = composition.tasksCubit.scope;
+  final devices = composition.pushDevices;
   if (scope == null ||
-      scope.userId != notice.recipientProfileId ||
-      c.pushDevices == null) {
+      devices == null ||
+      scope.userId != notice.recipientProfileId) {
     return;
   }
+  bool current() => isMounted() && composition.tasksCubit.scope == scope;
   try {
-    final record = await c.pushDevices!.getNotification(notice.notificationId);
-    if (record.type != NotificationType.taskReminder ||
-        record.data?['taskId'] != notice.taskId ||
+    final record = await devices.getNotification(notice.notificationId);
+    if (!current() ||
+        record.id != notice.notificationId ||
         record.workspaceId != notice.workspaceId) {
       return;
     }
-    final task = await c.tasksCubit.resolveTap(scope.userId, notice.taskId!);
-    if (task != null && isMounted() && c.tasksCubit.scope == scope) {
-      c.router.push('/tasks?taskId=${task.id}');
+    if (record.type == NotificationType.taskReminder &&
+        notice.taskId != null &&
+        record.data?['taskId'] == notice.taskId) {
+      final kind = record.data?['kind'];
+      if (kind == 'TEAM_TASK_ASSIGNED' || kind == 'TEAM_TASK_REMINDER') {
+        if (scope.workspaceId == notice.workspaceId) {
+          composition.router.push('/assigned-tasks?taskId=${notice.taskId}');
+        }
+      } else {
+        final task = await composition.tasksCubit.resolveTap(
+          scope.userId,
+          notice.taskId!,
+        );
+        if (current() && task != null) {
+          composition.router.push('/tasks?taskId=${task.id}');
+        }
+      }
+      return;
     }
-  } catch (_) {}
+    if (record.type != NotificationType.chatMessage ||
+        scope.workspaceId != notice.workspaceId) {
+      return;
+    }
+    final context = composition
+        .router
+        .routerDelegate
+        .navigatorKey
+        .currentState
+        ?.overlay
+        ?.context;
+    if (context == null || !context.mounted) return;
+    await NotificationsScreenNotificationNavigator.open(context, scope, record);
+  } catch (_) {
+    final context = messengerKey.currentContext;
+    if (current() && context != null && context.mounted) {
+      messengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text(
+            context.tr('This notification destination is no longer available.'),
+          ),
+        ),
+      );
+    }
+  }
 }

@@ -44,45 +44,57 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
         final busy = state.loading || _exporting, report = state.report;
         return RefreshIndicator(
           onRefresh: () => _exporting ? Future.value() : cubit.load(),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              ...buildReportPeriodControls(
-                context,
-                state: state,
-                busy: busy,
-                onChooseRange: () =>
-                    chooseAttendanceReportRange(context, state, _message),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 920),
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  ...buildReportPeriodControls(
+                    context,
+                    state: state,
+                    busy: busy,
+                    onChooseRange: () =>
+                        chooseAttendanceReportRange(context, state, _message),
+                  ),
+                  if (state.loading)
+                    const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: AppContentLoading(),
+                    ),
+                  if (state.failure != null)
+                    ...buildReportFailureBanner(
+                      context,
+                      state.failure!.message,
+                      busy: busy,
+                      onRefresh: cubit.load,
+                    ),
+                  if (report != null) ...[
+                    ...buildReportOverviewSection(
+                      context,
+                      report: report,
+                      state: state,
+                      busy: busy,
+                      exporting: _exporting,
+                      onExport: (format) => _export(format, state),
+                    ),
+                    const SizedBox(height: 12),
+                    Card(
+                      child: ExpansionTile(
+                        key: const PageStorageKey('attendance-report-tables'),
+                        title: Text(context.tr('Attendance details')),
+                        children: buildReportTablesSection(
+                          context,
+                          report: report,
+                          employeeId: state.employeeId,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              if (state.loading)
-                const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: AppContentLoading(),
-                ),
-              if (state.failure != null)
-                ...buildReportFailureBanner(
-                  context,
-                  state.failure!.message,
-                  busy: busy,
-                  onRefresh: cubit.load,
-                ),
-              if (report != null) ...[
-                ...buildReportOverviewSection(
-                  context,
-                  report: report,
-                  state: state,
-                  busy: busy,
-                  exporting: _exporting,
-                  onExport: (format) => _export(format, state),
-                ),
-                ...buildReportTablesSection(
-                  context,
-                  report: report,
-                  employeeId: state.employeeId,
-                ),
-              ],
-            ],
+            ),
           ),
         );
       },

@@ -9,6 +9,7 @@ import 'package:shiftly/features/support/presentation/support_detail_screen.dart
 import 'package:shiftly/features/support/presentation/support_inbox_screen.dart';
 import 'package:shiftly/features/support/presentation/support_session_boundary.dart';
 import 'package:shiftly/features/tasks/presentation/tasks_screen.dart';
+import 'package:shiftly/features/team_work/presentation/assigned_tasks_screen.dart';
 import 'package:shiftly/features/team_work/presentation/team_work_screen.dart';
 
 List<RouteBase> buildStandaloneAppRoutes(
@@ -59,6 +60,11 @@ List<RouteBase> buildStandaloneAppRoutes(
     path: '/tasks',
     builder: (_, state) =>
         TasksScreen(taskId: state.uri.queryParameters['taskId']),
+  ),
+  GoRoute(
+    path: '/assigned-tasks',
+    builder: (_, state) =>
+        AssignedTasksScreen(taskId: state.uri.queryParameters['taskId']),
   ),
   GoRoute(
     path: '/team-work',

@@ -24,7 +24,7 @@ void bindInitialOrCoordinatorSession(AppCompositionState c) {
     c.managerAttendanceCubit.bindSession(previewScope);
     c.attendanceReportsCubit.bindSession(previewScope);
     c.leaveRequestsCubit.bindSession(previewScope);
-    c.notificationsCubit.bindSession(previewScope);
+    c.notificationsCubit.bindSession(previewScope, loadInbox: false);
     c.dashboardCubit.bindSession(previewScope);
     c.chatGroupsCubit.bindSession(previewScope);
     c.managerTemplatesCubit.bindSession(previewScope);
@@ -57,7 +57,7 @@ void applyCompositionSession(
   c.employeeAttendanceCubit.bindSession(featureScope);
   c.leaveRequestsCubit.bindSession(featureScope);
   c.employeeLeaveRequestsCubit.bindSession(featureScope);
-  c.notificationsCubit.bindSession(featureScope);
+  c.notificationsCubit.bindSession(featureScope, loadInbox: false);
   c.pushNotifications?.bindSession(featureScope);
   if (state.status == SessionStatus.unauthenticated ||
       state.status == SessionStatus.sessionExpired) {

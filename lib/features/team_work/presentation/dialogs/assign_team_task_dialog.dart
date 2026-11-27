@@ -25,7 +25,6 @@ class _AssignTeamTaskDialog extends StatefulWidget {
 
 class _AssignTeamTaskDialogState extends State<_AssignTeamTaskDialog> {
   final _title = TextEditingController();
-  final _desc = TextEditingController();
   final _selected = <String>{};
   String _priority = 'MEDIUM';
   bool _saving = false;
@@ -39,7 +38,6 @@ class _AssignTeamTaskDialogState extends State<_AssignTeamTaskDialog> {
   @override
   void dispose() {
     _title.dispose();
-    _desc.dispose();
     super.dispose();
   }
 
@@ -51,7 +49,6 @@ class _AssignTeamTaskDialogState extends State<_AssignTeamTaskDialog> {
         widget.workspaceId,
         assigneeMembershipIds: _selected.toList(),
         title: _title.text.trim(),
-        description: _desc.text.trim(),
         priority: _priority,
       );
       if (mounted) Navigator.of(context).pop(true);
@@ -73,13 +70,9 @@ class _AssignTeamTaskDialogState extends State<_AssignTeamTaskDialog> {
         children: [
           TextField(
             controller: _title,
+            maxLength: 200,
+            enabled: !_saving,
             decoration: InputDecoration(labelText: context.tr('Task title')),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _desc,
-            maxLines: 2,
-            decoration: InputDecoration(labelText: context.tr('Details')),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
@@ -89,7 +82,9 @@ class _AssignTeamTaskDialogState extends State<_AssignTeamTaskDialog> {
               for (final p in const ['LOW', 'MEDIUM', 'HIGH'])
                 DropdownMenuItem(value: p, child: Text(context.tr(p))),
             ],
-            onChanged: (v) => setState(() => _priority = v ?? 'MEDIUM'),
+            onChanged: _saving
+                ? null
+                : (v) => setState(() => _priority = v ?? 'MEDIUM'),
           ),
           const SizedBox(height: 12),
           Text(context.tr('Select employees')),
@@ -98,13 +93,36 @@ class _AssignTeamTaskDialogState extends State<_AssignTeamTaskDialog> {
             builder: (context, snap) => Wrap(
               spacing: 6,
               children: [
-                for (final e in snap.data?.data ?? const <Employee>[])
+                if (snap.connectionState == ConnectionState.waiting)
+                  const CircularProgressIndicator()
+                else if (snap.hasError)
+                  Text(context.tr('Could not load active workspace members.'))
+                else if (snap.data?.data.any(
+                      (e) => e.role == EmployeeRole.employee,
+                    ) !=
+                    true)
+                  Text(context.tr('No active employees.')),
+                for (final e in (snap.data?.data ?? const <Employee>[]).where(
+                  (e) => e.role == EmployeeRole.employee,
+                ))
                   FilterChip(
                     label: Text(e.displayName),
                     selected: _selected.contains(e.id),
-                    onSelected: (v) => setState(
-                      () => v ? _selected.add(e.id) : _selected.remove(e.id),
+                    selectedColor: Theme.of(context)
+                        .colorScheme
+                        .primaryContainer,
+                    labelStyle: TextStyle(
+                      color: _selected.contains(e.id)
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
+                    onSelected: _saving
+                        ? null
+                        : (v) => setState(
+                            () => v
+                                ? _selected.add(e.id)
+                                : _selected.remove(e.id),
+                          ),
                   ),
               ],
             ),
@@ -118,7 +136,7 @@ class _AssignTeamTaskDialogState extends State<_AssignTeamTaskDialog> {
         child: Text(context.tr('Cancel')),
       ),
       FilledButton(
-        onPressed: _saving ? null : _submit,
+        onPressed: _saving || _selected.isEmpty ? null : _submit,
         child: Text(context.tr('Assign')),
       ),
     ],

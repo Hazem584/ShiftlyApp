@@ -47,7 +47,20 @@ List<Widget> buildReportOverviewSection(
     const SizedBox(height: 12),
     ReportAnalyticsCard(report: report, employeeId: state.employeeId),
     const SizedBox(height: 12),
-    AttendanceReportTotals(metrics: report.totalsFor(state.employeeId)),
+    Card(
+      child: ExpansionTile(
+        key: const PageStorageKey('attendance-report-totals'),
+        title: Text(context.tr('Report totals')),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: AttendanceReportTotals(
+              metrics: report.totalsFor(state.employeeId),
+            ),
+          ),
+        ],
+      ),
+    ),
     const SizedBox(height: 12),
     Wrap(
       spacing: 8,

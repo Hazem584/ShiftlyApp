@@ -119,6 +119,7 @@ class _Repository implements EmployeeRepository, InvitationRepository {
     required String membershipId,
     double? monthlySalary,
     double? hourlyRate,
+    int? payrollWorkDays,
   }) async => _employee(membershipId);
   @override
   Future<List<Employee>> getEmployees({String query = ''}) async => const [];

@@ -1,23 +1,24 @@
+export 'report_employee_row.dart';
+
 class ReportEmployee {
   const ReportEmployee(
     this.id,
     this.name, {
     this.monthlySalary,
     this.hourlyRate,
+    this.payrollWorkDays = 26,
   });
   final String id, name;
   final double? monthlySalary, hourlyRate;
-  double effectiveHourlyRate([int standardHours = 176]) =>
-      hourlyRate ??
-      (monthlySalary != null && standardHours > 0
-          ? monthlySalary! / standardHours
-          : 0);
+  final int payrollWorkDays;
+  double get dailyRate => (monthlySalary ?? 0) / payrollWorkDays;
 }
 
 class ReportMetrics {
   const ReportMetrics({
     this.attendanceDays = 0,
     this.absentDays = 0,
+    this.paidLeaveDays = 0,
     this.approved = 0,
     this.pending = 0,
     this.rejected = 0,
@@ -35,6 +36,7 @@ class ReportMetrics {
 
   final int attendanceDays,
       absentDays,
+      paidLeaveDays,
       approved,
       pending,
       rejected,
@@ -52,6 +54,7 @@ class ReportMetrics {
   ReportMetrics operator +(ReportMetrics other) => ReportMetrics(
     attendanceDays: attendanceDays + other.attendanceDays,
     absentDays: absentDays + other.absentDays,
+    paidLeaveDays: paidLeaveDays + other.paidLeaveDays,
     approved: approved + other.approved,
     pending: pending + other.pending,
     rejected: rejected + other.rejected,
@@ -66,31 +69,4 @@ class ReportMetrics {
     missingSchedule: missingSchedule + other.missingSchedule,
     missingWorkMinutes: missingWorkMinutes + other.missingWorkMinutes,
   );
-}
-
-class ReportEmployeeRow {
-  const ReportEmployeeRow(this.employee, this.metrics);
-  final ReportEmployee employee;
-  final ReportMetrics metrics;
-
-  double get hourlyRate => employee.effectiveHourlyRate();
-  double get basePay =>
-      employee.monthlySalary ??
-      ((metrics.workMinutes - metrics.extraMinutes - metrics.excessMinutes)
-              .clamp(0, 1000000) /
-          60.0 *
-          hourlyRate);
-  double get deductions =>
-      (((metrics.lateMinutes + metrics.earlyLeaveMinutes) / 60.0) *
-          hourlyRate) +
-      (metrics.absentDays *
-          (employee.monthlySalary != null
-              ? employee.monthlySalary! / 30.0
-              : hourlyRate * 8.0));
-  double get overtimePay =>
-      ((metrics.extraMinutes + metrics.excessMinutes) / 60.0) *
-      hourlyRate *
-      1.5;
-  double get netPay =>
-      (basePay - deductions + overtimePay).clamp(0.0, double.infinity);
 }

@@ -48,6 +48,7 @@ String? resolveAppRedirect(
               location.startsWith('/support/') ||
               location == '/devices' ||
               location == '/tasks' ||
+              location == '/assigned-tasks' ||
               location == '/team-work' ||
               location == '/workspaces' ||
               location == '/employee' ||

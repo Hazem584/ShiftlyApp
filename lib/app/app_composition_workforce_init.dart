@@ -64,7 +64,6 @@ void initializeWorkforceComposition(
     onAttendanceChanged: () async {
       await c.employeeAttendanceCubit.load(refresh: true);
       invalidateDashboardAndCalendar();
-      await c.notificationsCubit.refreshUnreadCount();
     },
   );
   c.employeeShiftsCubit = EmployeeShiftsCubit(

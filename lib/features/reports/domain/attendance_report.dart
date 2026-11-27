@@ -15,6 +15,7 @@ class AttendanceReport {
     required this.generatedAt,
     required List<ReportEmployee> employees,
     required List<AttendanceRecordApi> records,
+    this.payrollDays,
   }) : employees = List.unmodifiable(employees),
        records = List.unmodifiable(records);
 
@@ -23,6 +24,7 @@ class AttendanceReport {
   final DateTime generatedAt;
   final List<ReportEmployee> employees;
   final List<AttendanceRecordApi> records;
+  final Map<String, ({int absent, int leave})>? payrollDays;
 
   List<AttendanceRecordApi> recordsFor(String? employeeId) => records
       .where((r) => employeeId == null || r.employeeMembershipId == employeeId)
@@ -34,6 +36,13 @@ class AttendanceReport {
         (e) => ReportEmployeeRow(
           e,
           _employeeMetrics[e.id] ?? const ReportMetrics(),
+          payrollDays: payrollDays == null
+              ? null
+              : payrollDays![e.id] ?? (absent: 0, leave: 0),
+          fullMonth:
+              range.start.day == 1 &&
+              range.end ==
+                  DateTime.utc(range.start.year, range.start.month + 1, 0),
         ),
       )
       .toList(growable: false);

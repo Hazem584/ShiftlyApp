@@ -11,7 +11,6 @@ import 'package:shiftly/features/notifications/domain/repositories/notification_
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/notifications/presentation/utils/notification_destination.dart';
 import 'package:shiftly/features/notifications/presentation/utils/notification_destination_verifier.dart';
-import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
 
 abstract final class NotificationsScreenNotificationNavigator {
   static final _uuid = RegExp(
@@ -24,9 +23,6 @@ abstract final class NotificationsScreenNotificationNavigator {
     FeatureSessionScope? scope,
     NotificationRecord notification,
   ) async {
-    if (notification.type == NotificationType.taskReminder && scope != null) {
-      return _openTaskReminder(context, scope, notification);
-    }
     if (scope == null || notification.workspaceId != scope.workspaceId) {
       return _unavailable(context);
     }
@@ -45,30 +41,11 @@ abstract final class NotificationsScreenNotificationNavigator {
         if (context.mounted) _unavailable(context);
         return;
       }
-      final router = GoRouter.of(context), nav = Navigator.of(context);
-      if (nav.canPop()) {
-        final route = ModalRoute.of(context);
-        nav.pop();
-        await route?.completed;
-      }
+      final router = GoRouter.of(context);
       if (cubit.scope == scope) openAppRoute(router, dest.location);
     } catch (_) {
       if (context.mounted) _unavailable(context);
     }
-  }
-
-  static Future<void> _openTaskReminder(
-    BuildContext context,
-    FeatureSessionScope scope,
-    NotificationRecord notification,
-  ) async {
-    final id = notification.data?['taskId'];
-    if (id is! String || !_uuid.hasMatch(id)) return _unavailable(context);
-    final cubit = context.read<TasksCubit>();
-    final task = await cubit.resolveTap(scope.userId, id);
-    if (!context.mounted) return;
-    if (task == null || cubit.scope != scope) return _unavailable(context);
-    GoRouter.of(context).push('/tasks?taskId=${task.id}');
   }
 
   static void _unavailable(BuildContext context) => unawaited(

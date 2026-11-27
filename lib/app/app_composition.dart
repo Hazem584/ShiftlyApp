@@ -63,11 +63,11 @@ class AppComposition extends AppCompositionState {
 
   Future<void> openTaskTap() => taskCoordinator.openPending();
 
-  void invalidateDashboardAndCalendar() {
+  void invalidateDashboardAndCalendar({bool reports = true}) {
     dashboardCubit.invalidate();
     attendanceCalendarCubit.invalidate();
     employeeAttendanceCalendarCubit.invalidate();
-    attendanceReportsCubit.invalidate();
+    if (reports) attendanceReportsCubit.invalidate();
   }
 
   T? registered<T extends Object>() {

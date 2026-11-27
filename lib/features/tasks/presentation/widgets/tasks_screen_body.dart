@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
 import 'package:shiftly/features/tasks/presentation/task_options_sheet.dart';
 import 'package:shiftly/features/tasks/presentation/widgets/task_editor.dart';
 import 'package:shiftly/features/tasks/presentation/widgets/tasks_header_and_filters.dart';
 import 'package:shiftly/features/tasks/presentation/widgets/tasks_list_content.dart';
-import 'package:shiftly/features/team_work/presentation/widgets/assigned_team_tasks_section.dart';
 
 class TasksScreenBody extends StatelessWidget {
   const TasksScreenBody({required this.state, super.key});
@@ -14,7 +12,6 @@ class TasksScreenBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scope = context.read<TasksCubit>().scope;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -28,14 +25,6 @@ class TasksScreenBody extends StatelessWidget {
                   completed: state.completed,
                   onOptions: () => openTaskOptionsMenu(context),
                 ),
-                if (scope != null && scope.workspaceId.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: AssignedTeamTasksSection(
-                      workspaceId: scope.workspaceId,
-                      isManager: scope.isManager,
-                    ),
-                  ),
                 Expanded(child: TasksListContent(state: state)),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 10),

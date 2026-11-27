@@ -87,8 +87,7 @@ class AppProvidersState extends State<AppProviders> {
     );
     unawaited(_composition.pushNotifications?.refresh());
     unawaited(_composition.flexibleAttendanceCubit.load(refresh: true));
-    unawaited(_composition.notificationsCubit.refreshUnreadCount());
     unawaited(_composition.chatGroupsCubit.refreshUnread());
-    _composition.invalidateDashboardAndCalendar();
+    _composition.invalidateDashboardAndCalendar(reports: false);
   }
 }

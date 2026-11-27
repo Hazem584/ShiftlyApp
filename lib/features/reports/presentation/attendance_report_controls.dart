@@ -31,8 +31,8 @@ List<Widget> buildReportPeriodControls(
   final cubit = context.read<AttendanceReportsCubit>();
   return [
     Text(
-      context.tr('Weekly and monthly attendance, lateness and work hours'),
-      style: Theme.of(context).textTheme.bodyLarge,
+      context.tr('Report period'),
+      style: Theme.of(context).textTheme.titleMedium,
     ),
     const SizedBox(height: 16),
     Wrap(

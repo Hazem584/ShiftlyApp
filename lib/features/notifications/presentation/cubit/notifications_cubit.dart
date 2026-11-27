@@ -16,7 +16,7 @@ class NotificationsCubit extends NotificationsCubitBase
         NotificationsDeleteMixin {
   NotificationsCubit(super.repository);
 
-  void bindSession(FeatureSessionScope? scope) {
+  void bindSession(FeatureSessionScope? scope, {bool loadInbox = true}) {
     final authorized = scope?.isManager == true || scope?.isEmployee == true
         ? scope
         : null;
@@ -27,7 +27,7 @@ class NotificationsCubit extends NotificationsCubitBase
     countRequestId += 1;
     listInFlight = false;
     emit(const NotificationsState());
-    if (authorized != null) unawaited(load());
+    if (loadInbox && authorized != null) unawaited(load());
   }
 
   Future<NotificationMutationResult> markAllRead() async {

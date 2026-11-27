@@ -341,14 +341,7 @@ void main() {
     await _pumpRole(tester, WorkspaceRole.manager);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsOneWidget);
     expect(find.text('TODAY’S ATTENDANCE'), findsOneWidget);
-    expect(find.byKey(const Key('notification-bell')), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('notification-badge')),
-        matching: find.text('1'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('notification-bell')), findsNothing);
   });
 
   testWidgets(
@@ -397,15 +390,8 @@ void main() {
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
     expect(find.byKey(const Key('manager-bottom-navigation')), findsNothing);
-    expect(find.byKey(const Key('notification-bell')), findsOneWidget);
+    expect(find.byKey(const Key('notification-bell')), findsNothing);
     expect(find.byKey(const Key('employee-switch-workspace')), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byKey(const Key('notification-badge')),
-        matching: find.text('1'),
-      ),
-      findsOneWidget,
-    );
 
     await tester.tap(find.text('Profile'));
     await tester.pumpAndSettle();

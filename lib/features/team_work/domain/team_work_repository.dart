@@ -82,5 +82,6 @@ abstract interface class TeamWorkRepository {
     String taskId,
     String status,
   ) async {}
+  Future<void> remindAssignedTask(String workspaceId, String taskId) async {}
   Future<void> deleteAssignedTask(String workspaceId, String taskId) async {}
 }

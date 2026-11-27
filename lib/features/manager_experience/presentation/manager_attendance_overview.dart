@@ -46,9 +46,13 @@ class ManagerAttendanceOverview extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        context.tr('of {count} on shift', {
-                          'count': '${summary.scheduledToday}',
-                        }),
+                        summary.scheduledToday == 0
+                            ? context.tr('of {count} on the team', {
+                                'count': '${summary.totalEmployees}',
+                              })
+                            : context.tr('of {count} on shift', {
+                                'count': '${summary.scheduledToday}',
+                              }),
                         style: subStyle,
                       ),
                     ],

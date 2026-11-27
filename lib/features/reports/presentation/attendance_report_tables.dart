@@ -8,6 +8,8 @@ const _notes = [
   'Overtime includes time after the shift, minus arrival delay. Unused break time is added at shift end for on-time attendance.',
   'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Recorded breaks are deducted.',
   'Attendance days count distinct approved clock-in dates per employee. No attendance does not prove absence.',
+  'Monthly payroll deducts scheduled absences at the daily rate. Approved leave is paid.',
+  'Partial periods show pay for attendance and paid leave in the selected dates.',
 ];
 
 const _summaryColumns = [

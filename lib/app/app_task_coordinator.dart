@@ -3,12 +3,18 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
+import 'package:shiftly/features/notifications/domain/entities/push_notice.dart';
 import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
 import 'package:shiftly/features/tasks/data/device_task_reminders.dart';
 import 'package:shiftly/features/tasks/data/native_task_home_widget.dart';
 
 class AppTaskCoordinator with WidgetsBindingObserver {
-  AppTaskCoordinator(this.cubit, this.router, this.isMounted) {
+  AppTaskCoordinator(
+    this.cubit,
+    this.router,
+    this.isMounted,
+    this.onPushOpened,
+  ) {
     WidgetsBinding.instance.addObserver(this);
     if (NativeTaskHomeWidget.supported) {
       NativeTaskHomeWidget.channel.setMethodCallHandler((call) async {
@@ -55,6 +61,7 @@ class AppTaskCoordinator with WidgetsBindingObserver {
   final TasksCubit cubit;
   final GoRouter router;
   final bool Function() isMounted;
+  final Future<void> Function(PushNotice) onPushOpened;
   Timer? _refresh;
   StreamSubscription<Map<String, Object?>>? _taps;
   Map<String, Object?>? _pending;
@@ -76,6 +83,11 @@ class AppTaskCoordinator with WidgetsBindingObserver {
     final tap = _pending, scope = cubit.scope;
     if (tap == null || scope == null) return;
     _pending = null;
+    if (tap['kind'] == 'foreground-push') {
+      final notice = PushNotice.fromData(tap);
+      if (notice != null && isMounted()) await onPushOpened(notice);
+      return;
+    }
     final owner = tap['ownerId'], id = tap['taskId'];
     if (owner is! String || id is! String) return;
     if (id.isEmpty) {

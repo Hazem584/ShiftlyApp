@@ -15,11 +15,12 @@ class ReportAnalyticsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final m = report.totalsFor(employeeId);
     final rows = report.rowsFor(employeeId);
-    final totalDays = m.attendanceDays + m.absentDays;
+    final absentDays = rows.fold<int>(0, (sum, row) => sum + row.absentDays);
+    final totalDays = m.attendanceDays + absentDays;
     final onTimeDays = (m.attendanceDays - m.late).clamp(0, m.attendanceDays);
     final onTimePct = totalDays > 0 ? (onTimeDays / totalDays) : 0.0;
     final latePct = totalDays > 0 ? (m.late / totalDays) : 0.0;
-    final absentPct = totalDays > 0 ? (m.absentDays / totalDays) : 0.0;
+    final absentPct = totalDays > 0 ? (absentDays / totalDays) : 0.0;
     final netPayroll = rows.fold<double>(0, (sum, r) => sum + r.netPay);
     final deductions = rows.fold<double>(0, (sum, r) => sum + r.deductions);
     final overtime = rows.fold<double>(0, (sum, r) => sum + r.overtimePay);

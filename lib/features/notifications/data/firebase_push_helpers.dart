@@ -11,9 +11,9 @@ Future<void> setupFirebasePushInstance() async {
   FirebaseMessaging.onBackgroundMessage(taskPushBackground);
   await FirebaseMessaging.instance.setAutoInitEnabled(false);
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: false,
+    alert: true,
     badge: false,
-    sound: false,
+    sound: true,
   );
 }
 

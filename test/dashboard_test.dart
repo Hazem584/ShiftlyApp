@@ -96,8 +96,7 @@ void main() {
       );
     }
     expect(find.textContaining('%'), findsNWidgets(3));
-    expect(find.byKey(const Key('notification-badge')), findsOneWidget);
-    expect(find.byKey(const Key('notification-bell')), findsOneWidget);
+    expect(find.byKey(const Key('notification-bell')), findsNothing);
     await tester.scrollUntilVisible(
       find.text('Team update'),
       300,
@@ -111,6 +110,23 @@ void main() {
     expect(find.text('Team update'), findsOneWidget);
     expect(find.text('Quick actions'), findsNothing);
     expect(find.byKey(const Key('today-at-a-glance-card')), findsNothing);
+  });
+
+  testWidgets('no scheduled shifts displays the employee roster count', (
+    tester,
+  ) async {
+    final repository = _DashboardFake(
+      manager: dashboardManagerForPreview(
+        totalEmployees: 2,
+        scheduledToday: 0,
+        clockedInNow: 0,
+      ),
+    );
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    expect(find.text('of 2 on the team'), findsOneWidget);
+    expect(find.text('of 0 on shift'), findsNothing);
   });
 
   testWidgets('shows loading then error and retries safely', (tester) async {

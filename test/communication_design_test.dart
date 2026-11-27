@@ -11,19 +11,13 @@ import 'package:shiftly/app.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
 import 'package:shiftly/core/localization/language_settings.dart';
 import 'package:shiftly/core/localization/memory_language_store.dart';
-import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/theme/theme_cubit.dart';
-import 'package:shiftly/features/auth/domain/entities/current_user.dart';
 import 'package:shiftly/features/communication/presentation/announcement_detail_screen.dart';
 import 'package:shiftly/features/communication/presentation/communication_actions.dart';
 import 'package:shiftly/features/communication/presentation/communication_page.dart';
-import 'package:shiftly/features/communication/presentation/notification_permission_screen.dart';
 import 'package:shiftly/features/communication/presentation/notification_unavailable_screen.dart';
 import 'package:shiftly/features/communication/presentation/preference_editor_screen.dart';
 import 'package:shiftly/features/device_sessions/presentation/device_sessions_screen.dart';
-import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
-import 'package:shiftly/features/notifications/presentation/screens/notifications_screen.dart';
-import 'package:shiftly/features/notifications/presentation/widgets/notification_card.dart';
 import 'package:shiftly/features/profile/data/mock_profile_repository.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
@@ -259,7 +253,6 @@ void main() {
         await _back(tester);
         await tester.pumpAndSettle();
         for (final page in <(String, Widget)>[
-          ('notification-permission', const NotificationPermissionScreen()),
           ('unavailable', const NotificationUnavailableScreen()),
         ]) {
           open(page.$2);
@@ -268,31 +261,6 @@ void main() {
           await _back(tester);
           await tester.pumpAndSettle();
         }
-        final notices = NotificationsCubit(CommunicationNotifications())
-          ..bindSession(
-            const FeatureSessionScope(
-              userId: 'preview',
-              workspaceId: 'workspace',
-              membershipId: 'member',
-              role: WorkspaceRole.manager,
-              timezone: 'Africa/Cairo',
-            ),
-          );
-        addTearDown(notices.close);
-        open(
-          BlocProvider.value(
-            value: notices,
-            child: const NotificationsScreen(),
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(find.byType(NotificationCard), findsNWidgets(3));
-        await _capture(tester, 'inbox-$suffix');
-        await tester.tap(find.byKey(const Key('notifications-unread-filter')));
-        await tester.pumpAndSettle();
-        expect(find.byType(NotificationCard), findsNWidgets(2));
-        await _capture(tester, 'inbox-unread-$suffix');
-        await _back(tester);
         open(
           DeviceSessionsScreen(
             repository: CommunicationDevices(),

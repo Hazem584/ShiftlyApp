@@ -11,12 +11,14 @@ class ReportPreparation {
     required this.generatedAt,
     required this.employees,
     required this.records,
+    this.payrollDays,
   });
   final String workspaceId, workspaceName, timezone;
   final ReportRange range;
   final DateTime generatedAt;
   final List<ReportEmployee> employees;
   final List<AttendanceRecordApi> records;
+  final Map<String, ({int absent, int leave})>? payrollDays;
 }
 
 Future<AttendanceReport> prepareAttendanceReport(ReportPreparation input) =>
@@ -53,6 +55,7 @@ AttendanceReport buildAttendanceReport(ReportPreparation input) {
     generatedAt: input.generatedAt,
     employees: sorted,
     records: records,
+    payrollDays: input.payrollDays,
   );
   // Populate the report's lazy metric cache in the worker, not during rendering.
   report.totalsFor(null);

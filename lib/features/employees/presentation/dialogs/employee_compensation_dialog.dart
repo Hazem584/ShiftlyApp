@@ -6,6 +6,7 @@ import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employee_details_cubit.dart';
+import 'package:shiftly/features/reports/presentation/attendance_reports_cubit.dart';
 
 Future<void> showEmployeeCompensationDialog(
   BuildContext context, {
@@ -22,6 +23,7 @@ Future<void> showEmployeeCompensationDialog(
     ),
   );
   if (saved == true && context.mounted) {
+    context.read<AttendanceReportsCubit?>()?.invalidate();
     await context.read<EmployeeDetailsCubit>().load(
       workspaceId: workspaceId,
       membershipId: membershipId,
@@ -54,25 +56,45 @@ class _EmployeeCompensationDialogState
   late final _hourly = TextEditingController(
     text: widget.employee.hourlyRate?.toStringAsFixed(2) ?? '',
   );
+  late final _days = TextEditingController(
+    text: widget.employee.payrollWorkDays.toString(),
+  );
   bool _saving = false;
 
   @override
   void dispose() {
     _monthly.dispose();
     _hourly.dispose();
+    _days.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final monthly = double.tryParse(_monthly.text.trim());
     final hourly = double.tryParse(_hourly.text.trim());
+    final days = int.tryParse(_days.text.trim());
+    bool valid(String text, double? amount) =>
+        text.trim().isEmpty ||
+        (amount != null && amount.isFinite && amount >= 0);
+    if (days == null ||
+        days < 1 ||
+        days > 31 ||
+        !valid(_monthly.text, monthly) ||
+        !valid(_hourly.text, hourly)) {
+      ToastService.error(
+        context,
+        message: 'Enter valid rates and 1–31 workdays.',
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
       await getIt<EmployeeRepository>().updateCompensation(
         workspaceId: widget.workspaceId,
         membershipId: widget.membershipId,
         monthlySalary: monthly,
-        hourlyRate: hourly ?? (monthly != null ? monthly / 176.0 : null),
+        hourlyRate: hourly,
+        payrollWorkDays: days,
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (_) {
@@ -86,35 +108,36 @@ class _EmployeeCompensationDialogState
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(context.tr('Salary & hourly rate')),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        TextField(
-          controller: _monthly,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: context.tr('Monthly salary'),
-            helperText: context.tr('Auto-calculates hourly rate (÷ 176 hrs)'),
-          ),
-          onChanged: (v) {
-            final m = double.tryParse(v.trim());
-            if (m != null && m > 0) {
-              _hourly.text = (m / 176.0).toStringAsFixed(2);
-            }
-          },
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _hourly,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: context.tr('Hourly rate'),
-            helperText: context.tr(
-              'Used for overtime, extra shifts & lateness',
+    content: SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _monthly,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: context.tr('Monthly salary'),
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          TextField(
+            controller: _days,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: context.tr('Payroll workdays per month'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _hourly,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: context.tr('Overtime hourly rate'),
+              helperText: context.tr('Paid for each overtime hour'),
+            ),
+          ),
+        ],
+      ),
     ),
     actions: [
       TextButton(

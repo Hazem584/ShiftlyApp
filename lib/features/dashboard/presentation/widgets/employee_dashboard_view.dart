@@ -39,6 +39,14 @@ class EmployeeDashboardView extends StatelessWidget {
         EmployeeDashboardAttendanceSection(timezone: data.timezone, now: now),
         const SizedBox(height: 24),
         EmployeeTasksPreview(timezone: data.timezone),
+        const SizedBox(height: 14),
+        EmployeeTile(
+          key: const Key('employee-assigned-tasks'),
+          icon: Icons.assignment_outlined,
+          title: context.tr('Assigned to you'),
+          subtitle: context.tr('Tasks from your manager'),
+          onTap: () => context.push('/assigned-tasks'),
+        ),
         if (data.nextShift != null) ...[
           const SizedBox(height: 14),
           EmployeeTile(

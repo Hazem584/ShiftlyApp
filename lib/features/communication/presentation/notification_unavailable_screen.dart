@@ -10,7 +10,7 @@ class NotificationUnavailableScreen extends StatelessWidget {
     title: 'Item unavailable',
     footer: FilledButton(
       onPressed: () => Navigator.pop(context),
-      child: Text(context.tr('Back to notifications')),
+      child: Text(context.tr('Go back')),
     ),
     child: ListView(
       padding: const EdgeInsets.all(24),
@@ -23,7 +23,7 @@ class NotificationUnavailableScreen extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           context.tr(
-            'It may have been deleted or your access may have changed. You can return to your notifications.',
+            'It may have been deleted or your access may have changed.',
           ),
         ),
         const SizedBox(height: 16),

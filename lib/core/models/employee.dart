@@ -26,6 +26,7 @@ class Employee extends Equatable {
     this.role = EmployeeRole.employee,
     this.monthlySalary,
     this.hourlyRate,
+    this.payrollWorkDays = 26,
     this.createdAt,
     this.updatedAt,
   });
@@ -45,6 +46,9 @@ class Employee extends Equatable {
   final EmployeeRole role;
   final double? monthlySalary;
   final double? hourlyRate;
+  final int payrollWorkDays;
+  double? get dailyRate =>
+      monthlySalary == null ? null : monthlySalary! / payrollWorkDays;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -81,6 +85,7 @@ class Employee extends Equatable {
     role,
     monthlySalary,
     hourlyRate,
+    payrollWorkDays,
     createdAt,
     updatedAt,
   ];

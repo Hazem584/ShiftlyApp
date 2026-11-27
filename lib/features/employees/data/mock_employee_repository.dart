@@ -93,6 +93,7 @@ class MockEmployeeRepository implements EmployeeRepository {
     required String membershipId,
     double? monthlySalary,
     double? hourlyRate,
+    int? payrollWorkDays,
   }) => getWorkspaceEmployee(
     workspaceId: workspaceId,
     membershipId: membershipId,

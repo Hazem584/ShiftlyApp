@@ -102,6 +102,10 @@ class ApiTeamWorkRepository
     ),
   );
   @override
+  Future<void> remindAssignedTask(String workspaceId, String taskId) =>
+      postWorkRequest('${_base(workspaceId)}/assigned-tasks/$taskId/remind');
+
+  @override
   Future<void> deleteAssignedTask(String workspaceId, String taskId) =>
       runTeamWorkRequest(
         () => _dio.delete<Object?>(

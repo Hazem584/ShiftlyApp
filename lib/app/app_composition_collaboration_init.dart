@@ -94,5 +94,10 @@ void initializeCollaborationAndTasksComposition(
     enableRemoteReminders: () async => c.pushNotifications?.setEnabled(true),
     homeWidget: NativeTaskHomeWidget.supported ? NativeTaskHomeWidget() : null,
   );
-  c.taskCoordinator = AppTaskCoordinator(c.tasksCubit, c.router, c.isMounted);
+  c.taskCoordinator = AppTaskCoordinator(
+    c.tasksCubit,
+    c.router,
+    c.isMounted,
+    c.onOpened,
+  );
 }

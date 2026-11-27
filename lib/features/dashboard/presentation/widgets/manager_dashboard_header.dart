@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
-import 'package:shiftly/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:shiftly/features/profile/presentation/cubit/profile_cubit.dart';
 
 class ManagerDashboardHeader extends StatelessWidget {
@@ -51,7 +50,6 @@ class ManagerDashboardHeader extends StatelessWidget {
                 ],
               ),
             ),
-            const NotificationBell(),
           ],
         ),
         const SizedBox(height: 28),

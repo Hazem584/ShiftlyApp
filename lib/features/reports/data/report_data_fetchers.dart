@@ -88,6 +88,7 @@ Future<List<ReportEmployee>> fetchAllReportEmployees(
           emp.displayName,
           monthlySalary: emp.monthlySalary,
           hourlyRate: emp.hourlyRate,
+          payrollWorkDays: emp.payrollWorkDays,
         );
       }
     }

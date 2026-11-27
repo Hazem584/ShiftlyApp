@@ -176,4 +176,23 @@ const arabicShiftsWorkflowTranslations = <String, String>{
   'Select employees': 'اختر الموظفين',
   'Could not assign task.': 'معرفناش نوزّع المهمة.',
   'IN_PROGRESS': 'قيد التنفيذ',
+  'Payroll workdays per month': 'أيام العمل لحساب المرتب الشهري',
+  'Daily rate': 'أجر اليوم',
+  'Overtime hourly rate': 'أجر ساعة العمل الإضافي',
+  'Paid for each overtime hour': 'عن كل ساعة عمل إضافية',
+  'Report period': 'فترة التقرير',
+  'Report totals': 'إجماليات التقرير',
+  'Device notification permissions': 'أذونات إشعارات الجهاز',
+  'of {count} on the team': 'من أصل {count} في الفريق',
+  'Change task status': 'غيّر حالة المهمة',
+  'Remind employee': 'ذكّر الموظف',
+  'Reminder requested': 'تم طلب إرسال التذكير',
+  'Enter valid rates and 1–31 workdays.':
+      'أدخل أجورًا صالحة وعدد أيام من ١ إلى ٣١.',
+  'Tasks from your manager': 'المهام من مديرك',
+  'Monthly payroll deducts scheduled absences at the daily rate. Approved leave is paid.': 'يُخصم الغياب عن أيام العمل المجدولة بالأجر اليومي. الإجازات المعتمدة مدفوعة.',
+  'Partial periods show pay for attendance and paid leave in the selected dates.': 'تعرض الفترات الجزئية أجر الحضور والإجازات المدفوعة ضمن التواريخ المختارة.',
+  'Chat messages and task notifications': 'إشعارات رسائل الشات والمهام',
+  'It may have been deleted or your access may have changed.':
+      'قد يكون المحتوى اتحذف أو صلاحيتك اتغيّرت.',
 };

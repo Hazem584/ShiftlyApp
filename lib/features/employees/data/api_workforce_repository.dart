@@ -71,11 +71,13 @@ class ApiWorkforceRepository extends ApiWorkforceBase
     required String membershipId,
     double? monthlySalary,
     double? hourlyRate,
+    int? payrollWorkDays,
   }) => request(() async {
     final url = ApiEndpoints.employee(workspaceId, membershipId);
     final data = <String, Object?>{
       'monthlySalary': monthlySalary,
       'hourlyRate': hourlyRate,
+      'payrollWorkDays': ?payrollWorkDays,
     };
     return parseEmployee(
       asJsonMap((await dio.patch<Object?>(url, data: data)).data),

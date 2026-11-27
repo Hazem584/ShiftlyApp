@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -34,14 +35,14 @@ class DeviceTaskReminders
     await TaskNotificationSetup.initialize(
       _plugin,
       onTap: (r) {
-        final tap = decodeTaskTapPayload(r.payload);
+        final tap = _decodeTap(r.payload);
         if (tap != null) opened.add(tap);
       },
     );
     final launch = await _plugin.getNotificationAppLaunchDetails();
     if (launch?.didNotificationLaunchApp == true &&
         launch?.notificationResponse?.actionId != taskSnoozeAction) {
-      initialTap = decodeTaskTapPayload(launch?.notificationResponse?.payload);
+      initialTap = _decodeTap(launch?.notificationResponse?.payload);
     }
   }
 
@@ -112,4 +113,16 @@ class DeviceTaskReminders
       _supported ? _pushStore.installationId() : null;
   @override
   Future<void> close() => opened.close();
+}
+
+Map<String, Object?>? _decodeTap(String? value) {
+  try {
+    final data = jsonDecode(value ?? '');
+    if (data is Map<String, Object?> && data['kind'] == 'foreground-push') {
+      return data;
+    }
+  } on FormatException {
+    return null;
+  }
+  return decodeTaskTapPayload(value);
 }

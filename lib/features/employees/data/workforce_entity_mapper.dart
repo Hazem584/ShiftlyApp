@@ -50,6 +50,10 @@ Employee parseEmployee(Map<String, Object?> json) => Employee(
   avatarUrl: optionalString(json['avatarUrl']),
   monthlySalary: (json['monthlySalary'] as num?)?.toDouble(),
   hourlyRate: (json['hourlyRate'] as num?)?.toDouble(),
+  payrollWorkDays: switch (json['payrollWorkDays']) {
+    final int count when count >= 1 && count <= 31 => count,
+    _ => 26,
+  },
   createdAt: requiredDate(json, 'createdAt'),
   updatedAt: requiredDate(json, 'updatedAt'),
 );
