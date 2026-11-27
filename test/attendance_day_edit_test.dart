@@ -8,7 +8,7 @@ import 'package:shiftly/features/team_work/presentation/dialogs/edit_attendance_
 
 class DayRepository implements TeamWorkRepository {
   int requests = 0, direct = 0;
-  String? employee, assignment, date;
+  String? employee, assignment, date, submittedReason;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   @override
@@ -24,6 +24,7 @@ class DayRepository implements TeamWorkRepository {
     required String reason,
   }) async {
     requests++;
+    submittedReason = reason;
     assignment = assignmentId;
     date = operationalDate;
   }
@@ -43,6 +44,7 @@ class DayRepository implements TeamWorkRepository {
     required String reason,
   }) async {
     direct++;
+    submittedReason = reason;
     employee = employeeMembershipId;
     assignment = assignmentId;
     date = operationalDate;
@@ -110,10 +112,14 @@ void main() {
         );
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
-        await tester.enterText(
-          find.byType(TextFormField),
-          'I attended this shift but forgot to clock in.',
-        );
+        const employeeReason = 'I attended this shift but forgot to clock in.';
+        final reasonField = find.byType(TextFormField);
+        if (manager) {
+          expect(reasonField, findsNothing);
+        } else {
+          expect(reasonField, findsOneWidget);
+          await tester.enterText(reasonField, employeeReason);
+        }
         await tester.ensureVisible(
           find.byKey(const Key('save-attendance-day')),
         );
@@ -123,6 +129,10 @@ void main() {
         expect(repository.requests, manager ? 0 : 1);
         expect(repository.assignment, 'assignment');
         expect(repository.date, '2026-10-01');
+        expect(
+          repository.submittedReason,
+          manager ? 'Updated by manager' : employeeReason,
+        );
         if (manager) expect(repository.employee, 'employee');
         expect(tester.takeException(), isNull);
       },
