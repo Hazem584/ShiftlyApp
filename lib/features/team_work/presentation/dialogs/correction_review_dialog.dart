@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
-import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/dialogs/correction_review_actions.dart';
-import 'package:shiftly/features/team_work/presentation/widgets/correction_request_card.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/correction_review_preview.dart';
 
 class CorrectionReviewDialog extends StatefulWidget {
   const CorrectionReviewDialog({
@@ -63,23 +60,12 @@ class _CorrectionReviewDialogState extends State<CorrectionReviewDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              FutureBuilder<CorrectionRequest>(
-                future: _request,
-                builder: (context, s) {
-                  if (s.hasError) {
-                    return Text(
-                      context.tr(ApiErrorParser.parse(s.error!).message),
-                    );
-                  }
-                  if (!s.hasData) return const AppContentLoading();
-                  return CorrectionRequestCard(
-                    request: s.data!,
-                    timezone: widget.timezone,
-                    busy: _busy,
-                    onApprove: () => _review(true),
-                    onDecline: () => _review(false),
-                  );
-                },
+              CorrectionReviewPreview(
+                request: _request,
+                timezone: widget.timezone,
+                busy: _busy,
+                onApprove: () => _review(true),
+                onDecline: () => _review(false),
               ),
               if (_error != null)
                 Text(

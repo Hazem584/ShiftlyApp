@@ -7,10 +7,7 @@ import 'package:shiftly/core/theme/collaboration_appearance.dart';
 
 import '../application/tasks_cubit.dart';
 import 'task_detail_screen.dart';
-import 'task_options_sheet.dart';
-import 'widgets/task_editor.dart';
-import 'widgets/tasks_header_and_filters.dart';
-import 'widgets/tasks_list_content.dart';
+import 'widgets/tasks_screen_body.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({this.taskId, super.key});
@@ -64,38 +61,9 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Widget _body(BuildContext context) => BlocConsumer<TasksCubit, TasksState>(
     listenWhen: (b, a) => a.error != null && b.error != a.error,
-    listener: (context, state) => ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.tr(state.error!)))),
-    builder: (context, state) => Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                buildTasksHeader(
-                  context,
-                  completed: state.completed,
-                  onOptions: () => openTaskOptionsMenu(context),
-                ),
-                Expanded(child: TasksListContent(state: state)),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 10),
-                  child: FilledButton(
-                    key: const Key('add-personal-task'),
-                    onPressed: state.saving
-                        ? null
-                        : () => showTaskEditor(context),
-                    child: Text(context.tr('Add task')),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
+    listener: (context, state) =>
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(context.tr(state.error!)))),
+    builder: (context, state) => TasksScreenBody(state: state),
   );
 }

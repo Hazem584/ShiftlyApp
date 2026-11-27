@@ -8,6 +8,7 @@ import 'package:shiftly/core/widgets/empty_state.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_card.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_filters.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/leave_requests_heading.dart';
 
 class LeaveRequestsPanel extends StatelessWidget {
   const LeaveRequestsPanel({required this.timezone, super.key});
@@ -54,25 +55,7 @@ class LeaveRequestsPanel extends StatelessWidget {
                   message: 'New employee requests will appear here for review.',
                 )
               else ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        context.tr('Employee requests'),
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
-                    Text(
-                      context.tr('{value1} loaded', {
-                        'value1': (state.requests.length).toString(),
-                      }),
-                      style: TextStyle(
-                        color: AppPalette.of(context).textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+                LeaveRequestsHeading(count: state.requests.length),
                 const SizedBox(height: AppSpacing.s),
                 for (final request in state.requests) ...[
                   LeaveRequestCard(

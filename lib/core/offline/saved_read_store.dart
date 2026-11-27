@@ -4,6 +4,7 @@ import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'saved_read.dart';
+import 'saved_read_decoder.dart';
 
 export 'saved_read.dart';
 
@@ -23,20 +24,13 @@ class SavedReadStore {
 
   SavedRead? read(String key, String owner, DateTime now) {
     try {
-      final raw = _preferences?.getString(key) ?? _memory[key];
-      if (raw == null) return null;
-      final json = jsonDecode(raw) as Map<String, dynamic>;
-      final timestamp = DateTime.parse(json['updatedAt'] as String).toUtc();
-      if (json['owner'] != owner ||
-          now.difference(timestamp) > maxAge ||
-          timestamp.isAfter(now)) {
-        return null;
-      }
-      return SavedRead(owner: owner, data: json['data'], updatedAt: timestamp);
+      return decodeSavedRead(_raw(key), owner, now, maxAge);
     } catch (_) {
       return null;
     }
   }
+
+  String? _raw(String key) => _preferences?.getString(key) ?? _memory[key];
 
   Future<void> write(String key, SavedRead value) => _serialize(() async {
     final raw = jsonEncode({
@@ -74,7 +68,7 @@ class SavedReadStore {
       _serialize(() async {
         for (final key in _keys().toList()) {
           try {
-            final raw = _preferences?.getString(key) ?? _memory[key];
+            final raw = _raw(key);
             final owner = (jsonDecode(raw!) as Map)['owner'] as String;
             if (matches(owner)) await _remove(key);
           } catch (_) {
@@ -93,9 +87,7 @@ class SavedReadStore {
       .where((key) => key.startsWith(_prefix));
   String _timestamp(String key) {
     try {
-      return (jsonDecode(_preferences?.getString(key) ?? _memory[key]!)
-              as Map)['updatedAt']
-          as String;
+      return (jsonDecode(_raw(key)!) as Map)['updatedAt'] as String;
     } catch (_) {
       return '';
     }

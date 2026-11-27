@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/utils/saved_schedule_formatter.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/weekday_row.dart';
+
+import 'work_pattern_history_tile.dart';
 
 List<Widget> buildWorkPatternHistorySection(
   BuildContext context,
@@ -30,41 +29,10 @@ List<Widget> buildWorkPatternHistorySection(
       ),
       children: [
         for (final pattern in history.history)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(
-              pattern.effectiveTo == null
-                  ? Icons.event_available_outlined
-                  : Icons.history_rounded,
-            ),
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  pattern.id == history.current?.id
-                      ? context.tr('Current assignment')
-                      : pattern.effectiveFrom.compareTo(
-                              WorkspaceTime.dateKey(
-                                DateTime.now().toUtc(),
-                                timezone,
-                              ),
-                            ) >
-                            0
-                      ? context.tr('Future assignment')
-                      : context.tr('Historical assignment'),
-                ),
-                WeekdayRow(days: pattern.expectedWeekdays),
-              ],
-            ),
-            subtitle: Text(
-              context.tr('{value1}\n{value2} → {value3}', {
-                'value1': pattern.assignmentSnapshot != null
-                    ? savedScheduleLabel(context, pattern.assignmentSnapshot!)
-                    : context.tr('Assignment evidence not recorded'),
-                'value2': pattern.effectiveFrom,
-                'value3': pattern.effectiveTo ?? context.tr('ongoing'),
-              }),
-            ),
+          WorkPatternHistoryTile(
+            pattern: pattern,
+            isCurrent: pattern.id == history.current?.id,
+            timezone: timezone,
           ),
       ],
     ),

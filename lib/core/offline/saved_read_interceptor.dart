@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'read_sync_cubit.dart';
 import 'read_sync_state.dart';
 import 'saved_read_policy.dart';
+import 'saved_read_request.dart';
 import 'saved_read_store.dart';
 
 class SavedReadInterceptor extends Interceptor {
@@ -28,17 +29,7 @@ class SavedReadInterceptor extends Interceptor {
         ? null
         : SavedReadPolicy.category(options, workspace);
     if (owner != null && category != null && hasSession()) {
-      final sorted = Map.fromEntries(
-        options.queryParameters.entries.toList()
-          ..sort((a, b) => a.key.compareTo(b.key)),
-      );
-      final url = options.uri
-          .replace(
-            queryParameters: sorted.map(
-              (key, value) => MapEntry(key.toString(), value.toString()),
-            ),
-          )
-          .toString();
+      final url = savedReadRequestUrl(options);
       final key = sync.store.key(owner, url);
       options.extra[_context] = _ReadContext(
         owner,

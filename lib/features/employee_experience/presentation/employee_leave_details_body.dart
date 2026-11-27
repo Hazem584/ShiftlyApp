@@ -6,6 +6,7 @@ import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_re
 import 'package:shiftly/features/attendance/presentation/utils/leave_request_display_formatters.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/leave_request_display.dart';
 
+import 'employee_leave_cancel_hint.dart';
 import 'employee_tile.dart';
 
 class EmployeeLeaveDetailsBody extends StatelessWidget {
@@ -81,19 +82,7 @@ class EmployeeLeaveDetailsBody extends StatelessWidget {
         ],
         if (request.canCancel) ...[
           const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              context.tr('You can cancel while this request is pending.'),
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-              ),
-            ),
-          ),
+          const EmployeeLeaveCancelHint(),
         ],
         if (state.failure != null) ...[
           const SizedBox(height: 16),

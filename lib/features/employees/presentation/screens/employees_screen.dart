@@ -9,6 +9,8 @@ import 'package:shiftly/features/employees/presentation/screens/employees_loaded
 import 'package:shiftly/features/employees/presentation/widgets/employee_search_bar.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employees_loading.dart';
 
+import 'employees_screen_heading.dart';
+
 class EmployeesScreen extends StatefulWidget {
   const EmployeesScreen({this.embedded = false, super.key});
   final bool embedded;
@@ -36,25 +38,7 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.tr('Your team'),
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      loaded != null
-                          ? context.tr('{count} people', {'count': '${loaded.total}'})
-                          : context.tr('Manage your workspace team'),
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
-              ),
+              EmployeesScreenHeading(total: loaded?.total),
               EmployeeSearchBar(
                 onShift: _onShift,
                 onShiftChanged: (v) => setState(() => _onShift = v),

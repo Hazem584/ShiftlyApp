@@ -4,33 +4,9 @@ import 'package:equatable/equatable.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 
-enum ChatUploadState {
-  queued,
-  sending,
-  uncertain,
-  preparing,
-  uploading,
-  finalizing,
-  sent,
-  failed,
-  cancelled,
-}
+import 'pending_chat_media_state.dart';
 
-enum PendingChatMediaType {
-  text,
-  location,
-  image,
-  document,
-  voice;
-
-  String get apiValue => switch (this) {
-    PendingChatMediaType.text => 'TEXT',
-    PendingChatMediaType.location => 'LOCATION',
-    PendingChatMediaType.image => 'IMAGE',
-    PendingChatMediaType.voice => 'VOICE',
-    PendingChatMediaType.document => 'DOCUMENT',
-  };
-}
+export 'pending_chat_media_state.dart';
 
 class PendingChatMessage extends Equatable {
   const PendingChatMessage({

@@ -16,6 +16,13 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
   final LeaveRequestRecord request;
   final String timezone;
 
+  String _formatDate(BuildContext context, DateTime value) =>
+      WorkspaceTime.dateTime(
+        value,
+        timezone,
+        locale: Localizations.localeOf(context).toString(),
+      );
+
   @override
   Widget build(BuildContext context) => ManagerDialog(
     title: Row(
@@ -37,22 +44,14 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
           LeaveDetailRow(
             icon: Icons.calendar_today_outlined,
             text: context.tr('Starts: {value1}', {
-              'value1': (WorkspaceTime.dateTime(
-                request.startsAt,
-                timezone,
-                locale: Localizations.localeOf(context).toString(),
-              )).toString(),
+              'value1': _formatDate(context, request.startsAt),
             }),
           ),
           const SizedBox(height: 8),
           LeaveDetailRow(
             icon: Icons.event_available_outlined,
             text: context.tr('Ends: {value1}', {
-              'value1': (WorkspaceTime.dateTime(
-                request.endsAt,
-                timezone,
-                locale: Localizations.localeOf(context).toString(),
-              )).toString(),
+              'value1': _formatDate(context, request.endsAt),
             }),
           ),
           const SizedBox(height: 8),
@@ -61,11 +60,7 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
           LeaveDetailRow(
             icon: Icons.schedule_rounded,
             text: context.tr('Submitted: {value1}', {
-              'value1': (WorkspaceTime.dateTime(
-                request.createdAt,
-                timezone,
-                locale: Localizations.localeOf(context).toString(),
-              )).toString(),
+              'value1': _formatDate(context, request.createdAt),
             }),
           ),
           if (request.reviewedAt != null) ...[
@@ -73,11 +68,7 @@ class LeaveRequestDetailsDialog extends StatelessWidget {
             LeaveDetailRow(
               icon: Icons.fact_check_outlined,
               text: context.tr('Reviewed: {value1}', {
-                'value1': (WorkspaceTime.dateTime(
-                  request.reviewedAt!,
-                  timezone,
-                  locale: Localizations.localeOf(context).toString(),
-                )).toString(),
+                'value1': _formatDate(context, request.reviewedAt!),
               }),
             ),
           ],

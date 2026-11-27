@@ -7,6 +7,7 @@ import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/theme/theme_selector.dart';
 import 'package:shiftly/core/widgets/auth_brand_header.dart';
+import 'package:shiftly/core/widgets/auth_submit_button.dart';
 
 export 'package:shiftly/features/auth/presentation/widgets/login_session_expired.dart';
 
@@ -80,18 +81,11 @@ List<Widget> buildLoginFormChildren(
         v == null || v.isEmpty ? context.tr('Password is required') : null,
   ),
   const SizedBox(height: 32),
-  FilledButton(
-    key: const Key('login-submit'),
-    onPressed: loading ? null : onSubmit,
-    child: loading
-        ? const SizedBox.square(
-            dimension: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: Colors.white,
-            ),
-          )
-        : Text(context.tr('Sign in')),
+  AuthSubmitButton(
+    buttonKey: const Key('login-submit'),
+    label: 'Sign in',
+    loading: loading,
+    onSubmit: onSubmit,
   ),
   const SizedBox(height: AppSpacing.s),
   TextButton(

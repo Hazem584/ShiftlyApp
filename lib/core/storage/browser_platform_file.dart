@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:cross_file/cross_file.dart';
 import 'package:sembast_web/sembast_web.dart';
 
+import 'browser_recording_uri.dart';
+
 final _mediaDatabase = databaseFactoryWeb.openDatabase(
   'shiftly-private-media-v1',
 );
@@ -91,18 +93,7 @@ class ChatStorageDirectory {
 
 Future<Uri> chatFilePlaybackUri(ChatLocalFile file) async {
   final bytes = await file.readAsBytes();
-  final webm = bytes.length >= 4 && bytes[0] == 0x1a && bytes[1] == 0x45;
-  final ogg =
-      bytes.length >= 4 &&
-      ascii.decode(bytes.sublist(0, 4), allowInvalid: true) == 'OggS';
-  return Uri.dataFromBytes(
-    bytes,
-    mimeType: webm
-        ? 'audio/webm'
-        : ogg
-        ? 'audio/ogg'
-        : 'audio/mp4',
-  );
+  return browserRecordingUri(bytes);
 }
 
 Future<String> chatRecordingPath() async => 'shiftly-voice.webm';

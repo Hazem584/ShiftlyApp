@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/auth_brand_header.dart';
+import 'package:shiftly/core/widgets/auth_submit_button.dart';
 import 'package:shiftly/features/auth/presentation/widgets/register_field_helpers.dart';
 
 List<Widget> buildRegisterFormChildren(
@@ -80,18 +81,11 @@ List<Widget> buildRegisterFormChildren(
         : null,
   ),
   const SizedBox(height: AppSpacing.l),
-  FilledButton(
-    key: const Key('register-submit'),
-    onPressed: loading ? null : onSubmit,
-    child: loading
-        ? const SizedBox.square(
-            dimension: 22,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              color: Colors.white,
-            ),
-          )
-        : Text(context.tr('Create account')),
+  AuthSubmitButton(
+    buttonKey: const Key('register-submit'),
+    label: 'Create account',
+    loading: loading,
+    onSubmit: onSubmit,
   ),
   const SizedBox(height: AppSpacing.s),
   TextButton(

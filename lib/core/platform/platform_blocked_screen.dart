@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/platform/platform_gate_content.dart';
+import 'package:shiftly/core/platform/platform_retry_button.dart';
 
 class PlatformBlockedScreen extends StatelessWidget {
   const PlatformBlockedScreen({
@@ -76,16 +77,10 @@ class PlatformBlockedScreen extends StatelessWidget {
                       child: SelectableText(supportEmail),
                     ),
                   const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: checking ? null : onRefresh,
-                    icon: checking
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.refresh),
-                    label: Text(arabic ? 'إعادة المحاولة' : 'Try again'),
+                  PlatformRetryButton(
+                    arabic: arabic,
+                    checking: checking,
+                    onRefresh: onRefresh,
                   ),
                   if (suspension != null)
                     TextButton(

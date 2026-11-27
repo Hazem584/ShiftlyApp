@@ -1,47 +1,10 @@
 import 'dart:convert';
 
+import 'diagnostic_private_keys.dart';
+
 const _redacted = '[redacted]';
 const _maxInputLength = 32768;
 const _maxDepth = 12;
-const _privateKeys = {
-  'passwd',
-  'pwd',
-  'passphrase',
-  'authorization',
-  'proxyauthorization',
-  'apikey',
-  'xapikey',
-  'privatekey',
-  'cookie',
-  'setcookie',
-  'accesskey',
-  'accesskeyid',
-  'clientassertion',
-  'assertion',
-  'tokens',
-};
-
-bool _privateKey(String key) {
-  final normalized = key
-      .replaceAllMapped(
-        RegExp(r'\\u([a-f0-9]{4})', caseSensitive: false),
-        (m) => String.fromCharCode(int.parse(m[1]!, radix: 16)),
-      )
-      .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9]'), '');
-  return _privateKeys.contains(normalized) ||
-      normalized.contains('password') ||
-      normalized.contains('secret') ||
-      normalized.contains('credential') ||
-      const [
-        'token',
-        'apikey',
-        'privatekey',
-        'authorization',
-        'cookie',
-      ].any(normalized.endsWith);
-}
-
 Object? _fields(Object? value, int depth) {
   if (depth >= _maxDepth) return _redacted;
   if (value is String) return _text(value, depth + 1);
@@ -51,7 +14,7 @@ Object? _fields(Object? value, int depth) {
   if (value is Map) {
     return {
       for (final entry in value.entries)
-        entry.key.toString(): _privateKey(entry.key.toString())
+        entry.key.toString(): isPrivateDiagnosticKey(entry.key.toString())
             ? _redacted
             : _fields(entry.value, depth + 1),
     };
@@ -75,7 +38,7 @@ String _text(String value, int depth) {
   );
   for (final match in assignments.allMatches(value)) {
     final key = match[1] ?? match[2]!;
-    if (_privateKey(key)) {
+    if (isPrivateDiagnosticKey(key)) {
       safe =
           '${value.substring(0, match.start)}${key.replaceAll(r'\', '')}=$_redacted';
       break;
