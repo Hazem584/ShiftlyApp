@@ -96,7 +96,7 @@ void main() {
       expect(find.byKey(const Key('invite-employee')), findsOneWidget);
       await tester.tap(find.byKey(const Key('nav-2')));
       await tester.pumpAndSettle();
-      for (final name in ['tasks', 'shifts', 'announcements', 'personal']) {
+      for (final name in ['tasks', 'shifts', 'personal', 'reports']) {
         expect(find.byKey(Key('work-destination-$name')), findsOneWidget);
       }
       await tester.tap(find.byKey(const Key('work-destination-shifts')));

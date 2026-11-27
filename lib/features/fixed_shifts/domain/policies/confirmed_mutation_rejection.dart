@@ -13,6 +13,8 @@ bool confirmedMutationRejection(Object error) =>
           'SHIFT_TEMPLATE_ARCHIVED',
           'SHIFT_TEMPLATE_UNAVAILABLE',
           'EXTRA_AUTHORIZATION_UNAVAILABLE',
+          'EXTRA_AUTHORIZATION_NOT_FOUND',
+          'EXTRA_IDEMPOTENCY_CONFLICT',
           'EXTRA_OCCURRENCE_CONFLICT',
           'EXTRA_IS_BASELINE',
           'EXTRA_ALREADY_CONSUMED',

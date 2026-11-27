@@ -1,3 +1,4 @@
+import 'package:shiftly/features/fixed_shifts/domain/entities/extra_shift_intent.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit_base.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_state.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_validator.dart';
@@ -20,16 +21,22 @@ Future<void> loadExtraShiftsPage(
       loading: true,
       page: prev.page,
       canonical: prev.canonical,
+      intent: prev.intent,
     ),
   );
   try {
     final raw = await cubit.repository.readExtraIntent(scope);
-    if (raw != null) {
-      try {
-        await cubit.repository.clearExtraIntent(scope, raw);
-      } catch (_) {}
-    }
+    final intent = raw == null ? null : ExtraShiftIntent.decode(raw);
     if (!cubit.isValid(scope, gen) || req != cubit.request) return;
+    cubit.emitState(
+      ExtraShiftsState(
+        busy: cubit.isBusy,
+        loading: true,
+        page: prev.page,
+        intent: intent,
+        canonical: prev.canonical,
+      ),
+    );
     final result = await cubit.repository.listExtras(
       scope.workspaceId,
       employee,
@@ -42,6 +49,8 @@ Future<void> loadExtraShiftsPage(
         busy: cubit.isBusy,
         loading: false,
         page: result,
+        intent: intent,
+        recoveryBlocked: intent != null,
         canonical: prev.canonical,
       ),
     );
@@ -52,10 +61,11 @@ Future<void> loadExtraShiftsPage(
           busy: cubit.isBusy,
           loading: false,
           page: prev.page,
+          intent: cubit.state.intent,
           canonical: prev.canonical,
           failure: cubit.toFailure(
             error,
-            'Unable to load extra shifts. Please try again.',
+            'Unable to load extras or saved recovery. Retry before changing extras.',
           ),
         ),
       );

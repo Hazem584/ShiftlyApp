@@ -25,8 +25,7 @@ class ExtraShiftsView extends StatelessWidget {
     builder: (context, state) {
       final cubit = context.read<ExtraShiftsCubit>();
       final pagination = state.page?.pagination;
-      final canCreate =
-          canEdit && !state.loading && !state.busy && !state.recoveryBlocked;
+      final canCreate = canEdit && !state.loading && !state.busy;
       return SurfaceCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -88,11 +87,17 @@ class ExtraShiftsView extends StatelessWidget {
     },
   );
 
-  Future<void> _showForm(BuildContext context, bool actual) =>
-      showExtraShiftForm(
-        context,
-        workspaceId: workspaceId,
-        timezone: timezone,
-        actual: actual,
-      );
+  Future<void> _showForm(BuildContext context, bool actual) async {
+    final cubit = context.read<ExtraShiftsCubit>();
+    if (cubit.state.intent != null) {
+      await cubit.discardSavedIntent();
+    }
+    if (!context.mounted) return;
+    await showExtraShiftForm(
+      context,
+      workspaceId: workspaceId,
+      timezone: timezone,
+      actual: actual,
+    );
+  }
 }

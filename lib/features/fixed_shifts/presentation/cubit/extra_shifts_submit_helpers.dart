@@ -1,6 +1,7 @@
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/extra_authorization.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/extra_shift_intent.dart';
+import 'package:shiftly/features/fixed_shifts/domain/policies/confirmed_mutation_rejection.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_cubit_base.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/extra_shifts_state.dart';
 
@@ -12,8 +13,10 @@ Future<bool> finalizeExtraSubmit(
   ExtraShiftIntent intent,
   ExtraAuthorization canonical,
 ) async {
+  var cleared = false;
   try {
     await cubit.repository.clearExtraIntent(scope, intent.encode());
+    cleared = true;
   } catch (_) {}
   if (!cubit.ownsMutation(scope, gen, owner)) return true;
   cubit.emitState(
@@ -22,6 +25,8 @@ Future<bool> finalizeExtraSubmit(
       loading: false,
       page: cubit.state.page,
       canonical: canonical,
+      intent: cleared ? null : intent,
+      recoveryBlocked: !cleared,
     ),
   );
   try {
@@ -45,16 +50,22 @@ Future<bool> handleExtraSubmitError(
   Object error,
 ) async {
   if (!cubit.ownsMutation(scope, gen, owner)) return false;
-  try {
-    await cubit.repository.clearExtraIntent(scope, intent.encode());
-  } catch (_) {}
+  var cleared = false;
+  if (confirmedMutationRejection(error)) {
+    try {
+      await cubit.repository.clearExtraIntent(scope, intent.encode());
+      cleared = true;
+    } catch (_) {}
+  }
   if (cubit.ownsMutation(scope, gen, owner)) {
     cubit.emitState(
       ExtraShiftsState(
         busy: true,
         loading: false,
         page: cubit.state.page,
+        intent: cleared ? null : intent,
         canonical: cubit.state.canonical,
+        recoveryBlocked: !cleared,
         failure: cubit.toFailure(
           error,
           'Could not save extra shift. Please review the details and try again.',

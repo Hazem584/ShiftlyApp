@@ -60,6 +60,22 @@ class ExtraShiftsCubit extends ExtraShiftsCubitBase {
     return submitExtraShiftIntent(this, scope, intent);
   }
 
+  Future<void> discardSavedIntent() async {
+    final scope = currentScope, intent = state.intent;
+    if (scope == null || intent == null || isBusy) return;
+    try {
+      await repository.clearExtraIntent(scope, intent.encode());
+    } catch (_) {}
+    emitState(
+      ExtraShiftsState(
+        busy: isBusy,
+        loading: state.loading,
+        page: state.page,
+        canonical: state.canonical,
+      ),
+    );
+  }
+
   Future<bool> revoke(ExtraAuthorization value) =>
       revokeExtraShiftAuthorization(this, value);
 }

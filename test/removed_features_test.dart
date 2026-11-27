@@ -9,7 +9,6 @@ void main() {
       'tasks',
       'shifts',
       'personal',
-      'announcements',
       'reports',
     ]);
   });
