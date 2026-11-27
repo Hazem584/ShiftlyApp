@@ -53,6 +53,14 @@ FlexibleAttendance parseFlexibleAttendance(Map<String, Object?> json) {
     netWorkedMinutes: ApiModelParser.optionalInteger(json['netWorkedMinutes']),
     overtimeMinutes:
         ApiModelParser.optionalInteger(json['overtimeMinutes']) ?? 0,
+    clockInGeoStatus: ApiModelParser.optionalString(json['clockInGeoStatus']),
+    clockInDistanceMeters: ApiModelParser.optionalInteger(
+      json['clockInDistanceMeters'],
+    ),
+    clockOutGeoStatus: ApiModelParser.optionalString(json['clockOutGeoStatus']),
+    clockOutDistanceMeters: ApiModelParser.optionalInteger(
+      json['clockOutDistanceMeters'],
+    ),
     breakState: json['breakState'] == null
         ? null
         : ShiftBreakState.fromJson(ApiModelParser.map(json['breakState'])),

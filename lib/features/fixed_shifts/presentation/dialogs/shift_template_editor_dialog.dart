@@ -34,6 +34,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
       : shiftTemplatesScreenTod(widget.template!.breakStartMinute!);
   late String _colorValue =
       widget.template?.color ?? templatePresetColors.first;
+  late String? _workLocationId = widget.template?.workLocationId;
   String? _localError;
   int _step = 0;
 
@@ -53,6 +54,7 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
     end: _end,
     breakAt: _breakAt,
     colorValue: _colorValue,
+    workLocationId: _workLocationId,
   );
 
   @override
@@ -68,11 +70,13 @@ class _TemplateEditorDialogState extends State<ShiftTemplateEditorDialog> {
     end: _end,
     breakAt: _breakAt,
     colorValue: _colorValue,
+    workLocationId: _workLocationId,
     localError: _localError,
     input: _input,
     onStepChanged: (v) => setState(() => _step = v),
     onPickTime: _pick,
     onColorChanged: (v) => setState(() => _colorValue = v),
+    onWorkLocationChanged: (v) => setState(() => _workLocationId = v),
     onBreakChanged: (v) {
       if (mounted) setState(() => _breakAt = v);
     },

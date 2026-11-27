@@ -24,9 +24,7 @@ List<Widget> buildManagerMonthControlActions({
       ),
     ),
   if (!ended && !control.closed)
-    Text(
-      context.tr('Month approval becomes available after the month ends.'),
-    ),
+    Text(context.tr('Month approval becomes available after the month ends.')),
   const SizedBox(height: 8),
   OutlinedButton.icon(
     icon: Icon(control.closed ? Icons.lock_open : Icons.lock_outline),
@@ -52,9 +50,7 @@ List<Widget> buildManagerMonthControlActions({
           },
     label: Text(
       context.tr(
-        control.closed
-            ? 'Reopen attendance month'
-            : 'Approve and close month',
+        control.closed ? 'Reopen attendance month' : 'Approve and close month',
       ),
     ),
   ),

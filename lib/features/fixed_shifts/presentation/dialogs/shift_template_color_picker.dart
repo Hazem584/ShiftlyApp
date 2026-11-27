@@ -29,7 +29,11 @@ Widget buildTemplateTimeButtons({
         icon: const Icon(Icons.login_rounded),
         label: Text(
           context.tr('Start {value1}', {
-            'value1': ClockTime.format(start.hour, start.minute, locale: locale),
+            'value1': ClockTime.format(
+              start.hour,
+              start.minute,
+              locale: locale,
+            ),
           }),
         ),
       ),

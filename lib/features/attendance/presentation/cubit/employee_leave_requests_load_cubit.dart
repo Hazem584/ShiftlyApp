@@ -79,7 +79,9 @@ abstract class EmployeeLeaveRequestsLoadCubit
     List<LeaveRequestRecord> items,
     FeatureSessionScope s,
   ) => items.any(
-    (i) => i.workspaceId != s.workspaceId || i.employeeMembershipId != s.membershipId,
+    (i) =>
+        i.workspaceId != s.workspaceId ||
+        i.employeeMembershipId != s.membershipId,
   );
 
   bool isCurrent(FeatureSessionScope s, int gen, int reqId) =>

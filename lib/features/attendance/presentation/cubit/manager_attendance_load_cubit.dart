@@ -52,9 +52,10 @@ abstract class ManagerAttendanceLoadCubit
       if (!isCurrent(activeScope, gen, reqId)) return;
       final records = results[0];
       final pending = results[1];
-      if ([...records.data, ...pending.data].any(
-        (item) => item.workspaceId != activeScope.workspaceId,
-      )) {
+      if ([
+        ...records.data,
+        ...pending.data,
+      ].any((item) => item.workspaceId != activeScope.workspaceId)) {
         throw const FormatException('Cross-workspace attendance response');
       }
       emit(

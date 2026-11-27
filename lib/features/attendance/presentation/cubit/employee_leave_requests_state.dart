@@ -37,7 +37,17 @@ class EmployeeLeaveRequestsState extends Equatable {
 
   @override
   List<Object?> get props => [
-    initialLoading, requests, query, page, totalPages, refreshing,
-    loadingMore, creating, cancellingIds, selected, detailLoading, failure,
+    initialLoading,
+    requests,
+    query,
+    page,
+    totalPages,
+    refreshing,
+    loadingMore,
+    creating,
+    cancellingIds,
+    selected,
+    detailLoading,
+    failure,
   ];
 }

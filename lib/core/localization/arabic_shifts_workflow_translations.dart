@@ -80,4 +80,50 @@ const arabicShiftsWorkflowTranslations = <String, String>{
       'استخدم الشيفتات الثابتة للقوالب المتاحة وتسجيل الحضور.',
   'Historical assigned schedules and active clock-out':
       'الجداول السابقة وتسجيل الخروج النشط',
+  'Workplace locations & Geofence': 'أماكن الشغل ونطاق الحضور (Geofence)',
+  'Verify that employees clock in from an approved branch radius.':
+      'اتأكد إن الموظفين بيسجّلوا حضورهم من جوّه نطاق الفرع المحدّد.',
+  'Warn only': 'تنبيه للمراجعة فقط',
+  'Enforce on clock-in': 'إلزامي عند الحضور',
+  'Add work location': 'إضافة مكان شغل',
+  'Edit work location': 'تعديل مكان الشغل',
+  'No work locations added yet.': 'لسه مفيش أماكن شغل مضافة.',
+  'Location name': 'اسم المكان / الفرع',
+  'e.g. Main Branch': 'مثلًا: الفرع الرئيسي',
+  'Use my current GPS location': 'استخدم موقعي الحالي (GPS)',
+  'Latitude': 'خط العرض (Latitude)',
+  'Longitude': 'خط الطول (Longitude)',
+  'Allowed radius: {value1} meters': 'النطاق المسموح: {value1} متر',
+  'Save location': 'حفظ المكان',
+  'Enter a valid name and GPS coordinates.':
+      'اكتب اسم صحيح وإحداثيات GPS صحيحة.',
+  'Required work location (optional)': 'مكان الشغل المطلوب (اختياري)',
+  'Any workspace location': 'أي مكان مفعّل في مساحة العمل',
+  'Work location': 'مكان الشغل',
+  'Clock-in location': 'موقع تسجيل الحضور',
+  'Clock-out location': 'موقع تسجيل الانصراف',
+  'INSIDE': 'داخل النطاق',
+  'OUTSIDE': 'خارج النطاق',
+  'LOW_ACCURACY': 'إشارة GPS ضعيفة',
+  'MOCKED': 'موقع مزيّف',
+  'NOT_PROVIDED': 'بدون موقع',
+  'You are outside the allowed workplace area. Move closer to your work location and try again.':
+      'أنت برّه نطاق مكان الشغل المسموح. قرّب من مكان شغلك وجرّب تاني.',
+  'Turn on location services to record attendance at this workspace.':
+      'شغّل خدمة الموقع (GPS) عشان تسجّل حضورك في مساحة العمل دي.',
+  'Turn on location services to record attendance.':
+      'شغّل خدمة الموقع (GPS) عشان تسجّل حضورك.',
+  'Allow location permission to record attendance at your workplace.':
+      'اسمح بإذن الموقع عشان تسجّل حضورك في مكان الشغل.',
+  'GPS signal is too weak. Move near a window or outdoors and retry.':
+      'إشارة الـ GPS ضعيفة. قرّب من شباك أو مكان مفتوح وجرّب تاني.',
+  'Could not read your GPS location. Move outdoors and retry.':
+      'معرفناش نحدّد موقعك بالـ GPS. جرّب في مكان مفتوح.',
+  'Disable mock location apps before recording attendance.':
+      'اقفل برامج تزييف الموقع قبل ما تسجّل حضورك.',
+  'An active work location already uses this name.':
+      'فيه مكان شغل نشط بنفس الاسم ده.',
+  'That work location could not be found.': 'ملقيناش مكان الشغل ده.',
+  'Add at least one active work location before enforcing geofence.':
+      'ضِف مكان شغل نشط واحد على الأقل قبل تفعيل الإلزام.',
 };

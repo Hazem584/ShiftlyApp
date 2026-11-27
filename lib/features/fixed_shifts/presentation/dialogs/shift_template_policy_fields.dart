@@ -24,9 +24,11 @@ ShiftTemplateInput buildShiftTemplateInput({
   required TimeOfDay end,
   required TimeOfDay? breakAt,
   required String colorValue,
+  String? workLocationId,
 }) => ShiftTemplateInput(
   breakMinutes: int.tryParse(policies[4].text) ?? -1,
   breakStartMinute: breakAt == null ? null : breakAt.hour * 60 + breakAt.minute,
+  workLocationId: workLocationId,
   name: name.text,
   description: description.text,
   color: colorValue,

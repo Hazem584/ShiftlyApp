@@ -8,8 +8,18 @@ import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_re
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 String attendanceMonthAbbrev(int month) => const [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ][month - 1];
 
 (String, Color, Color) attendanceReviewStatusStyle(
@@ -97,8 +107,20 @@ Widget buildAttendanceRecordDetailsColumn(
         style: secondary,
       ),
       Text(_durationText(context, record), style: secondary),
+      if (record.clockInGeoStatus != null || record.clockOutGeoStatus != null)
+        Text(_geoText(context, record), style: secondary),
     ],
   );
+}
+
+String _geoText(BuildContext context, AttendanceRecordApi r) {
+  final parts = <String>[
+    if (r.clockInGeoStatus != null)
+      '${context.tr('In')}: ${context.tr(r.clockInGeoStatus!)}${r.clockInDistanceMeters == null ? '' : ' (${r.clockInDistanceMeters}m)'}',
+    if (r.clockOutGeoStatus != null)
+      '${context.tr('Out')}: ${context.tr(r.clockOutGeoStatus!)}${r.clockOutDistanceMeters == null ? '' : ' (${r.clockOutDistanceMeters}m)'}',
+  ];
+  return parts.join(' · ');
 }
 
 String _durationText(BuildContext context, AttendanceRecordApi record) {

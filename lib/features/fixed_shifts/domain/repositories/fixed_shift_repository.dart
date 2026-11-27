@@ -1,5 +1,7 @@
+import 'package:shiftly/core/models/attendance_location_point.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
 
+export 'package:shiftly/core/models/attendance_location_point.dart';
 export 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
 
 abstract interface class FixedShiftRepository {
@@ -46,8 +48,12 @@ abstract interface class FixedShiftRepository {
     required String clientAttendanceId,
     String? assignmentId,
     String? extraAuthorizationId,
+    AttendanceLocationPoint? location,
   });
-  Future<FlexibleAttendance> flexibleClockOut(String attendanceId);
+  Future<FlexibleAttendance> flexibleClockOut(
+    String attendanceId, {
+    AttendanceLocationPoint? location,
+  });
   Future<PendingClockIn?> loadPendingClockIn({
     required String userId,
     required String workspaceId,

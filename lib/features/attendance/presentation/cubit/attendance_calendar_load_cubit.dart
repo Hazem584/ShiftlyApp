@@ -81,7 +81,11 @@ abstract class AttendanceCalendarLoadCubit
       emit(
         refresh && prev.hasData
             ? prev.copyWith(refreshing: false, failure: failure)
-            : AttendanceCalendarState(year: year, month: month, failure: failure),
+            : AttendanceCalendarState(
+                year: year,
+                month: month,
+                failure: failure,
+              ),
       );
     } finally {
       if (isCurrentScope(activeScope, gen) && requestId == reqId) {

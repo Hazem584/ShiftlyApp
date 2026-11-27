@@ -95,7 +95,9 @@ class _ScheduleExceptionDialogState extends State<ScheduleExceptionDialog> {
       if (mounted) Navigator.pop(context, widget.isCurrent());
     } catch (e) {
       if (mounted) {
-        setState(() => (_busy = false, _error = ApiErrorParser.parse(e).message));
+        setState(
+          () => (_busy = false, _error = ApiErrorParser.parse(e).message),
+        );
       }
     }
   }

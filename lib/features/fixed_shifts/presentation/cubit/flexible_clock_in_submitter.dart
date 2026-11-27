@@ -15,6 +15,12 @@ Future<FixedShiftMutationResult> submitPendingClockIn(
   FlexibleAttendance? recovered,
 }) async {
   try {
+    final location = recovered == null
+        ? await host.readLocation(requiredForPunch: true)
+        : null;
+    if (!host.current(scope, generation, revision)) {
+      return FixedShiftMutationResult.stale;
+    }
     final canonical =
         recovered ??
         await host.repository.flexibleClockIn(
@@ -23,6 +29,7 @@ Future<FixedShiftMutationResult> submitPendingClockIn(
           clientAttendanceId: pending.clientAttendanceId,
           assignmentId: pending.assignmentId,
           extraAuthorizationId: pending.extraAuthorizationId,
+          location: location,
         );
     if (!host.current(scope, generation, revision)) {
       return FixedShiftMutationResult.stale;

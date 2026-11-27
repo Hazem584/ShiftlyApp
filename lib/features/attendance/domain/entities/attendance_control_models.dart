@@ -27,7 +27,12 @@ class AttendanceDayDecision extends Equatable {
       );
   @override
   List<Object?> get props => [
-    date, employeeMembershipId, status, reason, revision, employee,
+    date,
+    employeeMembershipId,
+    status,
+    reason,
+    revision,
+    employee,
   ];
 }
 
@@ -54,13 +59,20 @@ class AttendanceControlEvent extends Equatable {
         ApiModelParser.optionalMap(j['before'])?['status'] as String?,
         ApiModelParser.optionalMap(j['after'])?['status'] as String?,
         employee: ApiModelParser.optionalString(j['employee']),
-        operationalDate: ApiModelParser.optionalString(
-          j['operationalDate'],
-        )?.split('T').first,
+        operationalDate: ApiModelParser.optionalString(j['operationalDate'])
+            ?.split('T')
+            .first,
       );
   @override
   List<Object?> get props => [
-    date, action, actor, reason, before, after, employee, operationalDate,
+    date,
+    action,
+    actor,
+    reason,
+    before,
+    after,
+    employee,
+    operationalDate,
   ];
 }
 

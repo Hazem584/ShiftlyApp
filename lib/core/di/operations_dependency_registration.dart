@@ -13,9 +13,11 @@ import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.da
 import 'package:shiftly/features/employees/presentation/cubit/employee_details_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/data/api_fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/data/api_schedule_exception_repository.dart';
+import 'package:shiftly/features/fixed_shifts/data/api_work_location_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
+import 'package:shiftly/features/fixed_shifts/domain/repositories/work_location_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/profile/data/api_profile_repository.dart';
@@ -35,6 +37,9 @@ void registerOperationsAndFactoryDependencies(GetIt t) {
     )
     ..registerLazySingleton<ScheduleExceptionRepository>(
       () => ApiScheduleExceptionRepository(t()),
+    )
+    ..registerLazySingleton<WorkLocationRepository>(
+      () => ApiWorkLocationRepository(t()),
     )
     ..registerLazySingleton<ProfileRepository>(
       () => ApiProfileRepository(

@@ -38,8 +38,7 @@ AttendanceCalendarMonth applyAttendanceDayDecisions(
       (e) => e.employeeMembershipId == decision.employeeMembershipId,
     );
     final previous = index < 0 ? null : entries[index];
-    final status =
-        _parseCalendarStatus(decision.status) ?? previous?.status;
+    final status = _parseCalendarStatus(decision.status) ?? previous?.status;
     if (status == null) continue;
     _upsertEntry(
       entries,

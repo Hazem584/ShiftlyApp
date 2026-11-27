@@ -49,6 +49,16 @@ class ManagerTemplateDetails extends StatelessWidget {
               ),
             ),
           ),
+          if (template.workLocationName != null) ...[
+            const SizedBox(height: 10),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.place_outlined),
+                title: Text(context.tr('Work location')),
+                trailing: Text(template.workLocationName!),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           for (final v in rows) ...[
             Card(

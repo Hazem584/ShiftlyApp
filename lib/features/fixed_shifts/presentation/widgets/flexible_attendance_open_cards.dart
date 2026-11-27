@@ -38,7 +38,9 @@ Widget buildUnactionableOpenAttendanceCard(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          isLegacy ? Icons.event_available_outlined : Icons.help_outline_rounded,
+          isLegacy
+              ? Icons.event_available_outlined
+              : Icons.help_outline_rounded,
         ),
         const SizedBox(width: 10),
         Expanded(

@@ -59,7 +59,9 @@ class FlexibleAttendancePanel extends StatelessWidget {
         child: SizedBox(height: 116, child: AppContentLoading()),
       );
     }
-    if (state.recovery != null) return buildFlexibleRecoveryCard(context, state);
+    if (state.recovery != null) {
+      return buildFlexibleRecoveryCard(context, state);
+    }
     final current = state.current;
     final legacyReview = LegacyClockInReviewCard(
       reviews: state.legacyReviews,

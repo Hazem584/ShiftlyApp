@@ -42,7 +42,7 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Shiftly uses your microphone only when you record a voice message.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Shiftly uses your location only when you choose to share it in chat.</string>
+hiftly uses your location to verify workplace attendance and when you share a location in chat.</string>	<string>S
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -4,6 +4,7 @@ import 'package:shiftly/features/fixed_shifts/domain/entities/schedule_exception
 class TemplateEligibility {
   const TemplateEligibility({
     this.status = 'UNKNOWN',
+    this.geofenceMode = 'OFF',
     this.dayExceptions = const [],
     this.authorizedOccurrences = const [],
     this.openAttendanceId,
@@ -14,6 +15,7 @@ class TemplateEligibility {
     required this.eligibleTemplates,
   });
   final String status;
+  final String geofenceMode;
   final List<ScheduleExceptionNotice> dayExceptions;
   final String? openAttendanceId;
   final List<EligibleShiftOccurrence> authorizedOccurrences;

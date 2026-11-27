@@ -15,12 +15,7 @@ Future<List<ShiftRecord>> fetchAllCalendarShifts({
 }) async {
   final values = <ShiftRecord>[];
   for (var page = 1; page <= _maximumPages; page++) {
-    final query = ShiftQuery(
-      page: page,
-      limit: _pageSize,
-      from: from,
-      to: to,
-    );
+    final query = ShiftQuery(page: page, limit: _pageSize, from: from, to: to);
     final result = employeeOnly
         ? await shifts.listMyShifts(workspaceId, query)
         : await shifts.listWorkspaceShifts(workspaceId, query);

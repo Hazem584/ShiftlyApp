@@ -48,7 +48,13 @@ class EmployeeAttendanceState extends Equatable {
 
   @override
   List<Object?> get props => [
-    initialLoading, records, query, page, totalPages, refreshing, loadingMore,
+    initialLoading,
+    records,
+    query,
+    page,
+    totalPages,
+    refreshing,
+    loadingMore,
     failure,
   ];
 }

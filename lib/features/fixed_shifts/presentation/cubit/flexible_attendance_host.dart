@@ -13,6 +13,9 @@ abstract interface class FlexibleAttendanceHost {
   FixedShiftRepository get repository;
   String newRequestId();
   DateTime now();
+  Future<AttendanceLocationPoint?> readLocation({
+    required bool requiredForPunch,
+  });
   void emitState(FlexibleAttendanceState state);
   bool current(FeatureSessionScope scope, int generation, int revision);
   int beginMutation();

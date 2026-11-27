@@ -45,6 +45,12 @@ class AttendanceCalendarState extends Equatable {
 
   @override
   List<Object?> get props => [
-    year, month, data, selectedDate, loading, refreshing, failure,
+    year,
+    month,
+    data,
+    selectedDate,
+    loading,
+    refreshing,
+    failure,
   ];
 }

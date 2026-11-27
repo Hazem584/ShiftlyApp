@@ -30,7 +30,8 @@ List<Widget> buildEmptyEligibilitySection(
       ),
     ],
   ),
-  if (state.templates.isNotEmpty && state.eligibility?.status == 'ASSIGNED') ...[
+  if (state.templates.isNotEmpty &&
+      state.eligibility?.status == 'ASSIGNED') ...[
     const SizedBox(height: 12),
     Text(
       context.tr('Assigned shift schedule'),

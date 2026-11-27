@@ -77,7 +77,9 @@ class _ScheduleExceptionsSectionState extends State<ScheduleExceptionsSection> {
       });
     } catch (e) {
       if (_alive(gen)) {
-        setState(() => (_loading = false, _error = ApiErrorParser.parse(e).message));
+        setState(
+          () => (_loading = false, _error = ApiErrorParser.parse(e).message),
+        );
       }
     }
   }

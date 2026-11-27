@@ -50,5 +50,13 @@ List<Widget> buildTemplateAttendanceInfo(
           )).toString(),
         }),
       ),
+    if (record.clockInGeoStatus != null)
+      Text(
+        '${context.tr('Clock-in location')}: ${context.tr(record.clockInGeoStatus!)}${record.clockInLocationName == null ? '' : ' • ${record.clockInLocationName}'}${record.clockInDistanceMeters == null ? '' : ' (${record.clockInDistanceMeters}m)'}',
+      ),
+    if (record.clockOutGeoStatus != null)
+      Text(
+        '${context.tr('Clock-out location')}: ${context.tr(record.clockOutGeoStatus!)}${record.clockOutDistanceMeters == null ? '' : ' (${record.clockOutDistanceMeters}m)'}',
+      ),
   ];
 }

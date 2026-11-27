@@ -62,8 +62,7 @@ Future<FixedShiftMutationResult> recoverSavedFlexibleClockIn(
           host.state.copyWith(
             clearSubmitting: true,
             failure: const Failure(
-              message:
-                  'The original baseline window is no longer available. The saved operation is retained. Contact support with the original date and saved request ID; this app has no review or date-pinned retry endpoint and it cannot be replayed against a later occurrence.',
+              message: 'The original baseline window is no longer available. The saved operation is retained. Contact support with the original date and saved request ID; this app has no review or date-pinned retry endpoint and it cannot be replayed against a later occurrence.',
             ),
           ),
         );

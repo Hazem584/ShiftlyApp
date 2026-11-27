@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shiftly/core/location/location_reader.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shift_cubit_helpers.dart';
@@ -17,13 +18,16 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
     this.onAttendanceChanged,
     String Function()? uuid,
     DateTime Function()? now,
+    AttendanceLocationReader? locationReader,
   }) : _now = now ?? DateTime.now,
        _uuid = uuid ?? fixedShiftUuid,
+       _locationReader = locationReader ?? readDeviceAttendanceLocation,
        super(const FlexibleAttendanceState());
   final FixedShiftRepository _repository;
   final FutureOr<void> Function()? onAttendanceChanged;
   final String Function() _uuid;
   final DateTime Function() _now;
+  final AttendanceLocationReader _locationReader;
   FeatureSessionScope? _scope;
   int _generation = 0, _revision = 0;
   bool _refreshQueued = false, _busy = false;
@@ -92,6 +96,17 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
   String newRequestId() => _uuid();
   @override
   DateTime now() => _now();
+  @override
+  Future<AttendanceLocationPoint?> readLocation({
+    required bool requiredForPunch,
+  }) async {
+    final mode = state.eligibility?.geofenceMode ?? 'OFF';
+    if (mode == 'OFF') return null;
+    return _locationReader(
+      requiredForPunch: requiredForPunch && mode == 'ENFORCE',
+    );
+  }
+
   @override
   void emitState(FlexibleAttendanceState value) => emit(value);
   @override

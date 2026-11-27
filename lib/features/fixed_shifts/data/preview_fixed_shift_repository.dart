@@ -93,8 +93,11 @@ class PreviewFixedShiftRepository implements FixedShiftRepository {
     required String clientAttendanceId,
     String? assignmentId,
     String? extraAuthorizationId,
+    AttendanceLocationPoint? location,
   }) async => _unsupported();
   @override
-  Future<FlexibleAttendance> flexibleClockOut(String attendanceId) async =>
-      _unsupported();
+  Future<FlexibleAttendance> flexibleClockOut(
+    String attendanceId, {
+    AttendanceLocationPoint? location,
+  }) async => _unsupported();
 }

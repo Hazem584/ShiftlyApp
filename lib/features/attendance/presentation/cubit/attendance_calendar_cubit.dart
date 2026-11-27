@@ -12,7 +12,9 @@ class AttendanceCalendarCubit extends AttendanceCalendarLoadCubit {
 
   void bindSession(FeatureSessionScope? nextScope) {
     final authorized =
-        (employee ? nextScope?.isEmployee == true : nextScope?.isManager == true)
+        (employee
+            ? nextScope?.isEmployee == true
+            : nextScope?.isManager == true)
         ? nextScope
         : null;
     if (scope == authorized) return;

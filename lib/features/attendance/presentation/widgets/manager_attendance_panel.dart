@@ -16,52 +16,51 @@ class ManagerAttendancePanel extends StatelessWidget {
   final String timezone;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) => BlocConsumer<ManagerAttendanceCubit, ManagerAttendanceState>(
-    listenWhen: (previous, current) =>
-        previous.failure != current.failure && current.failure != null,
-    listener: (context, state) =>
-        ToastService.error(context, message: state.failure!.message),
-    builder: (context, state) {
-      if (state.initialLoading) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 64),
-          child: AppContentLoading(),
-        );
-      }
-      if (state.records.isEmpty && state.pending.isEmpty) {
-        return buildManagerAttendanceEmptyView(context, state);
-      }
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          OutlinedButton.icon(
-            key: const Key('attendance-date-employee-filters'),
-            onPressed: () =>
-                showManagerAttendanceFilters(context, state, timezone),
-            icon: const Icon(Icons.tune_rounded),
-            label: Text(
-              state.query.from == null &&
-                      state.query.employeeMembershipId == null
-                  ? context.tr('Date and employee filters')
-                  : context.tr('Change active filters'),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s),
-          _buildReviewDropdown(context, state),
-          if (state.failure != null) ...[
-            const SizedBox(height: AppSpacing.s),
-            Text(
-              state.failure!.message,
-              style: TextStyle(color: AppPalette.of(context).error),
-            ),
-          ],
-          ...buildManagerAttendanceListSections(context, state, timezone),
-        ],
+  Widget build(BuildContext context) =>
+      BlocConsumer<ManagerAttendanceCubit, ManagerAttendanceState>(
+        listenWhen: (previous, current) =>
+            previous.failure != current.failure && current.failure != null,
+        listener: (context, state) =>
+            ToastService.error(context, message: state.failure!.message),
+        builder: (context, state) {
+          if (state.initialLoading) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: 64),
+              child: AppContentLoading(),
+            );
+          }
+          if (state.records.isEmpty && state.pending.isEmpty) {
+            return buildManagerAttendanceEmptyView(context, state);
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              OutlinedButton.icon(
+                key: const Key('attendance-date-employee-filters'),
+                onPressed: () =>
+                    showManagerAttendanceFilters(context, state, timezone),
+                icon: const Icon(Icons.tune_rounded),
+                label: Text(
+                  state.query.from == null &&
+                          state.query.employeeMembershipId == null
+                      ? context.tr('Date and employee filters')
+                      : context.tr('Change active filters'),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s),
+              _buildReviewDropdown(context, state),
+              if (state.failure != null) ...[
+                const SizedBox(height: AppSpacing.s),
+                Text(
+                  state.failure!.message,
+                  style: TextStyle(color: AppPalette.of(context).error),
+                ),
+              ],
+              ...buildManagerAttendanceListSections(context, state, timezone),
+            ],
+          );
+        },
       );
-    },
-  );
 
   Widget _buildReviewDropdown(
     BuildContext context,

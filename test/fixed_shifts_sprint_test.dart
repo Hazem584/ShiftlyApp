@@ -239,6 +239,7 @@ class _FakeRepository implements FixedShiftRepository {
     required String clientAttendanceId,
     String? assignmentId,
     String? extraAuthorizationId,
+    AttendanceLocationPoint? location,
   }) async {
     clockInIds.add(clientAttendanceId);
     if (clockInIds.length == 1) {
@@ -248,8 +249,10 @@ class _FakeRepository implements FixedShiftRepository {
   }
 
   @override
-  Future<FlexibleAttendance> flexibleClockOut(String attendanceId) async =>
-      attendance(clockOutAt: '2026-10-07T03:01:00.000Z');
+  Future<FlexibleAttendance> flexibleClockOut(
+    String attendanceId, {
+    AttendanceLocationPoint? location,
+  }) async => attendance(clockOutAt: '2026-10-07T03:01:00.000Z');
   @override
   Future<PendingClockIn?> loadPendingClockIn({
     required String userId,
@@ -1726,6 +1729,7 @@ class _ControlledRepository extends _FakeRepository {
     required String clientAttendanceId,
     String? assignmentId,
     String? extraAuthorizationId,
+    AttendanceLocationPoint? location,
   }) async {
     payloads.add({
       'workspaceId': workspaceId,
@@ -1754,7 +1758,10 @@ class _ControlledRepository extends _FakeRepository {
   }
 
   @override
-  Future<FlexibleAttendance> flexibleClockOut(String attendanceId) async {
+  Future<FlexibleAttendance> flexibleClockOut(
+    String attendanceId, {
+    AttendanceLocationPoint? location,
+  }) async {
     final canonical = FlexibleAttendance.fromJson({
       ..._attendance(clockOutAt: '2026-10-06T20:00:00Z'),
       'occurrenceKind': kind,

@@ -29,7 +29,14 @@ Future<FixedShiftMutationResult> performFlexibleClockOut(
     ),
   );
   try {
-    final canonical = await host.repository.flexibleClockOut(active.id);
+    final location = await host.readLocation(requiredForPunch: false);
+    if (!host.current(scope, generation, revision)) {
+      return FixedShiftMutationResult.stale;
+    }
+    final canonical = await host.repository.flexibleClockOut(
+      active.id,
+      location: location,
+    );
     if (!host.current(scope, generation, revision)) {
       return FixedShiftMutationResult.stale;
     }
@@ -95,8 +102,7 @@ Future<void> refreshAfterAttendanceMutation(
         host.state.copyWith(
           recoveryBlocked: true,
           failure: const Failure(
-            message:
-                'Attendance saved. Schedule refresh failed; retry refresh before another clock-in.',
+            message: 'Attendance saved. Schedule refresh failed; retry refresh before another clock-in.',
           ),
         ),
       );

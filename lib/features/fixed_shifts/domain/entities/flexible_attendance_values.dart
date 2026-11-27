@@ -29,6 +29,10 @@ List<Object?> flexibleAttendanceValues(FlexibleAttendance attendance) => [
   attendance.breakState,
   attendance.netWorkedMinutes,
   attendance.overtimeMinutes,
+  attendance.clockInGeoStatus,
+  attendance.clockInDistanceMeters,
+  attendance.clockOutGeoStatus,
+  attendance.clockOutDistanceMeters,
   attendance.createdAt,
   attendance.updatedAt,
 ];

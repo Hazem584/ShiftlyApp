@@ -46,6 +46,11 @@ class AttendanceRecordApi extends AttendanceRecordMeta {
     super.graceMinutesUsed,
     super.minimumWorkMinutesUsed,
     super.clockInClassification,
+    super.clockInGeoStatus,
+    super.clockInDistanceMeters,
+    super.clockInLocationName,
+    super.clockOutGeoStatus,
+    super.clockOutDistanceMeters,
   });
 
   final String id, workspaceId, employeeMembershipId;
@@ -70,9 +75,25 @@ class AttendanceRecordApi extends AttendanceRecordMeta {
 
   @override
   List<Object?> get props => [
-    ...super.props, id, workspaceId, shiftId, employeeMembershipId, clockInAt,
-    clockOutAt, reviewStatus, reviewedByMembershipId, reviewedAt,
-    rejectionReason, minutesLate, workedMinutes, breakState, netWorkedMinutes,
-    overtimeMinutes, createdAt, updatedAt, shift, employee,
+    ...super.props,
+    id,
+    workspaceId,
+    shiftId,
+    employeeMembershipId,
+    clockInAt,
+    clockOutAt,
+    reviewStatus,
+    reviewedByMembershipId,
+    reviewedAt,
+    rejectionReason,
+    minutesLate,
+    workedMinutes,
+    breakState,
+    netWorkedMinutes,
+    overtimeMinutes,
+    createdAt,
+    updatedAt,
+    shift,
+    employee,
   ];
 }

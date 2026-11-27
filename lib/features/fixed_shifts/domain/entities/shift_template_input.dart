@@ -10,11 +10,13 @@ class ShiftTemplateInput {
     required this.minimumWorkMinutes,
     this.breakMinutes = 60,
     this.breakStartMinute,
+    this.workLocationId,
     this.description,
   });
 
   final int breakMinutes;
   final int? breakStartMinute;
+  final String? workLocationId;
   final String name;
   final String? description;
   final String color;
@@ -75,6 +77,7 @@ class ShiftTemplateInput {
   Map<String, Object?> toJson() => {
     'breakMinutes': breakMinutes,
     'breakStartMinute': breakStartMinute,
+    'workLocationId': workLocationId,
     'name': name.trim(),
     if (description != null) 'description': description!.trim(),
     'color': color,

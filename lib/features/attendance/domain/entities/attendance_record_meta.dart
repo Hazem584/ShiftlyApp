@@ -23,6 +23,11 @@ abstract class AttendanceRecordMeta extends Equatable {
     this.graceMinutesUsed,
     this.minimumWorkMinutesUsed,
     this.clockInClassification,
+    this.clockInGeoStatus,
+    this.clockInDistanceMeters,
+    this.clockInLocationName,
+    this.clockOutGeoStatus,
+    this.clockOutDistanceMeters,
   });
 
   final String? dayStatus,
@@ -37,7 +42,11 @@ abstract class AttendanceRecordMeta extends Equatable {
       shiftTemplateId,
       templateName,
       workspaceTimezone,
-      operationalDate;
+      operationalDate,
+      clockInGeoStatus,
+      clockInLocationName,
+      clockOutGeoStatus;
+  final int? clockInDistanceMeters, clockOutDistanceMeters;
   final Map<String, Object?>? calculation;
   final AttendanceSource source;
   final DateTime? scheduledStartAt, scheduledEndAt;
@@ -46,11 +55,30 @@ abstract class AttendanceRecordMeta extends Equatable {
 
   @override
   List<Object?> get props => [
-    dayStatus, dayDecisionReason, calculation, occurrenceKind, assignmentId,
-    scheduleExceptionId, scheduleExceptionReason, extraAuthorizationId,
-    enteredByMembershipId, clientAttendanceId, source, shiftTemplateId,
-    templateName, workspaceTimezone, operationalDate, scheduledStartAt,
-    scheduledEndAt, graceMinutesUsed, minimumWorkMinutesUsed,
+    dayStatus,
+    dayDecisionReason,
+    calculation,
+    occurrenceKind,
+    assignmentId,
+    scheduleExceptionId,
+    scheduleExceptionReason,
+    extraAuthorizationId,
+    enteredByMembershipId,
+    clientAttendanceId,
+    source,
+    shiftTemplateId,
+    templateName,
+    workspaceTimezone,
+    operationalDate,
+    scheduledStartAt,
+    scheduledEndAt,
+    graceMinutesUsed,
+    minimumWorkMinutesUsed,
     clockInClassification,
+    clockInGeoStatus,
+    clockInDistanceMeters,
+    clockInLocationName,
+    clockOutGeoStatus,
+    clockOutDistanceMeters,
   ];
 }

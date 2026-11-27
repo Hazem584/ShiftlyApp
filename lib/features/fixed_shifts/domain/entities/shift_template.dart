@@ -19,6 +19,8 @@ class ShiftTemplate extends Equatable {
     required this.updatedAt,
     this.breakMinutes = 60,
     this.breakStartMinute,
+    this.workLocationId,
+    this.workLocationName,
     this.description,
     this.archivedAt,
   });
@@ -27,6 +29,8 @@ class ShiftTemplate extends Equatable {
   final String workspaceId;
   final int breakMinutes;
   final int? breakStartMinute;
+  final String? workLocationId;
+  final String? workLocationName;
   final String name;
   final String? description;
   final String color;
@@ -87,6 +91,10 @@ class ShiftTemplate extends Equatable {
     if (minimumMinutes > duration) {
       throw const FormatException('Invalid minimum work duration');
     }
+    final workLoc = ApiModelParser.optionalMap(
+      json['workLocation'],
+      'workLocation',
+    );
     return ShiftTemplate(
       id: ApiModelParser.string(json, 'id'),
       workspaceId: ApiModelParser.string(json, 'workspaceId'),
@@ -94,6 +102,10 @@ class ShiftTemplate extends Equatable {
       breakStartMinute: ApiModelParser.optionalInteger(
         json['breakStartMinute'],
       ),
+      workLocationId: ApiModelParser.optionalString(json['workLocationId']),
+      workLocationName: workLoc == null
+          ? null
+          : ApiModelParser.optionalString(workLoc['name']),
       name: ApiModelParser.string(json, 'name'),
       description: ApiModelParser.optionalString(json['description']),
       color: color,
@@ -118,6 +130,8 @@ class ShiftTemplate extends Equatable {
     name,
     breakMinutes,
     breakStartMinute,
+    workLocationId,
+    workLocationName,
     description,
     color,
     startMinute,

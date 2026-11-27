@@ -46,8 +46,20 @@ class ManagerAttendanceState extends Equatable {
 
   @override
   List<Object?> get props => [
-    initialLoading, records, pending, query, page, totalPages, pendingPage,
-    pendingTotalPages, refreshing, loadingMore, loadingMorePending,
-    reviewingIds, selected, detailLoading, failure,
+    initialLoading,
+    records,
+    pending,
+    query,
+    page,
+    totalPages,
+    pendingPage,
+    pendingTotalPages,
+    refreshing,
+    loadingMore,
+    loadingMorePending,
+    reviewingIds,
+    selected,
+    detailLoading,
+    failure,
   ];
 }

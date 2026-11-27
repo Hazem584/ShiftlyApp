@@ -52,7 +52,10 @@ List<Widget> buildTemplatePolicyStep({
         context.tr('{value1} – {value2} • {value3} • {value4}', {
           'value1': ClockTime.format(start.hour, start.minute, locale: locale),
           'value2': ClockTime.format(end.hour, end.minute, locale: locale),
-          'value3': shiftTemplatesScreenDuration(input.durationMinutes, context),
+          'value3': shiftTemplatesScreenDuration(
+            input.durationMinutes,
+            context,
+          ),
           'value4': context.tr(
             input.durationMinutes == 1440
                 ? '24-hour'

@@ -74,8 +74,20 @@ class AttendanceMonthControl extends Equatable {
   }
   @override
   List<Object?> get props => [
-    revision, closedAt, overrides, approvedDays, events, pending, open,
-    pendingCorrections, unfinishedShifts, workMinutes, overtimeMinutes,
-    present, absent, late, leave,
+    revision,
+    closedAt,
+    overrides,
+    approvedDays,
+    events,
+    pending,
+    open,
+    pendingCorrections,
+    unfinishedShifts,
+    workMinutes,
+    overtimeMinutes,
+    present,
+    absent,
+    late,
+    leave,
   ];
 }

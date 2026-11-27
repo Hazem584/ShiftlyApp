@@ -26,7 +26,10 @@ abstract class EmployeeLeaveRequestsPageCubit
       final ids = prev.requests.map((item) => item.id).toSet();
       emit(
         prev.copyWith(
-          requests: [...prev.requests, ...page.data.where((i) => ids.add(i.id))],
+          requests: [
+            ...prev.requests,
+            ...page.data.where((i) => ids.add(i.id)),
+          ],
           page: page.pagination.page,
           totalPages: page.pagination.totalPages,
           loadingMore: false,

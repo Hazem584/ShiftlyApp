@@ -40,7 +40,16 @@ class LeaveRequestsState extends Equatable {
 
   @override
   List<Object?> get props => [
-    initialLoading, requests, query, page, totalPages, refreshing,
-    loadingMore, reviewingIds, selected, detailLoading, failure,
+    initialLoading,
+    requests,
+    query,
+    page,
+    totalPages,
+    refreshing,
+    loadingMore,
+    reviewingIds,
+    selected,
+    detailLoading,
+    failure,
   ];
 }

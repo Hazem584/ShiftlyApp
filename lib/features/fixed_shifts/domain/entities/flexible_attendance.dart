@@ -37,13 +37,20 @@ class FlexibleAttendance extends Equatable {
     this.breakState,
     this.netWorkedMinutes,
     this.overtimeMinutes = 0,
+    this.clockInGeoStatus,
+    this.clockInDistanceMeters,
+    this.clockOutGeoStatus,
+    this.clockOutDistanceMeters,
   });
 
   final String? occurrenceKind,
       assignmentId,
       extraAuthorizationId,
       enteredByMembershipId,
-      reviewStatus;
+      reviewStatus,
+      clockInGeoStatus,
+      clockOutGeoStatus;
+  final int? clockInDistanceMeters, clockOutDistanceMeters;
   final String id, workspaceId, employeeMembershipId;
   final AttendanceSource source;
   final String? shiftId,

@@ -28,7 +28,7 @@ class ShiftTemplateCard extends StatelessWidget {
         leading: Icon(Icons.schedule_outlined, color: color.onSurfaceVariant),
         title: Text(template.name),
         subtitle: Text(
-          '${shiftTemplatesScreenTod(template.startMinute).format(context)} – ${shiftTemplatesScreenTod(template.endMinute).format(context)}${template.overnight ? ' +1' : ''}',
+          '${shiftTemplatesScreenTod(template.startMinute).format(context)} – ${shiftTemplatesScreenTod(template.endMinute).format(context)}${template.overnight ? ' +1' : ''}${template.workLocationName == null ? '' : ' · ${template.workLocationName}'}',
         ),
         trailing: busy
             ? const SizedBox(

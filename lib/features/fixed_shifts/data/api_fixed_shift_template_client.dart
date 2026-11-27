@@ -86,7 +86,5 @@ abstract class ApiFixedShiftTemplateClient implements FixedShiftRepository {
             ShiftTemplate.fromJson(ApiModelParser.map((await op()).data)),
       );
   Future<ShiftTemplatePage> _page(Future<Response<Object?>> Function() op) =>
-      requestFixedShift(
-        () async => parseShiftTemplatePage((await op()).data),
-      );
+      requestFixedShift(() async => parseShiftTemplatePage((await op()).data));
 }

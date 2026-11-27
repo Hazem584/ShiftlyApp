@@ -62,8 +62,20 @@ class LeaveRequestRecord extends Equatable {
 
   @override
   List<Object?> get props => [
-    id, workspaceId, employeeMembershipId, type, status, startsAt, endsAt,
-    reason, reviewedByMembershipId, reviewedAt, rejectionReason, cancelledAt,
-    createdAt, updatedAt, employee,
+    id,
+    workspaceId,
+    employeeMembershipId,
+    type,
+    status,
+    startsAt,
+    endsAt,
+    reason,
+    reviewedByMembershipId,
+    reviewedAt,
+    rejectionReason,
+    cancelledAt,
+    createdAt,
+    updatedAt,
+    employee,
   ];
 }

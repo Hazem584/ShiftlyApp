@@ -8,7 +8,10 @@ import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_he
 
 abstract class EmployeeLeaveRequestsCancelCubit
     extends EmployeeLeaveRequestsPageCubit {
-  EmployeeLeaveRequestsCancelCubit(super.repository, {super.onDashboardChanged});
+  EmployeeLeaveRequestsCancelCubit(
+    super.repository, {
+    super.onDashboardChanged,
+  });
 
   Future<LeaveMutationResult> cancel(String reqIdStr) async {
     final activeScope = scope;

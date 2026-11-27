@@ -40,7 +40,14 @@ Future<bool> submitExtraShiftIntent(
         intent: intent,
       ),
     );
-    return await finalizeExtraSubmit(cubit, scope, gen, owner, intent, canonical);
+    return await finalizeExtraSubmit(
+      cubit,
+      scope,
+      gen,
+      owner,
+      intent,
+      canonical,
+    );
   } catch (error) {
     return handleExtraSubmitError(cubit, scope, gen, owner, intent, error);
   } finally {

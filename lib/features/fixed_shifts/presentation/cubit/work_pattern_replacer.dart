@@ -63,8 +63,7 @@ Future<FixedShiftMutationResult> performWorkPatternReplace({
             loading: false,
             history: getState().history,
             failure: const Failure(
-              message:
-                  'Recover the saved extra operation before replacing an assignment.',
+              message: 'Recover the saved extra operation before replacing an assignment.',
             ),
           ),
         );

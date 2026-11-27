@@ -81,6 +81,7 @@ class ApiFixedShiftRepository extends ApiFixedShiftExtraAndIntentClient {
     required String clientAttendanceId,
     String? assignmentId,
     String? extraAuthorizationId,
+    AttendanceLocationPoint? location,
   }) => _attendance(
     () => dio.post<Object?>(
       '/attendance/flexible/clock-in',
@@ -90,15 +91,21 @@ class ApiFixedShiftRepository extends ApiFixedShiftExtraAndIntentClient {
         'clientAttendanceId': clientAttendanceId,
         'assignmentId': ?assignmentId,
         'extraAuthorizationId': ?extraAuthorizationId,
+        if (location != null) 'location': location.toJson(),
       },
     ),
   );
 
   @override
-  Future<FlexibleAttendance> flexibleClockOut(String attendanceId) =>
-      _attendance(
-        () => dio.post<Object?>('/attendance/$attendanceId/clock-out'),
-      );
+  Future<FlexibleAttendance> flexibleClockOut(
+    String attendanceId, {
+    AttendanceLocationPoint? location,
+  }) => _attendance(
+    () => dio.post<Object?>(
+      '/attendance/$attendanceId/clock-out',
+      data: location == null ? null : {'location': location.toJson()},
+    ),
+  );
 
   Future<FlexibleAttendance> _attendance(
     Future<Response<Object?>> Function() op,

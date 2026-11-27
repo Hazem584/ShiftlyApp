@@ -16,6 +16,7 @@ TemplateEligibility parseTemplateEligibility(Object? data) {
             .map((e) => ScheduleExceptionNotice.fromJson(ApiModelParser.map(e)))
             .toList(),
     status: ApiModelParser.optionalString(json['status']) ?? 'UNKNOWN',
+    geofenceMode: ApiModelParser.optionalString(json['geofenceMode']) ?? 'OFF',
     openAttendanceId: json['openAttendance'] == null
         ? null
         : ApiModelParser.string(
