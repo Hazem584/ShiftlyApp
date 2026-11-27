@@ -2,7 +2,10 @@ import 'package:get_it/get_it.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
 import 'package:shiftly/features/chat/data/cache/chat_group_cache.dart';
+import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
+import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
 import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
+import 'package:shiftly/features/chat/data/outbox/chat_outbox_storage.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
 import 'package:shiftly/features/dashboard/data/api_dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
@@ -21,7 +24,9 @@ import 'package:shiftly/features/profile/domain/repositories/profile_repository.
 
 void registerOperationsAndFactoryDependencies(GetIt t) {
   t
-    ..registerLazySingleton<DashboardRepository>(() => ApiDashboardRepository(t()))
+    ..registerLazySingleton<DashboardRepository>(
+      () => ApiDashboardRepository(t()),
+    )
     ..registerLazySingleton<FixedShiftRepository>(
       () => ApiFixedShiftRepository(t(), t()),
     )
@@ -44,11 +49,11 @@ void registerOperationsAndFactoryDependencies(GetIt t) {
     ..registerFactory<ChatGroupsCubit>(
       () => ChatGroupsCubit(
         t(),
-        messageCache: t(),
+        messageCache: t<ChatMessageCache>(),
         realtime: t(),
         groupCache: ChatGroupCache(t<ChatCacheDatabase>()),
-        outbox: t(),
-        mediaCache: t(),
+        outbox: t<ChatOutboxStorage>(),
+        mediaCache: t<ChatMediaCache>(),
         gallery: ChatImageGallery(),
       ),
     )
