@@ -38,9 +38,6 @@ class CommunicationPage extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            leading: BackButton(
-              onPressed: onBack ?? () => Navigator.maybePop(context),
-            ),
             actions: actions,
           ),
           body: SafeArea(

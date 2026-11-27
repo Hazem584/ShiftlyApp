@@ -12,6 +12,7 @@ import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.da
 import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
 import 'package:shiftly/features/employees/data/mock_employee_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_attendance_overview.dart';
 import 'package:shiftly/features/notifications/data/mock_notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
 import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
@@ -78,7 +79,23 @@ void main() {
     expect(find.text('1 late'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('1 on leave'), findsOneWidget);
-    expect(find.textContaining('%'), findsNothing);
+    final attendance = find.byType(ManagerAttendanceOverview);
+    for (final (label, rate) in [
+      ('On-time rate', '50%'),
+      ('Late rate', '25%'),
+      ('Absence rate', '0%'),
+    ]) {
+      final row = find.descendant(
+        of: attendance,
+        matching: find.widgetWithText(Row, label),
+      );
+      expect(row, findsOneWidget);
+      expect(
+        find.descendant(of: row, matching: find.text(rate)),
+        findsOneWidget,
+      );
+    }
+    expect(find.textContaining('%'), findsNWidgets(3));
     expect(find.byKey(const Key('notification-badge')), findsOneWidget);
     expect(find.byKey(const Key('notification-bell')), findsOneWidget);
     await tester.scrollUntilVisible(

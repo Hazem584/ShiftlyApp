@@ -67,9 +67,9 @@ class ReportAnalyticsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(ctx.tr(label)),
+              Expanded(child: Text(ctx.tr(label))),
+              const SizedBox(width: 8),
               Text('${(ratio * 100).toStringAsFixed(0)}%'),
             ],
           ),

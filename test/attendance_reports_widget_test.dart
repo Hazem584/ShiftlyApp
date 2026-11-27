@@ -59,6 +59,13 @@ void main() {
     await mount(tester, cubit, locale: const Locale('ar'));
     expect(find.text('ملخص الحضور'), findsOneWidget);
     expect(find.text('شهري'), findsOneWidget);
+    final onTimeRate = find.text('نسبة الالتزام بالموعد');
+    await tester.scrollUntilVisible(
+      onTimeRate,
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(onTimeRate, findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -650));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
