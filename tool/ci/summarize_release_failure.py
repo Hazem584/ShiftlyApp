@@ -6,6 +6,28 @@ import sys
 from pathlib import Path
 
 
+KOTLIN_PLUGIN = "org.jetbrains.kotlin:kotlin-gradle-plugin"
+TRANSIENT_HTTP_STATUS = re.compile(r"status code (408|429|500|502|503|504)\b", re.I)
+
+
+def can_retry_gradle_configuration(log):
+    if "Could not resolve all artifacts" not in log:
+        return False
+    if any(
+        marker in log for marker in (
+            "No matching variant", "PKIX path building failed",
+            "Dependency requires at least JVM runtime version",
+        )
+    ):
+        return False
+    return (
+        f"Could not resolve {KOTLIN_PLUGIN}:" in log
+        or TRANSIENT_HTTP_STATUS.search(log) is not None
+        or "Read timed out" in log
+        or "Connect timed out" in log
+    )
+
+
 def summarize(log):
     lines = log.splitlines()
     output = ["Release build failed. Raw verbose output is private."]
@@ -71,6 +93,8 @@ def summarize(log):
         "Could not find method": "A Gradle script called an unavailable DSL method.",
     }
     output.extend(message for signature, message in signatures.items() if signature in log)
+    for status in sorted(set(TRANSIENT_HTTP_STATUS.findall(log))):
+        output.append("Build dependency repository returned HTTP " + status + ".")
     # Verbose Gradle startup echoes -XX:+HeapDumpOnOutOfMemoryError. That
     # option is configuration, not evidence that an OOM actually occurred.
     if re.search(r"\bOutOfMemoryError\b", log):
@@ -102,7 +126,7 @@ def summarize(log):
         for code in dict.fromkeys(re.findall(pattern, log)):
             output.append(label + ": " + code)
     # Print only fixed artifact names and numeric versions, never repository URLs.
-    for artifact in ("com.android.tools.build:gradle", "org.jetbrains.kotlin:kotlin-gradle-plugin"):
+    for artifact in ("com.android.tools.build:gradle", KOTLIN_PLUGIN):
         if re.search(r"Could not (?:find|resolve) " + re.escape(artifact) + r":", log):
             output.append("Unresolved build plugin: " + artifact)
     # Gradle's script locations use different syntax from Dart compiler locations.
@@ -181,4 +205,7 @@ def summarize(log):
 
 
 if __name__ == "__main__":
-    print(summarize(Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")))
+    log = Path(sys.argv[-1]).read_text(encoding="utf-8", errors="replace")
+    if sys.argv[1] == "--retryable":
+        sys.exit(0 if can_retry_gradle_configuration(log) else 1)
+    print(summarize(log))

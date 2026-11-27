@@ -2,7 +2,7 @@
 
 import unittest
 
-from summarize_release_failure import summarize
+from summarize_release_failure import can_retry_gradle_configuration, summarize
 
 
 class ReleaseFailureSummaryTest(unittest.TestCase):
@@ -125,6 +125,31 @@ class ReleaseFailureSummaryTest(unittest.TestCase):
         self.assertIn("A build dependency download failed TLS certificate validation.", output)
         self.assertNotIn("fixture-secret", output)
         self.assertNotIn("https://", output)
+
+    def test_reported_kotlin_plugin_resolution_failure_is_retried(self):
+        self.assertTrue(can_retry_gradle_configuration(
+            "Could not resolve all artifacts for configuration ':classpath'.\n"
+            "Could not resolve org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.0."
+        ))
+
+    def test_incompatible_kotlin_variant_is_not_retried(self):
+        self.assertFalse(can_retry_gradle_configuration(
+            "Could not resolve all artifacts for configuration ':classpath'.\n"
+            "Could not resolve org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.0.\n"
+            "No matching variant"
+        ))
+
+    def test_repository_http_failure_hides_private_url(self):
+        log = ("Could not resolve all artifacts for configuration ':classpath'.\n"
+               "Could not GET 'https://private.invalid/fixture-secret'. "
+               "Received status code 503 from server: Service Unavailable")
+        self.assertTrue(can_retry_gradle_configuration(log))
+        output = summarize(log)
+        self.assertIn("Build dependency repository returned HTTP 503.", output)
+        self.assertNotIn("fixture-secret", output)
+
+    def test_unrelated_configuration_failure_is_not_retried(self):
+        self.assertFalse(can_retry_gradle_configuration("Script compilation errors: Unresolved reference"))
 
     def test_native_compile_failure_uses_allowlisted_task_only(self):
         output = summarize("Execution failed for task ':app:compileReleaseKotlin'. "

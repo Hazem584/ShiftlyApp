@@ -277,9 +277,17 @@ jobs:
         # Keep it private and publish only the allowlisted diagnostic summary.
         # Separate Gradle/JDK/plugin configuration failures from Flutter compilation.
         # This uses the same private signing environment and Gradle home as the build.
-        config_status=0
-        (cd android && ./gradlew help --stacktrace --console=plain) \
-          > "$CI_PRIVATE_DIR/gradle-config.log" 2>&1 || config_status=$?
+        for attempt in 1 2 3; do
+          config_status=0
+          (cd android && ./gradlew help --stacktrace --console=plain) \
+            > "$CI_PRIVATE_DIR/gradle-config.log" 2>&1 || config_status=$?
+          if [[ "$config_status" -eq 0 || "$attempt" -eq 3 ]] || \
+            ! python3 tool/ci/summarize_release_failure.py --retryable "$CI_PRIVATE_DIR/gradle-config.log"; then
+            break
+          fi
+          echo "Gradle plugin download failed on attempt $attempt; retrying configuration."
+          sleep "$((attempt * 5))"
+        done
         if [[ "$config_status" -ne 0 ]]; then
           echo 'Gradle configuration failed before APK compilation.'
           python3 tool/ci/summarize_release_failure.py "$CI_PRIVATE_DIR/gradle-config.log" || \
