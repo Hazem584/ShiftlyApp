@@ -6,30 +6,46 @@ TextTheme employeeTypography(
   Color muted,
   String fontFamily,
 ) {
-  return base
-      .apply(fontFamily: fontFamily, bodyColor: ink, displayColor: ink)
+  final applied = base.apply(
+    fontFamily: fontFamily,
+    bodyColor: ink,
+    displayColor: ink,
+  );
+  return applied
       .copyWith(
-        headlineSmall: TextStyle(
+        headlineSmall: applied.headlineSmall?.copyWith(
           fontSize: 30,
           fontWeight: FontWeight.w700,
           letterSpacing: -.8,
           height: 1.2,
           color: ink,
         ),
-        titleLarge: TextStyle(
+        titleLarge: applied.titleLarge?.copyWith(
           fontSize: 23,
           fontWeight: FontWeight.w600,
           letterSpacing: -.4,
           color: ink,
         ),
-        titleMedium: TextStyle(
+        titleMedium: applied.titleMedium?.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: ink,
         ),
-        bodyLarge: TextStyle(fontSize: 16, height: 1.45, color: ink),
-        bodyMedium: TextStyle(fontSize: 15, height: 1.45, color: ink),
-        bodySmall: TextStyle(fontSize: 13, height: 1.4, color: muted),
+        bodyLarge: applied.bodyLarge?.copyWith(
+          fontSize: 16,
+          height: 1.45,
+          color: ink,
+        ),
+        bodyMedium: applied.bodyMedium?.copyWith(
+          fontSize: 15,
+          height: 1.45,
+          color: ink,
+        ),
+        bodySmall: applied.bodySmall?.copyWith(
+          fontSize: 13,
+          height: 1.4,
+          color: muted,
+        ),
       )
       .apply(fontFamily: fontFamily);
 }

@@ -36,6 +36,9 @@ Future<void> submitAttendanceDayEdit({
       ? shift.id
       : null;
   if (manager) {
+    final cleanReason = reason.trim().length >= 5
+        ? reason.trim()
+        : 'Updated by manager';
     await repository.recordAttendanceDay(
       workspaceId,
       employeeMembershipId: entry.employeeMembershipId,
@@ -47,7 +50,7 @@ Future<void> submitAttendanceDayEdit({
       reasonKind: reasonKind,
       clockIn: start,
       clockOut: end,
-      reason: reason,
+      reason: cleanReason,
     );
   } else if (entry.attendance != null) {
     await repository.requestCorrection(

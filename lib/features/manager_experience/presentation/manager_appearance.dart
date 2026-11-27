@@ -16,7 +16,7 @@ class ManagerAppearance extends StatelessWidget {
     return Theme(
       data: theme.copyWith(
         chipTheme: theme.chipTheme.copyWith(
-          secondaryLabelStyle: theme.textTheme.labelLarge?.copyWith(
+          secondaryLabelStyle: theme.chipTheme.labelStyle?.copyWith(
             color: theme.colorScheme.primary,
           ),
         ),

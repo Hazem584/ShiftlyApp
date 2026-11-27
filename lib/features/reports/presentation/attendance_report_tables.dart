@@ -44,45 +44,71 @@ List<Widget> buildReportTablesSection(
   BuildContext context, {
   required AttendanceReport report,
   required String? employeeId,
-}) => [
-  const SizedBox(height: 12),
-  for (final note in _notes) Text(context.tr(note)),
-  const SizedBox(height: 16),
-  if (report.recordsFor(employeeId).isEmpty)
-    Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Text(context.tr('No attendance in this period.')),
-    ),
-  if (report.rowsFor(employeeId).isNotEmpty)
-    PaginatedDataTable(
-      key: ValueKey('summary-${report.generatedAt}-$employeeId'),
-      header: Text(context.tr('Employee summary')),
-      rowsPerPage: 10,
-      availableRowsPerPage: const [10],
-      showFirstLastButtons: true,
-      columnSpacing: 20,
-      columns: [
-        for (final t in _summaryColumns) DataColumn(label: Text(context.tr(t))),
-      ],
-      source: AttendanceSummarySource(report.rowsFor(employeeId)),
-    ),
-  if (report.recordsFor(employeeId).isNotEmpty) ...[
+}) {
+  final summarySource = AttendanceSummarySource(report.rowsFor(employeeId));
+  final detailsSource = AttendanceDetailsSource(
+    report,
+    employeeId,
+    AppLocalizations.of(context),
+  );
+  return [
+    const SizedBox(height: 12),
+    for (final note in _notes) Text(context.tr(note)),
     const SizedBox(height: 16),
-    PaginatedDataTable(
-      key: ValueKey('details-${report.generatedAt}-$employeeId'),
-      header: Text(context.tr('Attendance details')),
-      rowsPerPage: 10,
-      availableRowsPerPage: const [10],
-      showFirstLastButtons: true,
-      columnSpacing: 20,
-      columns: [
-        for (final t in _detailColumns) DataColumn(label: Text(context.tr(t))),
-      ],
-      source: AttendanceDetailsSource(
-        report,
-        employeeId,
-        AppLocalizations.of(context),
+    if (detailsSource.rowCount == 0)
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Text(context.tr('No attendance in this period.')),
       ),
+    if (summarySource.rowCount > 0)
+      _tableCard(
+        context,
+        key: ValueKey('summary-${report.generatedAt}-$employeeId'),
+        title: context.tr('Employee summary'),
+        columns: _summaryColumns,
+        source: summarySource,
+      ),
+    if (detailsSource.rowCount > 0) ...[
+      const SizedBox(height: 16),
+      _tableCard(
+        context,
+        key: ValueKey('details-${report.generatedAt}-$employeeId'),
+        title: context.tr('Attendance details'),
+        columns: _detailColumns,
+        source: detailsSource,
+      ),
+    ],
+  ];
+}
+
+Widget _tableCard(
+  BuildContext context, {
+  required Key key,
+  required String title,
+  required List<String> columns,
+  required DataTableSource source,
+}) => Card(
+  key: key,
+  child: Padding(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columnSpacing: 20,
+            columns: [
+              for (final t in columns) DataColumn(label: Text(context.tr(t))),
+            ],
+            rows: [
+              for (var i = 0; i < source.rowCount; i++) ?source.getRow(i),
+            ],
+          ),
+        ),
+      ],
     ),
-  ],
-];
+  ),
+);

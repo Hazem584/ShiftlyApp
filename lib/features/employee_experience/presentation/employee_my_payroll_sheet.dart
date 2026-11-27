@@ -20,7 +20,10 @@ class _EmployeeMyPayrollSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = summary.currency;
     String money(double v) => '${v.toStringAsFixed(2)} $c';
-    String hrs(int m) => '${(m / 60).toStringAsFixed(1)} h';
+    String hrs(int m) => '${(m / 60).toStringAsFixed(2)} h';
+    final daily = summary.monthlySalary != null && summary.payrollWorkDays > 0
+        ? summary.monthlySalary! / summary.payrollWorkDays
+        : null;
     final rows = [
       (
         context.tr('Monthly salary'),
@@ -28,12 +31,18 @@ class _EmployeeMyPayrollSheet extends StatelessWidget {
             ? money(summary.monthlySalary!)
             : context.tr('Not set'),
       ),
+      (context.tr('Payroll workdays per month'), '${summary.payrollWorkDays}'),
       (
-        context.tr('Hourly rate'),
+        context.tr('Daily rate'),
+        daily != null ? money(daily) : context.tr('Not set'),
+      ),
+      (
+        context.tr('Overtime hourly rate'),
         summary.hourlyRate > 0
             ? money(summary.hourlyRate)
             : context.tr('Not set'),
       ),
+      (context.tr('Absent days'), '${summary.absentDaysMonth}'),
       (context.tr('Worked hours'), hrs(summary.workedMinutesMonth)),
       (context.tr('Extra shift hours'), hrs(summary.overtimeMinutesMonth)),
       (context.tr('Late minutes'), '${summary.lateMinutesMonth} min'),
@@ -52,16 +61,16 @@ class _EmployeeMyPayrollSheet extends StatelessWidget {
               context.tr('My salary & earnings'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             for (final r in rows)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [Text(r.$1), Text(r.$2)],
                 ),
               ),
-            const Divider(height: 24),
+            const Divider(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

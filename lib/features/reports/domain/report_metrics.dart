@@ -11,7 +11,8 @@ class ReportEmployee {
   final String id, name;
   final double? monthlySalary, hourlyRate;
   final int payrollWorkDays;
-  double get dailyRate => (monthlySalary ?? 0) / payrollWorkDays;
+  double get dailyRate =>
+      (monthlySalary ?? 0) / (payrollWorkDays <= 0 ? 26 : payrollWorkDays);
 }
 
 class ReportMetrics {

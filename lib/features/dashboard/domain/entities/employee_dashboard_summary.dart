@@ -9,6 +9,7 @@ class EmployeeDashboardSummary extends Equatable {
     this.currency = 'EGP',
     this.monthlySalary,
     this.hourlyRate = 0,
+    this.payrollWorkDays = 26,
     this.workedMinutesMonth = 0,
     this.lateMinutesMonth = 0,
     this.overtimeMinutesMonth = 0,
@@ -25,6 +26,7 @@ class EmployeeDashboardSummary extends Equatable {
   final String currency;
   final double? monthlySalary;
   final double hourlyRate;
+  final int payrollWorkDays;
   final int workedMinutesMonth;
   final int lateMinutesMonth;
   final int overtimeMinutesMonth;
@@ -46,6 +48,8 @@ class EmployeeDashboardSummary extends Equatable {
     currency: ApiModelParser.optionalString(json['currency']) ?? 'EGP',
     monthlySalary: (json['monthlySalary'] as num?)?.toDouble(),
     hourlyRate: (json['hourlyRate'] as num?)?.toDouble() ?? 0,
+    payrollWorkDays:
+        ApiModelParser.optionalInteger(json['payrollWorkDays']) ?? 26,
     workedMinutesMonth:
         ApiModelParser.optionalInteger(json['workedMinutesMonth']) ?? 0,
     lateMinutesMonth:
@@ -68,6 +72,7 @@ class EmployeeDashboardSummary extends Equatable {
     currency,
     monthlySalary,
     hourlyRate,
+    payrollWorkDays,
     workedMinutesMonth,
     lateMinutesMonth,
     overtimeMinutesMonth,

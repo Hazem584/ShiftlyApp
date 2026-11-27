@@ -234,4 +234,8 @@ const arabicShiftsWorkflowTranslations = <String, String>{
       'معرفناش نحمّل الشفتات الإضافية. جرّب تاني.',
   'This occurrence already has an active or completed authorization':
       'الشفت ده متسجّل بالفعل للموظف في نفس اليوم.',
+  'Overtime': 'الإضافي',
+  'Reset overtime': 'إلغاء الإضافي (نهاية الشفت)',
+  'Set the actual clock-in, clock-out, and overtime directly.':
+      'حدّد وقت الحضور الفعلي ووقت الانصراف والـ Overtime مباشرة.',
 };

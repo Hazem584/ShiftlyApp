@@ -92,6 +92,12 @@ class _EditAttendanceDayDialogState extends State<EditAttendanceDayDialog> {
         kind: _kind,
         start: _start,
         end: _end,
+        scheduledStart:
+            widget.entry.attendance?.scheduledStartAt ??
+            widget.entry.shift?.startsAt,
+        scheduledEnd:
+            widget.entry.attendance?.scheduledEndAt ??
+            widget.entry.shift?.endsAt,
         timezone: widget.timezone,
         busy: _busy,
         reasonController: _reason,

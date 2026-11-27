@@ -6,6 +6,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/features/manager_experience/presentation/manager_appearance.dart';
 import 'package:shiftly/features/reports/data/attendance_report_exporter.dart';
 import 'package:shiftly/features/reports/domain/attendance_report.dart';
 import 'package:shiftly/features/reports/domain/report_export.dart';
@@ -26,6 +28,7 @@ void main() {
       BlocProvider.value(
         value: cubit,
         child: MaterialApp(
+          theme: AppTheme.lightTheme(),
           locale: locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [
@@ -34,9 +37,11 @@ void main() {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: AttendanceReportsScreen(
-            fileDelivery: delivery ?? _Delivery(),
-            exporter: exporter ?? AttendanceReportExporter(),
+          home: ManagerAppearance(
+            child: AttendanceReportsScreen(
+              fileDelivery: delivery ?? _Delivery(),
+              exporter: exporter ?? AttendanceReportExporter(),
+            ),
           ),
         ),
       ),
@@ -68,6 +73,25 @@ void main() {
     expect(onTimeRate, findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -650));
     await tester.pumpAndSettle();
+    final detailsToggle = find.text('تفاصيل الحضور');
+    await tester.scrollUntilVisible(
+      detailsToggle,
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(detailsToggle);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('ملخص الموظفين'),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('ملخص الموظفين'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(ValueKey('details-${cubit.state.report!.generatedAt}-null')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(tester.takeException(), isNull);
   });
   testWidgets(

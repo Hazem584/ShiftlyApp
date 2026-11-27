@@ -23,6 +23,7 @@ class AttendanceReportsScreen extends StatefulWidget {
 
 class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
   bool _exporting = false;
+  bool _showDetails = false;
 
   @override
   void initState() {
@@ -81,16 +82,22 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
                     ),
                     const SizedBox(height: 12),
                     Card(
-                      child: ExpansionTile(
-                        key: const PageStorageKey('attendance-report-tables'),
+                      child: ListTile(
+                        key: const Key('attendance-report-tables'),
                         title: Text(context.tr('Attendance details')),
-                        children: buildReportTablesSection(
-                          context,
-                          report: report,
-                          employeeId: state.employeeId,
+                        trailing: Icon(
+                          _showDetails ? Icons.expand_less : Icons.expand_more,
                         ),
+                        onTap: () =>
+                            setState(() => _showDetails = !_showDetails),
                       ),
                     ),
+                    if (_showDetails)
+                      ...buildReportTablesSection(
+                        context,
+                        report: report,
+                        employeeId: state.employeeId,
+                      ),
                   ],
                 ],
               ),
