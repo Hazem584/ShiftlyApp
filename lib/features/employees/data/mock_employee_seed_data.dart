@@ -1,0 +1,53 @@
+import 'package:shiftly/core/models/employee.dart';
+import 'package:shiftly/features/employees/data/mock_employee_seed.dart';
+
+List<Employee> seedMockEmployees() => [
+  Employee(
+    id: 'emp-1',
+    fullName: 'Mariam Hassan',
+    phone: '+20 100 123 4567',
+    email: 'mariam@shiftlab.com',
+    jobTitle: 'Operations Lead',
+    location: mockWorkLocations[0],
+    shift: mockShifts[0],
+    startDate: DateTime(2024, 2, 12),
+    employmentStatus: EmploymentStatus.active,
+    attendanceStatus: AttendanceStatus.present,
+  ),
+  Employee(
+    id: 'emp-2',
+    fullName: 'Omar Khaled',
+    phone: '+20 111 234 5678',
+    email: 'omar@shiftlab.com',
+    jobTitle: 'Lab Technician',
+    location: mockWorkLocations[0],
+    shift: mockShifts[0],
+    startDate: DateTime(2024, 6, 3),
+    employmentStatus: EmploymentStatus.active,
+    attendanceStatus: AttendanceStatus.late,
+  ),
+  Employee(
+    id: 'emp-3',
+    fullName: 'Nour Adel',
+    phone: '+20 122 345 6789',
+    email: 'nour@shiftlab.com',
+    jobTitle: 'Customer Specialist',
+    location: mockWorkLocations[1],
+    shift: mockShifts[1],
+    startDate: DateTime(2025, 1, 20),
+    employmentStatus: EmploymentStatus.onLeave,
+    attendanceStatus: AttendanceStatus.absent,
+  ),
+  Employee(
+    id: 'emp-4',
+    fullName: 'Youssef Samir',
+    phone: '+20 155 456 7890',
+    email: 'youssef@shiftlab.com',
+    jobTitle: 'Lab Technician',
+    location: mockWorkLocations[0],
+    shift: mockShifts[0],
+    startDate: DateTime(2025, 4, 7),
+    employmentStatus: EmploymentStatus.active,
+    attendanceStatus: AttendanceStatus.present,
+  ),
+];

@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/widgets/workspace_content_frame.dart';
-import 'package:shiftly/features/attendance/presentation/screens/employee_attendance_screen.dart';
-import 'package:shiftly/features/chat/presentation/screens/chat_groups_screen.dart';
-import 'package:shiftly/features/dashboard/presentation/screens/employee_dashboard_screen.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_bottom_navigation.dart';
-import 'package:shiftly/features/profile/presentation/screens/profile_screen.dart';
+import 'package:shiftly/features/shell/presentation/screens/employee_shell_tabs.dart';
 import 'package:shiftly/features/shell/presentation/widgets/workspace_navigation_rail.dart';
-import 'package:shiftly/features/tasks/presentation/tasks_screen.dart';
 
 class EmployeeShellScreen extends StatefulWidget {
   const EmployeeShellScreen({
@@ -25,13 +19,7 @@ class EmployeeShellScreen extends StatefulWidget {
 }
 
 class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
-  late int _selectedIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedIndex = widget.initialTab;
-  }
+  late int _selectedIndex = widget.initialTab;
 
   @override
   void didUpdateWidget(covariant EmployeeShellScreen oldWidget) {
@@ -68,32 +56,11 @@ class _EmployeeShellScreenState extends State<EmployeeShellScreen> {
                 child: SafeArea(
                   child: IndexedStack(
                     index: _selectedIndex,
-                    children: [
-                      TickerMode(
-                        enabled: _selectedIndex == 0,
-                        child: const EmployeeDashboardScreen(),
-                      ),
-                      TickerMode(
-                        enabled: _selectedIndex == 1,
-                        child: EmployeeAttendanceScreen(
-                          initialTab: widget.initialAttendanceTab,
-                        ),
-                      ),
-                      TickerMode(
-                        enabled: _selectedIndex == 2,
-                        child: const TasksScreen(),
-                      ),
-                      TickerMode(
-                        enabled: _selectedIndex == 3,
-                        child: const ChatGroupsScreen(embedded: true),
-                      ),
-                      TickerMode(
-                        enabled: _selectedIndex == 4,
-                        child: ProfileScreen(
-                          onLogout: context.read<SessionCoordinator>().signOut,
-                        ),
-                      ),
-                    ],
+                    children: buildEmployeeShellTabs(
+                      context,
+                      selectedIndex: _selectedIndex,
+                      initialAttendanceTab: widget.initialAttendanceTab,
+                    ),
                   ),
                 ),
               ),

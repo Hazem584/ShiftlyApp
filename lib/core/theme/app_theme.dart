@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:shiftly/core/theme/app_button_themes.dart';
+import 'package:shiftly/core/theme/app_color_scheme.dart';
 import 'package:shiftly/core/theme/app_colors.dart';
+import 'package:shiftly/core/theme/app_form_themes.dart';
+import 'package:shiftly/core/theme/app_navigation_themes.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
+import 'package:shiftly/core/theme/app_surface_themes.dart';
+
+export 'package:shiftly/core/theme/app_dimensions.dart';
 
 class AppTheme {
   static const Color seedColor = AppColors.primaryColor;
@@ -10,51 +17,7 @@ class AppTheme {
 
   static ThemeData _theme(Brightness brightness) {
     final colors = AppPalette(brightness);
-    final colorScheme =
-        ColorScheme.fromSeed(
-          seedColor: seedColor,
-          brightness: brightness,
-        ).copyWith(
-          primary: colors.primaryColor,
-          onPrimary: brightness == Brightness.dark
-              ? Color(0xFF062B29)
-              : Colors.white,
-          primaryContainer: colors.selected,
-          onPrimaryContainer: colors.ink,
-          secondary: colors.orange,
-          onSecondary: brightness == Brightness.dark
-              ? colors.canvas
-              : Colors.white,
-          secondaryContainer: colors.orangeSoft,
-          onSecondaryContainer: colors.ink,
-          tertiary: colors.teal,
-          onTertiary: brightness == Brightness.dark
-              ? colors.canvas
-              : Colors.white,
-          tertiaryContainer: colors.tealSoft,
-          onTertiaryContainer: colors.ink,
-          surface: colors.surface,
-          onSurface: colors.ink,
-          surfaceContainerLowest: colors.surface,
-          surfaceContainerLow: colors.canvas,
-          surfaceContainerHighest: colors.field,
-          onSurfaceVariant: colors.textSecondary,
-          outline: colors.textSecondary,
-          outlineVariant: colors.borderColor,
-          error: colors.error,
-        );
-
-    final dateForeground = WidgetStateProperty.resolveWith<Color>((states) {
-      if (states.contains(WidgetState.disabled)) {
-        return colors.textSecondary;
-      }
-      if (states.contains(WidgetState.selected)) {
-        return colorScheme.onPrimary;
-      }
-      return colors.ink;
-    });
-    const radius = BorderRadius.all(Radius.circular(AppRadii.m));
-
+    final colorScheme = buildAppColorScheme(brightness, colors);
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Cairo',
@@ -63,80 +26,10 @@ class AppTheme {
       visualDensity: VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       brightness: brightness,
-      textTheme: TextTheme(
-        headlineMedium: TextStyle(
-          fontSize: 26,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -.6,
-          height: 1.3,
-        ),
-        headlineSmall: TextStyle(
-          fontSize: 21,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -.3,
-          height: 1.35,
-        ),
-        titleLarge: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -.2,
-        ),
-        titleMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        bodyLarge: TextStyle(fontSize: 15, height: 1.5),
-        bodyMedium: TextStyle(fontSize: 14, height: 1.5),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          height: 1.4,
-          color: colors.textSecondary,
-        ),
-        labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: colors.canvas,
-        foregroundColor: colors.ink,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontFamily: 'Cairo',
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          color: colors.ink,
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: colors.surface,
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.m,
-          vertical: 14,
-        ),
-        hintStyle: TextStyle(color: colors.lighterGray),
-        helperStyle: TextStyle(color: colors.textSecondary, fontSize: 12),
-        prefixIconColor: colors.textSecondary,
-        border: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: colors.borderColor),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: colors.borderColor),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: colors.primaryColor, width: 1.6),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: radius,
-          borderSide: BorderSide(color: colors.error),
-        ),
-      ),
-      datePickerTheme: DatePickerThemeData(
-        backgroundColor: colors.surface,
-        headerForegroundColor: colors.ink,
-        dayForegroundColor: dateForeground,
-        yearForegroundColor: dateForeground,
-      ),
+      textTheme: buildAppTextTheme(colors),
+      appBarTheme: buildAppBarTheme(colors),
+      inputDecorationTheme: buildInputDecorationTheme(colors),
+      datePickerTheme: buildDatePickerTheme(colors, colorScheme),
       dropdownMenuTheme: DropdownMenuThemeData(
         textStyle: TextStyle(color: colors.ink, fontFamily: 'Cairo'),
       ),
@@ -148,219 +41,42 @@ class AppTheme {
         ),
         dataTextStyle: TextStyle(color: colors.ink, fontFamily: 'Cairo'),
       ),
-      cardTheme: CardThemeData(
-        color: colors.surface,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: colors.borderColor),
-          borderRadius: BorderRadius.circular(AppRadii.l),
-        ),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: colors.field,
-        selectedColor: colors.selected,
-        disabledColor: colors.field,
-        checkmarkColor: colors.ink,
-        iconTheme: IconThemeData(color: colors.ink),
-        secondaryLabelStyle: TextStyle(
-          color: colors.ink,
-          fontFamily: 'Cairo',
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-        ),
-        side: BorderSide(color: colors.borderColor),
-        labelStyle: TextStyle(
-          color: colors.ink,
-          fontFamily: 'Cairo',
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        height: 66,
-        backgroundColor: colors.surface,
-        indicatorColor: colors.selected,
-        elevation: 0,
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => TextStyle(
-            fontFamily: 'Cairo',
-            fontSize: 11,
-            fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w800
-                : FontWeight.w600,
-            color: states.contains(WidgetState.selected)
-                ? colors.ink
-                : colors.textSecondary,
-          ),
-        ),
-      ),
+      cardTheme: buildCardTheme(colors),
+      chipTheme: buildChipTheme(colors),
+      navigationBarTheme: buildNavigationBarTheme(colors),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: colors.primaryColor,
         foregroundColor: colorScheme.onPrimary,
         elevation: 2,
       ),
-      dialogTheme: DialogThemeData(
-        backgroundColor: colors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.l),
-        ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: colorScheme.inverseSurface,
-        contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.m),
-        ),
-      ),
+      dialogTheme: buildDialogTheme(colors),
+      snackBarTheme: buildSnackBarTheme(colorScheme),
       dividerTheme: DividerThemeData(color: colors.borderColor, space: 1),
       listTileTheme: ListTileThemeData(
         iconColor: colors.ink,
         minVerticalPadding: 10,
-        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          minimumSize: Size(48, 48),
+          minimumSize: const Size(48, 48),
           foregroundColor: colors.ink,
         ),
       ),
-      bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: colors.surface,
-        showDragHandle: true,
-        dragHandleColor: colors.borderColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadii.xl),
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-      ),
+      bottomSheetTheme: buildBottomSheetTheme(colors),
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: colors.primaryColor,
         linearTrackColor: colors.field,
       ),
-      tooltipTheme: TooltipThemeData(
-        decoration: BoxDecoration(
-          color: colorScheme.inverseSurface,
-          borderRadius: BorderRadius.circular(AppRadii.s),
-        ),
-        textStyle: TextStyle(
-          fontFamily: 'Cairo',
-          color: colorScheme.onInverseSurface,
-          fontSize: 12,
-        ),
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      segmentedButtonTheme: SegmentedButtonThemeData(
-        style: ButtonStyle(
-          minimumSize: WidgetStatePropertyAll(Size(48, 48)),
-          backgroundColor: WidgetStateProperty.resolveWith(
-            (states) => states.contains(WidgetState.selected)
-                ? colors.selected
-                : colors.surface,
-          ),
-          foregroundColor: WidgetStatePropertyAll(colors.ink),
-          side: WidgetStatePropertyAll(BorderSide(color: colors.borderColor)),
-        ),
-      ),
-      tabBarTheme: TabBarThemeData(
-        indicatorSize: TabBarIndicatorSize.label,
-        labelColor: colors.primaryColor,
-        unselectedLabelColor: colors.textSecondary,
-        dividerColor: colors.borderColor,
-        labelStyle: TextStyle(
-          fontFamily: 'Cairo',
-          fontWeight: FontWeight.w800,
-          fontSize: 13,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontFamily: 'Cairo',
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-        ),
-      ),
-      navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: colors.surface,
-        selectedIconTheme: IconThemeData(color: colors.primaryColor),
-        unselectedIconTheme: IconThemeData(color: colors.textSecondary),
-        selectedLabelTextStyle: TextStyle(
-          fontFamily: 'Cairo',
-          fontSize: 12,
-          color: colors.ink,
-          fontWeight: FontWeight.w800,
-        ),
-        unselectedLabelTextStyle: TextStyle(
-          fontFamily: 'Cairo',
-          fontSize: 12,
-          color: colors.textSecondary,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          minimumSize: Size.fromHeight(48),
-          shape: RoundedRectangleBorder(borderRadius: radius),
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-          disabledBackgroundColor: colors.field,
-          disabledForegroundColor: colors.textSecondary,
-          minimumSize: Size(48, 48),
-          shape: RoundedRectangleBorder(borderRadius: radius),
-          padding: EdgeInsets.symmetric(horizontal: AppSpacing.m),
-          textStyle: TextStyle(
-            fontFamily: 'Cairo',
-            fontWeight: FontWeight.w800,
-            fontSize: 15,
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: colors.ink,
-          side: BorderSide(color: colors.borderColor),
-          minimumSize: Size(48, 48),
-          shape: RoundedRectangleBorder(borderRadius: radius),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: colors.primaryColor,
-          minimumSize: Size(48, 48),
-          textStyle: TextStyle(
-            fontFamily: 'Cairo',
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
+      tooltipTheme: buildTooltipTheme(colorScheme),
+      segmentedButtonTheme: buildSegmentedButtonTheme(colors),
+      tabBarTheme: buildTabBarTheme(colors),
+      navigationRailTheme: buildNavigationRailTheme(colors),
+      elevatedButtonTheme: buildElevatedButtonTheme(),
+      filledButtonTheme: buildFilledButtonTheme(colors, colorScheme),
+      outlinedButtonTheme: buildOutlinedButtonTheme(colors),
+      textButtonTheme: buildTextButtonTheme(colors),
     );
   }
-}
-
-class AppSpacing {
-  static const double xxs = 4;
-  static const double xs = 6;
-  static const double s = 12;
-  static const double m = 16;
-  static const double l = 24;
-  static const double xl = 32;
-}
-
-class AppRadii {
-  static const double s = 12;
-  static const double m = 12;
-  static const double l = 14;
-  static const double xl = 18;
-}
-
-abstract final class AppShadows {
-  static const soft = [
-    BoxShadow(color: Color(0x07133B28), blurRadius: 20, offset: Offset(0, 6)),
-  ];
 }

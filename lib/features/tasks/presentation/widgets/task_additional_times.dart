@@ -1,7 +1,8 @@
-import 'package:day_night_time_picker/day_night_time_picker.dart' as picker;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:shiftly/core/localization/app_localizations.dart';
+
+import 'task_date_time_picker.dart';
 
 class TaskAdditionalTimes extends StatelessWidget {
   const TaskAdditionalTimes({
@@ -19,9 +20,7 @@ class TaskAdditionalTimes extends StatelessWidget {
   void _set(BuildContext context, DateTime date, {int? index}) {
     if (!date.isAfter(DateTime.now()) ||
         date.isAtSameMomentAs(primary) ||
-        dates.indexed.any(
-          (entry) => entry.$1 != index && entry.$2.isAtSameMomentAs(date),
-        )) {
+        dates.indexed.any((e) => e.$1 != index && e.$2.isAtSameMomentAs(date))) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(context.tr('Choose a different future alarm time.')),
@@ -30,65 +29,28 @@ class TaskAdditionalTimes extends StatelessWidget {
       return;
     }
     final next = [...dates];
-    if (index == null) {
-      next.add(date);
-    } else {
-      next[index] = date;
-    }
+    index == null ? next.add(date) : next[index] = date;
     next.sort((a, b) => a.compareTo(b));
     onChanged(next);
   }
 
   DateTime _nextWeek() {
     final last = [primary, ...dates]..sort((a, b) => a.compareTo(b));
-    final value = last.last.toLocal();
-    return DateTime(
-      value.year,
-      value.month,
-      value.day + 7,
-      value.hour,
-      value.minute,
-    );
+    final v = last.last.toLocal();
+    return DateTime(v.year, v.month, v.day + 7, v.hour, v.minute);
   }
 
   Future<void> _pick(BuildContext context, {int? index}) async {
     FocusScope.of(context).unfocus();
-    final now = DateTime.now();
     final initial = index == null ? _nextWeek() : dates[index].toLocal();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: initial.isBefore(now) ? now : initial,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: DateTime(now.year + 100, 12, 31),
-    );
+    final date = await pickTaskCalendarDate(context, initial);
     if (date == null || !context.mounted) return;
-    picker.Time? chosen;
-    await Navigator.of(context).push(
-      picker.showPicker(
-        context: context,
-        value: picker.Time(hour: initial.hour, minute: initial.minute),
-        onChange: (time) => chosen = time,
-        themeData: Theme.of(context),
-        accentColor: Theme.of(context).colorScheme.primary,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        width: (MediaQuery.sizeOf(context).width - 48).clamp(240.0, 380.0),
-        ltrMode: Directionality.of(context) == TextDirection.ltr,
-        is24HrFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-        amLabel: MaterialLocalizations.of(context).anteMeridiemAbbreviation,
-        pmLabel: MaterialLocalizations.of(context).postMeridiemAbbreviation,
-        cancelText: context.tr('Cancel'),
-        okText: context.tr('Confirm time'),
-        borderRadius: 24,
-        dialogInsetPadding: const EdgeInsets.all(16),
-      ),
-    );
-    final time = chosen;
-    if (time == null || !context.mounted) return;
-    _set(
+    final picked = await pickTaskClockTime(
       context,
-      DateTime(date.year, date.month, date.day, time.hour, time.minute),
-      index: index,
+      date,
+      initialTime: initial,
     );
+    if (picked != null && context.mounted) _set(context, picked, index: index);
   }
 
   @override
@@ -106,21 +68,17 @@ class TaskAdditionalTimes extends StatelessWidget {
           context.tr('One task, the same title and details at every time.'),
           style: Theme.of(context).textTheme.bodySmall,
         ),
-        for (final (index, date) in dates.indexed)
+        for (final (i, date) in dates.indexed)
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.event_repeat_rounded),
-            title: Text(
-              DateFormat.yMMMd(locale).add_jm().format(date.toLocal()),
-            ),
-            onTap: enabled ? () => _pick(context, index: index) : null,
+            title: Text(DateFormat.yMMMd(locale).add_jm().format(date.toLocal())),
+            onTap: enabled ? () => _pick(context, index: i) : null,
             trailing: IconButton(
-              key: Key('remove-alarm-$index'),
+              key: Key('remove-alarm-$i'),
               tooltip: context.tr('Remove alarm time'),
               icon: const Icon(Icons.close_rounded),
-              onPressed: enabled
-                  ? () => onChanged([...dates]..removeAt(index))
-                  : null,
+              onPressed: enabled ? () => onChanged([...dates]..removeAt(i)) : null,
             ),
           ),
         Wrap(
@@ -129,9 +87,7 @@ class TaskAdditionalTimes extends StatelessWidget {
           children: [
             OutlinedButton.icon(
               key: const Key('add-task-alarm'),
-              onPressed: enabled && dates.length < 49
-                  ? () => _pick(context)
-                  : null,
+              onPressed: enabled && dates.length < 49 ? () => _pick(context) : null,
               icon: const Icon(Icons.add_alarm_rounded),
               label: Text(context.tr('Add alarm time')),
             ),

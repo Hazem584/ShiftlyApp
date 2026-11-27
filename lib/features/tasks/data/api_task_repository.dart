@@ -1,52 +1,29 @@
 import 'package:dio/dio.dart';
-import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/serialization/api_model_parser.dart';
 
 import '../domain/personal_task.dart';
 import '../domain/task_repository.dart';
+import 'api_task_payloads.dart';
+import 'api_task_requests.dart';
 
 class ApiTaskRepository implements TaskRepository {
   ApiTaskRepository(this._dio);
   final Dio _dio;
-  static const _path = '/personal-tasks';
-  Future<T> _request<T>(Future<T> Function() action) async {
-    try {
-      return await action();
-    } catch (error) {
-      throw ApiErrorParser.parse(error);
-    }
-  }
-
-  List<PersonalTask> _items(Object? value) =>
-      ApiModelParser.list(value)
-          .map((e) => PersonalTask.fromJson(ApiModelParser.map(e)))
-          .toList();
   @override
   Future<TaskPage> list({required bool completed, required int page}) =>
-      _request(() async {
-        final json = ApiModelParser.map(
-          (await _dio.get<Object?>(
-            _path,
-            queryParameters: {
-              'status': completed ? 'COMPLETED' : 'OPEN',
-              'page': page,
-              'limit': 30,
-            },
-          )).data,
-        );
-        return TaskPage(
-          _items(json['items']),
-          ApiModelParser.integer(json, 'total'),
-        );
-      });
+      fetchApiTaskPage(_dio, completed: completed, page: page);
   @override
-  Future<List<PersonalTask>> upcoming() => _request(
-    () async => _items((await _dio.get<Object?>('$_path/upcoming')).data),
+  Future<List<PersonalTask>> upcoming() => runTaskApiRequest(
+    () async => parseTaskItems(
+      (await _dio.get<Object?>('$personalTasksPath/upcoming')).data,
+    ),
   );
   @override
-  Future<PersonalTask> get(String id) => _request(
+  Future<PersonalTask> get(String id) => runTaskApiRequest(
     () async => PersonalTask.fromJson(
-      ApiModelParser.map((await _dio.get<Object?>('$_path/$id')).data),
+      ApiModelParser.map(
+        (await _dio.get<Object?>('$personalTasksPath/$id')).data,
+      ),
     ),
   );
   @override
@@ -59,23 +36,19 @@ class ApiTaskRepository implements TaskRepository {
     bool remindDayBefore = false,
     bool remindHourBefore = false,
     List<DateTime> additionalDueAts = const [],
-  }) => _request(() async {
-    await _dio.post<Object?>(
-      _path,
-      data: {
-        'workspaceId': workspaceId,
-        'title': title,
-        'description': description,
-        'dueAt': dueAt.toUtc().toIso8601String(),
-        'durationMinutes': ?durationMinutes,
-        'remindDayBefore': remindDayBefore,
-        'remindHourBefore': remindHourBefore,
-        'additionalDueAts': additionalDueAts
-            .map((date) => date.toUtc().toIso8601String())
-            .toList(),
-      },
-    );
-  });
+  }) => postApiTask(
+    _dio,
+    buildCreateTaskPayload(
+      workspaceId: workspaceId,
+      title: title,
+      description: description,
+      dueAt: dueAt,
+      durationMinutes: durationMinutes,
+      remindDayBefore: remindDayBefore,
+      remindHourBefore: remindHourBefore,
+      additionalDueAts: additionalDueAts,
+    ),
+  );
   @override
   Future<void> update(
     PersonalTask task, {
@@ -87,49 +60,29 @@ class ApiTaskRepository implements TaskRepository {
     bool? remindDayBefore,
     bool? remindHourBefore,
     List<DateTime>? additionalDueAts,
-  }) => _request(() async {
-    await _dio.patch<Object?>(
-      '$_path/${task.id}',
-      data: {
-        'revision': task.revision,
-        'title': ?title,
-        'description': ?description,
-        'durationMinutes': ?durationMinutes,
-        'remindDayBefore': ?remindDayBefore,
-        'remindHourBefore': ?remindHourBefore,
-        if (additionalDueAts != null)
-          'additionalDueAts': additionalDueAts
-              .map((date) => date.toUtc().toIso8601String())
-              .toList(),
-        if (dueAt != null) 'dueAt': dueAt.toUtc().toIso8601String(),
-        if (completed != null) 'status': completed ? 'COMPLETED' : 'OPEN',
-      },
-    );
-  });
+  }) => patchApiTask(
+    _dio,
+    task.id,
+    buildUpdateTaskPayload(
+      task,
+      title: title,
+      description: description,
+      dueAt: dueAt,
+      completed: completed,
+      durationMinutes: durationMinutes,
+      remindDayBefore: remindDayBefore,
+      remindHourBefore: remindHourBefore,
+      additionalDueAts: additionalDueAts,
+    ),
+  );
   @override
-  Future<void> remove(PersonalTask task) => _request(() async {
-    await _dio.delete<Object?>(
-      '$_path/${task.id}',
+  Future<void> remove(PersonalTask task) => runTaskApiRequest(
+    () => _dio.delete<Object?>(
+      '$personalTasksPath/${task.id}',
       queryParameters: {'revision': task.revision},
-    );
-  });
+    ),
+  );
   @override
   Future<void> register(String installationId, List<PersonalTask> scheduled) =>
-      _request(() async {
-        await _dio.post<Object?>(
-          '$_path/reminder-registrations',
-          data: {
-            'installationId': installationId,
-            'tasks': scheduled
-                .map(
-                  (t) => {
-                    'id': t.id,
-                    'revision': t.revision,
-                    'coverageVersion': 4,
-                  },
-                )
-                .toList(),
-          },
-        );
-      });
+      registerApiTaskReminders(_dio, installationId, scheduled);
 }

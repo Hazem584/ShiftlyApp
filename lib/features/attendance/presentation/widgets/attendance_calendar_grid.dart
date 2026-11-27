@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_legend.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_day_cell.dart';
 
 class AttendanceCalendarGrid extends StatelessWidget {
   const AttendanceCalendarGrid({
@@ -30,18 +30,17 @@ class AttendanceCalendarGrid extends StatelessWidget {
       key: const Key('calendar-grid'),
       children: [
         Row(
-          children: weekdays
-              .map(
-                (day) => Expanded(
-                  child: Center(
-                    child: Text(
-                      context.tr(day),
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
+          children: [
+            for (final day in weekdays)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    context.tr(day),
+                    style: Theme.of(context).textTheme.labelSmall,
                   ),
                 ),
-              )
-              .toList(growable: false),
+              ),
+          ],
         ),
         const SizedBox(height: 4),
         GridView.builder(
@@ -63,8 +62,6 @@ class AttendanceCalendarGrid extends StatelessWidget {
               month: data.month,
               day: day,
             );
-            final entries = data.days[key] ?? const [];
-            final statuses = entries.map((item) => item.status).toSet();
             final selected =
                 selectedDate?.year == date.year &&
                 selectedDate?.month == date.month &&
@@ -73,91 +70,15 @@ class AttendanceCalendarGrid extends StatelessWidget {
                 now.year == date.year &&
                 now.month == date.month &&
                 now.day == day;
-            final label = statuses.map(calendarStatusLabel).join(', ');
-            return Semantics(
-              button: true,
+            return buildAttendanceCalendarDayCell(
+              context: context,
+              data: data,
+              day: day,
+              date: date,
+              key: key,
               selected: selected,
-              label: context.tr('{value1}{value2}', {
-                'value1': (key).toString(),
-                'value2': (label.isEmpty ? '' : ', $label').toString(),
-              }),
-              child: InkWell(
-                key: Key('calendar-day-$key'),
-                onTap: () => onSelected(date),
-                borderRadius: BorderRadius.circular(10),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 4,
-                    horizontal: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
-                    border: today && !selected
-                        ? Border.all(
-                            color: Theme.of(context).colorScheme.primary,
-                          )
-                        : null,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: FittedBox(
-                          child: Text(
-                            context.tr('{value1}', {
-                              'value1': (day).toString(),
-                            }),
-                            style: TextStyle(
-                              color: selected
-                                  ? Theme.of(context).colorScheme.onPrimary
-                                  : null,
-                              fontWeight: today || selected
-                                  ? FontWeight.w700
-                                  : null,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (date.weekday == DateTime.friday &&
-                          entries.isEmpty &&
-                          !data.scheduledDates.contains(key))
-                        Text(
-                          context.tr('Off'),
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
-                        ),
-                      if (statuses.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 2,
-                          runSpacing: 2,
-                          children: statuses
-                              .map(
-                                (status) => Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: calendarStatusColor(status),
-                                  ),
-                                ),
-                              )
-                              .toList(growable: false),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+              today: today,
+              onSelected: onSelected,
             );
           },
         ),

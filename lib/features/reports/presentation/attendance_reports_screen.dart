@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
-import 'package:shiftly/features/reports/domain/attendance_report.dart';
 import 'package:shiftly/features/reports/domain/report_export.dart';
-import 'package:shiftly/features/reports/presentation/attendance_report_sources.dart';
-import 'package:shiftly/features/reports/presentation/attendance_report_totals.dart';
+import 'package:shiftly/features/reports/presentation/attendance_report_actions.dart';
+import 'package:shiftly/features/reports/presentation/attendance_report_controls.dart';
+import 'package:shiftly/features/reports/presentation/attendance_report_overview.dart';
+import 'package:shiftly/features/reports/presentation/attendance_report_tables.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_cubit.dart';
 
 class AttendanceReportsScreen extends StatefulWidget {
@@ -36,250 +36,51 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(context.tr('Attendance summary'))),
     body: BlocConsumer<AttendanceReportsCubit, AttendanceReportsState>(
-      listenWhen: (before, after) =>
-          before.range != null && after.range == null,
+      listenWhen: (b, a) => b.range != null && a.range == null,
       listener: (context, _) =>
           unawaited(context.read<AttendanceReportsCubit>().open()),
       builder: (context, state) {
         final cubit = context.read<AttendanceReportsCubit>();
-        final busy = state.loading || _exporting;
-        final report = state.report;
+        final busy = state.loading || _exporting, report = state.report;
         return RefreshIndicator(
           onRefresh: () => _exporting ? Future.value() : cubit.load(),
           child: ListView(
             padding: const EdgeInsets.all(16),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              Text(
-                context.tr(
-                  'Weekly and monthly attendance, lateness and work hours',
-                ),
-                style: Theme.of(context).textTheme.bodyLarge,
+              ...buildReportPeriodControls(
+                context,
+                state: state,
+                busy: busy,
+                onChooseRange: () =>
+                    chooseAttendanceReportRange(context, state, _message),
               ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  ChoiceChip(
-                    label: Text(context.tr('Weekly')),
-                    selected: state.period == ReportPeriod.weekly,
-                    onSelected: busy
-                        ? null
-                        : (_) => cubit.selectPeriod(ReportPeriod.weekly),
-                  ),
-                  ChoiceChip(
-                    label: Text(context.tr('Monthly')),
-                    selected: state.period == ReportPeriod.monthly,
-                    onSelected: busy
-                        ? null
-                        : (_) => cubit.selectPeriod(ReportPeriod.monthly),
-                  ),
-                  ActionChip(
-                    label: Text(context.tr('Choose period')),
-                    avatar: const Icon(Icons.date_range),
-                    onPressed: busy ? null : () => _chooseRange(state),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  IconButton(
-                    tooltip: context.tr('Previous period'),
-                    onPressed: busy ? null : () => cubit.move(-1),
-                    icon: const Icon(Icons.chevron_left),
-                  ),
-                  Expanded(
-                    child: Text(
-                      state.range?.label ?? '',
-                      textAlign: TextAlign.center,
-                      textDirection: TextDirection.ltr,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: context.tr('Next period'),
-                    onPressed: busy ? null : () => cubit.move(1),
-                    icon: const Icon(Icons.chevron_right),
-                  ),
-                ],
-              ),
-              if (state.period == ReportPeriod.weekly)
-                Text(context.tr('Weeks run Saturday through Friday.')),
               if (state.loading)
                 const Padding(
                   padding: EdgeInsets.all(32),
                   child: AppContentLoading(),
                 ),
-              if (state.failure != null) ...[
-                const SizedBox(height: 16),
-                Text(context.tr(state.failure!.message)),
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: FilledButton.icon(
-                    onPressed: busy ? null : () => cubit.load(),
-                    icon: const Icon(Icons.refresh),
-                    label: Text(context.tr('Refresh report')),
-                  ),
+              if (state.failure != null)
+                ...buildReportFailureBanner(
+                  context,
+                  state.failure!.message,
+                  busy: busy,
+                  onRefresh: cubit.load,
                 ),
-              ],
               if (report != null) ...[
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  key: ValueKey('${report.generatedAt}-${state.employeeId}'),
-                  initialValue: state.employeeId ?? '',
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Employee filter'),
-                    border: const OutlineInputBorder(),
-                  ),
-                  items: [
-                    DropdownMenuItem(
-                      value: '',
-                      child: Text(context.tr('All employees')),
-                    ),
-                    for (final employee in report.employees)
-                      DropdownMenuItem(
-                        value: employee.id,
-                        child: Text(
-                          employee.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                  onChanged: busy
-                      ? null
-                      : (id) => cubit.selectEmployee(id == '' ? null : id),
+                ...buildReportOverviewSection(
+                  context,
+                  report: report,
+                  state: state,
+                  busy: busy,
+                  exporting: _exporting,
+                  onExport: (format) => _export(format, state),
                 ),
-                const SizedBox(height: 12),
-                Text('${report.workspaceName} • ${report.timezone}'),
-                Text(
-                  '${context.tr('Generated at')}: ${WorkspaceTime.dateTime(report.generatedAt, report.timezone, locale: Localizations.localeOf(context).languageCode)}',
+                ...buildReportTablesSection(
+                  context,
+                  report: report,
+                  employeeId: state.employeeId,
                 ),
-                const SizedBox(height: 12),
-                AttendanceReportTotals(
-                  metrics: report.totalsFor(state.employeeId),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.icon(
-                      key: const Key('report-export-excel'),
-                      onPressed: busy
-                          ? null
-                          : () => _export(ReportFileFormat.excel, state),
-                      icon: const Icon(Icons.table_chart_outlined),
-                      label: Text(context.tr('Export Excel')),
-                    ),
-                    OutlinedButton.icon(
-                      key: const Key('report-export-pdf'),
-                      onPressed: busy
-                          ? null
-                          : () => _export(ReportFileFormat.pdf, state),
-                      icon: const Icon(Icons.picture_as_pdf_outlined),
-                      label: Text(context.tr('Export PDF')),
-                    ),
-                    IconButton(
-                      tooltip: context.tr('Refresh report'),
-                      onPressed: busy ? null : () => cubit.load(),
-                      icon: const Icon(Icons.refresh),
-                    ),
-                    if (_exporting)
-                      const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  context.tr(
-                    'Hours include approved closed records only. Open, pending and rejected records do not add hours.',
-                  ),
-                ),
-                Text(
-                  context.tr(
-                    'Overtime includes time after the shift, minus arrival delay. Unused break time is added at shift end for on-time attendance.',
-                  ),
-                ),
-                Text(
-                  context.tr(
-                    'Dates use clock-in time in the workspace timezone. Overnight work stays on the clock-in date. Recorded breaks are deducted.',
-                  ),
-                ),
-                Text(
-                  context.tr(
-                    'Attendance days count distinct approved clock-in dates per employee. No attendance does not prove absence.',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (report.recordsFor(state.employeeId).isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Text(context.tr('No attendance in this period.')),
-                  ),
-                if (report.rowsFor(state.employeeId).isNotEmpty)
-                  PaginatedDataTable(
-                    key: ValueKey(
-                      'summary-${report.generatedAt}-${state.employeeId}',
-                    ),
-                    header: Text(context.tr('Employee summary')),
-                    rowsPerPage: 10,
-                    availableRowsPerPage: const [10],
-                    showFirstLastButtons: true,
-                    columnSpacing: 20,
-                    columns: [
-                      for (final title in const [
-                        'Employee',
-                        'Attendance days',
-                        'Approved records',
-                        'Pending records',
-                        'Rejected records',
-                        'Open records',
-                        'Late records',
-                        'Late minutes',
-                        'Worked hours',
-                        'Extra shift hours',
-                        'Schedule excess hours',
-                      ])
-                        DataColumn(label: Text(context.tr(title))),
-                    ],
-                    source: AttendanceSummarySource(
-                      report.rowsFor(state.employeeId),
-                    ),
-                  ),
-                if (report.recordsFor(state.employeeId).isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  PaginatedDataTable(
-                    key: ValueKey(
-                      'details-${report.generatedAt}-${state.employeeId}',
-                    ),
-                    header: Text(context.tr('Attendance details')),
-                    rowsPerPage: 10,
-                    availableRowsPerPage: const [10],
-                    showFirstLastButtons: true,
-                    columnSpacing: 20,
-                    columns: [
-                      for (final title in const [
-                        'Employee',
-                        'Clock in',
-                        'Clock out',
-                        'Review status',
-                        'Late minutes',
-                        'Worked hours',
-                      ])
-                        DataColumn(label: Text(context.tr(title))),
-                    ],
-                    source: AttendanceDetailsSource(
-                      report,
-                      state.employeeId,
-                      AppLocalizations.of(context),
-                    ),
-                  ),
-                ],
               ],
             ],
           ),
@@ -288,83 +89,20 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
     ),
   );
 
-  Future<void> _chooseRange(AttendanceReportsState state) async {
-    final cubit = context.read<AttendanceReportsCubit>();
-    final range = state.range;
-    final picked = await showDateRangePicker(
+  Future<void> _export(ReportFileFormat f, AttendanceReportsState state) async {
+    if (_exporting) return;
+    await runAttendanceReportExport(
       context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      initialDateRange: range == null
-          ? null
-          : DateTimeRange(
-              start: DateTime(
-                range.start.year,
-                range.start.month,
-                range.start.day,
-              ),
-              end: DateTime(range.end.year, range.end.month, range.end.day),
-            ),
+      format: f,
+      state: state,
+      customExporter: widget.exporter,
+      customDelivery: widget.fileDelivery,
+      setExporting: (v) => setState(() => _exporting = v),
+      onMessage: _message,
     );
-    if (!mounted || picked == null || !identical(state, cubit.state)) return;
-    try {
-      await cubit.load(
-        range: ReportRange(picked.start, picked.end),
-        period: ReportPeriod.custom,
-      );
-    } on FormatException {
-      if (mounted) _message('Choose a period of up to 366 days.');
-    }
   }
 
-  Future<void> _export(
-    ReportFileFormat format,
-    AttendanceReportsState state,
-  ) async {
-    final report = state.report;
-    final cubit = context.read<AttendanceReportsCubit>();
-    if (_exporting || report == null || !cubit.canExport(report)) return;
-    final strings = ReportLabels(
-      AppLocalizations.of(context).text,
-      isArabic: Localizations.localeOf(context).languageCode == 'ar',
-    );
-    final exporter = widget.exporter ?? context.read<ReportExporter>();
-    final delivery = widget.fileDelivery ?? context.read<ReportFileDelivery>();
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box == null
-        ? const Rect.fromLTWH(0, 0, 1, 1)
-        : box.localToGlobal(Offset.zero) & box.size;
-    setState(() => _exporting = true);
-    bool current() =>
-        mounted &&
-        cubit.canExport(report) &&
-        cubit.state.employeeId == state.employeeId;
-    try {
-      final file = await exporter.create(
-        report,
-        format: format,
-        strings: strings,
-        employeeId: state.employeeId,
-      );
-      if (!current()) return;
-      await delivery.deliver(
-        file,
-        origin: ReportShareOrigin(
-          origin.left,
-          origin.top,
-          origin.width,
-          origin.height,
-        ),
-        isCurrent: current,
-      );
-    } catch (_) {
-      if (current()) _message('Unable to export report. Try again.');
-    } finally {
-      if (mounted) setState(() => _exporting = false);
-    }
-  }
-
-  void _message(String message) =>
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.tr(message))));
+  void _message(String message) => ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(context.tr(message))));
 }

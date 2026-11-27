@@ -1,7 +1,7 @@
-import '../entities/attendance_calendar_entry.dart';
-import '../entities/attendance_calendar_month.dart';
-import '../entities/attendance_month_control.dart';
-import '../entities/calendar_attendance_status.dart';
+import 'package:shiftly/features/attendance/domain/entities/attendance_calendar_entry.dart';
+import 'package:shiftly/features/attendance/domain/entities/attendance_calendar_month.dart';
+import 'package:shiftly/features/attendance/domain/entities/attendance_month_control.dart';
+import 'package:shiftly/features/attendance/domain/entities/calendar_attendance_status.dart';
 
 AttendanceCalendarMonth applyAttendanceDayDecisions(
   AttendanceCalendarMonth month,
@@ -16,27 +16,20 @@ AttendanceCalendarMonth applyAttendanceDayDecisions(
       );
       final previous = index < 0 ? null : entries[index];
       final employee = day.employee ?? previous?.employee;
-      final status = switch (day.status) {
-        'PRESENT' => CalendarAttendanceStatus.present,
-        'LATE' => CalendarAttendanceStatus.late,
-        'ABSENT' => CalendarAttendanceStatus.absent,
-        'LEAVE' => CalendarAttendanceStatus.leave,
-        _ => null,
-      };
+      final status = _parseCalendarStatus(day.status);
       if (employee == null || status == null) continue;
-      final entry = AttendanceCalendarEntry(
-        employeeMembershipId: day.employeeMembershipId,
-        employee: employee,
-        status: status,
-        shift: previous?.shift,
-        attendance: previous?.attendance,
-        leave: previous?.leave,
+      _upsertEntry(
+        entries,
+        index,
+        AttendanceCalendarEntry(
+          employeeMembershipId: day.employeeMembershipId,
+          employee: employee,
+          status: status,
+          shift: previous?.shift,
+          attendance: previous?.attendance,
+          leave: previous?.leave,
+        ),
       );
-      if (index < 0) {
-        entries.add(entry);
-      } else {
-        entries[index] = entry;
-      }
     }
   }
   for (final decision in control.overrides) {
@@ -45,29 +38,23 @@ AttendanceCalendarMonth applyAttendanceDayDecisions(
       (e) => e.employeeMembershipId == decision.employeeMembershipId,
     );
     final previous = index < 0 ? null : entries[index];
-    final status = switch (decision.status) {
-      'PRESENT' => CalendarAttendanceStatus.present,
-      'LATE' => CalendarAttendanceStatus.late,
-      'ABSENT' => CalendarAttendanceStatus.absent,
-      'LEAVE' => CalendarAttendanceStatus.leave,
-      _ => previous?.status,
-    };
+    final status =
+        _parseCalendarStatus(decision.status) ?? previous?.status;
     if (status == null) continue;
-    final entry = AttendanceCalendarEntry(
-      employeeMembershipId: decision.employeeMembershipId,
-      employee: previous?.employee ?? decision.employee,
-      status: status,
-      shift: previous?.shift,
-      attendance: previous?.attendance,
-      leave: previous?.leave,
-      decisionReason: decision.status == 'AUTO' ? null : decision.reason,
-      decisionRevision: decision.revision,
+    _upsertEntry(
+      entries,
+      index,
+      AttendanceCalendarEntry(
+        employeeMembershipId: decision.employeeMembershipId,
+        employee: previous?.employee ?? decision.employee,
+        status: status,
+        shift: previous?.shift,
+        attendance: previous?.attendance,
+        leave: previous?.leave,
+        decisionReason: decision.status == 'AUTO' ? null : decision.reason,
+        decisionRevision: decision.revision,
+      ),
     );
-    if (index < 0) {
-      entries.add(entry);
-    } else {
-      entries[index] = entry;
-    }
   }
   return AttendanceCalendarMonth(
     scheduledShifts: month.scheduledShifts,
@@ -81,3 +68,18 @@ AttendanceCalendarMonth applyAttendanceDayDecisions(
     scheduledDates: month.scheduledDates,
   );
 }
+
+CalendarAttendanceStatus? _parseCalendarStatus(String status) =>
+    switch (status) {
+      'PRESENT' => CalendarAttendanceStatus.present,
+      'LATE' => CalendarAttendanceStatus.late,
+      'ABSENT' => CalendarAttendanceStatus.absent,
+      'LEAVE' => CalendarAttendanceStatus.leave,
+      _ => null,
+    };
+
+void _upsertEntry(
+  List<AttendanceCalendarEntry> entries,
+  int index,
+  AttendanceCalendarEntry entry,
+) => index < 0 ? entries.add(entry) : entries[index] = entry;

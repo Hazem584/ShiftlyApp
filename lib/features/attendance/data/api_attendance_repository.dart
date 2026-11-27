@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:shiftly/core/error/api_error_parser.dart';
-import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/attendance/data/api_attendance_parser.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 
 class ApiAttendanceRepository implements AttendanceRepository {
@@ -9,22 +8,26 @@ class ApiAttendanceRepository implements AttendanceRepository {
 
   @override
   Future<AttendanceRecordApi> clockIn(String shiftId) =>
-      _object(() => _dio.post<Object?>('/shifts/$shiftId/clock-in'));
+      parseAttendanceRecordResponse(
+        () => _dio.post<Object?>('/shifts/$shiftId/clock-in'),
+      );
 
   @override
   Future<AttendanceRecordApi> clockOut(String shiftId) =>
-      _object(() => _dio.post<Object?>('/shifts/$shiftId/clock-out'));
+      parseAttendanceRecordResponse(
+        () => _dio.post<Object?>('/shifts/$shiftId/clock-out'),
+      );
 
   @override
   Future<AttendancePage> listWorkspaceAttendance(
     String workspaceId,
     AttendanceQuery query,
-  ) => _request(() async {
+  ) => runAttendanceApiRequest(() async {
     final response = await _dio.get<Object?>(
       '/workspaces/$workspaceId/attendance',
       queryParameters: query.toQuery(),
     );
-    return _page(response.data);
+    return parseAttendancePageResponse(response.data);
   });
 
   @override
@@ -32,19 +35,19 @@ class ApiAttendanceRepository implements AttendanceRepository {
     String workspaceId, {
     int page = 1,
     int limit = 20,
-  }) => _request(() async {
+  }) => runAttendanceApiRequest(() async {
     final response = await _dio.get<Object?>(
       '/workspaces/$workspaceId/attendance/requests',
       queryParameters: <String, Object?>{'page': page, 'limit': limit},
     );
-    return _page(response.data);
+    return parseAttendancePageResponse(response.data);
   });
 
   @override
   Future<AttendanceRecordApi> getWorkspaceAttendance(
     String workspaceId,
     String attendanceId,
-  ) => _object(
+  ) => parseAttendanceRecordResponse(
     () =>
         _dio.get<Object?>('/workspaces/$workspaceId/attendance/$attendanceId'),
   );
@@ -55,7 +58,7 @@ class ApiAttendanceRepository implements AttendanceRepository {
     String attendanceId,
     AttendanceReviewDecision decision, {
     String? rejectionReason,
-  }) => _object(
+  }) => parseAttendanceRecordResponse(
     () => _dio.patch<Object?>(
       '/workspaces/$workspaceId/attendance/$attendanceId/review',
       data: <String, Object?>{
@@ -72,7 +75,7 @@ class ApiAttendanceRepository implements AttendanceRepository {
   Future<AttendancePage> listMyAttendance(
     String workspaceId,
     AttendanceQuery query,
-  ) => _request(() async {
+  ) => runAttendanceApiRequest(() async {
     final response = await _dio.get<Object?>(
       '/attendance/me',
       queryParameters: {
@@ -80,33 +83,6 @@ class ApiAttendanceRepository implements AttendanceRepository {
         'workspaceId': workspaceId,
       },
     );
-    return _page(response.data);
+    return parseAttendancePageResponse(response.data);
   });
-
-  Future<AttendanceRecordApi> _object(
-    Future<Response<Object?>> Function() operation,
-  ) => _request(() async {
-    final response = await operation();
-    return AttendanceRecordApi.fromJson(ApiModelParser.map(response.data));
-  });
-
-  AttendancePage _page(Object? value) {
-    final json = ApiModelParser.map(value);
-    return AttendancePage(
-      data: ApiModelParser.list(json['data'], 'data')
-          .map((item) => AttendanceRecordApi.fromJson(ApiModelParser.map(item)))
-          .toList(growable: false),
-      pagination: ApiPagination.fromJson(
-        ApiModelParser.map(json['pagination'], 'pagination'),
-      ),
-    );
-  }
-
-  Future<T> _request<T>(Future<T> Function() operation) async {
-    try {
-      return await operation();
-    } catch (error) {
-      throw ApiErrorParser.parse(error);
-    }
-  }
 }

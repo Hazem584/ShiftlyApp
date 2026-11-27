@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_page.dart';
-import 'package:shiftly/features/employee_experience/presentation/employee_tile.dart';
 
 import '../application/tasks_cubit.dart';
 import 'widgets/task_reminder_banner.dart';
+import 'widgets/task_widget_help_section.dart';
 
 class TaskOptionsScreen extends StatelessWidget {
   const TaskOptionsScreen({this.widgetHelp = false, super.key});
@@ -17,9 +17,7 @@ class TaskOptionsScreen extends StatelessWidget {
       footer: FilledButton(
         onPressed: widgetHelp
             ? () => Navigator.pop(context)
-            : () async {
-                await context.read<TasksCubit>().syncReminders(request: true);
-              },
+            : () => context.read<TasksCubit>().syncReminders(request: true),
         child: Text(context.tr(widgetHelp ? 'Done' : 'Enable reminders')),
       ),
       child: ListView(
@@ -32,32 +30,9 @@ class TaskOptionsScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 28),
-          if (widgetHelp) ...[
-            EmployeeTile(
-              title: 'Android',
-              subtitle: context.tr(
-                'Long-press your home screen, choose Widgets, then Shiftly tasks.',
-              ),
-              icon: Icons.android,
-            ),
-            const SizedBox(height: 14),
-            EmployeeTile(
-              title: 'iPhone',
-              subtitle: context.tr(
-                'Touch and hold your home screen. Tap Add Widget, then choose Shiftly.',
-              ),
-              icon: Icons.phone_iphone,
-            ),
-            const SizedBox(height: 16),
-            Text(context.tr('Tap a task in the widget to open its details.')),
-            if (context.read<TasksCubit>().canAddHomeWidget)
-              TextButton(
-                onPressed: () async {
-                  await context.read<TasksCubit>().requestHomeWidget();
-                },
-                child: Text(context.tr('Add home screen widget')),
-              ),
-          ] else ...[
+          if (widgetHelp)
+            const TaskWidgetHelpSection()
+          else ...[
             TaskReminderBanner(
               permission: state.reminderPermission,
               failed: state.reminderError,

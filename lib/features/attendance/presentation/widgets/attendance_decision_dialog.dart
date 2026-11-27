@@ -3,7 +3,10 @@ import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_calendar_entry.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_controls_repository.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_decision_dialog_helpers.dart';
 import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
+
+export 'attendance_decision_dialog_helpers.dart' show attendanceDecisionLabel;
 
 class AttendanceDecisionDialog extends StatefulWidget {
   const AttendanceDecisionDialog({
@@ -56,28 +59,18 @@ class _AttendanceDecisionDialogState extends State<AttendanceDecisionDialog> {
       _error = null;
     });
     try {
-      final entry = widget.entry;
-      if (entry == null) {
-        await widget.repository.decideMonth(
-          workspaceId: widget.workspaceId,
-          year: widget.year,
-          month: widget.month,
-          revision: widget.revision,
-          close: widget.closeMonth,
-          reason: _reason.text.trim(),
-        );
-      } else {
-        final d = widget.date!;
-        await widget.repository.decideDay(
-          workspaceId: widget.workspaceId,
-          employeeMembershipId: entry.employeeMembershipId,
-          date:
-              '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
-          status: _status,
-          reason: _reason.text.trim(),
-          revision: widget.revision,
-        );
-      }
+      await performAttendanceDecisionSave(
+        repository: widget.repository,
+        workspaceId: widget.workspaceId,
+        year: widget.year,
+        month: widget.month,
+        revision: widget.revision,
+        closeMonth: widget.closeMonth,
+        entry: widget.entry,
+        date: widget.date,
+        status: _status,
+        reason: _reason.text.trim(),
+      );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
@@ -106,65 +99,19 @@ class _AttendanceDecisionDialogState extends State<AttendanceDecisionDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                widget.date?.toIso8601String().split('T').first ??
-                    '${widget.year}-${widget.month.toString().padLeft(2, '0')}',
-              ),
-              const SizedBox(height: 8),
-              if (widget.entry != null) ...[
-                Text(widget.entry!.employee.displayName),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _status,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: context.tr('Attendance status'),
-                  ),
-                  items: const ['AUTO', 'PRESENT', 'LATE', 'ABSENT', 'LEAVE']
-                      .map(
-                        (s) => DropdownMenuItem(
-                          value: s,
-                          child: Text(context.tr(attendanceDecisionLabel(s))),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: _saving
-                      ? null
-                      : (s) => setState(() => _status = s!),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  context.tr(
-                    'The day status changes; recorded clock times remain in the audit history.',
-                  ),
-                ),
-              ] else
-                Text(
-                  context.tr(
-                    widget.closeMonth
-                        ? 'Review the monthly totals before closing. Changes require reopening the month with a reason.'
-                        : 'Reopening allows attendance changes. The previous approval remains in the audit history.',
-                  ),
-                ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _reason,
-                enabled: !_saving,
-                minLines: 2,
-                maxLines: 4,
-                maxLength: 1000,
-                decoration: InputDecoration(labelText: context.tr('Reason')),
-                validator: (v) => (v?.trim().length ?? 0) < 3
-                    ? context.tr('Enter a reason of at least 3 characters.')
-                    : null,
-              ),
-              if (_error != null)
-                Text(
-                  context.tr(_error!),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-            ],
+            children: buildAttendanceDecisionContent(
+              context: context,
+              entry: widget.entry,
+              date: widget.date,
+              year: widget.year,
+              month: widget.month,
+              closeMonth: widget.closeMonth,
+              status: _status,
+              saving: _saving,
+              onStatusChanged: (s) => setState(() => _status = s!),
+              reasonController: _reason,
+              error: _error,
+            ),
           ),
         ),
       ),
@@ -181,11 +128,3 @@ class _AttendanceDecisionDialogState extends State<AttendanceDecisionDialog> {
     );
   }
 }
-
-String attendanceDecisionLabel(String status) => switch (status) {
-  'PRESENT' => 'Present',
-  'LATE' => 'Late',
-  'ABSENT' => 'Absent',
-  'LEAVE' => 'Leave',
-  _ => 'Use recorded attendance',
-};

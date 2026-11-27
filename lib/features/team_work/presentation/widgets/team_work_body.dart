@@ -3,12 +3,9 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
-import 'package:shiftly/features/team_work/presentation/dialogs/correction_approval_dialog.dart';
-import 'package:shiftly/features/team_work/presentation/dialogs/review_note_dialog.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/announcements_view.dart';
-import 'package:shiftly/features/team_work/presentation/widgets/correction_request_card.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/manager_tasks_view.dart';
-import 'package:shiftly/features/team_work/presentation/widgets/work_feed_view.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/team_work_corrections_tab.dart';
 
 class TeamWorkBody extends StatefulWidget {
   const TeamWorkBody({
@@ -31,11 +28,17 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
   late final WorkFeedCubit<CorrectionRequest> _corrections;
   late final WorkFeedCubit<TeamAnnouncement> _announcements;
   String? _status;
-  late bool _pendingAnnouncements;
+  late bool _pendingAnnouncements = !widget.manager;
+
+  void _loadActiveTab() {
+    if (widget.initialTab == 'tasks' && widget.manager) _tasks.load();
+    if (widget.initialTab == 'corrections') _corrections.load();
+    if (widget.initialTab == 'announcements') _announcements.load();
+  }
+
   @override
   void initState() {
     super.initState();
-    _pendingAnnouncements = !widget.manager;
     _tasks = WorkFeedCubit((_) => widget.repository.tasks(widget.workspaceId));
     _corrections = WorkFeedCubit(
       (page) => widget.repository.corrections(
@@ -51,19 +54,13 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
         pendingOnly: _pendingAnnouncements,
       ),
     );
-    if (widget.initialTab == 'tasks' && widget.manager) _tasks.load();
-    if (widget.initialTab == 'corrections') _corrections.load();
-    if (widget.initialTab == 'announcements') _announcements.load();
+    _loadActiveTab();
   }
 
   @override
   void didUpdateWidget(covariant TeamWorkBody oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialTab != widget.initialTab) {
-      if (widget.initialTab == 'tasks' && widget.manager) _tasks.load();
-      if (widget.initialTab == 'corrections') _corrections.load();
-      if (widget.initialTab == 'announcements') _announcements.load();
-    }
+    if (oldWidget.initialTab != widget.initialTab) _loadActiveTab();
   }
 
   @override
@@ -74,52 +71,15 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
     super.dispose();
   }
 
-  Future<void> _review(CorrectionRequest request, bool approve) async {
-    if (approve) {
-      final saved = await showDialog<bool>(
-        context: context,
-        builder: (_) => CorrectionApprovalDialog(
-          request: request,
-          repository: widget.repository,
-          workspaceId: widget.workspaceId,
-          timezone: widget.timezone,
-        ),
-      );
-      if (saved == true && mounted) {
-        _corrections.load();
-        _tasks.load();
-      }
-      return;
-    }
-    final note = approve ? null : await requestReviewNote(context);
-    if (!approve && note == null) return;
-    final saved = await _corrections.mutate(
-      request.id,
-      () => widget.repository.reviewCorrection(
-        widget.workspaceId,
-        request.id,
-        approve: approve,
-        note: note,
-      ),
-    );
-    if (saved) _tasks.load();
-  }
+  String _title() => widget.initialTab == 'corrections'
+      ? (widget.manager ? 'Attendance corrections' : 'My corrections')
+      : widget.initialTab == 'tasks' && widget.manager
+      ? 'Action inbox'
+      : 'Team announcements';
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(
-        context.tr(
-          widget.initialTab == 'corrections'
-              ? widget.manager
-                    ? 'Attendance corrections'
-                    : 'My corrections'
-              : widget.initialTab == 'tasks' && widget.manager
-              ? 'Action inbox'
-              : 'Team announcements',
-        ),
-      ),
-    ),
+    appBar: AppBar(title: Text(context.tr(_title()))),
     body: Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1000),
@@ -128,39 +88,27 @@ class TeamWorkBodyState extends State<TeamWorkBody> {
             cubit: _tasks,
             workspaceId: widget.workspaceId,
             timezone: widget.timezone,
-            onReviewed: () => _tasks.load(),
+            onReviewed: _tasks.load,
           ),
-          'corrections' => WorkFeedView(
+          'corrections' => TeamWorkCorrectionsTab(
             cubit: _corrections,
-            header: Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final (value, label) in <(String?, String)>[
-                    (null, 'All'),
-                    ('PENDING', 'Pending review'),
-                    ('APPROVED', 'Approved'),
-                    ('REJECTED', 'Declined'),
-                  ])
-                    ChoiceChip(
-                      label: Text(context.tr(label)),
-                      selected: _status == value,
-                      onSelected: (_) {
-                        setState(() => _status = value);
-                        _corrections.load();
-                      },
-                    ),
-                ],
-              ),
-            ),
-            itemBuilder: (_, request, busy) => CorrectionRequestCard(
-              request: request,
+            status: _status,
+            timezone: widget.timezone,
+            manager: widget.manager,
+            onStatusChanged: (value) {
+              setState(() => _status = value);
+              _corrections.load();
+            },
+            onReview: (req, approve) => reviewTeamWorkCorrection(
+              context: context,
+              isMounted: () => mounted,
+              request: req,
+              approve: approve,
+              repository: widget.repository,
+              workspaceId: widget.workspaceId,
               timezone: widget.timezone,
-              busy: busy,
-              onApprove: widget.manager ? () => _review(request, true) : null,
-              onDecline: widget.manager ? () => _review(request, false) : null,
+              corrections: _corrections,
+              tasks: _tasks,
             ),
           ),
           _ => AnnouncementsView(

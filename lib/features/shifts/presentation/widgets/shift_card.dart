@@ -22,68 +22,67 @@ class ShiftCard extends StatelessWidget {
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) => SurfaceCard(
-    onTap: onTap,
-    padding: const EdgeInsets.all(14),
-    child: Row(
-      children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppPalette.of(context).selected,
-            borderRadius: BorderRadius.circular(AppRadii.m),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(10),
-            child: Icon(
-              Icons.schedule_rounded,
-              size: 22,
-              color: AppPalette.of(context).primaryColor,
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final locale = Localizations.localeOf(context).toString();
+    final subStyle = TextStyle(color: palette.textSecondary, fontSize: 12);
+    return SurfaceCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: palette.selected,
+              borderRadius: BorderRadius.circular(AppRadii.m),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Icon(
+                Icons.schedule_rounded,
+                size: 22,
+                color: palette.primaryColor,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: AppSpacing.s),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                shift.employee.displayName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                WorkspaceTime.dateTime(
-                  shift.startsAt,
-                  timezone,
-                  locale: Localizations.localeOf(context).toString(),
+          const SizedBox(width: AppSpacing.s),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  shift.employee.displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                style: TextStyle(
-                  color: AppPalette.of(context).textSecondary,
-                  fontSize: 12,
-                ),
-              ),
-              Text(
-                context.tr('to {value1}', {
-                  'value1': (WorkspaceTime.dateTime(
-                    shift.endsAt,
+                const SizedBox(height: 3),
+                Text(
+                  WorkspaceTime.dateTime(
+                    shift.startsAt,
                     timezone,
-                    locale: Localizations.localeOf(context).toString(),
-                  )).toString(),
-                }),
-                style: TextStyle(
-                  color: AppPalette.of(context).textSecondary,
-                  fontSize: 12,
+                    locale: locale,
+                  ),
+                  style: subStyle,
                 ),
-              ),
-              const SizedBox(height: 6),
-              ShiftStatusBadge(status: shift.status),
-            ],
+                Text(
+                  context.tr('to {value1}', {
+                    'value1': WorkspaceTime.dateTime(
+                      shift.endsAt,
+                      timezone,
+                      locale: locale,
+                    ),
+                  }),
+                  style: subStyle,
+                ),
+                const SizedBox(height: 6),
+                ShiftStatusBadge(status: shift.status),
+              ],
+            ),
           ),
-        ),
-        if (trailing != null) trailing! else const Icon(Icons.chevron_right),
-      ],
-    ),
-  );
+          trailing ?? const Icon(Icons.chevron_right),
+        ],
+      ),
+    );
+  }
 }

@@ -1,20 +1,20 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/features/breaks/domain/break_notifier.dart';
 import 'package:shiftly/features/notifications/domain/repositories/push_preference_store.dart';
-import 'package:timezone/timezone.dart' as tz;
 
 import '../domain/personal_task.dart';
-import '../domain/task_alarm.dart';
 import '../domain/task_reminders.dart';
+import 'device_break_scheduler.dart';
+import 'device_reminder_permissions.dart';
+import 'device_task_alarm_reconciler.dart';
+import 'device_task_alarm_scheduler.dart';
 import 'task_notification_actions.dart';
 
-/// Native pending alarms survive process death and Android reboot. UTC preserves
-/// the chosen instant across timezone changes; the editor uses device local time.
+/// Native pending alarms survive process death and Android reboot.
 class DeviceTaskReminders
     implements TaskReminders, BreakNotifier, BreakStartNotifier {
   DeviceTaskReminders(this._preferences, this._pushStore);
@@ -33,339 +33,77 @@ class DeviceTaskReminders
     if (!_supported) return;
     await TaskNotificationSetup.initialize(
       _plugin,
-      onTap: (response) {
-        final tap = _decode(response.payload);
+      onTap: (r) {
+        final tap = decodeTaskTapPayload(r.payload);
         if (tap != null) opened.add(tap);
       },
     );
     final launch = await _plugin.getNotificationAppLaunchDetails();
-    if (launch?.didNotificationLaunchApp == true) {
-      final response = launch?.notificationResponse;
-      if (response?.actionId != taskSnoozeAction) {
-        initialTap = _decode(response?.payload);
-      }
+    if (launch?.didNotificationLaunchApp == true &&
+        launch?.notificationResponse?.actionId != taskSnoozeAction) {
+      initialTap = decodeTaskTapPayload(launch?.notificationResponse?.payload);
     }
   }
 
   @override
-  Future<void> cancelBreak() async {
-    if (!_supported) return;
-    await _initialize();
-    await _plugin.cancel(id: 1600000001);
-  }
-
+  Future<void> cancelBreak() async =>
+      _supported ? _initialize().then((_) => _plugin.cancel(id: 1600000001)) : null;
   @override
-  Future<bool> scheduleBreakStart(DateTime at, {required bool arabic}) =>
-      _scheduleBreak(at, arabic: arabic, start: true);
+  Future<void> cancelBreakStart() async =>
+      _supported ? _initialize().then((_) => _plugin.cancel(id: 1600000002)) : null;
   @override
-  Future<void> cancelBreakStart() async {
-    if (!_supported) return;
-    await _initialize();
-    await _plugin.cancel(id: 1600000002);
-  }
-
+  Future<bool> scheduleBreakStart(DateTime at, {required bool arabic}) async =>
+      _supported &&
+      await _initialize().then(
+        (_) => scheduleDeviceBreak(_plugin, at, arabic: arabic, start: true),
+      );
   @override
-  Future<bool> scheduleBreak(DateTime end, {required bool arabic}) =>
-      _scheduleBreak(end, arabic: arabic, start: false);
-  Future<bool> _scheduleBreak(
-    DateTime end, {
-    required bool arabic,
-    required bool start,
-  }) async {
-    if (!_supported) return false;
-    await _initialize();
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-    var exact = true;
-    if (android != null) {
-      if (await android.requestNotificationsPermission() != true) return false;
-      exact = await android.canScheduleExactNotifications() == true;
-    } else {
-      final ios = _plugin
-          .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin
-          >();
-      if (await ios?.requestPermissions(
-            alert: true,
-            sound: true,
-            badge: false,
-          ) !=
-          true) {
-        return false;
-      }
-    }
-    await _plugin.zonedSchedule(
-      id: start ? 1600000002 : 1600000001,
-      title: start
-          ? (arabic ? 'ميعاد البريك' : 'Time for your break')
-          : (arabic ? 'البريك خلص' : 'Your break is over'),
-      body: start
-          ? (arabic
-                ? 'ابدأ البريك من التطبيق لما توقف شغل.'
-                : 'Start your break in the app when you stop working.')
-          : arabic
-          ? 'وقت البريك انتهى، ارجع كمّل الشيفت.'
-          : 'Your break has ended. Time to return to work.',
-      scheduledDate: tz.TZDateTime.from(end, tz.UTC),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'shiftly_breaks',
-          'Break reminders',
-          channelDescription: 'Local shift break timer',
-          importance: Importance.high,
-          priority: Priority.high,
-          icon: 'ic_notification',
-        ),
-        iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
-      ),
-      androidScheduleMode: exact
-          ? AndroidScheduleMode.exactAllowWhileIdle
-          : AndroidScheduleMode.inexactAllowWhileIdle,
-      payload: '{"kind":"shift-break"}',
-    );
-    return true;
-  }
-
-  Map<String, Object?>? _decode(String? value) {
-    try {
-      final json = jsonDecode(value ?? '') as Map<String, dynamic>;
-      if (json['kind'] != 'personal-task' ||
-          json['ownerId'] is! String ||
-          json['taskId'] is! String) {
-        return null;
-      }
-      return Map<String, Object?>.from(json);
-    } catch (_) {
-      return null;
-    }
-  }
-
+  Future<bool> scheduleBreak(DateTime end, {required bool arabic}) async =>
+      _supported &&
+      await _initialize().then(
+        (_) => scheduleDeviceBreak(_plugin, end, arabic: arabic, start: false),
+      );
   @override
   Future<TaskReminderPermission> permission(
     String userId, {
     bool request = false,
-  }) async {
-    if (!_supported) return TaskReminderPermission.unsupported;
-    await _initialize();
-    if (request) await _preferences.setBool('tasks.reminders.$userId', true);
-    if (!(_preferences.getBool('tasks.reminders.$userId') ?? false)) {
-      return TaskReminderPermission.disabled;
-    }
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-    if (android != null) {
-      final allowed = request
-          ? await android.requestNotificationsPermission()
-          : await android.areNotificationsEnabled();
-      if (allowed != true) return TaskReminderPermission.disabled;
-      final exact = request
-          ? await android.requestExactAlarmsPermission()
-          : await android.canScheduleExactNotifications();
-      return exact == true
-          ? TaskReminderPermission.exact
-          : TaskReminderPermission.approximate;
-    }
-    final ios = _plugin
-        .resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin
-        >()!;
-    if (request) {
-      await ios.requestPermissions(alert: true, badge: true, sound: true);
-    }
-    final permissions = await ios.checkPermissions();
-    return permissions?.isEnabled == true
-        ? TaskReminderPermission.exact
-        : TaskReminderPermission.disabled;
-  }
-
-  String _alarmKey(Map<String, Object?> tap) =>
-      "${tap['taskId']}:${tap['reminderKind'] ?? 'DUE'}"
-      "${tap['occurrenceDueAt'] is String ? ':${tap['occurrenceDueAt']}' : ''}";
-
+  }) async => !_supported
+      ? TaskReminderPermission.unsupported
+      : _initialize().then(
+          (_) => resolveDeviceReminderPermission(
+            _plugin,
+            _preferences,
+            userId,
+            request: request,
+          ),
+        );
   @override
   Future<List<PersonalTask>> replace(
     String userId,
     List<PersonalTask> tasks, {
     bool preserveExisting = false,
-  }) async {
-    if (!_supported) return [];
-    await _initialize();
-    final state = await permission(userId);
-    if (state == TaskReminderPermission.disabled) {
-      for (final notification in await _plugin.pendingNotificationRequests()) {
-        final tap = _decode(notification.payload);
-        if (tap != null &&
-            !(tap['ownerId'] == userId && tap['snoozed'] == true)) {
-          await _plugin.cancel(id: notification.id);
-        }
-      }
-      return [];
-    }
-    final pending = await _plugin.pendingNotificationRequests();
-    final existing = <String, int>{};
-    final usedIds = pending.map((p) => p.id).toSet();
-    for (final notification in pending) {
-      final tap = _decode(notification.payload);
-      if (tap?['ownerId'] == userId) {
-        existing[_alarmKey(tap!)] = notification.id;
-      }
-    }
-    var nextId = 1700000000;
-    final scheduled = <PersonalTask>[];
-    final now = DateTime.now();
-    final alarms =
-        tasks
-            .where((task) => task.ownerId == userId)
-            .expand((task) => TaskAlarm.upcoming(task, now))
-            .toList()
-          ..sort((a, b) {
-            final time = a.at.compareTo(b.at);
-            return time == 0 ? a.key.compareTo(b.key) : time;
-          });
-    for (final task in tasks.where((t) => t.ownerId == userId)) {
-      if (task.completed) {
-        await _preferences.setBool(
-          'tasks.notification.cancelled.$userId.${task.id}',
-          true,
+  }) async => !_supported
+      ? []
+      : _initialize().then(
+          (_) async => replaceDeviceTaskAlarms(
+            plugin: _plugin,
+            preferences: _preferences,
+            userId: userId,
+            tasks: tasks,
+            state: await permission(userId),
+            preserveExisting: preserveExisting,
+          ),
         );
-        continue;
-      }
-      await _preferences.setInt(
-        'tasks.notification.revision.$userId.${task.id}',
-        task.revision,
-      );
-      await _preferences.remove(
-        'tasks.notification.cancelled.$userId.${task.id}',
-      );
-    }
-    final desiredIds = alarms.take(60).map((alarm) => alarm.key).toSet();
-    if (!preserveExisting) {
-      // Free obsolete slots first so reconciliation never exceeds iOS's cap.
-      for (final notification in pending) {
-        final tap = _decode(notification.payload);
-        if (tap != null &&
-            !(tap['ownerId'] == userId &&
-                tap['snoozed'] == true &&
-                _preferences.getBool(
-                      'tasks.notification.cancelled.$userId.${tap['taskId']}',
-                    ) !=
-                    true &&
-                (_preferences.getInt(
-                          'tasks.notification.revision.$userId.${tap['taskId']}',
-                        ) ==
-                        null ||
-                    _preferences.getInt(
-                          'tasks.notification.revision.$userId.${tap['taskId']}',
-                        ) ==
-                        tap['revision'])) &&
-            (tap['ownerId'] != userId ||
-                !desiredIds.contains(_alarmKey(tap)))) {
-          await _plugin.cancel(id: notification.id);
-          existing.remove(_alarmKey(tap));
-        }
-      }
-    }
-    var occupied = existing.length;
-    // Reserve four iOS slots for other app reminders (system limit is 64).
-    final installed = <String>{};
-    final arabic =
-        (_preferences.getString('app.language') ??
-            PlatformDispatcher.instance.locale.languageCode) ==
-        'ar';
-    for (final alarm in alarms.take(60)) {
-      final task = alarm.task;
-      if (!existing.containsKey(alarm.key) && occupied >= 60) continue;
-      while (usedIds.contains(nextId)) {
-        nextId++;
-      }
-      final id = existing[alarm.key] ?? nextId;
-      usedIds.add(id);
-      await _plugin.zonedSchedule(
-        id: id,
-        title: switch (alarm.kind) {
-          TaskAlarmKind.due => task.title,
-          TaskAlarmKind.advance =>
-            (arabic ? 'مهمة بكرة: ' : 'Task tomorrow: ') + task.title,
-          TaskAlarmKind.hour =>
-            (arabic ? 'مهمة بعد ساعة: ' : 'Task in one hour: ') + task.title,
-          TaskAlarmKind.end =>
-            (arabic ? 'انتهى وقت المهمة: ' : 'Time is up: ') + task.title,
-        },
-        body: task.description.isEmpty ? task.title : task.description,
-        scheduledDate: tz.TZDateTime.from(alarm.at, tz.UTC),
-        notificationDetails: taskNotificationDetails(arabic: arabic),
-        androidScheduleMode: state == TaskReminderPermission.exact
-            ? AndroidScheduleMode.exactAllowWhileIdle
-            : AndroidScheduleMode.inexactAllowWhileIdle,
-        payload: jsonEncode({
-          'kind': 'personal-task',
-          'ownerId': userId,
-          'taskId': task.id,
-          'revision': task.revision,
-          'title': task.title,
-          'body': task.description.isEmpty ? task.title : task.description,
-          'arabic': arabic,
-          'reminderKind': alarm.wireKind,
-          if (alarm.occurrenceDueAt != null)
-            'occurrenceDueAt': alarm.occurrenceDueAt!.toUtc().toIso8601String(),
-        }),
-      );
-      if (!existing.containsKey(alarm.key)) occupied++;
-      installed.add(alarm.key);
-    }
-    // A partial native window must keep server fallback for that revision.
-    for (final task in tasks.where((t) => t.ownerId == userId)) {
-      final events = TaskAlarm.upcoming(task, now);
-      if (events.isNotEmpty && events.every((e) => installed.contains(e.key))) {
-        scheduled.add(task);
-      }
-    }
-    scheduled.sort((a, b) => a.dueAt.compareTo(b.dueAt));
-    // Approximate native alarms still get server fallback.
-    return state == TaskReminderPermission.exact ? scheduled : [];
-  }
-
   @override
-  Future<void> clear() async {
-    if (!_supported) return;
-    await _initialize();
-    for (final pending in await _plugin.pendingNotificationRequests()) {
-      if (_decode(pending.payload) != null) {
-        await _plugin.cancel(id: pending.id);
-      }
-    }
-  }
-
+  Future<void> clear() async =>
+      _supported ? _initialize().then((_) => clearDeviceTaskAlarms(_plugin)) : null;
   @override
-  Future<void> cancel(String taskId) async {
-    if (!_supported) return;
-    final owner = _preferences.getString(taskNotificationOwnerKey);
-    if (owner != null) {
-      await _preferences.setBool(
-        'tasks.notification.cancelled.$owner.$taskId',
-        true,
-      );
-    }
-    await _initialize();
-    for (final pending in await _plugin.pendingNotificationRequests()) {
-      if (_decode(pending.payload)?['taskId'] == taskId) {
-        await _plugin.cancel(id: pending.id);
-      }
-    }
-  }
-
-  Future<void> bindNotificationOwner(String? owner) async {
-    if (owner == null) {
-      await _preferences.remove(taskNotificationOwnerKey);
-    } else {
-      await _preferences.setString(taskNotificationOwnerKey, owner);
-    }
-  }
-
+  Future<void> cancel(String taskId) async => _supported
+      ? cancelDeviceTaskAlarm(_plugin, _preferences, taskId, _initialize)
+      : null;
+  Future<void> bindNotificationOwner(String? owner) => owner == null
+      ? _preferences.remove(taskNotificationOwnerKey)
+      : _preferences.setString(taskNotificationOwnerKey, owner);
   @override
   Future<String?> installationId() async =>
       _supported ? _pushStore.installationId() : null;

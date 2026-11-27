@@ -20,31 +20,21 @@ class EmailVerificationScreen extends StatelessWidget {
             ToastService.error(context, message: state.failure!.message),
         builder: (context, state) {
           final email = state.verificationEmail ?? '';
+          final busy = state.resendingVerification;
+          final session = context.read<SessionCoordinator>();
           return AccessScreen(
             title: 'Verify your email',
             actions: [
               FilledButton(
-                onPressed: state.resendingVerification
-                    ? null
-                    : context.read<SessionCoordinator>().retry,
+                onPressed: busy ? null : session.retry,
                 child: Text(context.tr('I’ve verified my email')),
               ),
               OutlinedButton.icon(
                 key: const Key('resend-verification'),
-                onPressed: state.resendingVerification || email.isEmpty
+                onPressed: busy || email.isEmpty
                     ? null
-                    : () async {
-                        final success = await context
-                            .read<SessionCoordinator>()
-                            .resendVerificationEmail();
-                        if (success && context.mounted) {
-                          ToastService.success(
-                            context,
-                            message: 'Confirmation email resent.',
-                          );
-                        }
-                      },
-                icon: state.resendingVerification
+                    : () => _resend(context),
+                icon: busy
                     ? const SizedBox.square(
                         dimension: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
@@ -54,9 +44,7 @@ class EmailVerificationScreen extends StatelessWidget {
               ),
               TextButton(
                 key: const Key('verification-back-to-login'),
-                onPressed: state.resendingVerification
-                    ? null
-                    : context.read<SessionCoordinator>().signOut,
+                onPressed: busy ? null : session.signOut,
                 child: Text(context.tr('Back to sign in')),
               ),
             ],
@@ -88,4 +76,13 @@ class EmailVerificationScreen extends StatelessWidget {
           );
         },
       );
+
+  Future<void> _resend(BuildContext context) async {
+    final ok = await context
+        .read<SessionCoordinator>()
+        .resendVerificationEmail();
+    if (ok && context.mounted) {
+      ToastService.success(context, message: 'Confirmation email resent.');
+    }
+  }
 }

@@ -4,11 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
 import 'package:shiftly/core/widgets/hub_section_frame.dart';
-import 'package:shiftly/features/attendance/presentation/screens/attendance_screen.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/screens/shift_templates_screen.dart';
-import 'package:shiftly/features/reports/presentation/attendance_reports_screen.dart';
-import 'package:shiftly/features/tasks/presentation/tasks_screen.dart';
-import 'package:shiftly/features/team_work/presentation/team_work_screen.dart';
+import 'package:shiftly/features/shell/presentation/screens/work_hub_section_resolver.dart';
 
 class WorkHubScreen extends StatelessWidget {
   const WorkHubScreen({this.section = 'hub', super.key});
@@ -24,32 +20,11 @@ class WorkHubScreen extends StatelessWidget {
     ),
     ('Reports', 'Attendance summaries and exports', 'reports'),
   ];
+
   @override
   Widget build(BuildContext context) {
     final member = context.read<SessionCoordinator?>()?.state.activeMembership;
-    final selected = switch (section) {
-      'shifts' => ShiftTemplatesScreen(
-        workspaceName: member?.workspace.name ?? 'Current workspace',
-        timezone: member?.workspace.timezone ?? 'Etc/UTC',
-      ),
-      'tasks' => const TeamWorkScreen(initialTab: 'tasks'),
-      'announcements' => const TeamWorkScreen(initialTab: 'announcements'),
-      'personal' => const TasksScreen(),
-      'attendance' => AttendanceScreen(
-        timezone: member?.workspace.timezone ?? 'Etc/UTC',
-      ),
-      'corrections' => const TeamWorkScreen(initialTab: 'corrections'),
-      'leave' => AttendanceScreen(
-        timezone: member?.workspace.timezone ?? 'Etc/UTC',
-        initialTab: 1,
-      ),
-      'calendar' => AttendanceScreen(
-        timezone: member?.workspace.timezone ?? 'Etc/UTC',
-        initialTab: 2,
-      ),
-      'reports' => const AttendanceReportsScreen(),
-      _ => null,
-    };
+    final selected = resolveWorkHubSection(section, member);
     if (selected != null) {
       return HubSectionFrame(
         title: 'Work hub',

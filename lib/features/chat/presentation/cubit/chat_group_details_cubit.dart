@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
@@ -10,22 +9,9 @@ import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_cache_access.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_state.dart';
 
-class ChatGroupDetailsState extends Equatable {
-  const ChatGroupDetailsState({
-    this.loading = true,
-    this.group,
-    this.mutating = false,
-    this.failure,
-  });
-  final bool loading;
-  final ChatGroup? group;
-  final bool mutating;
-  final Failure? failure;
-
-  @override
-  List<Object?> get props => [loading, group, mutating, failure];
-}
+export 'package:shiftly/features/chat/presentation/cubit/chat_group_details_state.dart';
 
 class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
   ChatGroupDetailsCubit(

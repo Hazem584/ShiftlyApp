@@ -1,11 +1,11 @@
-import 'package:equatable/equatable.dart';
-import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/attendance/domain/entities/attendance_record_api_parser.dart';
+import 'package:shiftly/features/attendance/domain/entities/attendance_record_meta.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_shift_summary.dart';
 import 'package:shiftly/features/breaks/domain/shift_break_state.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
-class AttendanceRecordApi extends Equatable {
+class AttendanceRecordApi extends AttendanceRecordMeta {
   const AttendanceRecordApi({
     required this.id,
     required this.workspaceId,
@@ -16,19 +16,19 @@ class AttendanceRecordApi extends Equatable {
     required this.minutesLate,
     required this.createdAt,
     required this.updatedAt,
-    this.dayStatus,
-    this.dayDecisionReason,
-    this.calculation,
-    this.occurrenceKind,
-    this.assignmentId,
-    this.scheduleExceptionId,
-    this.scheduleExceptionReason,
-    this.extraAuthorizationId,
-    this.enteredByMembershipId,
-    this.clientAttendanceId,
-    this.source = AttendanceSource.legacyShift,
-    this.shift,
     required this.employee,
+    super.dayStatus,
+    super.dayDecisionReason,
+    super.calculation,
+    super.occurrenceKind,
+    super.assignmentId,
+    super.scheduleExceptionId,
+    super.scheduleExceptionReason,
+    super.extraAuthorizationId,
+    super.enteredByMembershipId,
+    super.clientAttendanceId,
+    super.source = AttendanceSource.legacyShift,
+    this.shift,
     this.clockOutAt,
     this.reviewedByMembershipId,
     this.reviewedAt,
@@ -37,53 +37,25 @@ class AttendanceRecordApi extends Equatable {
     this.breakState,
     this.netWorkedMinutes,
     this.overtimeMinutes = 0,
-    this.shiftTemplateId,
-    this.templateName,
-    this.workspaceTimezone,
-    this.operationalDate,
-    this.scheduledStartAt,
-    this.scheduledEndAt,
-    this.graceMinutesUsed,
-    this.minimumWorkMinutesUsed,
-    this.clockInClassification,
+    super.shiftTemplateId,
+    super.templateName,
+    super.workspaceTimezone,
+    super.operationalDate,
+    super.scheduledStartAt,
+    super.scheduledEndAt,
+    super.graceMinutesUsed,
+    super.minimumWorkMinutesUsed,
+    super.clockInClassification,
   });
 
-  final String? dayStatus, dayDecisionReason;
-  final Map<String, Object?>? calculation;
-  final String? occurrenceKind,
-      scheduleExceptionId,
-      scheduleExceptionReason,
-      assignmentId,
-      extraAuthorizationId,
-      enteredByMembershipId,
-      clientAttendanceId;
-  final String id;
-  final String workspaceId;
-  final String? shiftId;
-  final AttendanceSource source;
-  final String? shiftTemplateId;
-  final String? templateName;
-  final String? workspaceTimezone;
-  final String? operationalDate;
-  final DateTime? scheduledStartAt;
-  final DateTime? scheduledEndAt;
-  final int? graceMinutesUsed;
-  final int? minimumWorkMinutesUsed;
-  final AttendanceClassification? clockInClassification;
-  final String employeeMembershipId;
-  final DateTime clockInAt;
-  final DateTime? clockOutAt;
+  final String id, workspaceId, employeeMembershipId;
+  final String? shiftId, reviewedByMembershipId, rejectionReason;
+  final DateTime clockInAt, createdAt, updatedAt;
+  final DateTime? clockOutAt, reviewedAt;
   final AttendanceReviewStatus reviewStatus;
-  final String? reviewedByMembershipId;
-  final DateTime? reviewedAt;
-  final String? rejectionReason;
-  final int minutesLate;
-  final int? workedMinutes;
-  final int? netWorkedMinutes;
-  final int overtimeMinutes;
+  final int minutesLate, overtimeMinutes;
+  final int? workedMinutes, netWorkedMinutes;
   final ShiftBreakState? breakState;
-  final DateTime createdAt;
-  final DateTime updatedAt;
   final AttendanceShiftSummary? shift;
   final ShiftEmployeeSummary employee;
 
@@ -93,115 +65,14 @@ class AttendanceRecordApi extends Equatable {
       reviewStatus == AttendanceReviewStatus.pending &&
       source != AttendanceSource.unknown;
 
-  factory AttendanceRecordApi.fromJson(
-    Map<String, Object?> json,
-  ) => AttendanceRecordApi(
-    dayStatus: ApiModelParser.optionalString(json['dayStatus']),
-    dayDecisionReason: ApiModelParser.optionalString(json['dayDecisionReason']),
-    calculation: ApiModelParser.optionalMap(json['calculation']),
-    occurrenceKind: ApiModelParser.optionalString(json['occurrenceKind']),
-    assignmentId: ApiModelParser.optionalString(json['assignmentId']),
-    scheduleExceptionId: ApiModelParser.optionalString(
-      json['scheduleExceptionId'],
-    ),
-    scheduleExceptionReason: ApiModelParser.optionalString(
-      ApiModelParser.optionalMap(json['scheduleException'])?['reason'],
-    ),
-    extraAuthorizationId: ApiModelParser.optionalString(
-      json['extraAuthorizationId'],
-    ),
-    enteredByMembershipId: ApiModelParser.optionalString(
-      json['enteredByMembershipId'],
-    ),
-    clientAttendanceId: ApiModelParser.optionalString(
-      json['clientAttendanceId'],
-    ),
-    id: ApiModelParser.string(json, 'id'),
-    workspaceId: ApiModelParser.string(json, 'workspaceId'),
-    shiftId: ApiModelParser.optionalString(json['shiftId']),
-    source: AttendanceSource.parse(json['source']),
-    shiftTemplateId: ApiModelParser.optionalString(json['shiftTemplateId']),
-    templateName: ApiModelParser.optionalString(json['templateName']),
-    workspaceTimezone: ApiModelParser.optionalString(json['workspaceTimezone']),
-    operationalDate: ApiModelParser.optionalString(json['operationalDate']),
-    scheduledStartAt: ApiModelParser.optionalDate(json['scheduledStartAt']),
-    scheduledEndAt: ApiModelParser.optionalDate(json['scheduledEndAt']),
-    graceMinutesUsed: ApiModelParser.optionalInteger(json['graceMinutesUsed']),
-    minimumWorkMinutesUsed: ApiModelParser.optionalInteger(
-      json['minimumWorkMinutesUsed'],
-    ),
-    clockInClassification: json['clockInClassification'] == null
-        ? null
-        : AttendanceClassification.parse(json['clockInClassification']),
-    employeeMembershipId: ApiModelParser.string(json, 'employeeMembershipId'),
-    clockInAt: ApiModelParser.date(json, 'clockInAt'),
-    clockOutAt: ApiModelParser.optionalDate(json['clockOutAt']),
-    reviewStatus: AttendanceReviewStatus.parse(json['reviewStatus']),
-    reviewedByMembershipId: ApiModelParser.optionalString(
-      json['reviewedByMembershipId'],
-    ),
-    reviewedAt: ApiModelParser.optionalDate(json['reviewedAt']),
-    rejectionReason: ApiModelParser.optionalString(json['rejectionReason']),
-    minutesLate: ApiModelParser.integer(json, 'minutesLate'),
-    workedMinutes: ApiModelParser.optionalInteger(json['workedMinutes']),
-    netWorkedMinutes: ApiModelParser.optionalInteger(json['netWorkedMinutes']),
-    overtimeMinutes:
-        ApiModelParser.optionalInteger(json['overtimeMinutes']) ?? 0,
-    breakState: json['breakState'] == null
-        ? null
-        : ShiftBreakState.fromJson(ApiModelParser.map(json['breakState'])),
-    createdAt: ApiModelParser.date(json, 'createdAt'),
-    updatedAt: ApiModelParser.date(json, 'updatedAt'),
-    shift: json['shift'] == null
-        ? null
-        : AttendanceShiftSummary.fromJson(
-            ApiModelParser.map(json['shift'], 'shift'),
-          ),
-    employee: ShiftEmployeeSummary.fromJson(
-      ApiModelParser.map(json['employee'], 'employee'),
-    ),
-  );
+  factory AttendanceRecordApi.fromJson(Map<String, Object?> json) =>
+      parseAttendanceRecordApi(json);
 
   @override
   List<Object?> get props => [
-    dayStatus,
-    dayDecisionReason,
-    calculation,
-    occurrenceKind,
-    assignmentId,
-    scheduleExceptionId,
-    scheduleExceptionReason,
-    extraAuthorizationId,
-    enteredByMembershipId,
-    clientAttendanceId,
-    id,
-    workspaceId,
-    shiftId,
-    source,
-    shiftTemplateId,
-    templateName,
-    workspaceTimezone,
-    operationalDate,
-    scheduledStartAt,
-    scheduledEndAt,
-    graceMinutesUsed,
-    minimumWorkMinutesUsed,
-    clockInClassification,
-    employeeMembershipId,
-    clockInAt,
-    clockOutAt,
-    reviewStatus,
-    reviewedByMembershipId,
-    reviewedAt,
-    rejectionReason,
-    minutesLate,
-    workedMinutes,
-    breakState,
-    netWorkedMinutes,
-    overtimeMinutes,
-    createdAt,
-    updatedAt,
-    shift,
-    employee,
+    ...super.props, id, workspaceId, shiftId, employeeMembershipId, clockInAt,
+    clockOutAt, reviewStatus, reviewedByMembershipId, reviewedAt,
+    rejectionReason, minutesLate, workedMinutes, breakState, netWorkedMinutes,
+    overtimeMinutes, createdAt, updatedAt, shift, employee,
   ];
 }

@@ -24,22 +24,22 @@ class WorkspaceExitTile extends StatelessWidget {
         if (membership == null || !context.read<WorkspacesCubit>().canLeave) {
           return const SizedBox.shrink();
         }
-        final manager = membership.role == WorkspaceRole.manager;
+        final m = membership.role == WorkspaceRole.manager;
         return BlocBuilder<WorkspacesCubit, WorkspacesState>(
           builder: (context, state) => ListTile(
             key: const Key('leave-workspace'),
             leading: Icon(
-              manager ? Icons.delete_forever_outlined : Icons.exit_to_app,
+              m ? Icons.delete_forever_outlined : Icons.exit_to_app,
               color: Theme.of(context).colorScheme.error,
             ),
             title: Text(
               context.tr(
-                manager ? 'Delete workspace for everyone' : 'Leave workspace',
+                m ? 'Delete workspace for everyone' : 'Leave workspace',
               ),
             ),
             subtitle: Text(membership.workspace.name),
             enabled: !state.busy,
-            onTap: () => _confirm(context, membership, manager),
+            onTap: () => _confirm(context, membership, m),
           ),
         );
       },
@@ -60,21 +60,16 @@ class WorkspaceExitTile extends StatelessWidget {
     );
     if (typed == null || !context.mounted) return;
     final cubit = context.read<WorkspacesCubit>();
-    final success = await cubit.leave(
+    final ok = await cubit.leave(
       membership.workspace.id,
       confirmation: manager ? typed : null,
     );
-    if (!success && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            context.tr(
-              cubit.state.failure?.message ??
-                  'Could not leave workspace. Please retry.',
-            ),
-          ),
-        ),
-      );
+    if (!ok && context.mounted) {
+      final msg =
+          cubit.state.failure?.message ??
+          'Could not leave workspace. Please retry.';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.tr(msg))));
     }
   }
 }

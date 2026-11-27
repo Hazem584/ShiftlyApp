@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/di/service_locator.dart';
-import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/theme/app_palette.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/utils/saved_schedule_formatter.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/widgets/assignment_form.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/weekday_row.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/work_pattern_current_section.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/widgets/work_pattern_history_section.dart';
 
 class WorkPatternView extends StatelessWidget {
   const WorkPatternView({
@@ -24,216 +21,30 @@ class WorkPatternView extends StatelessWidget {
   final bool canEdit;
 
   @override
-  Widget build(
-    BuildContext context,
-  ) => BlocBuilder<WorkPatternCubit, WorkPatternState>(
-    builder: (context, state) {
-      if (state.loading && state.history == null) {
-        return const SurfaceCard(child: AppContentLoading());
-      }
-      return SurfaceCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+  Widget build(BuildContext context) =>
+      BlocBuilder<WorkPatternCubit, WorkPatternState>(
+        builder: (context, state) {
+          if (state.loading && state.history == null) {
+            return const SurfaceCard(child: AppContentLoading());
+          }
+          return SurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.calendar_view_week_outlined),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    context.tr('Work pattern'),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-                IconButton(
-                  tooltip: context.tr('Refresh work pattern'),
-                  onPressed: () =>
-                      context.read<WorkPatternCubit>().load(retain: true),
-                  icon: const Icon(Icons.refresh_rounded),
+                ...buildWorkPatternCurrentSection(context, state),
+                ...buildWorkPatternHistorySection(context, state, timezone),
+                ...buildWorkPatternFooterSection(
+                  context: context,
+                  state: state,
+                  timezone: timezone,
+                  canEdit: canEdit,
+                  onReplace: () => _replace(context),
                 ),
               ],
             ),
-            if (state.loading) const AppContentLoading(rows: 1),
-            const SizedBox(height: 8),
-            if (state.failure != null) ...[
-              Text(
-                context.tr(state.failure!.message),
-                style: TextStyle(color: AppPalette.of(context).error),
-              ),
-              if (state.failure!.requestId != null)
-                Text(
-                  context.tr('Support reference: {value1}', {
-                    'value1': (state.failure!.requestId).toString(),
-                  }),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              const SizedBox(height: 8),
-            ],
-            if (state.history?.current case final current?) ...[
-              Text(
-                context.tr('Current schedule'),
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                current.assignmentSnapshot != null
-                    ? savedScheduleLabel(context, current.assignmentSnapshot!)
-                    : context.tr(
-                        'Historical assignment evidence is not recorded.',
-                      ),
-              ),
-              WeekdayRow(days: current.expectedWeekdays),
-              const SizedBox(height: 5),
-              Text(
-                context.tr('Effective {value1}{value2}', {
-                  'value1': (current.effectiveFrom).toString(),
-                  'value2':
-                      (current.effectiveTo == null
-                              ? ''
-                              : context.tr(' through {date}', {
-                                  'date': '${current.effectiveTo}',
-                                }))
-                          .toString(),
-                }),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ] else
-              Text(context.tr('No work pattern is currently effective.')),
-            if ((state.history?.history.length ?? 0) > 0) ...[
-              const Divider(height: 28),
-              ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Text(
-                  context.tr('Version history ({value1})', {
-                    'value1': (state.history!.history.length).toString(),
-                  }),
-                ),
-                subtitle: Text(
-                  context.tr(
-                    'New patterns create versions; history is never overwritten.',
-                  ),
-                ),
-                children: [
-                  for (final pattern in state.history!.history)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        pattern.effectiveTo == null
-                            ? Icons.event_available_outlined
-                            : Icons.history_rounded,
-                      ),
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            pattern.id == state.history?.current?.id
-                                ? context.tr('Current assignment')
-                                : pattern.effectiveFrom.compareTo(
-                                        WorkspaceTime.dateKey(
-                                          DateTime.now().toUtc(),
-                                          timezone,
-                                        ),
-                                      ) >
-                                      0
-                                ? context.tr('Future assignment')
-                                : context.tr('Historical assignment'),
-                          ),
-                          WeekdayRow(days: pattern.expectedWeekdays),
-                        ],
-                      ),
-                      subtitle: Text(
-                        context.tr('{value1}\n{value2} → {value3}', {
-                          'value1': pattern.assignmentSnapshot != null
-                              ? savedScheduleLabel(
-                                  context,
-                                  pattern.assignmentSnapshot!,
-                                )
-                              : context.tr('Assignment evidence not recorded'),
-                          'value2': (pattern.effectiveFrom).toString(),
-                          'value3':
-                              (pattern.effectiveTo ?? context.tr('ongoing'))
-                                  .toString(),
-                        }),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-            if (state.history?.pagination case final pagination?)
-              if (pagination.totalPages > 1)
-                Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: state.loading
-                          ? null
-                          : pagination.page > 1
-                          ? () => context.read<WorkPatternCubit>().load(
-                              retain: true,
-                              page: pagination.page - 1,
-                            )
-                          : null,
-                      child: Text(context.tr('Previous')),
-                    ),
-                    Text(
-                      context.tr('Page {value1} of {value2}', {
-                        'value1': (pagination.page).toString(),
-                        'value2': (pagination.totalPages).toString(),
-                      }),
-                    ),
-                    TextButton(
-                      onPressed: state.loading
-                          ? null
-                          : pagination.page < pagination.totalPages
-                          ? () => context.read<WorkPatternCubit>().load(
-                              retain: true,
-                              page: pagination.page + 1,
-                            )
-                          : null,
-                      child: Text(context.tr('Next')),
-                    ),
-                  ],
-                ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                key: const Key('replace-work-pattern'),
-                onPressed:
-                    !canEdit ||
-                        state.saving ||
-                        state.loading ||
-                        !WorkspaceTime.isValid(timezone)
-                    ? null
-                    : () => _replace(context),
-                icon: state.saving
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.edit_calendar_outlined),
-                label: Text(
-                  canEdit
-                      ? context.tr('Schedule a new version')
-                      : context.tr('Employee is inactive'),
-                ),
-              ),
-            ),
-            if (!WorkspaceTime.isValid(timezone))
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  context.tr(
-                    'The workspace timezone is invalid. Pattern changes are disabled.',
-                  ),
-                  style: TextStyle(color: AppPalette.of(context).error),
-                ),
-              ),
-          ],
-        ),
+          );
+        },
       );
-    },
-  );
 
   Future<void> _replace(BuildContext context) => showDialog<void>(
     context: context,

@@ -11,63 +11,60 @@ class EmployeeDetailsHeader extends StatelessWidget {
   final Employee employee;
 
   @override
-  Widget build(BuildContext context) => SurfaceCard(
-    padding: EdgeInsets.zero,
-    child: Column(
-      children: [
-        Container(
-          height: 88,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppPalette.of(context).ink,
-                AppPalette.of(context).orange,
-                AppPalette.of(context).teal,
-              ],
-            ),
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AppRadii.l),
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final headline = Theme.of(context).textTheme.headlineSmall;
+    return SurfaceCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          Container(
+            height: 88,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [palette.ink, palette.orange, palette.teal],
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppRadii.l),
+              ),
             ),
           ),
-        ),
-        Transform.translate(
-          offset: const Offset(0, -36),
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 42,
-                backgroundColor: AppPalette.of(context).surface,
-                child: CircleAvatar(
-                  radius: 37,
-                  backgroundColor: AppPalette.of(context).field,
-                  foregroundColor: AppPalette.of(context).ink,
-                  child: Text(
-                    employee.initials,
-                    style: Theme.of(context).textTheme.headlineSmall,
+          Transform.translate(
+            offset: const Offset(0, -36),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 42,
+                  backgroundColor: palette.surface,
+                  child: CircleAvatar(
+                    radius: 37,
+                    backgroundColor: palette.field,
+                    foregroundColor: palette.ink,
+                    child: Text(employee.initials, style: headline),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Text(
-                  employee.displayName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall,
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Text(
+                    employee.displayName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: headline,
+                  ),
                 ),
-              ),
-              Text(
-                employee.displayJobTitle,
-                style: TextStyle(color: AppPalette.of(context).textSecondary),
-              ),
-              const SizedBox(height: 10),
-              EmployeeStatusBadge(status: employee.employmentStatus),
-            ],
+                Text(
+                  employee.displayJobTitle,
+                  style: TextStyle(color: palette.textSecondary),
+                ),
+                const SizedBox(height: 10),
+                EmployeeStatusBadge(status: employee.employmentStatus),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

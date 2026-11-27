@@ -5,14 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/routing/open_app_route.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
-import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
-import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:shiftly/features/communication/presentation/communication_actions.dart';
 import 'package:shiftly/features/communication/presentation/notification_unavailable_screen.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
-import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
+import 'package:shiftly/features/notifications/presentation/utils/notification_destination.dart';
+import 'package:shiftly/features/notifications/presentation/utils/notification_destination_verifier.dart';
 import 'package:shiftly/features/tasks/application/tasks_cubit.dart';
 
 abstract final class NotificationsScreenNotificationNavigator {
@@ -27,214 +25,53 @@ abstract final class NotificationsScreenNotificationNavigator {
     NotificationRecord notification,
   ) async {
     if (notification.type == NotificationType.taskReminder && scope != null) {
-      final id = notification.data?['taskId'];
-      if (id is! String || !_uuid.hasMatch(id)) {
-        _unavailable(context);
-        return;
-      }
-      final cubit = context.read<TasksCubit>();
-      final task = await cubit.resolveTap(scope.userId, id);
-      if (!context.mounted) return;
-      if (task == null || cubit.scope != scope) {
-        _unavailable(context);
-        return;
-      }
-      GoRouter.of(context).push('/tasks?taskId=${task.id}');
-      return;
+      return _openTaskReminder(context, scope, notification);
     }
     if (scope == null || notification.workspaceId != scope.workspaceId) {
-      _unavailable(context);
-      return;
+      return _unavailable(context);
     }
-    final notifications = context.read<NotificationsCubit>();
-    if (notifications.scope != scope) {
-      _unavailable(context);
-      return;
-    }
-    final destination = _destination(scope, notification);
-    if (destination == null) {
-      _unavailable(context);
-      return;
-    }
-    if (!_uuid.hasMatch(destination.id)) {
-      _unavailable(context);
-      return;
+    final cubit = context.read<NotificationsCubit>();
+    final dest = resolveNotificationDestination(scope, notification);
+    if (cubit.scope != scope || dest == null || !_uuid.hasMatch(dest.id)) {
+      return _unavailable(context);
     }
     try {
-      final valid = await _exists(context, scope, destination);
-      if (!context.mounted || !valid || notifications.scope != scope) {
+      final valid = await verifyNotificationDestinationExists(
+        context,
+        scope,
+        dest,
+      );
+      if (!context.mounted || !valid || cubit.scope != scope) {
         if (context.mounted) _unavailable(context);
         return;
       }
-      final router = GoRouter.of(context);
-      final navigator = Navigator.of(context);
-      if (navigator.canPop()) {
+      final router = GoRouter.of(context), nav = Navigator.of(context);
+      if (nav.canPop()) {
         final route = ModalRoute.of(context);
-        navigator.pop();
+        nav.pop();
         await route?.completed;
       }
-      if (notifications.scope == scope) {
-        openAppRoute(router, destination.location);
-      }
+      if (cubit.scope == scope) openAppRoute(router, dest.location);
     } catch (_) {
       if (context.mounted) _unavailable(context);
     }
   }
 
-  static _NotificationDestination? _destination(
-    FeatureSessionScope scope,
-    NotificationRecord notification,
-  ) {
-    final data = notification.data;
-    if (data == null || notification.type == NotificationType.unknown) {
-      return null;
-    }
-    return switch (notification.type) {
-      NotificationType.fixedShiftReminder when scope.isEmployee =>
-        _NotificationDestination(
-          id: _id(data, 'assignmentId'),
-          location: '/employee?tab=shifts',
-          kind: _DestinationKind.teamWork,
-        ),
-      NotificationType.clockOutReminder when scope.isEmployee =>
-        _NotificationDestination(
-          id: _id(data, 'attendanceId'),
-          location: '/employee?tab=shifts',
-          kind: _DestinationKind.teamWork,
-        ),
-      NotificationType.teamAnnouncement => _NotificationDestination(
-        id: _id(data, 'announcementId'),
-        location: '/team-work?tab=announcements',
-        kind: _DestinationKind.teamWork,
-      ),
-      NotificationType.attendanceCorrectionCreated ||
-      NotificationType.attendanceCorrectionReviewed => _NotificationDestination(
-        id: _id(data, 'correctionId'),
-        location: '/team-work?tab=corrections',
-        kind: _DestinationKind.teamWork,
-      ),
-      NotificationType.attendanceClockedIn ||
-      NotificationType.attendanceClockedOut when scope.isManager =>
-        _NotificationDestination(
-          id: _id(data, 'attendanceId'),
-          location: '/attendance',
-          kind: _DestinationKind.managerAttendance,
-        ),
-      NotificationType.leaveRequestCreated when scope.isManager =>
-        _NotificationDestination(
-          id: _id(data, 'leaveRequestId'),
-          location: '/attendance?tab=leaveRequests',
-          kind: _DestinationKind.managerLeave,
-        ),
-      NotificationType.shiftAssigned ||
-      NotificationType.shiftUpdated ||
-      NotificationType.shiftCancelled ||
-      NotificationType.shiftReminder
-          when scope.isEmployee &&
-              _id(data, 'employeeMembershipId') == scope.membershipId =>
-        _NotificationDestination(
-          id: _id(data, 'shiftId'),
-          location: '/employee?tab=shifts',
-          kind: _DestinationKind.employeeShift,
-        ),
-      NotificationType.leaveRequestApproved ||
-      NotificationType.leaveRequestRejected when scope.isEmployee =>
-        _NotificationDestination(
-          id: _id(data, 'leaveRequestId'),
-          location: '/employee?tab=leave',
-          kind: _DestinationKind.employeeLeave,
-        ),
-      NotificationType.supportReply => _NotificationDestination(
-        id: _id(data, 'supportTicketId'),
-        location: '/support/${_id(data, 'supportTicketId')}',
-        kind: _DestinationKind.support,
-      ),
-      NotificationType.chatMessage => _NotificationDestination(
-        id: _id(data, 'groupId'),
-        location: scope.isManager
-            ? '/chat/${_id(data, 'groupId')}'
-            : '/employee/chat/${_id(data, 'groupId')}',
-        kind: _DestinationKind.chatGroup,
-      ),
-      _ => null,
-    };
-  }
-
-  static Future<bool> _exists(
+  static Future<void> _openTaskReminder(
     BuildContext context,
     FeatureSessionScope scope,
-    _NotificationDestination destination,
-  ) async => switch (destination.kind) {
-    _DestinationKind.teamWork || _DestinationKind.support => true,
-    _DestinationKind.chatGroup => () async {
-      final group = await context.read<ChatRepository>().getGroup(
-        scope.workspaceId,
-        destination.id,
-      );
-      return group.id == destination.id &&
-          group.workspaceId == scope.workspaceId &&
-          !group.isArchived;
-    }(),
-    _DestinationKind.managerAttendance => () async {
-      final record = await context
-          .read<AttendanceRepository>()
-          .getWorkspaceAttendance(scope.workspaceId, destination.id);
-      return record.id == destination.id &&
-          record.workspaceId == scope.workspaceId;
-    }(),
-    _DestinationKind.managerLeave => () async {
-      final record = await context.read<LeaveRequestRepository>().getWorkspace(
-        scope.workspaceId,
-        destination.id,
-      );
-      return record.id == destination.id &&
-          record.workspaceId == scope.workspaceId;
-    }(),
-    _DestinationKind.employeeShift => () async {
-      final record = await context.read<ShiftRepository>().getMyShift(
-        destination.id,
-      );
-      return record.id == destination.id &&
-          record.workspaceId == scope.workspaceId &&
-          record.employeeMembershipId == scope.membershipId;
-    }(),
-    _DestinationKind.employeeLeave => () async {
-      final record = await context.read<LeaveRequestRepository>().getMine(
-        destination.id,
-      );
-      return record.id == destination.id &&
-          record.workspaceId == scope.workspaceId &&
-          record.employeeMembershipId == scope.membershipId;
-    }(),
-  };
-
-  static String _id(Map<String, Object?> data, String key) =>
-      data[key] is String ? data[key]! as String : '';
-
-  static void _unavailable(BuildContext context) {
-    unawaited(
-      openCommunicationPage(context, const NotificationUnavailableScreen()),
-    );
+    NotificationRecord notification,
+  ) async {
+    final id = notification.data?['taskId'];
+    if (id is! String || !_uuid.hasMatch(id)) return _unavailable(context);
+    final cubit = context.read<TasksCubit>();
+    final task = await cubit.resolveTap(scope.userId, id);
+    if (!context.mounted) return;
+    if (task == null || cubit.scope != scope) return _unavailable(context);
+    GoRouter.of(context).push('/tasks?taskId=${task.id}');
   }
-}
 
-enum _DestinationKind {
-  support,
-  teamWork,
-  chatGroup,
-  managerAttendance,
-  managerLeave,
-  employeeShift,
-  employeeLeave,
-}
-
-class _NotificationDestination {
-  const _NotificationDestination({
-    required this.id,
-    required this.location,
-    required this.kind,
-  });
-  final String id;
-  final String location;
-  final _DestinationKind kind;
+  static void _unavailable(BuildContext context) => unawaited(
+    openCommunicationPage(context, const NotificationUnavailableScreen()),
+  );
 }

@@ -5,6 +5,7 @@ import 'package:shiftly/core/widgets/manager_form_page.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_message_uuid.dart';
 import 'package:shiftly/features/communication/presentation/communication_appearance.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/publish_announcement_form.dart';
 
 class PublishAnnouncementDialog extends StatefulWidget {
   const PublishAnnouncementDialog({
@@ -25,6 +26,7 @@ class _PublishAnnouncementDialogState extends State<PublishAnnouncementDialog> {
   final _clientId = chatMessageUuid();
   bool _acknowledge = false, _busy = false;
   String? _error;
+
   @override
   void dispose() {
     _title.dispose();
@@ -64,61 +66,14 @@ class _PublishAnnouncementDialogState extends State<PublishAnnouncementDialog> {
       child: ManagerFormPage(
         title: 'Publish update',
         busy: _busy,
-        content: SizedBox(
-          width: 540,
-          child: SingleChildScrollView(
-            child: Form(
-              key: _form,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _title,
-                    enabled: !_busy,
-                    maxLength: 160,
-                    decoration: InputDecoration(labelText: context.tr('Title')),
-                    validator: (v) => v?.trim().isNotEmpty == true
-                        ? null
-                        : context.tr('Please enter a title.'),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _body,
-                    enabled: !_busy,
-                    minLines: 4,
-                    maxLines: 8,
-                    maxLength: 4000,
-                    decoration: InputDecoration(
-                      labelText: context.tr('Announcement'),
-                    ),
-                    validator: (v) => v?.trim().isNotEmpty == true
-                        ? null
-                        : context.tr('Please enter your announcement.'),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(context.tr('Require acknowledgment')),
-                    subtitle: Text(
-                      context.tr(
-                        'Each recipient must confirm they have read this announcement.',
-                      ),
-                    ),
-                    value: _acknowledge,
-                    onChanged: _busy
-                        ? null
-                        : (v) => setState(() => _acknowledge = v),
-                  ),
-                  if (_error != null)
-                    Text(
-                      context.tr(_error!),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
+        content: PublishAnnouncementForm(
+          formKey: _form,
+          titleController: _title,
+          bodyController: _body,
+          acknowledge: _acknowledge,
+          busy: _busy,
+          error: _error,
+          onAcknowledgeChanged: (v) => setState(() => _acknowledge = v),
         ),
         actions: [
           TextButton(

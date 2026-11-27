@@ -29,9 +29,9 @@ Future<bool> confirmTaskAction(
       ),
     ) ==
     true;
+
 Future<bool> togglePersonalTask(BuildContext context, PersonalTask task) async {
-  final cubit = context.read<TasksCubit>();
-  final scope = cubit.scope;
+  final cubit = context.read<TasksCubit>(), scope = cubit.scope;
   if (task.completed &&
       !await confirmTaskAction(
         context,
@@ -46,20 +46,16 @@ Future<bool> togglePersonalTask(BuildContext context, PersonalTask task) async {
   if (!context.mounted || cubit.scope != scope) return false;
   final success = await cubit.toggle(task);
   if (success && context.mounted && cubit.scope == scope) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          context.tr(task.completed ? 'Task reopened' : 'Task complete'),
-        ),
-      ),
-    );
+    final msg = task.completed ? 'Task reopened' : 'Task complete';
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.tr(msg))));
   }
   return success;
 }
 
 Future<bool> deletePersonalTask(BuildContext context, PersonalTask task) async {
-  final cubit = context.read<TasksCubit>();
-  final scope = cubit.scope;
+  final cubit = context.read<TasksCubit>(), scope = cubit.scope;
   if (!await confirmTaskAction(
     context,
     title: 'Delete this task?',
@@ -70,6 +66,5 @@ Future<bool> deletePersonalTask(BuildContext context, PersonalTask task) async {
   )) {
     return false;
   }
-  if (!context.mounted || cubit.scope != scope) return false;
-  return cubit.remove(task);
+  return context.mounted && cubit.scope == scope && await cubit.remove(task);
 }

@@ -19,6 +19,12 @@ class PendingAnnouncementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final fg = colors.onPrimaryContainer;
+    final time = WorkspaceTime.dateTime(
+      announcement.createdAt,
+      timezone,
+      locale: Localizations.localeOf(context).toString(),
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
@@ -34,27 +40,27 @@ class PendingAnnouncementCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.campaign_outlined, color: colors.onPrimaryContainer),
+                Icon(Icons.campaign_outlined, color: fg),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     announcement.title,
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(color: colors.onPrimaryContainer),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(color: fg),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
             Text(
-              '${announcement.author} · ${WorkspaceTime.dateTime(announcement.createdAt, timezone, locale: Localizations.localeOf(context).toString())}',
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: colors.onPrimaryContainer),
+              '${announcement.author} · $time',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: fg),
             ),
             const SizedBox(height: 12),
             SelectableText(
               announcement.body,
-              style: TextStyle(color: colors.onPrimaryContainer, height: 1.5),
+              style: TextStyle(color: fg, height: 1.5),
             ),
             const SizedBox(height: 12),
             if (announcement.requiresAcknowledgment)
@@ -64,7 +70,7 @@ class PendingAnnouncementCard extends StatelessWidget {
                   context.tr(
                     'Your manager needs confirmation that you read this.',
                   ),
-                  style: TextStyle(color: colors.onPrimaryContainer),
+                  style: TextStyle(color: fg),
                 ),
               ),
             Align(

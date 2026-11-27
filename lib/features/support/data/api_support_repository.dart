@@ -5,45 +5,30 @@ import 'package:shiftly/core/serialization/api_model_parser.dart';
 
 import '../domain/support_models.dart';
 import '../domain/support_repository.dart';
+import 'support_api_helpers.dart';
 
 class ApiSupportRepository implements SupportRepository {
   ApiSupportRepository(this.dio);
   final Dio dio;
   @override
-  Future<SupportPage> list({required int page}) async {
-    final j = ApiModelParser.map(
-      (await dio.get<Object?>(
-        '/support',
-        queryParameters: {'page': page},
-      )).data,
-    );
-    return SupportPage(
-      ApiModelParser.list(
-        j['items'],
-        'items',
-      ).map((v) => SupportTicket.fromJson(ApiModelParser.map(v))).toList(),
-      j['hasNext'] == true,
-    );
-  }
+  Future<SupportPage> list({required int page}) async => parseSupportPage(
+    (await dio.get<Object?>('/support', queryParameters: {'page': page})).data,
+  );
 
   @override
-  Future<List<SupportContext>> contexts(String workspaceId) async {
-    final j = ApiModelParser.map(
-      (await dio.get<Object?>(
-        '/support/context',
-        queryParameters: {'workspaceId': workspaceId},
-      )).data,
-    );
-    return ApiModelParser.list(
-      j['items'],
-      'items',
-    ).map((v) => SupportContext.fromJson(ApiModelParser.map(v))).toList();
-  }
+  Future<List<SupportContext>> contexts(String workspaceId) async =>
+      parseSupportContexts(
+        (await dio.get<Object?>(
+          '/support/context',
+          queryParameters: {'workspaceId': workspaceId},
+        )).data,
+      );
 
   @override
   Future<SupportTicket> get(String id) async => SupportTicket.fromJson(
     ApiModelParser.map((await dio.get<Object?>('/support/$id')).data),
   );
+
   @override
   Future<SupportTicket> create({
     required String workspaceId,
@@ -54,16 +39,13 @@ class ApiSupportRepository implements SupportRepository {
   }) async {
     final r = await dio.post<Object?>(
       '/support',
-      data: {
-        'workspaceId': workspaceId,
-        'clientId': clientId,
-        'title': title,
-        'description': description,
-        if (related != null) ...{
-          'relatedKind': related.kind,
-          'relatedId': related.id,
-        },
-      },
+      data: buildSupportCreatePayload(
+        workspaceId: workspaceId,
+        clientId: clientId,
+        title: title,
+        description: description,
+        related: related,
+      ),
     );
     return SupportTicket.fromJson(ApiModelParser.map(r.data));
   }
@@ -73,30 +55,20 @@ class ApiSupportRepository implements SupportRepository {
     required String id,
     required String clientId,
     required String body,
-  }) async {
-    await dio.post<Object?>(
-      '/support/$id/replies',
-      data: {'clientId': clientId, 'body': body},
-    );
-  }
+  }) => dio.post<Object?>(
+    '/support/$id/replies',
+    data: {'clientId': clientId, 'body': body},
+  );
 
   @override
   Future<void> uploadImage({
     required String id,
     required Uint8List bytes,
     required String mime,
-  }) async {
-    await dio.post<Object?>(
-      '/support/$id/image',
-      data: FormData.fromMap({
-        'image': MultipartFile.fromBytes(
-          bytes,
-          filename: 'support-image.${mime.split('/').last}',
-          contentType: DioMediaType.parse(mime),
-        ),
-      }),
-    );
-  }
+  }) => dio.post<Object?>(
+    '/support/$id/image',
+    data: buildSupportImageForm(bytes, mime),
+  );
 
   @override
   Future<Uint8List> image(String id) async {

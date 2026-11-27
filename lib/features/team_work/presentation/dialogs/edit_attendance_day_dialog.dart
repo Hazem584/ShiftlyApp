@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_form_surface.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
-import 'package:shiftly/features/team_work/presentation/widgets/attendance_period_fields.dart';
+import 'package:shiftly/features/team_work/presentation/dialogs/edit_attendance_day_submit.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/edit_attendance_day_form.dart';
 
 class EditAttendanceDayDialog extends StatefulWidget {
   const EditAttendanceDayDialog({
@@ -37,6 +37,7 @@ class _EditAttendanceDayDialogState extends State<EditAttendanceDayDialog> {
   String _kind = 'FORGOT_TO_RECORD';
   bool _busy = false;
   String? _error;
+
   @override
   void dispose() {
     _reason.dispose();
@@ -45,68 +46,24 @@ class _EditAttendanceDayDialogState extends State<EditAttendanceDayDialog> {
 
   Future<void> _save() async {
     if (_busy || !_form.currentState!.validate()) return;
-    final duration = _end.difference(_start);
-    if (duration.inMinutes < 1 ||
-        duration > const Duration(hours: 24) ||
-        _end.isAfter(DateTime.now())) {
-      setState(
-        () => _error =
-            'Choose a completed period of up to 24 hours, ending before now.',
-      );
-      return;
-    }
+    final periodError = validateCompletedAttendancePeriod(_start, _end);
+    if (periodError != null) return setState(() => _error = periodError);
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      final entry = widget.entry, shift = entry.shift;
-      final date = WorkspaceTime.localDateKey(
-        year: widget.date.year,
-        month: widget.date.month,
-        day: widget.date.day,
+      await submitAttendanceDayEdit(
+        repository: widget.repository,
+        workspaceId: widget.workspaceId,
+        manager: widget.manager,
+        entry: widget.entry,
+        date: widget.date,
+        reasonKind: _kind,
+        start: _start,
+        end: _end,
+        reason: _reason.text,
       );
-      final legacyId =
-          shift != null &&
-              shift.assignmentId == null &&
-              shift.extraAuthorizationId == null
-          ? shift.id
-          : null;
-      if (widget.manager) {
-        await widget.repository.recordAttendanceDay(
-          widget.workspaceId,
-          employeeMembershipId: entry.employeeMembershipId,
-          attendanceId: entry.attendance?.id,
-          assignmentId: shift?.assignmentId,
-          extraAuthorizationId: shift?.extraAuthorizationId,
-          shiftId: legacyId,
-          operationalDate: date,
-          reasonKind: _kind,
-          clockIn: _start,
-          clockOut: _end,
-          reason: _reason.text,
-        );
-      } else if (entry.attendance != null) {
-        await widget.repository.requestCorrection(
-          widget.workspaceId,
-          attendanceId: entry.attendance!.id,
-          clockIn: _start,
-          clockOut: _end,
-          reason: _reason.text,
-        );
-      } else {
-        await widget.repository.requestMissedAttendance(
-          widget.workspaceId,
-          assignmentId: shift?.assignmentId,
-          extraAuthorizationId: shift?.extraAuthorizationId,
-          shiftId: legacyId,
-          operationalDate: date,
-          reasonKind: _kind,
-          clockIn: _start,
-          clockOut: _end,
-          reason: _reason.text,
-        );
-      }
       if (mounted) Navigator.pop(context, true);
     } catch (error) {
       if (mounted) {
@@ -128,83 +85,20 @@ class _EditAttendanceDayDialogState extends State<EditAttendanceDayDialog> {
         ),
       ),
       scrollable: true,
-      content: SizedBox(
-        width: 460,
-        child: Form(
-          key: _form,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(widget.entry.employee.displayName),
-              Text(
-                context.tr(
-                  widget.manager
-                      ? 'Changes are applied immediately and recorded in the audit history.'
-                      : 'Your attendance changes only after your manager approves this request.',
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _kind,
-                isExpanded: true,
-                decoration: InputDecoration(labelText: context.tr('Reason')),
-                items: [
-                  for (final (value, label) in const [
-                    (
-                      'FORGOT_TO_RECORD',
-                      'I attended but forgot to record attendance',
-                    ),
-                    (
-                      'EXCEPTION',
-                      'I have an exception or special circumstance',
-                    ),
-                    ('OTHER', 'Other reason'),
-                  ])
-                    DropdownMenuItem(
-                      value: value,
-                      child: Text(context.tr(label), maxLines: 2),
-                    ),
-                ],
-                onChanged: _busy
-                    ? null
-                    : (value) => setState(() => _kind = value!),
-              ),
-              AttendancePeriodFields(
-                start: _start,
-                end: _end,
-                timezone: widget.timezone,
-                busy: _busy,
-                onStart: (value) => setState(() => _start = value),
-                onEnd: (value) => setState(() => _end = value),
-              ),
-              Text(
-                context.tr(
-                  'Overtime is calculated from the approved times and your break policy.',
-                ),
-              ),
-              TextFormField(
-                controller: _reason,
-                enabled: !_busy,
-                minLines: 2,
-                maxLines: 4,
-                maxLength: 1000,
-                decoration: InputDecoration(
-                  labelText: context.tr('Explain what happened'),
-                ),
-                validator: (value) => (value?.trim().length ?? 0) < 5
-                    ? context.tr(
-                        'Please add a reason of at least 5 characters.',
-                      )
-                    : null,
-              ),
-              if (_error != null)
-                Text(
-                  context.tr(_error!),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-            ],
-          ),
-        ),
+      content: EditAttendanceDayForm(
+        formKey: _form,
+        employeeName: widget.entry.employee.displayName,
+        manager: widget.manager,
+        kind: _kind,
+        start: _start,
+        end: _end,
+        timezone: widget.timezone,
+        busy: _busy,
+        reasonController: _reason,
+        error: _error,
+        onKindChanged: (value) => setState(() => _kind = value),
+        onStartChanged: (value) => setState(() => _start = value),
+        onEndChanged: (value) => setState(() => _end = value),
       ),
       actions: [
         TextButton(

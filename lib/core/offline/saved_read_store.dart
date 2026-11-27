@@ -3,16 +3,9 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SavedRead {
-  const SavedRead({
-    required this.owner,
-    required this.data,
-    required this.updatedAt,
-  });
-  final String owner;
-  final Object? data;
-  final DateTime updatedAt;
-}
+import 'saved_read.dart';
+
+export 'saved_read.dart';
 
 /// Bounded, read-only snapshots. Credentials and mutation bodies are never saved.
 class SavedReadStore {
@@ -68,44 +61,27 @@ class SavedReadStore {
 
   Future<void> remove(String key) => _serialize(() => _remove(key));
 
-  Future<void> clearOwner(String owner) => _serialize(() async {
-    for (final key in _keys().toList()) {
-      try {
-        final raw = _preferences?.getString(key) ?? _memory[key];
-        if ((jsonDecode(raw!) as Map)['owner'] == owner) await _remove(key);
-      } catch (_) {
-        await _remove(key);
-      }
-    }
-  });
+  Future<void> clearOwner(String owner) =>
+      _clearMatching((value) => value == owner);
 
   Future<void> clearWorkspace(String userId, String workspaceId) =>
+      _clearMatching((owner) => owner.startsWith('$userId|$workspaceId|'));
+
+  Future<void> clearUser(String userId) =>
+      _clearMatching((owner) => owner.startsWith('$userId|'));
+
+  Future<void> _clearMatching(bool Function(String) matches) =>
       _serialize(() async {
         for (final key in _keys().toList()) {
           try {
             final raw = _preferences?.getString(key) ?? _memory[key];
             final owner = (jsonDecode(raw!) as Map)['owner'] as String;
-            if (owner.startsWith('$userId|$workspaceId|')) await _remove(key);
+            if (matches(owner)) await _remove(key);
           } catch (_) {
             await _remove(key);
           }
         }
       });
-
-  Future<void> clearUser(String userId) => _serialize(() async {
-    for (final key in _keys().toList()) {
-      try {
-        final raw = _preferences?.getString(key) ?? _memory[key];
-        if (((jsonDecode(raw!) as Map)['owner'] as String).startsWith(
-          '$userId|',
-        )) {
-          await _remove(key);
-        }
-      } catch (_) {
-        await _remove(key);
-      }
-    }
-  });
 
   Future<void> _serialize(Future<void> Function() operation) {
     // A disk failure must not turn a successful API read into a failed request.

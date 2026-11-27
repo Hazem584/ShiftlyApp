@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
-import 'package:shiftly/features/employees/presentation/widgets/employee_list_employee_card.dart';
+import 'package:shiftly/features/employees/presentation/widgets/employee_list_row.dart';
 
 class EmployeeList extends StatelessWidget {
   const EmployeeList({
@@ -38,27 +38,7 @@ class EmployeeList extends StatelessWidget {
           separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (_, index) {
             if (index < rows) {
-              if (columns == 1) {
-                return EmployeeListEmployeeCard(employee: employees[index]);
-              }
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: EmployeeListEmployeeCard(
-                      employee: employees[index * 2],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: index * 2 + 1 < employees.length
-                        ? EmployeeListEmployeeCard(
-                            employee: employees[index * 2 + 1],
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              );
+              return buildEmployeeListRow(employees, index, columns);
             }
             return Center(
               child: loadingMore

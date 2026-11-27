@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/widgets/app_content_loading.dart';
 import 'package:shiftly/features/communication/presentation/communication_appearance.dart';
 import 'package:uuid/uuid.dart';
 
 import '../domain/support_models.dart';
 import '../domain/support_repository.dart';
-import 'support_image_preview.dart';
+import 'support_detail_actions.dart';
+import 'support_detail_body.dart';
 
 class SupportDetailScreen extends StatefulWidget {
   const SupportDetailScreen({
@@ -30,6 +30,7 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
   bool _loading = false, _sending = false, _refreshRequested = false;
   Timer? _timer;
   String _replyId = const Uuid().v4();
+
   @override
   void initState() {
     super.initState();
@@ -51,21 +52,10 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
     }
     _loading = true;
     try {
-      final ticket = await widget.repository.get(widget.id);
-      if (mounted) {
-        setState(() {
-          _ticket = ticket;
-          _error = null;
-        });
-      }
+      final t = await widget.repository.get(widget.id);
+      if (mounted) setState(() => (_ticket = t, _error = null));
     } catch (e) {
-      if (mounted) {
-        setState(
-          () => _error = e is ApiException
-              ? e.message
-              : 'Could not load the support report.',
-        );
-      }
+      if (mounted) setState(() => _error = supportLoadError(e));
     } finally {
       _loading = false;
       if (_refreshRequested && mounted) {
@@ -79,10 +69,7 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
     if (_sending || _ticket?.canReply != true || _reply.text.trim().isEmpty) {
       return;
     }
-    setState(() {
-      _sending = true;
-      _error = null;
-    });
+    setState(() => (_sending = true, _error = null));
     try {
       await widget.repository.reply(
         id: widget.id,
@@ -93,13 +80,7 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
       _replyId = const Uuid().v4();
       await _load();
     } catch (e) {
-      if (mounted) {
-        setState(
-          () => _error = e is ApiException
-              ? e.message
-              : 'Could not send the reply. Retry safely.',
-        );
-      }
+      if (mounted) setState(() => _error = supportReplyError(e));
       if (mounted && e is ApiException && e.statusCode == 409) {
         await _load();
         if (mounted && _ticket?.canReply == true) {
@@ -112,127 +93,31 @@ class _SupportDetailScreenState extends State<SupportDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      CommunicationAppearance(child: Builder(builder: _build));
-  Widget _build(BuildContext context) {
-    final ticket = _ticket;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr('Support report')),
-        actions: [
-          IconButton(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-            tooltip: context.tr('Refresh'),
-          ),
-        ],
-      ),
-      body: ticket == null
-          ? (_error == null
-                ? const AppContentLoading()
-                : Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(context.tr(_error!)),
-                        TextButton(
-                          onPressed: _load,
-                          child: Text(context.tr('Retry')),
-                        ),
-                      ],
-                    ),
-                  ))
-          : ListView(
-              padding: const EdgeInsets.all(18),
-              children: [
-                Text(
-                  ticket.title,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Chip(
-                  label: Text(context.tr(supportStatusLabel(ticket.status))),
-                ),
-                if (ticket.assignee != null)
-                  Text(
-                    context.tr('Responsible person: {name}', {
-                      'name': ticket.assignee!,
-                    }),
-                  ),
-                if (ticket.relatedLabel != null) Text(ticket.relatedLabel!),
-                const SizedBox(height: 12),
-                SelectableText(ticket.description),
-                if (ticket.hasImage)
-                  SupportImagePreview(
-                    repository: widget.repository,
-                    ticketId: widget.id,
-                  ),
-                const SizedBox(height: 20),
-                Text(
-                  context.tr('Replies'),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                for (final reply in ticket.replies)
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            reply.author.isEmpty
-                                ? context.tr(
-                                    reply.staff ? 'Support team' : 'You',
-                                  )
-                                : reply.author,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            reply.createdAt
-                                .toLocal()
-                                .toString()
-                                .split('.')
-                                .first,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          const SizedBox(height: 6),
-                          SelectableText(reply.body),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (_error != null)
-                  Text(
-                    context.tr(_error!),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                if (!ticket.canReply)
-                  Text(context.tr('This report is closed.'))
-                else ...[
-                  TextField(
-                    controller: _reply,
-                    enabled: !_sending,
-                    minLines: 2,
-                    maxLines: 6,
-                    maxLength: 5000,
-                    onChanged: (_) => _replyId = const Uuid().v4(),
-                    decoration: InputDecoration(
-                      labelText: context.tr('Write a reply'),
-                    ),
-                  ),
-                  FilledButton.icon(
-                    onPressed: _sending ? null : _send,
-                    icon: const Icon(Icons.send_outlined),
-                    label: Text(
-                      context.tr(_sending ? 'Sending…' : 'Send reply'),
-                    ),
-                  ),
-                ],
-              ],
+  Widget build(BuildContext context) => CommunicationAppearance(
+    child: Builder(
+      builder: (c) => Scaffold(
+        appBar: AppBar(
+          title: Text(c.tr('Support report')),
+          actions: [
+            IconButton(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              tooltip: c.tr('Refresh'),
             ),
-    );
-  }
+          ],
+        ),
+        body: _ticket == null
+            ? buildSupportDetailPlaceholder(c, error: _error, onRetry: _load)
+            : SupportDetailBody(
+                ticket: _ticket!,
+                repository: widget.repository,
+                replyController: _reply,
+                sending: _sending,
+                error: _error,
+                onReplyChanged: (_) => _replyId = const Uuid().v4(),
+                onSend: _send,
+              ),
+      ),
+    ),
+  );
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
+import 'package:shiftly/features/employees/presentation/widgets/employee_status_filter_chips.dart';
 
 class EmployeeSearchBar extends StatelessWidget {
   const EmployeeSearchBar({
@@ -34,36 +35,11 @@ class EmployeeSearchBar extends StatelessWidget {
         const SizedBox(height: 8),
         Align(
           alignment: AlignmentDirectional.centerStart,
-          child: Wrap(
-            key: const Key('employee-status-filter'),
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ChoiceChip(
-                label: Text(context.tr('All')),
-                selected: status == null && !onShift,
-                onSelected: (_) {
-                  onShiftChanged?.call(false);
-                  onStatusChanged?.call(null);
-                },
-              ),
-              ChoiceChip(
-                label: Text(context.tr('On shift')),
-                selected: onShift,
-                onSelected: (value) {
-                  onShiftChanged?.call(value);
-                  onStatusChanged?.call(null);
-                },
-              ),
-              ChoiceChip(
-                label: Text(context.tr('Inactive')),
-                selected: status == EmployeeStatusFilter.suspended,
-                onSelected: (_) {
-                  onShiftChanged?.call(false);
-                  onStatusChanged?.call(EmployeeStatusFilter.suspended);
-                },
-              ),
-            ],
+          child: EmployeeStatusFilterChips(
+            onShift: onShift,
+            status: status,
+            onShiftChanged: onShiftChanged,
+            onStatusChanged: onStatusChanged,
           ),
         ),
       ],

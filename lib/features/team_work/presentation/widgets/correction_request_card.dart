@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/employee_design.dart';
 import 'package:shiftly/core/theme/manager_design.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
-import 'package:shiftly/features/employee_experience/presentation/employee_correction_details_screen.dart';
-import 'package:shiftly/features/employee_experience/presentation/employee_tile.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/correction_request_card_helpers.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/correction_request_times_section.dart';
 
 class CorrectionRequestCard extends StatelessWidget {
   const CorrectionRequestCard({
@@ -21,36 +20,13 @@ class CorrectionRequestCard extends StatelessWidget {
   final String timezone;
   final VoidCallback? onApprove, onDecline;
   final bool busy, detailed;
+
   @override
   Widget build(BuildContext context) {
-    String time(DateTime value) => WorkspaceTime.dateTime(
-      value,
-      timezone,
-      locale: Localizations.localeOf(context).toString(),
-    );
     if (EmployeeDesign.applies(context) &&
         !ManagerDesign.applies(context) &&
         !detailed) {
-      return EmployeeTile(
-        icon: Icons.edit_calendar_outlined,
-        title:
-            "${request.operationalDate ?? WorkspaceTime.dateKey(request.requestedIn, timezone)} · ${request.shiftName ?? context.tr('Request correction')}",
-        subtitle:
-            "${context.tr(request.status == 'PENDING'
-                ? 'Pending review'
-                : request.status == 'APPROVED'
-                ? 'Approved'
-                : 'Declined')} · ${time(request.requestedIn)} → ${time(request.requestedOut)}",
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute<void>(
-            builder: (_) => EmployeeCorrectionDetailsScreen(
-              request: request,
-              timezone: timezone,
-            ),
-          ),
-        ),
-      );
+      return buildEmployeeCorrectionTile(context, request, timezone);
     }
     return Card(
       child: Padding(
@@ -62,64 +38,11 @@ class CorrectionRequestCard extends StatelessWidget {
             if (request.isMissingAttendance) ...[
               Text(context.tr('Review missing attendance')),
               Text('${request.shiftName} · ${request.operationalDate}'),
-              Text(
-                context.tr(switch (request.reasonKind) {
-                  'FORGOT_TO_RECORD' =>
-                    'I attended but forgot to record attendance',
-                  'EXCEPTION' => 'I have an exception or special circumstance',
-                  _ => 'Other reason',
-                }),
-              ),
+              Text(context.tr(correctionReasonKindLabel(request.reasonKind))),
             ],
-            Text(
-              context.tr(switch (request.status) {
-                'PENDING' => 'Pending review',
-                'APPROVED' => 'Approved',
-                _ => 'Declined',
-              }),
-            ),
+            Text(context.tr(correctionStatusLabel(request.status))),
             const SizedBox(height: 12),
-            Text(
-              context.tr('Original times'),
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            Text(
-              request.originalIn == null || request.originalOut == null
-                  ? context.tr('No attendance recorded')
-                  : '${time(request.originalIn!)}\n${time(request.originalOut!)}',
-            ),
-            const SizedBox(height: 10),
-            Text(
-              context.tr('Requested times'),
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            Text('${time(request.requestedIn)}\n${time(request.requestedOut)}'),
-            Text(
-              context.tr('Requested period: {hours}h {minutes}m', {
-                'hours':
-                    '${request.requestedOut.difference(request.requestedIn).inHours}',
-                'minutes':
-                    '${request.requestedOut.difference(request.requestedIn).inMinutes % 60}',
-              }),
-            ),
-            if (request.approvedIn != null && request.approvedOut != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                context.tr('Approved times'),
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              Text(
-                '${time(request.approvedIn!)}\n${time(request.approvedOut!)}',
-              ),
-              Text(
-                context.tr('Approved period: {hours}h {minutes}m', {
-                  'hours':
-                      '${request.approvedOut!.difference(request.approvedIn!).inHours}',
-                  'minutes':
-                      '${request.approvedOut!.difference(request.approvedIn!).inMinutes % 60}',
-                }),
-              ),
-            ],
+            CorrectionRequestTimesSection(request: request, timezone: timezone),
             const Divider(),
             Text(request.reason),
             if (request.reviewNote != null) Text(request.reviewNote!),
@@ -130,7 +53,14 @@ class CorrectionRequestCard extends StatelessWidget {
                   context.tr('Reviewed by {name}', {'name': request.reviewer!}),
                 ),
               ),
-            if (request.reviewedAt != null) Text(time(request.reviewedAt!)),
+            if (request.reviewedAt != null)
+              Text(
+                formatCorrectionRequestTime(
+                  context,
+                  request.reviewedAt!,
+                  timezone,
+                ),
+              ),
             if (request.status == 'PENDING' && onApprove != null)
               Padding(
                 padding: const EdgeInsets.only(top: 12),

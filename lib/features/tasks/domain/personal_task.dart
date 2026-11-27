@@ -1,4 +1,4 @@
-import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'personal_task_parser.dart';
 
 class PersonalTask {
   const PersonalTask({
@@ -23,8 +23,10 @@ class PersonalTask {
   final bool remindDayBefore;
   final bool remindHourBefore;
   final List<DateTime> additionalDueAts;
+
   List<DateTime> get scheduledDates =>
       [dueAt, ...additionalDueAts]..sort((a, b) => a.compareTo(b));
+
   DateTime nextDueAt(DateTime now) {
     final dates = scheduledDates;
     return dates.firstWhere(
@@ -36,37 +38,15 @@ class PersonalTask {
   DateTime? get endsAt => durationMinutes == null
       ? null
       : dueAt.add(Duration(minutes: durationMinutes!));
+
   bool get overdue =>
       !completed &&
       scheduledDates.last
           .add(Duration(minutes: durationMinutes ?? 0))
           .isBefore(DateTime.now());
-  factory PersonalTask.fromJson(Map<String, Object?> json) {
-    final status = ApiModelParser.string(json, 'status');
-    if (status != 'OPEN' && status != 'COMPLETED') {
-      throw const FormatException('Invalid task status');
-    }
-    return PersonalTask(
-      id: ApiModelParser.string(json, 'id'),
-      ownerId: ApiModelParser.string(json, 'ownerId'),
-      workspaceId: ApiModelParser.string(json, 'workspaceId'),
-      title: ApiModelParser.string(json, 'title'),
-      description: json['description'] as String,
-      dueAt: ApiModelParser.date(json, 'dueAt'),
-      revision: ApiModelParser.integer(json, 'revision', minimum: 1),
-      completed: status == 'COMPLETED',
-      durationMinutes: json['durationMinutes'] == null
-          ? null
-          : ApiModelParser.integer(json, 'durationMinutes', minimum: 1),
-      remindDayBefore: json['remindDayBefore'] == true,
-      remindHourBefore: json['remindHourBefore'] == true,
-      additionalDueAts: json['additionalDueAts'] == null
-          ? const []
-          : ApiModelParser.list(json['additionalDueAts'])
-                .map((date) => ApiModelParser.date({'date': date}, 'date'))
-                .toList(),
-    );
-  }
+
+  factory PersonalTask.fromJson(Map<String, Object?> json) =>
+      parsePersonalTask(json);
 }
 
 class TaskPage {

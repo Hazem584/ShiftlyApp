@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 
 import '../../domain/personal_task.dart';
+import 'task_card_menu.dart';
 import 'task_countdown.dart';
 
 class TaskCard extends StatelessWidget {
@@ -17,6 +18,7 @@ class TaskCard extends StatelessWidget {
   final PersonalTask task;
   final bool busy;
   final VoidCallback onOpen, onToggle, onDelete;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -28,34 +30,10 @@ class TaskCard extends StatelessWidget {
         onTap: busy ? null : onOpen,
         onLongPress: busy
             ? null
-            : () => showModalBottomSheet<void>(
-                context: context,
-                showDragHandle: true,
-                builder: (c) => SafeArea(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        title: Text(context.tr('Task details')),
-                        onTap: () {
-                          Navigator.pop(c);
-                          onOpen();
-                        },
-                      ),
-                      ListTile(
-                        title: Text(context.tr('Delete task')),
-                        leading: Icon(
-                          Icons.delete_outline,
-                          color: colors.error,
-                        ),
-                        onTap: () {
-                          Navigator.pop(c);
-                          onDelete();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+            : () => showTaskCardMenu(
+                context,
+                onOpen: onOpen,
+                onDelete: onDelete,
               ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 16, 20, 16),

@@ -68,6 +68,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.findByName("release")
+            // R8 removes unused JVM code and resources from plugins.
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
     }
 }

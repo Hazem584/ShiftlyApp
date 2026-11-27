@@ -1,21 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/models/employee.dart';
-import 'package:shiftly/core/services/toast_service.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/widgets/empty_state.dart';
-import 'package:shiftly/core/widgets/manager_form_page.dart';
-import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
 import 'package:shiftly/features/employees/presentation/cubit/employee_details_cubit.dart';
-import 'package:shiftly/features/employees/presentation/cubit/employees_cubit.dart';
-import 'package:shiftly/features/employees/presentation/widgets/employee_details_header.dart';
+import 'package:shiftly/features/employees/presentation/widgets/employee_details_loaded_body.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_details_loading.dart';
-import 'package:shiftly/features/employees/presentation/widgets/employee_information_sections.dart';
-import 'package:shiftly/features/employees/presentation/widgets/employee_work_section.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/extra_shifts_section.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/work_pattern_section.dart';
-import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 
 class EmployeeDetailsView extends StatelessWidget {
   const EmployeeDetailsView({
@@ -27,53 +16,6 @@ class EmployeeDetailsView extends StatelessWidget {
   final String workspaceId;
   final String membershipId;
   final String timezone;
-
-  Future<void> _changeStatus(BuildContext context, Employee employee) async {
-    final suspending = employee.employmentStatus == EmploymentStatus.active;
-    if (suspending) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => ManagerDialog(
-          title: Text(context.tr('Deactivate employee?')),
-          content: Text(
-            context.tr('The employee will lose active workspace access.'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(context.tr('Cancel')),
-            ),
-            FilledButton(
-              key: const Key('confirm-deactivate-employee'),
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(context.tr('Deactivate')),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !context.mounted) return;
-    }
-    final result = await context.read<EmployeesCubit>().setStatus(
-      membershipId,
-      suspending ? EmployeeStatusFilter.suspended : EmployeeStatusFilter.active,
-    );
-    if (!context.mounted) return;
-    if (result == EmployeeOperationResult.success) {
-      await context.read<EmployeeDetailsCubit>().load(
-        workspaceId: workspaceId,
-        membershipId: membershipId,
-        retain: true,
-      );
-      if (context.mounted) {
-        ToastService.success(
-          context,
-          message: suspending ? 'Employee deactivated' : 'Employee reactivated',
-        );
-      }
-    } else if (result == EmployeeOperationResult.failure) {
-      ToastService.error(context, message: 'Could not update employee status.');
-    }
-  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -93,81 +35,13 @@ class EmployeeDetailsView extends StatelessWidget {
             child: Text(context.tr('Retry')),
           ),
         ),
-        EmployeeDetailsLoadedState(:final employee) => ListView(
-          key: const Key('employee-details-content'),
-          padding: const EdgeInsets.fromLTRB(18, 8, 18, 30),
-          children: [
-            EmployeeDetailsHeader(employee: employee),
-
-            const SizedBox(height: AppSpacing.l),
-            EmployeeContactSection(employee: employee),
-            const SizedBox(height: AppSpacing.l),
-            EmployeeWorkSection(employee: employee),
-            const SizedBox(height: AppSpacing.l),
-            for (final item in [
-              (
-                'Baseline schedule',
-                'Working weekdays and assignment history',
-                WorkPatternSection(
-                  workspaceId: workspaceId,
-                  membershipId: membershipId,
-                  timezone: timezone,
-                  canEdit: employee.employmentStatus == EmploymentStatus.active,
-                ),
-              ),
-              (
-                'Extra shifts',
-                'Authorizations and recorded extra attendance',
-                ExtraShiftsSection(
-                  workspaceId: workspaceId,
-                  membershipId: membershipId,
-                  timezone: timezone,
-                  canEdit: employee.employmentStatus == EmploymentStatus.active,
-                ),
-              ),
-            ]) ...[
-              Card(
-                child: ListTile(
-                  title: Text(context.tr(item.$1)),
-                  subtitle: Text(context.tr(item.$2)),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => ManagerFormPage(
-                        title: item.$1,
-                        subtitle: employee.displayName,
-                        content: item.$3,
-                        actions: const [],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-            ],
-            if (employee.employmentStatus == EmploymentStatus.active ||
-                employee.employmentStatus == EmploymentStatus.suspended)
-              FilledButton.tonalIcon(
-                key: Key(
-                  employee.employmentStatus == EmploymentStatus.active
-                      ? 'deactivate-employee'
-                      : 'reactivate-employee',
-                ),
-                onPressed: () => _changeStatus(context, employee),
-                icon: Icon(
-                  employee.employmentStatus == EmploymentStatus.active
-                      ? Icons.person_off_outlined
-                      : Icons.person_add_alt_rounded,
-                ),
-                label: Text(
-                  employee.employmentStatus == EmploymentStatus.active
-                      ? context.tr('Deactivate employee')
-                      : context.tr('Reactivate employee'),
-                ),
-              ),
-          ],
-        ),
+        EmployeeDetailsLoadedState(:final employee) =>
+          EmployeeDetailsLoadedBody(
+            employee: employee,
+            workspaceId: workspaceId,
+            membershipId: membershipId,
+            timezone: timezone,
+          ),
       },
     ),
   );

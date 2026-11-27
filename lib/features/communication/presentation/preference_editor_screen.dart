@@ -4,9 +4,9 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/localization/language_cubit.dart';
 import 'package:shiftly/core/localization/language_settings.dart';
 import 'package:shiftly/core/theme/theme_cubit.dart';
+import 'package:shiftly/features/communication/presentation/preference_editor_options.dart';
 
 import 'communication_page.dart';
-import 'settings_choice_card.dart';
 
 class PreferenceEditorScreen extends StatefulWidget {
   const PreferenceEditorScreen({this.language = false, super.key});
@@ -16,16 +16,10 @@ class PreferenceEditorScreen extends StatefulWidget {
 }
 
 class _PreferenceEditorScreenState extends State<PreferenceEditorScreen> {
-  late AppLanguage _language;
-  late ThemeMode _mode;
+  late AppLanguage _language = context.read<LanguageCubit>().state.language;
+  late ThemeMode _mode = context.read<ThemeCubit>().state.mode;
   bool _saving = false;
   String? _error;
-  @override
-  void initState() {
-    super.initState();
-    _language = context.read<LanguageCubit>().state.language;
-    _mode = context.read<ThemeCubit>().state.mode;
-  }
 
   Future<void> _save() async {
     if (_saving) return;
@@ -70,59 +64,15 @@ class _PreferenceEditorScreenState extends State<PreferenceEditorScreen> {
           ),
         ),
       ),
-      child: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          if (widget.language)
-            for (final item in const [
-              (AppLanguage.english, 'English', 'Left to right'),
-              (AppLanguage.arabic, 'العربية', 'Arabic · من اليمين إلى اليسار'),
-              (
-                AppLanguage.system,
-                'Use device setting',
-                'Follows your system language',
-              ),
-            ])
-              SettingsChoiceCard(
-                key: Key('language-${item.$1.name}'),
-                title: context.tr(item.$2),
-                subtitle: context.tr(item.$3),
-                selected: _language == item.$1,
-                onTap: _saving
-                    ? null
-                    : () => setState(() => _language = item.$1),
-              ),
-          if (!widget.language)
-            for (final item in const [
-              (ThemeMode.system, 'Use device setting', 'Follows your system'),
-              (ThemeMode.light, 'Light', 'Bright surfaces and dark text'),
-              (ThemeMode.dark, 'Dark', 'Dark surfaces for low-light use'),
-            ])
-              SettingsChoiceCard(
-                key: Key('appearance-${item.$1.name}'),
-                title: context.tr(item.$2),
-                subtitle: context.tr(item.$3),
-                selected: _mode == item.$1,
-                onTap: _saving ? null : () => setState(() => _mode = item.$1),
-              ),
-          if (widget.language)
-            Card(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  context.tr(
-                    'The interface will update after you choose a language.',
-                  ),
-                ),
-              ),
-            ),
-          if (_error != null)
-            Text(
-              context.tr(_error!),
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-        ],
+      child: buildPreferenceEditorList(
+        context,
+        isLanguage: widget.language,
+        language: _language,
+        mode: _mode,
+        saving: _saving,
+        error: _error,
+        onSelectLanguage: (v) => setState(() => _language = v),
+        onSelectMode: (v) => setState(() => _mode = v),
       ),
     ),
   );

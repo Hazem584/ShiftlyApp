@@ -2,50 +2,15 @@ import 'dart:typed_data';
 
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
+import 'package:shiftly/features/chat/data/chat_storage_uploader.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_upload_cancellation.dart';
-import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-abstract interface class ChatStorageUploader {
-  Future<void> upload({
-    required String bucket,
-    required String path,
-    required String uploadToken,
-    required Uint8List bytes,
-    required String mimeType,
-    required bool upsert,
-  });
-}
-
-class SupabaseChatStorageUploader implements ChatStorageUploader {
-  const SupabaseChatStorageUploader(this._client);
-
-  final SupabaseClient _client;
-
-  @override
-  Future<void> upload({
-    required String bucket,
-    required String path,
-    required String uploadToken,
-    required Uint8List bytes,
-    required String mimeType,
-    required bool upsert,
-  }) async {
-    await _client.storage
-        .from(bucket)
-        .uploadBinaryToSignedUrl(
-          path,
-          uploadToken,
-          bytes,
-          FileOptions(contentType: mimeType, upsert: upsert),
-        );
-  }
-}
+export 'package:shiftly/features/chat/data/chat_storage_uploader.dart';
 
 class SignedChatUploadClient {
   const SignedChatUploadClient(this._uploader);
-
   final ChatStorageUploader _uploader;
 
   Future<void> upload({
@@ -79,16 +44,14 @@ class SignedChatUploadClient {
     } on ApiException {
       rethrow;
     } on StorageException catch (error) {
-      final statusCode = int.tryParse(error.statusCode ?? '');
+      final code = int.tryParse(error.statusCode ?? '');
       throw ApiException(
-        statusCode: statusCode,
+        statusCode: code,
         message: 'The media upload failed. Please try again.',
         code: 'CHAT_MEDIA_STORAGE_UPLOAD_FAILED',
-        kind: statusCode != null && statusCode >= 500
+        kind: code != null && code >= 500
             ? FailureKind.server
-            : statusCode != null
-            ? FailureKind.validation
-            : FailureKind.network,
+            : (code != null ? FailureKind.validation : FailureKind.network),
       );
     } catch (_) {
       throw const ApiException(

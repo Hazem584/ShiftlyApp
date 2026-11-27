@@ -1,6 +1,7 @@
-import 'package:shiftly/features/chat/data/chat_realtime.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
+
+export 'package:shiftly/features/chat/data/noop_chat_realtime.dart';
 
 class MockChatRepository extends ChatRepository {
   const MockChatRepository();
@@ -61,19 +62,4 @@ class MockChatRepository extends ChatRepository {
     String groupId,
     String messageId,
   ) async {}
-}
-
-class NoopChatRealtime implements ChatRealtime {
-  const NoopChatRealtime();
-  @override
-  ChatRealtimeSubscription subscribeToGroup(
-    String groupId,
-    void Function() onInsert,
-  ) => const _NoopSubscription();
-}
-
-class _NoopSubscription implements ChatRealtimeSubscription {
-  const _NoopSubscription();
-  @override
-  Future<void> cancel() async {}
 }

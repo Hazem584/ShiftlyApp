@@ -4,28 +4,15 @@ import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/reports/domain/attendance_report.dart';
+import 'package:shiftly/features/reports/presentation/attendance_reports_state.dart';
 
-class AttendanceReportsState {
-  const AttendanceReportsState({
-    this.range,
-    this.period = ReportPeriod.monthly,
-    this.report,
-    this.employeeId,
-    this.loading = false,
-    this.failure,
-  });
-  final ReportRange? range;
-  final ReportPeriod period;
-  final AttendanceReport? report;
-  final String? employeeId;
-  final bool loading;
-  final Failure? failure;
-}
+export 'package:shiftly/features/reports/presentation/attendance_reports_state.dart';
 
 class AttendanceReportsCubit extends Cubit<AttendanceReportsState> {
   AttendanceReportsCubit(this._repository, {DateTime Function()? now})
     : _now = now ?? DateTime.now,
       super(const AttendanceReportsState());
+
   final AttendanceReportRepository _repository;
   final DateTime Function() _now;
   FeatureSessionScope? _scope;
@@ -44,21 +31,14 @@ class AttendanceReportsCubit extends Cubit<AttendanceReportsState> {
   Future<void> load({ReportRange? range, ReportPeriod? period}) async {
     final scope = _scope;
     if (scope == null || isClosed) return;
-    final request = ++_request;
-    final chosenPeriod = period ?? state.period;
-    final chosenRange =
-        range ??
-        state.range ??
-        ReportRange.forPeriod(
-          chosenPeriod,
-          WorkspaceTime.inWorkspace(_now(), scope.timezone),
-        );
-    final employeeId = state.employeeId;
+    final request = ++_request, chosenPeriod = period ?? state.period;
+    final chosenRange = range ?? state.range ?? _defaultRange(chosenPeriod);
+    final empId = state.employeeId;
     emit(
       AttendanceReportsState(
         range: chosenRange,
         period: chosenPeriod,
-        employeeId: employeeId,
+        employeeId: empId,
         loading: true,
       ),
     );
@@ -72,20 +52,13 @@ class AttendanceReportsCubit extends Cubit<AttendanceReportsState> {
         isCurrent: current,
       );
       if (!current()) return;
-      if (report.workspaceId != scope.workspaceId ||
-          report.timezone != scope.timezone ||
-          report.range.startKey != chosenRange.startKey ||
-          report.range.endKey != chosenRange.endKey) {
-        throw const FormatException('Invalid report scope');
-      }
+      validateAttendanceReportScope(report, scope, chosenRange);
       emit(
         AttendanceReportsState(
           range: chosenRange,
           period: chosenPeriod,
           report: report,
-          employeeId: report.employees.any((e) => e.id == employeeId)
-              ? employeeId
-              : null,
+          employeeId: report.employees.any((e) => e.id == empId) ? empId : null,
         ),
       );
     } catch (error) {
@@ -94,7 +67,7 @@ class AttendanceReportsCubit extends Cubit<AttendanceReportsState> {
         AttendanceReportsState(
           range: chosenRange,
           period: chosenPeriod,
-          employeeId: employeeId,
+          employeeId: empId,
           failure: error is ApiException
               ? error.toFailure()
               : const Failure(message: 'Unable to load attendance report.'),
@@ -103,16 +76,14 @@ class AttendanceReportsCubit extends Cubit<AttendanceReportsState> {
     }
   }
 
+  ReportRange _defaultRange(ReportPeriod period) => ReportRange.forPeriod(
+    period,
+    WorkspaceTime.inWorkspace(_now(), _scope!.timezone),
+  );
+
   Future<void> selectPeriod(ReportPeriod period) async {
-    final scope = _scope;
-    if (scope == null || period == ReportPeriod.custom) return;
-    await load(
-      period: period,
-      range: ReportRange.forPeriod(
-        period,
-        WorkspaceTime.inWorkspace(_now(), scope.timezone),
-      ),
-    );
+    if (_scope == null || period == ReportPeriod.custom) return;
+    await load(period: period, range: _defaultRange(period));
   }
 
   Future<void> move(int direction) async {
@@ -127,29 +98,13 @@ class AttendanceReportsCubit extends Cubit<AttendanceReportsState> {
         (id != null && !report.employees.any((e) => e.id == id))) {
       return;
     }
-    emit(
-      AttendanceReportsState(
-        range: state.range,
-        period: state.period,
-        report: report,
-        employeeId: id,
-      ),
-    );
+    emit(state.copyWithEmployee(id));
   }
 
   void invalidate() {
     if (_scope != null && state.range != null) {
       _request++;
-      emit(
-        AttendanceReportsState(
-          range: state.range,
-          period: state.period,
-          employeeId: state.employeeId,
-          failure: const Failure(
-            message: 'Attendance changed. Refresh the report.',
-          ),
-        ),
-      );
+      emit(state.invalidated());
     }
   }
 

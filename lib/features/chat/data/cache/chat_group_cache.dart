@@ -1,7 +1,7 @@
 import 'package:sembast/sembast.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
-import 'package:shiftly/features/chat/data/cache/chat_message_codec.dart';
+import 'package:shiftly/features/chat/data/cache/chat_group_codec.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_group_store.dart';
 
@@ -10,6 +10,7 @@ class ChatGroupCache implements ChatGroupStore {
   final ChatCacheDatabase storage;
   String _key(FeatureSessionScope scope) =>
       'groups:${scope.userId}:${scope.workspaceId}';
+
   @override
   Future<ChatGroupSnapshot?> read(FeatureSessionScope scope) async {
     final revision = storage.revision;
@@ -23,10 +24,10 @@ class ChatGroupCache implements ChatGroupStore {
         value['workspace'] != scope.workspaceId) {
       return null;
     }
-    if (value['saved'] is! int || (value['saved'] as int) <
-        DateTime.now()
-            .subtract(const Duration(days: 7))
-            .millisecondsSinceEpoch) {
+    final cutoff = DateTime.now()
+        .subtract(const Duration(days: 7))
+        .millisecondsSinceEpoch;
+    if (value['saved'] is! int || (value['saved'] as int) < cutoff) {
       return null;
     }
     try {
@@ -45,31 +46,13 @@ class ChatGroupCache implements ChatGroupStore {
     final revision = storage.revision;
     await storage.ready;
     if (revision != storage.revision) return;
-    final groups = value.groups
-        .map(
-          (g) => <String, Object?>{
-            'id': g.id,
-            'workspaceId': g.workspaceId,
-            'name': g.name,
-            'description': g.description,
-            'memberCount': g.memberCount,
-            'unreadCount': g.unreadCount,
-            'createdAt': g.createdAt.toIso8601String(),
-            'updatedAt': g.updatedAt.toIso8601String(),
-            'archivedAt': g.archivedAt?.toIso8601String(),
-            'archived': g.isArchived,
-            if (g.lastMessage != null)
-              'lastMessage': ChatMessageCodec.encode(g.lastMessage!),
-          },
-        )
-        .toList();
     await storage.records.record(_key(scope)).put(storage.database, {
       'kind': 'groups',
       'user': scope.userId,
       'workspace': scope.workspaceId,
       'unread': value.unreadCount,
       'saved': DateTime.now().millisecondsSinceEpoch,
-      'groups': groups,
+      'groups': value.groups.map(encodeCachedChatGroup).toList(),
     });
   }
 }

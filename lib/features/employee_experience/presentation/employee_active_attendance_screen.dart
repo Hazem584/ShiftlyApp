@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/utils/work_duration.dart';
-import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 
 import 'employee_attendance_actions.dart';
 import 'employee_attendance_gate.dart';
 import 'employee_attendance_hero.dart';
 import 'employee_break_panel.dart';
+import 'employee_completed_shift_body.dart';
 import 'employee_page.dart';
 
 class EmployeeActiveAttendanceScreen extends StatelessWidget {
@@ -63,31 +62,9 @@ class EmployeeActiveAttendanceScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            if (complete) ...[
-              const Icon(Icons.check_circle_outline, size: 64),
-              const SizedBox(height: 20),
-              Text(
-                context.tr('You’re all done.'),
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '${WorkspaceTime.time(a.clockInAt, timezone)} → ${WorkspaceTime.time(a.clockOutAt, timezone)} · $timezone',
-              ),
-              Text(
-                workDurationWithOvertime(
-                  a.netWorkedMinutes ?? a.workedMinutes ?? 0,
-                  a.overtimeMinutes,
-                  arabic: Localizations.localeOf(context).languageCode == 'ar',
-                ),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              Text(
-                context.tr(
-                  a.reviewStatus == 'APPROVED' ? 'Approved' : 'Pending review',
-                ),
-              ),
-            ] else ...[
+            if (complete)
+              EmployeeCompletedShiftBody(attendance: a, timezone: timezone)
+            else ...[
               EmployeeAttendanceHero(
                 attendance: a,
                 timezone: timezone,

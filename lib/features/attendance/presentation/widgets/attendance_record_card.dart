@@ -3,13 +3,11 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/app_palette.dart';
 import 'package:shiftly/core/theme/employee_design.dart';
 import 'package:shiftly/core/theme/manager_design.dart';
-import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/core/widgets/surface_card.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_record_card_details.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_record_tile.dart';
-import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
-import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 class AttendanceRecordCard extends StatelessWidget {
   const AttendanceRecordCard({
@@ -34,28 +32,10 @@ class AttendanceRecordCard extends StatelessWidget {
       record.shift?.startsAt ?? record.scheduledStartAt ?? record.clockInAt,
       savedTimezone,
     );
-    final (label, color, background) = switch (record.reviewStatus) {
-      AttendanceReviewStatus.pending => (
-        'Pending review',
-        AppPalette.of(context).warning,
-        AppPalette.of(context).warningSoft,
-      ),
-      AttendanceReviewStatus.approved => (
-        'Approved',
-        AppPalette.of(context).success,
-        AppPalette.of(context).successSoft,
-      ),
-      AttendanceReviewStatus.rejected => (
-        'Rejected',
-        AppPalette.of(context).error,
-        AppPalette.of(context).errorSoft,
-      ),
-      AttendanceReviewStatus.unknown => (
-        'Unavailable',
-        AppPalette.of(context).textSecondary,
-        AppPalette.of(context).field,
-      ),
-    };
+    final (label, color, background) = attendanceReviewStatusStyle(
+      context,
+      record.reviewStatus,
+    );
     return SurfaceCard(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
@@ -70,7 +50,7 @@ class AttendanceRecordCard extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  context.tr(_month(date.month)),
+                  context.tr(attendanceMonthAbbrev(date.month)),
                   style: TextStyle(
                     color: AppPalette.of(context).textSecondary,
                     fontSize: 10,
@@ -81,80 +61,10 @@ class AttendanceRecordCard extends StatelessWidget {
           ),
           const SizedBox(width: 9),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  record.source == AttendanceSource.template
-                      ? record.templateName ?? context.tr('Fixed shift')
-                      : record.employee.displayName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                if (record.source == AttendanceSource.template)
-                  Text(
-                    record.occurrenceKind == 'EXTRA'
-                        ? context.tr('Extra shift')
-                        : record.occurrenceKind == 'BASELINE'
-                        ? context.tr('BASELINE')
-                        : context.tr(
-                            'Historical template attendance; assignment evidence not recorded',
-                          ),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                if (record.source == AttendanceSource.template)
-                  Text(
-                    context.tr('Operational date: {value1} / {value2}', {
-                      'value1':
-                          (record.operationalDate?.split('T').first ??
-                                  'Not recorded')
-                              .toString(),
-                      'value2': (savedTimezone).toString(),
-                    }),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                const SizedBox(height: 3),
-                Text(
-                  context.tr('In: {value1}  Out: {value2}', {
-                    'value1': (WorkspaceTime.time(
-                      record.clockInAt,
-                      savedTimezone,
-                      locale: Localizations.localeOf(context).toString(),
-                    )).toString(),
-                    'value2': (WorkspaceTime.time(
-                      record.clockOutAt,
-                      savedTimezone,
-                      locale: Localizations.localeOf(context).toString(),
-                    )).toString(),
-                  }),
-                  style: TextStyle(
-                    color: AppPalette.of(context).textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-                Text(
-                  record.isOpen
-                      ? context.tr('Open attendance')
-                      : record.reviewStatus ==
-                                AttendanceReviewStatus.rejected &&
-                            record.clockOutAt == null
-                      ? context.tr('Rejected; occurrence remains used')
-                      : record.workedMinutes == null
-                      ? context.tr('Duration not recorded')
-                      : workDurationWithOvertime(
-                          record.netWorkedMinutes ?? record.workedMinutes!,
-                          record.overtimeMinutes,
-                          arabic:
-                              Localizations.localeOf(context).languageCode ==
-                              'ar',
-                        ),
-                  style: TextStyle(
-                    color: AppPalette.of(context).textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
+            child: buildAttendanceRecordDetailsColumn(
+              context,
+              record,
+              savedTimezone,
             ),
           ),
           const SizedBox(width: 8),
@@ -183,19 +93,4 @@ class AttendanceRecordCard extends StatelessWidget {
       ),
     );
   }
-
-  String _month(int month) => const [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ][month - 1];
 }

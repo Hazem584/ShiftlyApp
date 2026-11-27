@@ -6,7 +6,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/active_template_selector.dart';
+import 'package:shiftly/features/fixed_shifts/presentation/dialogs/schedule_exception_form_content.dart';
 import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 import 'package:uuid/uuid.dart';
 
@@ -37,6 +37,7 @@ class _ScheduleExceptionDialogState extends State<ScheduleExceptionDialog> {
   late DateTime _date = _firstDate().add(const Duration(days: 1));
   String? _templateId, _error, _payload, _clientId;
   bool _busy = false;
+
   DateTime _firstDate() {
     final local = WorkspaceTime.inWorkspace(DateTime.now(), widget.timezone);
     return DateTime(local.year, local.month, local.day);
@@ -47,18 +48,29 @@ class _ScheduleExceptionDialogState extends State<ScheduleExceptionDialog> {
     month: _date.month,
     day: _date.day,
   );
+
   @override
   void dispose() {
     _reason.dispose();
     super.dispose();
   }
 
+  Future<void> _pickDate() async {
+    final min = _firstDate().add(
+      Duration(days: widget.employeeMembershipId == null ? 1 : 0),
+    );
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _date.isBefore(min) ? min : _date,
+      firstDate: min,
+      lastDate: DateTime(min.year + 5, 12, 31),
+    );
+    if (picked != null && mounted) setState(() => _date = picked);
+  }
+
   Future<void> _save() async {
     if (_busy || !_form.currentState!.validate()) return;
-    if (!widget.isCurrent()) {
-      Navigator.pop(context);
-      return;
-    }
+    if (!widget.isCurrent()) return Navigator.pop(context);
     final payload = jsonEncode([
       _kind,
       _dateKey,
@@ -69,10 +81,7 @@ class _ScheduleExceptionDialogState extends State<ScheduleExceptionDialog> {
       _payload = payload;
       _clientId = const Uuid().v4();
     }
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
+    setState(() => (_busy = true, _error = null));
     try {
       await widget.repository.create(
         widget.workspaceId,
@@ -86,10 +95,7 @@ class _ScheduleExceptionDialogState extends State<ScheduleExceptionDialog> {
       if (mounted) Navigator.pop(context, widget.isCurrent());
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _busy = false;
-          _error = ApiErrorParser.parse(e).message;
-        });
+        setState(() => (_busy = false, _error = ApiErrorParser.parse(e).message));
       }
     }
   }
@@ -105,104 +111,21 @@ class _ScheduleExceptionDialogState extends State<ScheduleExceptionDialog> {
               : 'New day exception',
         ),
       ),
-      content: SizedBox(
-        width: 480,
-        child: SingleChildScrollView(
-          child: Form(
-            key: _form,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  context.tr(
-                    'Changes apply to this date only. Recorded attendance cannot be changed.',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (widget.employeeMembershipId != null)
-                  DropdownButtonFormField<String>(
-                    initialValue: _kind,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: context.tr('Exception type'),
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: 'SHIFT',
-                        child: Text(context.tr('One-day shift change')),
-                      ),
-                      DropdownMenuItem(
-                        value: 'DAY_OFF',
-                        child: Text(context.tr('Employee day off')),
-                      ),
-                    ],
-                    onChanged: _busy ? null : (v) => setState(() => _kind = v!),
-                  ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _busy
-                      ? null
-                      : () async {
-                          final minimum = _firstDate().add(
-                            Duration(
-                              days: widget.employeeMembershipId == null ? 1 : 0,
-                            ),
-                          );
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _date.isBefore(minimum)
-                                ? minimum
-                                : _date,
-                            firstDate: minimum,
-                            lastDate: DateTime(minimum.year + 5, 12, 31),
-                          );
-                          if (picked != null && mounted) {
-                            setState(() => _date = picked);
-                          }
-                        },
-                  icon: const Icon(Icons.calendar_today_outlined),
-                  label: Text('$_dateKey · ${widget.timezone}'),
-                ),
-                if (_kind == 'SHIFT') ...[
-                  const SizedBox(height: 12),
-                  ActiveTemplateSelector(
-                    templates: widget.templates,
-                    value: _templateId,
-                    onChanged: _busy
-                        ? null
-                        : (v) => setState(() => _templateId = v),
-                  ),
-                  if (widget.templates.isEmpty)
-                    Text(
-                      context.tr(
-                        'Create an active fixed-shift template first.',
-                      ),
-                    ),
-                ],
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _reason,
-                  enabled: !_busy,
-                  minLines: 2,
-                  maxLines: 4,
-                  maxLength: 1000,
-                  decoration: InputDecoration(labelText: context.tr('Reason')),
-                  validator: (v) => (v?.trim().length ?? 0) < 5
-                      ? context.tr('Enter a reason of at least 5 characters.')
-                      : null,
-                ),
-                if (_error != null)
-                  Text(
-                    context.tr(_error!),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
+      content: buildScheduleExceptionFormContent(
+        context: context,
+        formKey: _form,
+        employeeMembershipId: widget.employeeMembershipId,
+        kind: _kind,
+        dateKey: _dateKey,
+        timezone: widget.timezone,
+        templates: widget.templates,
+        templateId: _templateId,
+        reason: _reason,
+        error: _error,
+        busy: _busy,
+        onKindChanged: (v) => setState(() => _kind = v),
+        onPickDate: _pickDate,
+        onTemplateChanged: (v) => setState(() => _templateId = v),
       ),
       actions: [
         TextButton(

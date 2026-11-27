@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -6,9 +5,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shiftly/features/notifications/data/task_push_payload.dart';
+import 'package:shiftly/features/notifications/domain/entities/push_notice.dart';
 import 'package:shiftly/features/tasks/data/task_notification_actions.dart';
-
-import '../domain/entities/push_notice.dart';
 
 @pragma('vm:entry-point')
 Future<void> taskPushBackground(RemoteMessage message) async {
@@ -17,9 +16,7 @@ Future<void> taskPushBackground(RemoteMessage message) async {
   if (Firebase.apps.isEmpty) await Firebase.initializeApp();
   try {
     await showTaskPushNotification(message.data);
-  } catch (_) {
-    /* Durable server event remains available in-app. */
-  }
+  } catch (_) {}
 }
 
 Future<bool> showTaskPushNotification(
@@ -36,42 +33,24 @@ Future<bool> showTaskPushNotification(
   }
   final prefs = await SharedPreferences.getInstance();
   await prefs.reload();
-  if (prefs.getString(taskNotificationOwnerKey) != notice.recipientProfileId ||
-      prefs.getBool(
-            'tasks.notification.cancelled.${notice.recipientProfileId}.${notice.taskId}',
-          ) ==
-          true) {
-    return false;
-  }
-  final arabic =
-      (prefs.getString('app.language') ??
-          PlatformDispatcher.instance.locale.languageCode) ==
-      'ar';
+  if (!isTaskPushEligible(prefs, notice)) return false;
+  final arabic = isTaskPushArabic(prefs);
   final plugin = notifications ?? FlutterLocalNotificationsPlugin();
   await TaskNotificationSetup.initialize(plugin);
+  final notificationId = taskSnoozeId(
+    notice.recipientProfileId,
+    notice.taskId!,
+  );
   await plugin.show(
-    id: taskSnoozeId(notice.recipientProfileId, notice.taskId!),
+    id: notificationId,
     title: data['title'] as String,
     body: data['body'] as String,
     notificationDetails: taskNotificationDetails(arabic: arabic),
-    payload: jsonEncode({
-      'kind': 'personal-task',
-      'ownerId': notice.recipientProfileId,
-      'taskId': notice.taskId,
-      'workspaceId': notice.workspaceId,
-      if (int.tryParse(data['taskRevision']?.toString() ?? '')
-          case final int revision)
-        'revision': revision,
-      'title': data['title'],
-      'body': data['body'],
-      'arabic': arabic,
-    }),
+    payload: encodeTaskPushPayload(notice, data, arabic: arabic),
   );
   await prefs.reload();
   if (prefs.getString(taskNotificationOwnerKey) != notice.recipientProfileId) {
-    await plugin.cancel(
-      id: taskSnoozeId(notice.recipientProfileId, notice.taskId!),
-    );
+    await plugin.cancel(id: notificationId);
     return false;
   }
   return true;

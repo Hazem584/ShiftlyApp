@@ -23,20 +23,12 @@ class LeaveRequestRecord extends Equatable {
     this.cancelledAt,
   });
 
-  final String id;
-  final String workspaceId;
-  final String employeeMembershipId;
+  final String id, workspaceId, employeeMembershipId, reason;
   final LeaveRequestType type;
   final LeaveRequestStatus status;
-  final DateTime startsAt;
-  final DateTime endsAt;
-  final String reason;
-  final String? reviewedByMembershipId;
-  final DateTime? reviewedAt;
-  final String? rejectionReason;
-  final DateTime? cancelledAt;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime startsAt, endsAt, createdAt, updatedAt;
+  final String? reviewedByMembershipId, rejectionReason;
+  final DateTime? reviewedAt, cancelledAt;
   final ShiftEmployeeSummary employee;
 
   bool get canReview => status == LeaveRequestStatus.pending;
@@ -70,20 +62,8 @@ class LeaveRequestRecord extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    workspaceId,
-    employeeMembershipId,
-    type,
-    status,
-    startsAt,
-    endsAt,
-    reason,
-    reviewedByMembershipId,
-    reviewedAt,
-    rejectionReason,
-    cancelledAt,
-    createdAt,
-    updatedAt,
-    employee,
+    id, workspaceId, employeeMembershipId, type, status, startsAt, endsAt,
+    reason, reviewedByMembershipId, reviewedAt, rejectionReason, cancelledAt,
+    createdAt, updatedAt, employee,
   ];
 }

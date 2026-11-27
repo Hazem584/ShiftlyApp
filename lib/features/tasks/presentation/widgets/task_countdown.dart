@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 
 import '../../domain/personal_task.dart';
+import 'task_countdown_format.dart';
 
 class TaskCountdown extends StatefulWidget {
   const TaskCountdown({
@@ -51,58 +52,12 @@ class _TaskCountdownState extends State<TaskCountdown> {
 
   @override
   Widget build(BuildContext context) {
-    final task = widget.task;
-    final now = widget.now?.call() ?? DateTime.now();
-    final due = task.nextDueAt(now);
-    final end = task.durationMinutes == null
-        ? null
-        : due.add(Duration(minutes: task.durationMinutes!));
-    final waiting = due.isAfter(now);
-    final target = waiting ? due : end;
-    final running = !waiting && (target?.isAfter(now) ?? false);
-    final label = task.completed
-        ? 'Task completed'
-        : waiting
-        ? 'Starts in'
-        : running
-        ? 'Time remaining'
-        : task.endsAt == null
-        ? 'Task is due'
-        : 'Task time ended';
-    final seconds = target == null
-        ? 0
-        : (target.difference(now).inMilliseconds / 1000).ceil().clamp(
-            0,
-            315576000000,
-          );
-    final days = seconds ~/ 86400;
-    final time =
-        '${((seconds ~/ 3600) % 24).toString().padLeft(2, '0')}:'
-        '${((seconds ~/ 60) % 60).toString().padLeft(2, '0')}:'
-        '${(seconds % 60).toString().padLeft(2, '0')}';
+    final data = computeTaskCountdown(
+      widget.task,
+      widget.now?.call() ?? DateTime.now(),
+    );
+    if (widget.compact) return buildCompactTaskCountdown(context, data);
     final colors = Theme.of(context).colorScheme;
-    if (widget.compact) {
-      final minutes = (seconds / 60).ceil();
-      final hours = minutes ~/ 60;
-      final remaining = minutes % 60;
-      final duration = hours > 0
-          ? context.tr('{hours}h {minutes}m', {
-              'hours': '$hours',
-              'minutes': '$remaining',
-            })
-          : context.tr('{minutes} min', {'minutes': '$remaining'});
-      final text = waiting
-          ? context.tr('In {duration}', {'duration': duration})
-          : running
-          ? context.tr('{duration} left', {'duration': duration})
-          : context.tr('Overdue');
-      return Text(
-        text,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: waiting || running ? colors.primary : colors.error,
-        ),
-      );
-    }
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -114,18 +69,18 @@ class _TaskCountdownState extends State<TaskCountdown> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            context.tr(label),
+            context.tr(data.label),
             style: Theme.of(context).textTheme.labelMedium,
           ),
-          if (!task.completed && (waiting || running))
+          if (!widget.task.completed && (data.waiting || data.running))
             Wrap(
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                if (days > 0)
-                  Text(context.tr('{days} days', {'days': '$days'})),
+                if (data.days > 0)
+                  Text(context.tr('{days} days', {'days': '${data.days}'})),
                 Text(
-                  time,
+                  data.time,
                   textDirection: TextDirection.ltr,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,

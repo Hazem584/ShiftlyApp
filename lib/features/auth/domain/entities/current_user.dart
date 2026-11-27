@@ -20,19 +20,13 @@ class CurrentUser {
   });
 
   final String id;
-  final String? email;
-  final String? fullName;
-  final String? phone;
-  final String? avatarUrl;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String? email, fullName, phone, avatarUrl;
+  final DateTime createdAt, updatedAt;
   final List<WorkspaceMembership> memberships;
 
   factory CurrentUser.fromJson(Map<String, Object?> json) {
-    final rawMemberships = json['memberships'];
-    if (rawMemberships is! List) {
-      throw const FormatException('Invalid memberships');
-    }
+    final raw = json['memberships'];
+    if (raw is! List) throw const FormatException('Invalid memberships');
     return CurrentUser(
       id: currentUserRequiredString(json, 'id'),
       email: currentUserOptionalString(json['email']),
@@ -41,7 +35,7 @@ class CurrentUser {
       avatarUrl: currentUserOptionalString(json['avatarUrl']),
       createdAt: currentUserRequiredDate(json, 'createdAt'),
       updatedAt: currentUserRequiredDate(json, 'updatedAt'),
-      memberships: rawMemberships
+      memberships: raw
           .map((item) {
             if (item is! Map) throw const FormatException('Invalid membership');
             return WorkspaceMembership.fromJson(

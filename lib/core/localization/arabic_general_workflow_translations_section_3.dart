@@ -1,0 +1,62 @@
+const arabicTranslationSection3 = <String, String>{
+  'Dashboard unavailable': 'الصفحة الرئيسية مش متاحة',
+  'Could not load your overview': 'معرفناش نحمّل ملخصك',
+  'Quick actions': 'إجراءات سريعة',
+  'Upcoming approved': 'الإجازات الجاية المقبولة',
+  'Search, invite, and manage your team in one place':
+      'دوّر على موظفينك، وابعت دعوات، وتابع فريقك من مكان واحد',
+  'Loaded suspended': 'الموظفين الموقوفين اللي ظاهرين',
+  'Employment status': 'حالة الموظف',
+  'Job title': 'المسمى الوظيفي',
+  'Joined': 'تاريخ الانضمام',
+  'Could not load profile': 'معرفناش نحمّل البروفايل',
+  'The exact saved request will be checked. No new operation will be created.':
+      'هنراجع نفس الطلب اللي اتحفظ، مش هنبدأ عملية جديدة.',
+  'In {time}': 'الحضور {time}',
+  'Out {time}': 'الخروج {time}',
+  'A reason is required': 'اكتب السبب',
+  'A rejection reason is required.': 'اكتب سبب الرفض.',
+  'Rejection reason is too long.': 'سبب الرفض أطول من المسموح.',
+  'Unable to load more requests.': 'معرفناش نحمّل باقي الطلبات.',
+  'Could not cancel request': 'معرفناش نلغي الطلب',
+  'Could not submit request': 'معرفناش نبعت الطلب',
+  'Unknown date': 'تاريخ مش معروف',
+  'Confirmation email resent.': 'رسالة التأكيد اتبعتت تاني.',
+  'Could not create your profile.': 'معرفناش نعمل بروفايلك.',
+  'Full name is required': 'اكتب اسمك بالكامل',
+  'Full name is too long': 'الاسم أطول من المسموح',
+  'Phone number is too long': 'رقم الموبايل أطول من المسموح',
+  'Unable to create your account.': 'معرفناش نعمل حسابك.',
+  'You are offline': 'إنت مش متصل بالنت',
+  'Connect to the internet and retry.': 'اتصل بالنت وجرّب تاني.',
+  'Open the verification email, then return and sign in.':
+      'افتح رسالة تأكيد الإيميل، وبعدها ارجع وادخل حسابك.',
+  'Could not load your account': 'معرفناش نحمّل حسابك',
+  'Please try again.': 'جرّب تاني.',
+  'Could not accept invitation.': 'معرفناش نقبل الدعوة.',
+  'Show invitation token': 'بيّن رمز الدعوة',
+  'Hide invitation token': 'خبّي رمز الدعوة',
+  'Unable to load messages.': 'معرفناش نحمّل الرسايل.',
+  'Unable to load older messages.': 'معرفناش نحمّل الرسايل السابقة.',
+  'Chat access unavailable': 'الشات مش متاح',
+  'Unable to save media. Keep it and try again.':
+      'معرفناش نحفظ الملفات. احتفظ بيها وجرّب تاني.',
+  'Unable to save this message. Keep your input and retry.':
+      'معرفناش نحفظ الرسالة. احتفظ بالكلام اللي كتبته وجرّب تاني.',
+  'Confirmation unavailable. Retry safely with the same message ID.':
+      'معرفناش نأكد الإرسال. جرّب تاني بنفس الرسالة.',
+  'Unable to send media.': 'معرفناش نبعت الملفات.',
+  'Unable to load chat groups.': 'معرفناش نحمّل جروبات الشات.',
+  'Unable to update the chat group.': 'معرفناش نحدّث جروب الشات.',
+  'The change was saved, but chat could not be refreshed.':
+      'اتحفظ التغيير، لكن معرفناش نحدّث الشات.',
+  'Unable to load group details.': 'معرفناش نحمّل تفاصيل الجروب.',
+  'Unable to add members.': 'معرفناش نضيف الأعضاء.',
+  'Unable to remove this member.': 'معرفناش نشيل العضو ده.',
+  'Description cannot exceed 1000 characters.':
+      'الوصف مينفعش يزيد عن 1000 حرف.',
+  'Policy minutes must be between 0 and 1440.':
+      'عدد الدقائق في الإعدادات لازم يكون من 0 إلى 1440.',
+  'EXTRA': 'إضافي',
+  'Duration not recorded': 'المدة مش متسجّلة',
+};

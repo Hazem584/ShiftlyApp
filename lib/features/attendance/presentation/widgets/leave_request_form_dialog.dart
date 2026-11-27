@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/services/toast_service.dart';
 import 'package:shiftly/core/utils/clock_time_picker.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/employee_leave_requests_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/utils/leave_request_display_formatters.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/leave_request_date_button.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/leave_request_time_button.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/leave_request_form_actions.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/leave_request_form_fields.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_form_surface.dart';
-import 'package:shiftly/features/employee_experience/presentation/employee_notice.dart';
 
 class LeaveRequestFormDialog extends StatefulWidget {
   const LeaveRequestFormDialog({required this.timezone, super.key});
@@ -55,87 +51,22 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<LeaveRequestType>(
-                key: const Key('leave-type'),
-                initialValue: _type,
-                decoration: InputDecoration(
-                  labelText: context.tr('Leave type'),
-                ),
-                items: LeaveRequestType.values
-                    .where((type) => type != LeaveRequestType.unknown)
-                    .map(
-                      (type) => DropdownMenuItem(
-                        value: type,
-                        child: Text(context.tr(leaveTypeLabel(type))),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) => setState(() {
-                  _type = value ?? _type;
-                  if (_type == LeaveRequestType.earlyLeave) {
-                    _endDate = _startDate;
-                  }
-                }),
-              ),
-              const SizedBox(height: 12),
-              LeaveRequestDateButton(
-                label: context.tr('Start date'),
-                value: _startDate,
-                onPressed: () => _pickDate(start: true),
-              ),
-              const SizedBox(height: 8),
-              LeaveRequestDateButton(
-                label: context.tr('End date'),
-                value: _endDate,
-                onPressed: _type == LeaveRequestType.earlyLeave
-                    ? null
-                    : () => _pickDate(start: false),
-              ),
-              if (_type == LeaveRequestType.earlyLeave) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: LeaveRequestTimeButton(
-                        label: context.tr('Start time'),
-                        value: _startTime,
-                        onPressed: () => _pickTime(start: true),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: LeaveRequestTimeButton(
-                        label: context.tr('End time'),
-                        value: _endTime,
-                        onPressed: () => _pickTime(start: false),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 12),
-              TextFormField(
-                key: const Key('leave-reason'),
-                controller: _reason,
-                maxLength: 1000,
-                maxLines: 4,
-                decoration: InputDecoration(labelText: context.tr('Reason')),
-                validator: (value) => value?.trim().isEmpty != false
-                    ? context.tr('A reason is required')
-                    : null,
-              ),
-              const SizedBox(height: 20),
-              EmployeeNotice(
-                child: Text(
-                  context.tr(
-                    'Your manager will review this request. It is pending until approved.',
-                  ),
-                ),
-              ),
-            ],
+          child: buildLeaveRequestFormFields(
+            context: context,
+            type: _type,
+            startDate: _startDate,
+            endDate: _endDate,
+            startTime: _startTime,
+            endTime: _endTime,
+            reasonController: _reason,
+            onTypeChanged: (value) => setState(() {
+              _type = value ?? _type;
+              if (_type == LeaveRequestType.earlyLeave) _endDate = _startDate;
+            }),
+            onPickStartDate: () => _pickDate(start: true),
+            onPickEndDate: () => _pickDate(start: false),
+            onPickStartTime: () => _pickTime(start: true),
+            onPickEndTime: () => _pickTime(start: false),
           ),
         ),
       ),
@@ -146,7 +77,7 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
         child: Text(context.tr('Cancel')),
       ),
       BlocBuilder<EmployeeLeaveRequestsCubit, EmployeeLeaveRequestsState>(
-        buildWhen: (previous, current) => previous.creating != current.creating,
+        buildWhen: (p, c) => p.creating != c.creating,
         builder: (context, state) => FilledButton(
           key: const Key('submit-leave-request'),
           onPressed: state.creating ? null : _submit,
@@ -165,20 +96,10 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
   );
 
   Future<void> _pickDate({required bool start}) async {
-    final workspaceNow = WorkspaceTime.inWorkspace(
-      DateTime.now().toUtc(),
-      widget.timezone,
-    );
-    final firstDate = DateTime(
-      workspaceNow.year,
-      workspaceNow.month,
-      workspaceNow.day,
-    );
-    final picked = await showDatePicker(
+    final picked = await pickLeaveRequestDate(
       context: context,
+      timezone: widget.timezone,
       initialDate: start ? _startDate : _endDate,
-      firstDate: firstDate,
-      lastDate: firstDate.add(const Duration(days: 365)),
     );
     if (picked == null) return;
     setState(() {
@@ -204,37 +125,15 @@ class _LeaveRequestFormDialogState extends State<LeaveRequestFormDialog> {
 
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
-    final early = _type == LeaveRequestType.earlyLeave;
-    final startsAt = WorkspaceTime.wallTimeToUtc(
-      date: _startDate,
-      hour: early ? _startTime.hour : 0,
-      minute: early ? _startTime.minute : 0,
-      timezoneName: widget.timezone,
+    await submitLeaveRequestForm(
+      context: context,
+      type: _type,
+      startDate: _startDate,
+      endDate: _endDate,
+      startTime: _startTime,
+      endTime: _endTime,
+      timezone: widget.timezone,
+      reason: _reason.text,
     );
-    final endsAt = WorkspaceTime.wallTimeToUtc(
-      date: early ? _startDate : _endDate,
-      hour: early ? _endTime.hour : 23,
-      minute: early ? _endTime.minute : 59,
-      timezoneName: widget.timezone,
-    );
-    final cubit = context.read<EmployeeLeaveRequestsCubit>();
-    final result = await cubit.create(
-      CreateLeaveRequestInput(
-        type: _type,
-        startsAt: startsAt,
-        endsAt: endsAt,
-        reason: _reason.text,
-      ),
-    );
-    if (!mounted || result == LeaveMutationResult.stale) return;
-    if (result == LeaveMutationResult.success) {
-      ToastService.success(context, message: 'Leave request submitted');
-      Navigator.pop(context);
-    } else if (result == LeaveMutationResult.failure) {
-      ToastService.error(
-        context,
-        message: cubit.state.failure?.message ?? 'Could not submit request',
-      );
-    }
   }
 }

@@ -10,11 +10,11 @@ class ApiShiftRepository implements ShiftRepository {
   @override
   Future<ShiftPage> listWorkspaceShifts(String workspaceId, ShiftQuery query) =>
       _request(() async {
-        final response = await _dio.get<Object?>(
+        final res = await _dio.get<Object?>(
           '/workspaces/$workspaceId/shifts',
           queryParameters: query.toQuery(),
         );
-        return _page(response.data);
+        return _page(res.data);
       });
 
   @override
@@ -55,25 +55,24 @@ class ApiShiftRepository implements ShiftRepository {
   @override
   Future<ShiftPage> listMyShifts(String workspaceId, ShiftQuery query) =>
       _request(() async {
-        final response = await _dio.get<Object?>(
+        final res = await _dio.get<Object?>(
           '/shifts/me',
           queryParameters: {
             ...query.toQuery(includeEmployee: false),
             'workspaceId': workspaceId,
           },
         );
-        return _page(response.data);
+        return _page(res.data);
       });
 
   @override
   Future<ShiftRecord> getMyShift(String shiftId) =>
       _object(() => _dio.get<Object?>('/shifts/me/$shiftId'));
 
-  Future<ShiftRecord> _object(Future<Response<Object?>> Function() operation) =>
-      _request(() async {
-        final response = await operation();
-        return ShiftRecord.fromJson(ApiModelParser.map(response.data));
-      });
+  Future<ShiftRecord> _object(Future<Response<Object?>> Function() op) =>
+      _request(
+        () async => ShiftRecord.fromJson(ApiModelParser.map((await op()).data)),
+      );
 
   ShiftPage _page(Object? value) {
     final json = ApiModelParser.map(value);
@@ -87,9 +86,9 @@ class ApiShiftRepository implements ShiftRepository {
     );
   }
 
-  Future<T> _request<T>(Future<T> Function() operation) async {
+  Future<T> _request<T>(Future<T> Function() op) async {
     try {
-      return await operation();
+      return await op();
     } catch (error) {
       throw ApiErrorParser.parse(error);
     }

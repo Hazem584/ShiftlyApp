@@ -1,69 +1,14 @@
 import 'dart:async';
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
 import 'package:shiftly/core/models/manager_profile.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
+import 'package:shiftly/features/profile/presentation/cubit/profile_state.dart';
 
-enum ProfileAction { idle, saving, uploadingAvatar, deletingAvatar }
-
-enum ProfileOperationResult {
-  success,
-  failure,
-  cancelled,
-  busy,
-  imageTooLarge,
-  unsupportedImage,
-  stale,
-}
-
-final class ProfileSessionScope extends Equatable {
-  const ProfileSessionScope({required this.userId, required this.workspaceId});
-
-  final String userId;
-  final String workspaceId;
-
-  @override
-  List<Object?> get props => [userId, workspaceId];
-}
-
-sealed class ProfileState extends Equatable {
-  const ProfileState();
-  @override
-  List<Object?> get props => [];
-}
-
-final class ProfileLoading extends ProfileState {
-  const ProfileLoading();
-}
-
-final class ProfileLoaded extends ProfileState {
-  const ProfileLoaded(
-    this.profile, {
-    this.action = ProfileAction.idle,
-    this.failure,
-  });
-
-  final ManagerProfile profile;
-  final ProfileAction action;
-  final Failure? failure;
-
-  bool get saving => action == ProfileAction.saving;
-  bool get busy => action != ProfileAction.idle;
-
-  @override
-  List<Object?> get props => [profile, action, failure];
-}
-
-final class ProfileError extends ProfileState {
-  const ProfileError(this.message);
-  final String message;
-  @override
-  List<Object?> get props => [message];
-}
+export 'package:shiftly/features/profile/presentation/cubit/profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit(this._repository, {this.onProfileChanged})
@@ -80,13 +25,10 @@ class ProfileCubit extends Cubit<ProfileState> {
   void bindSession(ProfileSessionScope? scope) {
     _usesSessionBinding = true;
     if (_sessionScope == scope) return;
-
     _sessionScope = scope;
     _generation += 1;
     emit(const ProfileLoading());
-    if (scope != null) {
-      unawaited(_load(scope: scope, generation: _generation));
-    }
+    if (scope != null) unawaited(_load(scope: scope, generation: _generation));
   }
 
   Future<void> load() async {
@@ -113,7 +55,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<ProfileOperationResult> update({
     required String fullName,
     required String? phone,
-  }) async => _mutate(
+  }) => _mutate(
     ProfileAction.saving,
     () => _repository.updateProfile(
       fullName: fullName.trim(),
@@ -146,10 +88,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     final current = state;
     if (current is! ProfileLoaded) return ProfileOperationResult.failure;
     if (current.busy) return ProfileOperationResult.busy;
-
-    final scope = _sessionScope;
-    final generation = _generation;
-
+    final scope = _sessionScope, generation = _generation;
     emit(ProfileLoaded(current.profile, action: action));
     try {
       final profile = await operation();

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/notifications/data/notification_api_parser.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
 
 class ApiNotificationRepository implements NotificationRepository {
@@ -10,7 +11,7 @@ class ApiNotificationRepository implements NotificationRepository {
   @override
   Future<NotificationPage> list(String workspaceId, NotificationQuery query) =>
       _request(() async {
-        final response = await _dio.get<Object?>(
+        final res = await _dio.get<Object?>(
           '/notifications',
           queryParameters: {
             'page': query.page,
@@ -20,60 +21,36 @@ class ApiNotificationRepository implements NotificationRepository {
             'workspaceId': workspaceId,
           },
         );
-        final json = ApiModelParser.map(response.data);
-        return NotificationPage(
-          data: ApiModelParser.list(json['data'], 'data')
-              .map(
-                (item) => NotificationRecord.fromJson(
-                  ApiModelParser.map(item, 'notification'),
-                ),
-              )
-              .toList(growable: false),
-          pagination: ApiPagination.fromJson(
-            ApiModelParser.map(json['pagination'], 'pagination'),
-          ),
-        );
+        return parseNotificationPage(res.data);
       });
 
   @override
   Future<int> unreadCount() => _request(() async {
-    final response = await _dio.get<Object?>('/notifications/unread-count');
-    return ApiModelParser.integer(ApiModelParser.map(response.data), 'count');
+    final res = await _dio.get<Object?>('/notifications/unread-count');
+    return ApiModelParser.integer(ApiModelParser.map(res.data), 'count');
   });
 
   @override
-  Future<NotificationRecord> markRead(String notificationId) =>
-      _request(() async {
-        final response = await _dio.patch<Object?>(
-          '/notifications/$notificationId/read',
-        );
-        return NotificationRecord.fromJson(
-          ApiModelParser.map(response.data, 'notification'),
-        );
-      });
+  Future<NotificationRecord> markRead(String id) => _request(() async {
+    final res = await _dio.patch<Object?>('/notifications/$id/read');
+    return NotificationRecord.fromJson(
+      ApiModelParser.map(res.data, 'notification'),
+    );
+  });
 
   @override
   Future<int> markAllRead(String workspaceId) => _request(() async {
-    final response = await _dio.patch<Object?>(
+    final res = await _dio.patch<Object?>(
       '/notifications/read-all',
       data: {'workspaceId': workspaceId},
     );
-    return ApiModelParser.integer(
-      ApiModelParser.map(response.data),
-      'updatedCount',
-    );
+    return ApiModelParser.integer(ApiModelParser.map(res.data), 'updatedCount');
   });
 
   @override
-  Future<bool> delete(String notificationId) => _request(() async {
-    final response = await _dio.delete<Object?>(
-      '/notifications/$notificationId',
-    );
-    final json = ApiModelParser.map(response.data);
-    if (json['deleted'] is! bool) {
-      throw const FormatException('Invalid deleted acknowledgement');
-    }
-    return json['deleted']! as bool;
+  Future<bool> delete(String id) => _request(() async {
+    final res = await _dio.delete<Object?>('/notifications/$id');
+    return parseDeletedAck(res.data);
   });
 
   Future<T> _request<T>(Future<T> Function() operation) async {

@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/theme/employee_design.dart';
 import 'package:shiftly/core/widgets/dashboard_card_loading.dart';
-import 'package:shiftly/features/fixed_shifts/domain/entities/attendance_source.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/models/attendance_status_summary.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/legacy_clock_in_review_card.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/widgets/saved_schedule_list.dart';
-import 'package:shiftly/features/shifts/presentation/screens/employee_shifts_screen.dart';
 
-import 'employee_shift_details_screen.dart';
+import 'employee_attendance_gate_actions.dart';
+import 'employee_attendance_recovery_section.dart';
 
 class EmployeeAttendanceGate extends StatelessWidget {
   const EmployeeAttendanceGate({
@@ -22,6 +16,7 @@ class EmployeeAttendanceGate extends StatelessWidget {
   });
   final FlexibleAttendanceState state;
   final String timezone;
+
   @override
   Widget build(BuildContext context) {
     if (state.loading && state.current == null) {
@@ -93,42 +88,11 @@ class EmployeeAttendanceGate extends StatelessWidget {
                 style: const TextStyle(color: EmployeeDesign.heroText),
               ),
             ],
-            if (recovery != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                context.tr('Original request saved'),
-                style: const TextStyle(color: EmployeeDesign.mint),
+            if (recovery != null)
+              EmployeeAttendanceRecoverySection(
+                clientAttendanceId: recovery.clientAttendanceId,
+                busy: busy,
               ),
-              SelectableText(
-                recovery.clientAttendanceId,
-                style: const TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 10),
-              FilledButton(
-                onPressed: busy
-                    ? null
-                    : () => context
-                          .read<FlexibleAttendanceCubit>()
-                          .recoverClockIn(),
-                child: Text(context.tr('Check original request')),
-              ),
-              TextButton(
-                onPressed: () => Clipboard.setData(
-                  ClipboardData(text: recovery.clientAttendanceId),
-                ),
-                child: Text(
-                  context.tr('Copy request reference'),
-                  style: const TextStyle(color: EmployeeDesign.mint),
-                ),
-              ),
-              TextButton(
-                onPressed: () => context.push('/support'),
-                child: Text(
-                  context.tr('Get help'),
-                  style: const TextStyle(color: EmployeeDesign.mint),
-                ),
-              ),
-            ],
             if (state.failure != null) ...[
               const SizedBox(height: 10),
               Text(
@@ -136,74 +100,12 @@ class EmployeeAttendanceGate extends StatelessWidget {
                 style: const TextStyle(color: EmployeeDesign.heroText),
               ),
             ],
-            if (recovery == null) ...[
-              const SizedBox(height: 18),
-              OutlinedButton(
-                onPressed:
-                    state.submittingTemplateId != null || state.clockingOut
-                    ? null
-                    : summary.occurrence != null
-                    ? () => Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                          builder: (_) => EmployeeShiftDetailsScreen(
-                            entry: summary.occurrence!,
-                            timezone: timezone,
-                          ),
-                        ),
-                      )
-                    : () => context.go('/employee?tab=shifts'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: EmployeeDesign.mint,
-                  side: const BorderSide(color: Color(0xFF414966)),
-                ),
-                child: Text(
-                  context.tr(
-                    summary.occurrence != null ? 'View shift' : 'View schedule',
-                  ),
-                ),
-              ),
-            ],
-            if (state.failure != null || state.recoveryBlocked)
-              TextButton(
-                onPressed: busy
-                    ? null
-                    : () => context.read<FlexibleAttendanceCubit>().load(
-                        refresh: true,
-                      ),
-                child: Text(
-                  context.tr('Refresh'),
-                  style: const TextStyle(color: EmployeeDesign.mint),
-                ),
-              ),
-            if (state.current?.isOpen == true &&
-                state.current?.source == AttendanceSource.legacyShift)
-              TextButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute<void>(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: Text(context.tr('Earlier shifts'))),
-                      body: const EmployeeShiftsScreen(),
-                    ),
-                  ),
-                ),
-                child: Text(
-                  context.tr('Earlier shifts & clock-out'),
-                  style: const TextStyle(color: EmployeeDesign.mint),
-                ),
-              ),
-            if (state.legacyReviews.isNotEmpty)
-              LegacyClockInReviewCard(
-                reviews: state.legacyReviews,
-                onRefresh: busy
-                    ? null
-                    : () => context.read<FlexibleAttendanceCubit>().load(
-                        refresh: true,
-                      ),
-              ),
-            if (state.failure != null && state.templates.isNotEmpty)
-              SavedScheduleList(templates: state.templates),
+            EmployeeAttendanceGateActions(
+              state: state,
+              summary: summary,
+              timezone: timezone,
+              busy: busy,
+            ),
           ],
         ),
       ),

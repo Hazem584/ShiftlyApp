@@ -60,9 +60,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/Logo.png
     - assets/images/shiftly-mark.png
-    - assets/app_icons/
   fonts:
     - family: Cairo
       fonts:

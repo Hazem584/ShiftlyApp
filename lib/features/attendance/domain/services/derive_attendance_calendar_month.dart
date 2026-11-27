@@ -1,11 +1,11 @@
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_calendar_entry.dart';
 import 'package:shiftly/features/attendance/domain/entities/attendance_calendar_month.dart';
-import 'package:shiftly/features/attendance/domain/entities/calendar_attendance_status.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
+import 'package:shiftly/features/attendance/domain/services/attendance_calendar_entry_builder.dart';
+import 'package:shiftly/features/attendance/domain/services/attendance_calendar_month_inputs.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
-import 'package:shiftly/features/fixed_shifts/domain/services/fixed_shift_dates.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 import 'package:timezone/timezone.dart' as timezone;
 
@@ -22,61 +22,12 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
   final zone = WorkspaceTime.location(timezoneName);
   final monthStart = timezone.TZDateTime(zone, year, month);
   final monthEnd = timezone.TZDateTime(zone, year, month + 1);
-  final validShifts = <String, ShiftRecord>{};
-  for (final shift in shifts) {
-    if (shift.workspaceId == workspaceId &&
-        (shift.status == ShiftStatus.scheduled ||
-            shift.status == ShiftStatus.completed)) {
-      validShifts.putIfAbsent(shift.id, () => shift);
-    }
-  }
-  final validAttendance = <String, AttendanceRecordApi>{};
-  final templateDays = <String, String>{};
-  for (final record in attendance) {
-    if (record.workspaceId != workspaceId ||
-        validAttendance.containsKey(record.id) ||
-        record.reviewStatus == AttendanceReviewStatus.rejected ||
-        record.reviewStatus == AttendanceReviewStatus.unknown) {
-      continue;
-    }
-    switch (record.source) {
-      case AttendanceSource.legacyShift:
-        if (record.shift == null ||
-            record.shift!.status == ShiftStatus.cancelled ||
-            record.shift!.status == ShiftStatus.unknown) {
-          continue;
-        }
-      case AttendanceSource.template:
-        if (record.operationalDate == null ||
-            record.clockInClassification == AttendanceClassification.unknown) {
-          continue;
-        }
-        try {
-          // DateTime parsing normalizes impossible dates in timestamps.
-          // Validate the calendar date before accepting either representation.
-          fixedShiftDateOnly({
-            'date': record.operationalDate!.split('T').first,
-          }, 'date');
-          final date = fixedShiftOperationalDate({
-            'date': record.operationalDate,
-          }, 'date');
-          templateDays.putIfAbsent(record.id, () => date);
-        } on FormatException {
-          continue;
-        }
-      case AttendanceSource.unknown:
-        continue;
-    }
-    validAttendance.putIfAbsent(record.id, () => record);
-  }
-  final approvedLeave = <String, LeaveRequestRecord>{};
-  for (final request in leaveRequests) {
-    if (request.workspaceId == workspaceId &&
-        request.status == LeaveRequestStatus.approved) {
-      approvedLeave.putIfAbsent(request.id, () => request);
-    }
-  }
-
+  final validShifts = collectValidCalendarShifts(shifts, workspaceId);
+  final att = collectValidCalendarAttendance(attendance, workspaceId);
+  final approvedLeave = collectApprovedCalendarLeave(
+    leaveRequests,
+    workspaceId,
+  );
   final days = <String, List<AttendanceCalendarEntry>>{};
   for (
     var day = monthStart;
@@ -89,96 +40,17 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
       month: day.month,
       day: day.day,
     );
-    final dayShifts = validShifts.values
-        .where((item) {
-          final start = item.startsAt.toUtc();
-          return !start.isBefore(day.toUtc()) &&
-              start.isBefore(nextDay.toUtc());
-        })
-        .toList(growable: false);
-    final dayLeave = approvedLeave.values
-        .where(
-          (item) =>
-              item.startsAt.isBefore(nextDay.toUtc()) &&
-              item.endsAt.isAfter(day.toUtc()),
-        )
-        .toList(growable: false);
-    final dayAttendance = validAttendance.values
-        .where(
-          (item) => item.source == AttendanceSource.template
-              ? templateDays[item.id] == key
-              : dayShifts.any(
-                  (shift) =>
-                      shift.id == item.shiftId &&
-                      shift.employeeMembershipId == item.employeeMembershipId,
-                ),
-        )
-        .toList(growable: false);
-    final employees = <String>{
-      ...dayShifts.map((item) => item.employeeMembershipId),
-      ...dayLeave.map((item) => item.employeeMembershipId),
-      ...dayAttendance.map((item) => item.employeeMembershipId),
-    };
-    final entries = <AttendanceCalendarEntry>[];
-    for (final employeeId in employees) {
-      final employeeShifts = dayShifts
-          .where((item) => item.employeeMembershipId == employeeId)
-          .toList();
-      final employeeLeave = dayLeave
-          .where((item) => item.employeeMembershipId == employeeId)
-          .firstOrNull;
-      final records = dayAttendance
-          .where((item) => item.employeeMembershipId == employeeId)
-          .toList();
-      final attendanceRecord = records.isEmpty ? null : records.first;
-      final lateRecord = records
-          .where(
-            (item) =>
-                item.minutesLate > 0 ||
-                item.clockInClassification == AttendanceClassification.late,
-          )
-          .firstOrNull;
-      final selectedRecord = lateRecord ?? attendanceRecord;
-      final shift = selectedRecord == null
-          ? employeeShifts.firstOrNull
-          : employeeShifts
-                .where((item) => item.id == selectedRecord.shiftId)
-                .firstOrNull;
-      final employee =
-          attendanceRecord?.employee ??
-          shift?.employee ??
-          employeeLeave?.employee;
-      if (employee == null) continue;
-      CalendarAttendanceStatus? status;
-      if (lateRecord != null) {
-        status = CalendarAttendanceStatus.late;
-      } else if (attendanceRecord != null) {
-        status = CalendarAttendanceStatus.present;
-      } else if (employeeLeave != null) {
-        status = CalendarAttendanceStatus.leave;
-      } else if (employeeShifts.isNotEmpty &&
-          employeeShifts.every((item) => !item.endsAt.isAfter(nowUtc))) {
-        status = CalendarAttendanceStatus.absent;
-      }
-      if (status != null) {
-        entries.add(
-          AttendanceCalendarEntry(
-            employeeMembershipId: employeeId,
-            employee: employee,
-            status: status,
-            shift: shift,
-            attendance: lateRecord ?? attendanceRecord,
-            leave: employeeLeave,
-          ),
-        );
-      }
-    }
-    if (entries.isNotEmpty) {
-      entries.sort(
-        (a, b) => a.employee.displayName.compareTo(b.employee.displayName),
-      );
-      days[key] = List.unmodifiable(entries);
-    }
+    final dayEntries = _buildDayEntries(
+      dayUtc: day.toUtc(),
+      nextDayUtc: nextDay.toUtc(),
+      key: key,
+      validShifts: validShifts.values,
+      approvedLeave: approvedLeave.values,
+      validAttendance: att.attendance.values,
+      templateDays: att.templateDays,
+      nowUtc: nowUtc,
+    );
+    if (dayEntries.isNotEmpty) days[key] = dayEntries;
   }
   final upcoming =
       validShifts.values
@@ -200,4 +72,55 @@ AttendanceCalendarMonth deriveAttendanceCalendarMonth({
     timezone: timezoneName,
     days: Map.unmodifiable(days),
   );
+}
+
+List<AttendanceCalendarEntry> _buildDayEntries({
+  required DateTime dayUtc,
+  required DateTime nextDayUtc,
+  required String key,
+  required Iterable<ShiftRecord> validShifts,
+  required Iterable<LeaveRequestRecord> approvedLeave,
+  required Iterable<AttendanceRecordApi> validAttendance,
+  required Map<String, String> templateDays,
+  required DateTime nowUtc,
+}) {
+  final dayShifts = validShifts
+      .where((i) {
+        final s = i.startsAt.toUtc();
+        return !s.isBefore(dayUtc) && s.isBefore(nextDayUtc);
+      })
+      .toList(growable: false);
+  final dayLeave = approvedLeave
+      .where((i) => i.startsAt.isBefore(nextDayUtc) && i.endsAt.isAfter(dayUtc))
+      .toList(growable: false);
+  final dayAttendance = validAttendance
+      .where(
+        (i) => i.source == AttendanceSource.template
+            ? templateDays[i.id] == key
+            : dayShifts.any(
+                (s) =>
+                    s.id == i.shiftId &&
+                    s.employeeMembershipId == i.employeeMembershipId,
+              ),
+      )
+      .toList(growable: false);
+  final employees = <String>{
+    ...dayShifts.map((item) => item.employeeMembershipId),
+    ...dayLeave.map((item) => item.employeeMembershipId),
+    ...dayAttendance.map((item) => item.employeeMembershipId),
+  };
+  final entries = [
+    for (final employeeId in employees)
+      ?buildEmployeeCalendarEntry(
+        employeeId: employeeId,
+        dayShifts: dayShifts,
+        dayLeave: dayLeave,
+        dayAttendance: dayAttendance,
+        nowUtc: nowUtc,
+      ),
+  ];
+  entries.sort(
+    (a, b) => a.employee.displayName.compareTo(b.employee.displayName),
+  );
+  return List.unmodifiable(entries);
 }

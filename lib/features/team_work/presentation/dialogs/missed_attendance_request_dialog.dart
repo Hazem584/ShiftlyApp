@@ -4,7 +4,7 @@ import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/employee_experience/presentation/employee_form_surface.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/eligible_shift_occurrence.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
-import 'package:shiftly/features/team_work/presentation/widgets/attendance_period_fields.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/missed_attendance_form_body.dart';
 
 class MissedAttendanceRequestDialog extends StatefulWidget {
   const MissedAttendanceRequestDialog({
@@ -31,6 +31,7 @@ class _MissedAttendanceRequestDialogState
   String _kind = 'FORGOT_TO_RECORD';
   bool _busy = false;
   String? _error;
+
   @override
   void dispose() {
     _reason.dispose();
@@ -45,8 +46,9 @@ class _MissedAttendanceRequestDialogState
         _end.isAfter(DateTime.now()) ||
         !_start.isBefore(widget.entry.scheduledEndAt) ||
         !_end.isAfter(widget.entry.scheduledStartAt)) {
-      setState(() => _error = 'Choose a completed period within this shift.');
-      return;
+      return setState(
+        () => _error = 'Choose a completed period within this shift.',
+      );
     }
     setState(() {
       _busy = true;
@@ -80,82 +82,19 @@ class _MissedAttendanceRequestDialogState
     child: EmployeeFormSurface(
       title: Text(context.tr('Review missing attendance')),
       scrollable: true,
-      content: SizedBox(
-        width: 460,
-        child: Form(
-          key: _form,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${widget.entry.template.name} · ${widget.entry.operationalDate}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                context.tr(
-                  'No attendance was recorded for this shift. Explain what happened and the period you want counted. Your manager may approve all or part of it, or decline.',
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _kind,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: context.tr('Why was attendance not recorded?'),
-                ),
-                items: [
-                  for (final (value, label) in const [
-                    (
-                      'FORGOT_TO_RECORD',
-                      'I attended but forgot to record attendance',
-                    ),
-                    (
-                      'EXCEPTION',
-                      'I have an exception or special circumstance',
-                    ),
-                    ('OTHER', 'Other reason'),
-                  ])
-                    DropdownMenuItem(
-                      value: value,
-                      child: Text(context.tr(label), maxLines: 2),
-                    ),
-                ],
-                onChanged: _busy
-                    ? null
-                    : (value) => setState(() => _kind = value!),
-              ),
-              AttendancePeriodFields(
-                start: _start,
-                end: _end,
-                timezone: widget.timezone,
-                busy: _busy,
-                onStart: (value) => setState(() => _start = value),
-                onEnd: (value) => setState(() => _end = value),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _reason,
-                enabled: !_busy,
-                maxLines: 3,
-                maxLength: 1000,
-                decoration: InputDecoration(
-                  labelText: context.tr('Explain what happened'),
-                ),
-                validator: (text) => (text?.trim().length ?? 0) < 5
-                    ? context.tr(
-                        'Please add a reason of at least 5 characters.',
-                      )
-                    : null,
-              ),
-              if (_error != null)
-                Text(
-                  context.tr(_error!),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-            ],
-          ),
-        ),
+      content: MissedAttendanceFormBody(
+        formKey: _form,
+        entry: widget.entry,
+        timezone: widget.timezone,
+        kind: _kind,
+        start: _start,
+        end: _end,
+        busy: _busy,
+        reasonController: _reason,
+        error: _error,
+        onKindChanged: (v) => setState(() => _kind = v),
+        onStartChanged: (v) => setState(() => _start = v),
+        onEndChanged: (v) => setState(() => _end = v),
       ),
       actions: [
         TextButton(

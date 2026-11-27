@@ -25,22 +25,22 @@ class ChatUploadAuthorization extends Equatable {
     final bucket = json['bucket'];
     final path = json['path'];
     final token = json['uploadToken'];
-    final expires = json['expiresAt'];
-    final uri = url is String ? Uri.tryParse(url) : null;
-    final date = expires is String ? DateTime.tryParse(expires) : null;
-    if (uri == null ||
-        !uri.isAbsolute ||
-        uri.scheme != 'https' ||
-        uri.host.isEmpty ||
-        uri.userInfo.isNotEmpty ||
-        uri.fragment.isNotEmpty ||
+    final exp = json['expiresAt'];
+    final u = url is String ? Uri.tryParse(url) : null;
+    final d = exp is String ? DateTime.tryParse(exp) : null;
+    if (u == null ||
+        !u.isAbsolute ||
+        u.scheme != 'https' ||
+        u.host.isEmpty ||
+        u.userInfo.isNotEmpty ||
+        u.fragment.isNotEmpty ||
         bucket != 'chat-media' ||
         !chatModelsValidStoragePath(path) ||
         token is! String ||
         token.trim().isEmpty ||
-        date == null ||
-        !date.isUtc ||
-        !date.isAfter(DateTime.now().toUtc())) {
+        d == null ||
+        !d.isUtc ||
+        !d.isAfter(DateTime.now().toUtc())) {
       throw const FormatException('Invalid upload authorization');
     }
     return ChatUploadAuthorization(
@@ -48,7 +48,7 @@ class ChatUploadAuthorization extends Equatable {
       bucket: bucket as String,
       path: path as String,
       uploadToken: token,
-      expiresAt: date.toUtc(),
+      expiresAt: d.toUtc(),
     );
   }
 
@@ -67,7 +67,6 @@ class ChatUploadAuthorization extends Equatable {
 
   @override
   List<Object?> get props => [uploadId, expiresAt];
-
   @override
   String toString() =>
       'ChatUploadAuthorization($uploadId, expiresAt: $expiresAt)';

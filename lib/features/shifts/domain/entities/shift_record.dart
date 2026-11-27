@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
-import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/features/shifts/domain/entities/attendance_review_status.dart';
 import 'package:shiftly/features/shifts/domain/entities/shift_attendance_summary.dart';
 import 'package:shiftly/features/shifts/domain/entities/shift_employee_summary.dart';
+import 'package:shiftly/features/shifts/domain/entities/shift_record_parser.dart';
 import 'package:shiftly/features/shifts/domain/entities/shift_status.dart';
 
 class ShiftRecord extends Equatable {
@@ -25,18 +25,11 @@ class ShiftRecord extends Equatable {
     this.attendance,
   });
 
-  final String id;
-  final String workspaceId;
-  final String employeeMembershipId;
-  final String createdByMembershipId;
-  final DateTime startsAt;
-  final DateTime endsAt;
-  final int breakMinutes;
-  final int graceMinutes;
+  final String id, workspaceId, employeeMembershipId, createdByMembershipId;
+  final DateTime startsAt, endsAt, createdAt, updatedAt;
+  final int breakMinutes, graceMinutes;
   final String? notes, assignmentId, extraAuthorizationId;
   final ShiftStatus status;
-  final DateTime createdAt;
-  final DateTime updatedAt;
   final ShiftEmployeeSummary employee;
   final ShiftAttendanceSummary? attendance;
 
@@ -71,38 +64,8 @@ class ShiftRecord extends Equatable {
     attendance: attendance ?? this.attendance,
   );
 
-  factory ShiftRecord.fromJson(Map<String, Object?> json) {
-    final employee = ApiModelParser.map(json['employee'], 'employee');
-    final attendance = ApiModelParser.optionalMap(
-      json['attendance'],
-      'attendance',
-    );
-    return ShiftRecord(
-      id: ApiModelParser.string(json, 'id'),
-      workspaceId: ApiModelParser.string(json, 'workspaceId'),
-      employeeMembershipId: ApiModelParser.string(json, 'employeeMembershipId'),
-      createdByMembershipId: ApiModelParser.string(
-        json,
-        'createdByMembershipId',
-      ),
-      startsAt: ApiModelParser.date(json, 'startsAt'),
-      endsAt: ApiModelParser.date(json, 'endsAt'),
-      breakMinutes: ApiModelParser.integer(json, 'breakMinutes'),
-      graceMinutes: ApiModelParser.integer(json, 'graceMinutes'),
-      notes: ApiModelParser.optionalString(json['notes']),
-      assignmentId: ApiModelParser.optionalString(json['assignmentId']),
-      extraAuthorizationId: ApiModelParser.optionalString(
-        json['extraAuthorizationId'],
-      ),
-      status: ShiftStatus.parse(json['status']),
-      createdAt: ApiModelParser.date(json, 'createdAt'),
-      updatedAt: ApiModelParser.date(json, 'updatedAt'),
-      employee: ShiftEmployeeSummary.fromJson(employee),
-      attendance: attendance == null
-          ? null
-          : ShiftAttendanceSummary.fromJson(attendance),
-    );
-  }
+  factory ShiftRecord.fromJson(Map<String, Object?> json) =>
+      parseShiftRecordJson(json);
 
   @override
   List<Object?> get props => [

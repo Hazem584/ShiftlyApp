@@ -15,9 +15,7 @@ class WorkspaceMembershipChooser extends StatelessWidget {
   });
 
   final List<WorkspaceMembership> memberships;
-  final String? currentWorkspaceId;
-  final String? currentSelectionId;
-  final String? switchingWorkspaceId;
+  final String? currentWorkspaceId, currentSelectionId, switchingWorkspaceId;
   final ValueChanged<WorkspaceMembership> onSelected;
   final bool shrinkWrap;
 
@@ -29,60 +27,68 @@ class WorkspaceMembershipChooser extends StatelessWidget {
     padding: const EdgeInsets.all(AppSpacing.m),
     itemCount: memberships.length,
     separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s),
-    itemBuilder: (context, index) {
-      final membership = memberships[index];
-      final current = membership.workspace.id == currentWorkspaceId;
-      final selected =
-          membership.workspace.id == (currentSelectionId ?? currentWorkspaceId);
-      final switching = membership.workspace.id == switchingWorkspaceId;
-      return Card(
-        color: selected ? Theme.of(context).colorScheme.primaryContainer : null,
-        child: ListTile(
-          key: Key('workspace-${membership.workspace.id}'),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.business_outlined,
-              color: Theme.of(context).colorScheme.primary,
-              size: 20,
-            ),
-          ),
-          title: Text(
-            membership.workspace.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            membership.role == WorkspaceRole.manager
-                ? context.tr('Manager')
-                : context.tr('Employee'),
-          ),
-          trailing: switching
-              ? const SizedBox.square(
-                  dimension: 22,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : current
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.check_circle_rounded, size: 20),
-                    const SizedBox(width: 4),
-                    Text(context.tr('Current')),
-                  ],
-                )
-              : const Icon(Icons.chevron_right_rounded),
-          onTap:
-              (current && currentSelectionId == null) ||
-                  switchingWorkspaceId != null
-              ? null
-              : () => onSelected(membership),
-        ),
-      );
-    },
+    itemBuilder: (context, index) => _buildTile(context, memberships[index]),
   );
+
+  Widget _buildTile(BuildContext context, WorkspaceMembership membership) {
+    final id = membership.workspace.id;
+    final current = id == currentWorkspaceId;
+    final selected = id == (currentSelectionId ?? currentWorkspaceId);
+    final switching = id == switchingWorkspaceId;
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      color: selected ? scheme.primaryContainer : null,
+      child: ListTile(
+        key: Key('workspace-$id'),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(Icons.business_outlined, color: scheme.primary, size: 20),
+        ),
+        title: Text(
+          membership.workspace.name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          context.tr(
+            membership.role == WorkspaceRole.manager ? 'Manager' : 'Employee',
+          ),
+        ),
+        trailing: _buildTrailing(
+          context,
+          switching: switching,
+          current: current,
+        ),
+        onTap:
+            (current && currentSelectionId == null) ||
+                switchingWorkspaceId != null
+            ? null
+            : () => onSelected(membership),
+      ),
+    );
+  }
+
+  Widget _buildTrailing(
+    BuildContext context, {
+    required bool switching,
+    required bool current,
+  }) => switching
+      ? const SizedBox.square(
+          dimension: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        )
+      : current
+      ? Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_rounded, size: 20),
+            const SizedBox(width: 4),
+            Text(context.tr('Current')),
+          ],
+        )
+      : const Icon(Icons.chevron_right_rounded);
 }

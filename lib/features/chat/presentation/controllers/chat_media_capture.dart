@@ -1,491 +1,57 @@
 import 'dart:async';
 
-import 'package:file_selector/file_selector.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
-import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/storage/platform_file.dart';
-import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
-import 'package:shiftly/features/chat/domain/services/chat_document_validation.dart';
-import 'package:shiftly/features/chat/domain/services/chat_media_validation.dart';
-import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
-import 'package:shiftly/features/chat/presentation/dialogs/shiftly_chat_dialog.dart';
-import 'package:shiftly/features/chat/presentation/screens/chat_media_review_screen.dart';
 
-class ChatMediaCapture extends ChangeNotifier {
+import 'chat_document_picker_action.dart';
+import 'chat_image_picker_action.dart';
+import 'chat_location_share_action.dart';
+import 'chat_media_capture_state.dart';
+import 'chat_prepared_media_retry.dart';
+import 'chat_voice_recorder_finish.dart';
+import 'chat_voice_recorder_start.dart';
+
+class ChatMediaCapture extends ChangeNotifier with ChatMediaCaptureState {
   ChatMediaCapture(this.context) {
-    _recordState = _recorder.onStateChanged().listen((value) {
+    _recordState = recorder.onStateChanged().listen((value) {
       if ((value == RecordState.stop || value == RecordState.pause) &&
-          _recording) {
+          isRecording) {
         unawaited(handleRecordingInterruption());
       }
     });
   }
   final BuildContext context;
-  final _picker = ImagePicker();
-  final _recorder = AudioRecorder();
   StreamSubscription<RecordState>? _recordState;
-  Timer? _recordTimer;
-  DateTime? _recordStarted;
-  bool _recording = false;
-  bool _mediaBusy = false;
-  bool _disposed = false;
-  Uint8List? _preparedImage;
-  String? _preparedCaption;
-  String? _preparedVoicePath;
-  int? _preparedVoiceDuration;
-  String? _recordPath;
-  bool get recording => _recording;
-  bool get mediaBusy => _mediaBusy;
-  bool get hasPreparedMedia =>
-      _preparedImage != null || _preparedVoicePath != null;
-  void _update(VoidCallback change) {
-    if (_disposed) return;
-    change();
-    notifyListeners();
-  }
-
-  void clearPreparedMedia() {
-    _preparedImage = null;
-    _preparedCaption = null;
-    if (_preparedVoicePath case final path?) {
-      unawaited(
-        ChatLocalFile(path)
-            .delete()
-            .catchError((Object _) => ChatLocalFile(path)),
-      );
-    }
-    _preparedVoicePath = null;
-    _preparedVoiceDuration = null;
-  }
+  bool get active => context.mounted && !isDisposed;
 
   @override
   void dispose() {
-    _disposed = true;
-    _recordTimer?.cancel();
+    isDisposed = true;
+    recordTimer?.cancel();
     unawaited(_recordState?.cancel());
-    unawaited(_recorder.cancel());
-    _recorder.dispose();
+    unawaited(recorder.cancel());
+    recorder.dispose();
     clearPreparedMedia();
-    if (_recordPath case final path?) {
-      unawaited(
-        ChatLocalFile(path)
-            .delete()
-            .catchError((Object _) => ChatLocalFile(path)),
-      );
-    }
+    deleteLocalMediaFile(recordPath);
     super.dispose();
   }
 
-  Future<void> pickImage() async {
-    if (_mediaBusy) return;
-    final conversation = context.read<ChatConversationCubit>();
-    final generation = conversation.generation;
-    _update(() => _mediaBusy = true);
-    try {
-      final selected = await _picker.pickImage(source: ImageSource.gallery);
-      if (selected == null || !(context.mounted && !_disposed)) return;
-      final length = await selected.length();
-      if (length < 1 || length > ChatMediaValidation.imageMaxBytes) {
-        if (!(context.mounted && !_disposed)) return;
-        Fluttertoast.showToast(
-          msg: context.tr('Images must be 5 MiB or smaller.'),
-        );
-        return;
-      }
-      final bytes = await selected.readAsBytes();
-      final mime = ChatMediaValidation.imageMime(bytes);
-      if (mime == null) {
-        if (!(context.mounted && !_disposed)) return;
-        Fluttertoast.showToast(
-          msg: context.tr('Choose a valid JPEG, PNG, or WebP image.'),
-        );
-        return;
-      }
-      if ((context.mounted && !_disposed)) {
-        final decision = await Navigator.push<ChatMediaDecision>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatMediaReviewScreen(kind: 'IMAGE', bytes: bytes),
-          ),
-        );
-        if (!context.mounted ||
-            _disposed ||
-            conversation.generation != generation ||
-            decision == null) {
-          return;
-        }
-        if (decision.reselect) {
-          _update(() => _mediaBusy = false);
-          await pickImage();
-          return;
-        }
-        _preparedImage = bytes;
-        _preparedCaption = decision.caption;
-        final id = await conversation.sendImage(
-          bytes,
-          caption: decision.caption,
-        );
-        if (id != null) _preparedImage = null;
-      }
-    } catch (_) {
-      if (!(context.mounted && !_disposed)) return;
-      Fluttertoast.showToast(
-        msg: context.tr('The image could not be prepared.'),
-      );
-    } finally {
-      if ((context.mounted && !_disposed)) _update(() => _mediaBusy = false);
-    }
-  }
-
-  Future<void> pickDocument() async {
-    if (_mediaBusy) return;
-    final conversation = context.read<ChatConversationCubit>();
-    final generation = conversation.generation;
-    _update(() => _mediaBusy = true);
-    try {
-      final file = await openFile(
-        acceptedTypeGroups: [
-          const XTypeGroup(
-            label: 'Documents',
-            extensions: ['pdf', 'xlsx', 'xls', 'csv', 'txt'],
-            uniformTypeIdentifiers: [
-              'public.pdf',
-              'org.openxmlformats.spreadsheetml.sheet',
-              'com.microsoft.excel.xls',
-              'public.comma-separated-values-text',
-              'public.plain-text',
-            ],
-          ),
-        ],
-      );
-      if (file == null ||
-          !context.mounted ||
-          _disposed ||
-          conversation.generation != generation) {
-        return;
-      }
-      if (await file.length() > ChatDocumentValidation.maxBytes) {
-        throw const FormatException('Document too large');
-      }
-      final bytes = await file.readAsBytes();
-      if (!context.mounted ||
-          _disposed ||
-          conversation.generation != generation) {
-        return;
-      }
-      if (!ChatDocumentValidation.valid(bytes, file.name)) {
-        throw const FormatException('Invalid document');
-      }
-      final decision = await Navigator.push<ChatMediaDecision>(
-        context,
-        MaterialPageRoute(
-          builder: (_) => ChatMediaReviewScreen(
-            kind: 'DOCUMENT',
-            bytes: bytes,
-            fileName: file.name,
-          ),
-        ),
-      );
-      if (!context.mounted ||
-          _disposed ||
-          conversation.generation != generation ||
-          decision == null) {
-        return;
-      }
-      if (decision.reselect) {
-        _update(() => _mediaBusy = false);
-        await pickDocument();
-        return;
-      }
-      final id = await conversation.sendDocument(bytes, file.name);
-      if (id == null) throw StateError('Document not saved');
-    } catch (_) {
-      if (context.mounted && !_disposed) {
-        Fluttertoast.showToast(
-          msg: context.tr('Choose a PDF, Excel, CSV or text file up to 10 MB.'),
-        );
-      }
-    } finally {
-      if (context.mounted && !_disposed) _update(() => _mediaBusy = false);
-    }
-  }
-
-  Future<void> startRecording() async {
-    if (_recording || _mediaBusy) return;
-    _update(() => _mediaBusy = true);
-    try {
-      if (!await _recorder.hasPermission()) {
-        if (!(context.mounted && !_disposed)) return;
-        Fluttertoast.showToast(
-          msg: context.tr('Microphone permission is required to record.'),
-        );
-        return;
-      }
-      final path = await chatRecordingPath();
-      _recordPath = path;
-      await _recorder.start(
-        RecordConfig(
-          encoder:
-              kIsWeb && await _recorder.isEncoderSupported(AudioEncoder.opus)
-              ? AudioEncoder.opus
-              : AudioEncoder.aacLc,
-        ),
-        path: path,
-      );
-      _recordStarted = DateTime.now();
-      _recordTimer?.cancel();
-      _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (!(context.mounted && !_disposed) || !_recording) return;
-        final elapsed = DateTime.now().difference(_recordStarted!);
-        _update(() {});
-        if (elapsed.inMilliseconds >= ChatMediaValidation.voiceMaxDurationMs) {
-          unawaited(finishRecording(send: true));
-        }
-      });
-      if ((context.mounted && !_disposed)) _update(() => _recording = true);
-    } catch (_) {
-      if (!(context.mounted && !_disposed)) return;
-      Fluttertoast.showToast(
-        msg: context.tr('Recording could not be started.'),
-      );
-    } finally {
-      if ((context.mounted && !_disposed)) _update(() => _mediaBusy = false);
-    }
-  }
-
-  Future<void> finishRecording({required bool send}) async {
-    if (!_recording) return;
-    final conversation = context.read<ChatConversationCubit>();
-    final generation = conversation.generation;
-    if (!send) {
-      final discard = await ShiftlyChatDialog.confirm(
-        context,
-        title: 'Discard recording?',
-        message: 'This voice recording will be permanently discarded.',
-        confirmText: 'Discard',
-        destructive: true,
-      );
-      if (!discard || !(context.mounted && !_disposed) || !_recording) return;
-    }
-    final started = _recordStarted;
-    _update(() => _recording = false);
-    _recordTimer?.cancel();
-    String? path;
-    bool accepted = false;
-    try {
-      if (!send) {
-        await _recorder.cancel();
-        return;
-      }
-      path = await _recorder.stop();
-      final duration = started == null
-          ? 0
-          : DateTime.now().difference(started).inMilliseconds;
-      if (path == null) throw const FormatException('Missing recording');
-      final file = ChatLocalFile(path);
-      final bytes = await file.readAsBytes();
-      if (!ChatMediaValidation.validVoice(
-        bytes: bytes,
-        mimeType: ChatMediaValidation.voiceMime(bytes) ?? '',
-        durationMs: duration,
-      )) {
-        if (!(context.mounted && !_disposed)) return;
-        Fluttertoast.showToast(
-          msg: context.tr('The recording is empty, invalid, or too long.'),
-        );
-        return;
-      }
-      if ((context.mounted && !_disposed)) {
-        final decision = await Navigator.push<ChatMediaDecision>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ChatMediaReviewScreen(
-              kind: 'VOICE',
-              voicePath: path,
-              durationMs: duration,
-            ),
-          ),
-        );
-        if (!context.mounted ||
-            _disposed ||
-            conversation.generation != generation ||
-            decision == null) {
-          return;
-        }
-        _preparedVoicePath = path;
-        _preparedVoiceDuration = duration;
-        final id = await context.read<ChatConversationCubit>().sendVoice(
-          mimeType: ChatMediaValidation.voiceMime(bytes) ?? '',
-          bytes: bytes,
-          durationMs: duration,
-        );
-        accepted = id != null;
-        if (accepted) {
-          _preparedVoicePath = null;
-          _preparedVoiceDuration = null;
-        }
-      }
-    } catch (_) {
-      if (!(context.mounted && !_disposed)) return;
-      Fluttertoast.showToast(
-        msg: context.tr('The recording could not be prepared.'),
-      );
-    } finally {
-      if (path != null && (accepted || _preparedVoicePath != path)) {
-        try {
-          await ChatLocalFile(path).delete();
-        } catch (_) {}
-      }
-      _recordPath = null;
-      _recordStarted = null;
-      if ((context.mounted && !_disposed)) _update(() {});
-    }
-  }
-
-  Future<void> handleRecordingInterruption() async {
-    if (!_recording) return;
-    _recordTimer?.cancel();
-    _recording = false;
-    final path = _recordPath;
-    _recordPath = null;
-    _recordStarted = null;
-    try {
-      await _recorder.cancel();
-    } catch (_) {}
-    if (path != null) {
-      try {
-        await ChatLocalFile(path).delete();
-      } catch (_) {}
-    }
-    if ((context.mounted && !_disposed)) {
-      _update(() {});
-      if (!(context.mounted && !_disposed)) return;
-      Fluttertoast.showToast(msg: context.tr('Recording was interrupted.'));
-    }
-  }
-
-  Future<void> retryPreparedMedia() async {
-    _update(() => _mediaBusy = true);
-    try {
-      final conversation = context.read<ChatConversationCubit>();
-      if (_preparedImage case final bytes?) {
-        if (await conversation.sendImage(bytes, caption: _preparedCaption) !=
-            null) {
-          _preparedImage = null;
-        }
-      }
-      if (_preparedVoicePath case final path?) {
-        final bytes = await ChatLocalFile(path).readAsBytes();
-        if (await conversation.sendVoice(
-              bytes: bytes,
-              mimeType: ChatMediaValidation.voiceMime(bytes) ?? '',
-              durationMs: _preparedVoiceDuration!,
-            ) !=
-            null) {
-          await ChatLocalFile(path).delete();
-          _preparedVoicePath = null;
-          _preparedVoiceDuration = null;
-        }
-      }
-    } catch (_) {
-      if (!(context.mounted && !_disposed)) return;
-      Fluttertoast.showToast(
-        msg: context.tr(
-          'Media could not be saved. Retry when storage is available.',
-        ),
-      );
-    } finally {
-      if ((context.mounted && !_disposed)) _update(() => _mediaBusy = false);
-    }
-  }
+  Future<void> pickImage() => pickChatImage(this);
+  Future<void> pickDocument() => pickChatDocument(this);
+  Future<void> startRecording() => startChatRecording(this);
+  Future<void> finishRecording({required bool send}) =>
+      finishChatRecording(this, send: send);
+  Future<void> handleRecordingInterruption() =>
+      handleChatRecordingInterruption(this);
+  Future<void> retryPreparedMedia() => retryChatPreparedMedia(this);
+  Future<void> shareLocation() => shareChatLocation(this);
 
   String recordingLabel() {
-    final elapsed = _recordStarted == null
+    final elapsed = recordStarted == null
         ? Duration.zero
-        : DateTime.now().difference(_recordStarted!);
-    final minutes = elapsed.inMinutes.toString().padLeft(2, '0');
-    final seconds = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds / 10:00';
+        : DateTime.now().difference(recordStarted!);
+    final m = elapsed.inMinutes.toString().padLeft(2, '0');
+    final s = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s / 10:00';
   }
-
-  Future<void> shareLocation() async {
-    if (_mediaBusy) return;
-    _update(() => _mediaBusy = true);
-    try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        if (!(context.mounted && !_disposed)) return;
-        Fluttertoast.showToast(
-          msg: context.tr('Turn on location services to share a location.'),
-        );
-        return;
-      }
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        if (!(context.mounted && !_disposed)) return;
-        Fluttertoast.showToast(
-          msg: context.tr(
-            permission == LocationPermission.deniedForever
-                ? 'Location permission is blocked in system settings.'
-                : 'Location permission was denied.',
-          ),
-        );
-        return;
-      }
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
-      final location = ChatLocation(
-        latitude: _sixDecimals(position.latitude),
-        longitude: _sixDecimals(position.longitude),
-      );
-      if (!location.isValid || !(context.mounted && !_disposed)) return;
-      final conversation = context.read<ChatConversationCubit>();
-      final generation = conversation.generation;
-      final decision = await Navigator.push<ChatMediaDecision>(
-        context,
-        MaterialPageRoute(
-          builder: (_) =>
-              ChatMediaReviewScreen(kind: 'LOCATION', location: location),
-        ),
-      );
-      if (decision != null &&
-          context.mounted &&
-          !_disposed &&
-          conversation.generation == generation) {
-        await conversation.sendLocation(
-          ChatLocation(
-            latitude: location.latitude,
-            longitude: location.longitude,
-            label: decision.caption?.isEmpty == true ? null : decision.caption,
-          ),
-        );
-      }
-    } on TimeoutException {
-      if (!(context.mounted && !_disposed)) return;
-      Fluttertoast.showToast(msg: context.tr('Location request timed out.'));
-    } catch (_) {
-      if (!(context.mounted && !_disposed)) return;
-      Fluttertoast.showToast(
-        msg: context.tr('Your location is currently unavailable.'),
-      );
-    } finally {
-      if ((context.mounted && !_disposed)) _update(() => _mediaBusy = false);
-    }
-  }
-
-  double _sixDecimals(double value) =>
-      (value * 1000000).roundToDouble() / 1000000;
 }

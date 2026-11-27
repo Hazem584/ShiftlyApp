@@ -6,48 +6,49 @@ import 'package:shiftly/features/reports/domain/attendance_report.dart';
 class ManagerReportOverview extends StatelessWidget {
   const ManagerReportOverview({required this.metrics, super.key});
   final ReportMetrics metrics;
+
   @override
   Widget build(BuildContext context) {
-    final arabic = Localizations.localeOf(context).languageCode == 'ar';
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    String dur(int m) => workDuration(m, arabic: ar);
+    final items = [
+      (
+        Icons.calendar_today_outlined,
+        context.tr('{count} attendance days', {
+          'count': '${metrics.attendanceDays}',
+        }),
+        context.tr(
+          '{approved} approved · {pending} pending · {rejected} rejected',
+          {
+            'approved': '${metrics.approved}',
+            'pending': '${metrics.pending}',
+            'rejected': '${metrics.rejected}',
+          },
+        ),
+      ),
+      (
+        Icons.schedule_outlined,
+        context.tr('{duration} worked', {'duration': dur(metrics.workMinutes)}),
+        context.tr('Extra work: {duration}', {
+          'duration': dur(metrics.extraMinutes + metrics.excessMinutes),
+        }),
+      ),
+      (
+        Icons.access_time,
+        context.tr('Lateness'),
+        context.tr('{count} late arrivals · {duration} total', {
+          'count': '${metrics.late}',
+          'duration': dur(metrics.lateMinutes),
+        }),
+      ),
+    ];
+    final needsReview =
+        metrics.missingSchedule + metrics.missingWorkMinutes + metrics.unknown >
+        0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final item in [
-          (
-            Icons.calendar_today_outlined,
-            context.tr('{count} attendance days', {
-              'count': '${metrics.attendanceDays}',
-            }),
-            context.tr(
-              '{approved} approved · {pending} pending · {rejected} rejected',
-              {
-                'approved': '${metrics.approved}',
-                'pending': '${metrics.pending}',
-                'rejected': '${metrics.rejected}',
-              },
-            ),
-          ),
-          (
-            Icons.schedule_outlined,
-            context.tr('{duration} worked', {
-              'duration': workDuration(metrics.workMinutes, arabic: arabic),
-            }),
-            context.tr('Extra work: {duration}', {
-              'duration': workDuration(
-                metrics.extraMinutes + metrics.excessMinutes,
-                arabic: arabic,
-              ),
-            }),
-          ),
-          (
-            Icons.access_time,
-            context.tr('Lateness'),
-            context.tr('{count} late arrivals · {duration} total', {
-              'count': '${metrics.late}',
-              'duration': workDuration(metrics.lateMinutes, arabic: arabic),
-            }),
-          ),
-        ]) ...[
+        for (final item in items) ...[
           Card(
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
@@ -62,10 +63,7 @@ class ManagerReportOverview extends StatelessWidget {
           Text(
             context.tr('{count} open records', {'count': '${metrics.open}'}),
           ),
-        if (metrics.missingSchedule +
-                metrics.missingWorkMinutes +
-                metrics.unknown >
-            0)
+        if (needsReview)
           Text(
             context.tr(
               'Some records need review before their hours can be counted.',

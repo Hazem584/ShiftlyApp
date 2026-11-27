@@ -1,85 +1,29 @@
-import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shiftly/core/config/app_config.dart';
+import 'package:shiftly/core/di/collaboration_dependency_registration.dart';
+import 'package:shiftly/core/di/core_dependency_registration.dart';
 import 'package:shiftly/core/di/dependency_disposal.dart';
+import 'package:shiftly/core/di/operations_dependency_registration.dart';
 import 'package:shiftly/core/di/service_locator.dart';
-import 'package:shiftly/core/localization/language_preference_store.dart';
-import 'package:shiftly/core/localization/preferences_language_store.dart';
-import 'package:shiftly/core/network/api_client.dart';
-import 'package:shiftly/core/offline/read_sync_cubit.dart';
-import 'package:shiftly/core/offline/saved_read_interceptor.dart';
-import 'package:shiftly/core/offline/saved_read_store.dart';
+import 'package:shiftly/core/di/test_dependency_registration.dart';
+import 'package:shiftly/core/di/workforce_dependency_registration.dart';
 import 'package:shiftly/core/session/session_coordinator.dart';
-import 'package:shiftly/core/storage/active_workspace_storage.dart';
-import 'package:shiftly/core/theme/preferences_theme_store.dart';
-import 'package:shiftly/core/theme/theme_preference_store.dart';
-import 'package:shiftly/features/attendance/data/api_attendance_calendar_repository.dart';
-import 'package:shiftly/features/attendance/data/api_attendance_controls_repository.dart';
-import 'package:shiftly/features/attendance/data/api_attendance_repository.dart';
-import 'package:shiftly/features/attendance/data/api_leave_request_repository.dart';
-import 'package:shiftly/features/attendance/domain/repositories/attendance_calendar_repository.dart';
-import 'package:shiftly/features/attendance/domain/repositories/attendance_controls_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
-import 'package:shiftly/features/auth/data/authentication_api_repository.dart';
-import 'package:shiftly/features/auth/data/supabase_authentication_service.dart';
-import 'package:shiftly/features/auth/domain/repositories/authentication_repository.dart';
-import 'package:shiftly/features/auth/domain/repositories/authentication_service.dart';
-import 'package:shiftly/features/chat/data/api_chat_repository.dart';
 import 'package:shiftly/features/chat/data/cache/chat_cache_database.dart';
 import 'package:shiftly/features/chat/data/cache/chat_database_factory.dart';
-import 'package:shiftly/features/chat/data/cache/chat_group_cache.dart';
-import 'package:shiftly/features/chat/data/cache/chat_media_cache.dart';
-import 'package:shiftly/features/chat/data/cache/chat_message_cache.dart';
-import 'package:shiftly/features/chat/data/chat_image_gallery.dart';
 import 'package:shiftly/features/chat/data/chat_realtime.dart';
-import 'package:shiftly/features/chat/data/outbox/chat_outbox_storage.dart';
-import 'package:shiftly/features/chat/data/signed_chat_upload_client.dart';
-import 'package:shiftly/features/chat/data/stream/stream_chat_connection.dart';
-import 'package:shiftly/features/chat/data/stream/stream_chat_realtime.dart';
-import 'package:shiftly/features/chat/data/stream/stream_chat_repository.dart';
 import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
-import 'package:shiftly/features/chat/domain/services/chat_outbox_coordinator.dart';
-import 'package:shiftly/features/chat/presentation/cubit/chat_groups_cubit.dart';
-import 'package:shiftly/features/dashboard/data/api_dashboard_repository.dart';
 import 'package:shiftly/features/dashboard/domain/repositories/dashboard_repository.dart';
-import 'package:shiftly/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:shiftly/features/employees/data/api_workforce_repository.dart';
 import 'package:shiftly/features/employees/domain/repositories/employee_repository.dart';
-import 'package:shiftly/features/employees/presentation/cubit/employee_details_cubit.dart';
-import 'package:shiftly/features/fixed_shifts/data/api_fixed_shift_repository.dart';
-import 'package:shiftly/features/fixed_shifts/data/api_schedule_exception_repository.dart';
-import 'package:shiftly/features/fixed_shifts/domain/repositories/extra_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
-import 'package:shiftly/features/fixed_shifts/domain/repositories/schedule_exception_repository.dart';
-import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 import 'package:shiftly/features/invitations/domain/repositories/invitation_repository.dart';
-import 'package:shiftly/features/notifications/data/api_notification_repository.dart';
-import 'package:shiftly/features/notifications/data/api_push_device_repository.dart';
-import 'package:shiftly/features/notifications/data/firebase_push_messaging.dart';
-import 'package:shiftly/features/notifications/data/preferences_push_store.dart';
 import 'package:shiftly/features/notifications/domain/repositories/notification_repository.dart';
-import 'package:shiftly/features/notifications/domain/repositories/push_device_repository.dart';
-import 'package:shiftly/features/notifications/domain/repositories/push_messaging.dart';
-import 'package:shiftly/features/notifications/domain/repositories/push_preference_store.dart';
-import 'package:shiftly/features/notifications/presentation/cubit/notifications_cubit.dart';
-import 'package:shiftly/features/onboarding/data/memory_onboarding_storage.dart';
-import 'package:shiftly/features/onboarding/data/preferences_onboarding_storage.dart';
 import 'package:shiftly/features/onboarding/domain/repositories/onboarding_storage.dart';
-import 'package:shiftly/features/profile/data/api_profile_repository.dart';
 import 'package:shiftly/features/profile/data/profile_image_picker.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_repository.dart';
-import 'package:shiftly/features/shifts/data/api_shift_repository.dart';
 import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
-import 'package:shiftly/features/support/data/api_support_repository.dart';
-import 'package:shiftly/features/support/domain/support_repository.dart';
-import 'package:shiftly/features/tasks/data/api_task_repository.dart';
-import 'package:shiftly/features/tasks/data/device_task_reminders.dart';
-import 'package:shiftly/features/tasks/domain/task_reminders.dart';
-import 'package:shiftly/features/tasks/domain/task_repository.dart';
-import 'package:shiftly/features/team_work/data/api_team_work_repository.dart';
-import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
 import 'package:shiftly/features/workspaces/domain/repositories/workspace_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -92,189 +36,12 @@ abstract final class DependencyRegistration {
       url: config.supabaseUrl.toString(),
       publishableKey: config.supabasePublishableKey,
     );
-    final preferences = await SharedPreferences.getInstance();
-    final chatStorage = await ChatCacheDatabase.open(
-      await chatStorageDirectory(),
-    );
-    target
-      ..registerSingleton<ChatCacheDatabase>(
-        chatStorage,
-        dispose: (storage) => storage.close(),
-      )
-      ..registerLazySingleton<ChatMessageCache>(
-        () => ChatMessageCache(target()),
-      )
-      ..registerLazySingleton<ChatOutboxCoordinator>(ChatOutboxCoordinator.new)
-      ..registerLazySingleton<ChatOutboxStorage>(
-        () => ChatOutboxStorage(target(), coordinator: target()),
-      )
-      ..registerLazySingleton<ChatMediaCache>(
-        () => ChatMediaCache(target()),
-        dispose: (cache) => cache.close(),
-      )
-      ..registerSingleton<AppConfig>(config)
-      ..registerSingleton<SupabaseClient>(Supabase.instance.client)
-      ..registerSingleton<SharedPreferences>(preferences)
-      ..registerSingleton<SavedReadStore>(SavedReadStore(preferences))
-      ..registerLazySingleton<ReadSyncCubit>(
-        () => ReadSyncCubit(target()),
-        dispose: (cubit) => cubit.close(),
-      )
-      ..registerSingleton<ThemePreferenceStore>(
-        PreferencesThemeStore(preferences),
-      )
-      ..registerSingleton<LanguagePreferenceStore>(
-        PreferencesLanguageStore(preferences),
-      )
-      ..registerLazySingleton<OnboardingStorage>(
-        () => PreferencesOnboardingStorage(target()),
-      )
-      ..registerLazySingleton<ActiveWorkspaceStorage>(
-        () => SharedPreferencesActiveWorkspaceStorage(target()),
-      )
-      ..registerLazySingleton<AuthenticationService>(
-        () => SupabaseAuthenticationService(target<SupabaseClient>().auth),
-      )
-      ..registerLazySingleton<ApiClient>(
-        () => ApiClient(
-          config: target(),
-          authentication: target(),
-          workspaceStorage: target(),
-          savedReads: SavedReadInterceptor(
-            target<ReadSyncCubit>(),
-            hasSession: () =>
-                target<AuthenticationService>().currentSession != null,
-          ),
-        ),
-        dispose: (client) => client.dio.close(force: true),
-      )
-      ..registerLazySingleton<Dio>(() => target<ApiClient>().dio)
-      ..registerLazySingleton<SupportRepository>(
-        () => ApiSupportRepository(target<Dio>()),
-      )
-      ..registerLazySingleton<AttendanceControlsRepository>(
-        () => ApiAttendanceControlsRepository(target<Dio>()),
-      )
-      ..registerLazySingleton<TaskRepository>(
-        () => ApiTaskRepository(target<Dio>()),
-      )
-      ..registerLazySingleton<TaskReminders>(
-        () => DeviceTaskReminders(
-          target<SharedPreferences>(),
-          target<PushPreferenceStore>(),
-        ),
-      )
-      ..registerLazySingleton<TeamWorkRepository>(
-        () => ApiTeamWorkRepository(target<Dio>()),
-      )
-      ..registerLazySingleton<AuthenticationRepository>(
-        () => AuthenticationApiRepository(target()),
-      )
-      ..registerLazySingleton<SessionCoordinator>(
-        () => SessionCoordinator(target(), target(), target()),
-        dispose: (coordinator) => coordinator.close(),
-      )
-      ..registerLazySingleton<ApiWorkforceRepository>(
-        () => ApiWorkforceRepository(target()),
-      )
-      ..registerLazySingleton<EmployeeRepository>(
-        () => target<ApiWorkforceRepository>(),
-      )
-      ..registerLazySingleton<InvitationRepository>(
-        () => target<ApiWorkforceRepository>(),
-      )
-      ..registerLazySingleton<WorkspaceRepository>(
-        () => target<ApiWorkforceRepository>(),
-      )
-      ..registerLazySingleton<ShiftRepository>(
-        () => ApiShiftRepository(target()),
-      )
-      ..registerLazySingleton<AttendanceRepository>(
-        () => ApiAttendanceRepository(target()),
-      )
-      ..registerLazySingleton<LeaveRequestRepository>(
-        () => ApiLeaveRequestRepository(target()),
-      )
-      ..registerLazySingleton<AttendanceCalendarRepository>(
-        () => ApiAttendanceCalendarRepository(
-          target(),
-          target(),
-          target(),
-          dio: target<Dio>(),
-        ),
-      )
-      ..registerLazySingleton<NotificationRepository>(
-        () => ApiNotificationRepository(target()),
-      )
-      ..registerLazySingleton<PushDeviceRepository>(
-        () => ApiPushDeviceRepository(target()),
-      )
-      ..registerLazySingleton<PushMessaging>(FirebasePushMessaging.new)
-      ..registerLazySingleton<PushPreferenceStore>(
-        () => PreferencesPushStore(target()),
-      )
-      ..registerLazySingleton<DashboardRepository>(
-        () => ApiDashboardRepository(target()),
-      )
-      ..registerLazySingleton<FixedShiftRepository>(
-        () => ApiFixedShiftRepository(target(), target()),
-      )
-      ..registerLazySingleton<ExtraShiftRepository>(
-        () => target<FixedShiftRepository>() as ExtraShiftRepository,
-      )
-      ..registerLazySingleton<ScheduleExceptionRepository>(
-        () => ApiScheduleExceptionRepository(target()),
-      )
-      ..registerLazySingleton<ProfileRepository>(
-        () => ApiProfileRepository(
-          target(),
-          () => target<SessionCoordinator>().state.activeMembership,
-          currentUser: () => target<SessionCoordinator>().state.currentUser,
-        ),
-      )
-      ..registerLazySingleton<ProfileImagePicker>(DeviceProfileImagePicker.new)
-      ..registerLazySingleton<SupabaseChatStorageUploader>(
-        () => SupabaseChatStorageUploader(target()),
-      )
-      ..registerLazySingleton<StreamChatConnection>(
-        () => StreamChatConnection(target()),
-        dispose: (connection) => connection.dispose(),
-      )
-      ..registerLazySingleton<ChatRepository>(
-        () => StreamChatRepository(
-          ApiChatRepository(
-            target(),
-            storageUploader: target<SupabaseChatStorageUploader>(),
-          ),
-          target<StreamChatConnection>(),
-        ),
-      )
-      ..registerLazySingleton<ChatRealtime>(
-        () => StreamChatRealtime(
-          target<StreamChatConnection>(),
-          SupabaseChatRealtime(target()),
-        ),
-      )
-      ..registerFactory<DashboardCubit>(() => DashboardCubit(target()))
-      ..registerFactory<NotificationsCubit>(() => NotificationsCubit(target()))
-      ..registerFactory<ChatGroupsCubit>(
-        () => ChatGroupsCubit(
-          target(),
-          messageCache: target<ChatMessageCache>(),
-          realtime: target<ChatRealtime>(),
-          groupCache: ChatGroupCache(target<ChatCacheDatabase>()),
-          outbox: target<ChatOutboxStorage>(),
-          mediaCache: target<ChatMediaCache>(),
-          gallery: ChatImageGallery(),
-        ),
-      )
-      ..registerFactory<ManagerTemplatesCubit>(
-        () => ManagerTemplatesCubit(target()),
-      )
-      ..registerFactory<WorkPatternCubit>(() => WorkPatternCubit(target()))
-      ..registerFactory<EmployeeDetailsCubit>(
-        () => EmployeeDetailsCubit(target()),
-      );
+    final prefs = await SharedPreferences.getInstance();
+    final chatDb = await ChatCacheDatabase.open(await chatStorageDirectory());
+    registerCoreProductionDependencies(target, config, prefs, chatDb);
+    registerWorkforceProductionDependencies(target);
+    registerCollaborationProductionDependencies(target);
+    registerOperationsAndFactoryDependencies(target);
   }
 
   static void configureTestDependencies({
@@ -294,63 +61,22 @@ abstract final class DependencyRegistration {
     required FixedShiftRepository fixedShiftRepository,
     OnboardingStorage? onboardingStorage,
     ProfileImagePicker? profileImagePicker,
-  }) {
-    if (locator.isRegistered<SessionCoordinator>()) {
-      throw StateError(
-        'Reset test dependencies before registering replacements.',
-      );
-    }
-    locator
-      ..registerSingleton<OnboardingStorage>(
-        onboardingStorage ?? MemoryOnboardingStorage(),
-      )
-      ..registerSingleton<SessionCoordinator>(
-        sessionCoordinator,
-        dispose: (coordinator) => coordinator.close(),
-      )
-      ..registerSingleton<ProfileRepository>(profileRepository)
-      ..registerSingleton<EmployeeRepository>(employeeRepository)
-      ..registerSingleton<InvitationRepository>(invitationRepository)
-      ..registerSingleton<WorkspaceRepository>(workspaceRepository)
-      ..registerSingleton<ShiftRepository>(shiftRepository)
-      ..registerSingleton<AttendanceRepository>(attendanceRepository)
-      ..registerSingleton<LeaveRequestRepository>(leaveRequestRepository)
-      ..registerLazySingleton<AttendanceCalendarRepository>(
-        () => ApiAttendanceCalendarRepository(
-          locator<ShiftRepository>(),
-          locator<AttendanceRepository>(),
-          locator<LeaveRequestRepository>(),
-          dio: null,
-        ),
-      )
-      ..registerSingleton<NotificationRepository>(notificationRepository)
-      ..registerSingleton<DashboardRepository>(dashboardRepository)
-      ..registerSingleton<ChatRepository>(chatRepository)
-      ..registerSingleton<ChatRealtime>(chatRealtime)
-      ..registerSingleton<FixedShiftRepository>(fixedShiftRepository)
-      ..registerSingleton<ProfileImagePicker>(
-        profileImagePicker ?? DeviceProfileImagePicker(),
-      )
-      ..registerFactory<DashboardCubit>(
-        () => DashboardCubit(locator<DashboardRepository>()),
-      )
-      ..registerFactory<NotificationsCubit>(
-        () => NotificationsCubit(locator<NotificationRepository>()),
-      )
-      ..registerFactory<ChatGroupsCubit>(
-        () => ChatGroupsCubit(
-          locator<ChatRepository>(),
-          gallery: ChatImageGallery(),
-        ),
-      )
-      ..registerFactory<ManagerTemplatesCubit>(
-        () => ManagerTemplatesCubit(locator<FixedShiftRepository>()),
-      )
-      ..registerFactory<WorkPatternCubit>(
-        () => WorkPatternCubit(locator<FixedShiftRepository>()),
-      )
-      ..registerFactory<EmployeeDetailsCubit>(
-        () => EmployeeDetailsCubit(locator<EmployeeRepository>()),
-      );
-  }
+  }) => registerTestDependencies(
+    locator: locator,
+    sessionCoordinator: sessionCoordinator,
+    profileRepository: profileRepository,
+    employeeRepository: employeeRepository,
+    invitationRepository: invitationRepository,
+    workspaceRepository: workspaceRepository,
+    shiftRepository: shiftRepository,
+    attendanceRepository: attendanceRepository,
+    leaveRequestRepository: leaveRequestRepository,
+    notificationRepository: notificationRepository,
+    dashboardRepository: dashboardRepository,
+    chatRepository: chatRepository,
+    chatRealtime: chatRealtime,
+    fixedShiftRepository: fixedShiftRepository,
+    onboardingStorage: onboardingStorage,
+    profileImagePicker: profileImagePicker,
+  );
 }

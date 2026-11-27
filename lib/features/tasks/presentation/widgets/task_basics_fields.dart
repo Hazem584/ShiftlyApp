@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
+
+import 'task_duration_field.dart';
 
 class TaskBasicsFields extends StatelessWidget {
   const TaskBasicsFields({
@@ -67,23 +68,7 @@ class TaskBasicsFields extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 20),
-        TextFormField(
-          key: const Key('task-duration'),
-          controller: duration,
-          enabled: !busy,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: InputDecoration(
-            labelText: context.tr('Duration · Optional'),
-          ),
-          validator: (v) {
-            if (v == null || v.isEmpty) return null;
-            final n = int.tryParse(v);
-            return n == null || n < 1 || n > 10080
-                ? context.tr('Choose a duration from 1 to 10080 minutes.')
-                : null;
-          },
-        ),
+        TaskDurationField(controller: duration, busy: busy),
         const SizedBox(height: 12),
         Text(
           context.tr('Time is shown in your device timezone.'),

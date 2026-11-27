@@ -13,12 +13,8 @@ class ProfileModel {
   });
 
   final String id;
-  final String? email;
-  final String? fullName;
-  final String? phone;
-  final String? avatarUrl;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final String? email, fullName, phone, avatarUrl;
+  final DateTime createdAt, updatedAt;
 
   factory ProfileModel.fromJson(Map<String, Object?> json) => ProfileModel(
     id: _requiredString(json, 'id'),

@@ -1,7 +1,6 @@
-import 'package:uuid/uuid.dart';
-
 import '../domain/personal_task.dart';
 import '../domain/task_repository.dart';
+import 'memory_task_helpers.dart';
 
 class MemoryTaskRepository implements TaskRepository {
   final _items = <String, PersonalTask>{};
@@ -41,21 +40,17 @@ class MemoryTaskRepository implements TaskRepository {
     bool remindHourBefore = false,
     List<DateTime> additionalDueAts = const [],
   }) async {
-    final id = const Uuid().v4();
-    _items[id] = PersonalTask(
-      id: id,
-      ownerId: 'preview-user',
+    final created = buildCreatedMemoryTask(
       workspaceId: workspaceId,
       title: title,
       description: description,
       dueAt: dueAt,
-      revision: 1,
-      completed: false,
       durationMinutes: durationMinutes,
       remindDayBefore: remindDayBefore,
       remindHourBefore: remindHourBefore,
-      additionalDueAts: List.unmodifiable(additionalDueAts),
+      additionalDueAts: additionalDueAts,
     );
+    _items[created.id] = created;
   }
 
   @override
@@ -70,29 +65,21 @@ class MemoryTaskRepository implements TaskRepository {
     bool? remindHourBefore,
     List<DateTime>? additionalDueAts,
   }) async {
-    _items[task.id] = PersonalTask(
-      id: task.id,
-      ownerId: task.ownerId,
-      workspaceId: task.workspaceId,
-      title: title ?? task.title,
-      description: description ?? task.description,
-      dueAt: dueAt ?? task.dueAt,
-      revision: task.revision + 1,
-      completed: completed ?? task.completed,
-      durationMinutes: durationMinutes ?? task.durationMinutes,
-      remindDayBefore: remindDayBefore ?? task.remindDayBefore,
-      remindHourBefore: remindHourBefore ?? task.remindHourBefore,
-      additionalDueAts: List.unmodifiable(
-        additionalDueAts ?? task.additionalDueAts,
-      ),
+    _items[task.id] = buildUpdatedMemoryTask(
+      task,
+      title: title,
+      description: description,
+      dueAt: dueAt,
+      completed: completed,
+      durationMinutes: durationMinutes,
+      remindDayBefore: remindDayBefore,
+      remindHourBefore: remindHourBefore,
+      additionalDueAts: additionalDueAts,
     );
   }
 
   @override
-  Future<void> remove(PersonalTask task) async {
-    _items.remove(task.id);
-  }
-
+  Future<void> remove(PersonalTask task) async => _items.remove(task.id);
   @override
   Future<void> register(
     String installationId,

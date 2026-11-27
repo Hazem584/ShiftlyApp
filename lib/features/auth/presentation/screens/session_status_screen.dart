@@ -21,9 +21,7 @@ class SessionStatusScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (view == SessionStatusView.loading) {
-      return const BrandSessionLoading();
-    }
+    if (view == SessionStatusView.loading) return const BrandSessionLoading();
     final state = context.watch<SessionCoordinator>().state;
     final (title, heading, icon) = switch (view) {
       SessionStatusView.offline => (

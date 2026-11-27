@@ -22,13 +22,12 @@ class ApiProfileRepository implements ProfileRepository {
         return ProfileModel.fromCurrentUser(cached)
             .toPresentation(_membershipFrom(cached));
       }
-      final response = await _dio.get<Object?>(ApiEndpoints.currentUser);
-      final json = _json(response.data);
-      final user = CurrentUser.fromJson(json);
+      final res = await _dio.get<Object?>(ApiEndpoints.currentUser);
+      final user = CurrentUser.fromJson(_json(res.data));
       return ProfileModel.fromCurrentUser(user)
           .toPresentation(_membershipFrom(user));
     } catch (error) {
-      throw _parse(error);
+      throw ApiErrorParser.parse(error);
     }
   }
 
@@ -71,22 +70,20 @@ class ApiProfileRepository implements ProfileRepository {
       _profileRequest(() => _dio.delete<Object?>(ApiEndpoints.avatar));
 
   Future<ManagerProfile> _profileRequest(
-    Future<Response<Object?>> Function() request,
+    Future<Response<Object?>> Function() req,
   ) async {
     try {
-      final response = await request();
-      return ProfileModel.fromJson(_json(response.data))
+      final res = await req();
+      return ProfileModel.fromJson(_json(res.data))
           .toPresentation(_activeMembership());
     } catch (error) {
-      throw _parse(error);
+      throw ApiErrorParser.parse(error);
     }
   }
 
   WorkspaceMembership? _membershipFrom(CurrentUser user) {
     final activeId = _activeMembership()?.workspace.id;
-    final matching = user.memberships.where(
-      (membership) => membership.workspace.id == activeId,
-    );
+    final matching = user.memberships.where((m) => m.workspace.id == activeId);
     return matching.length == 1 ? matching.single : _activeMembership();
   }
 
@@ -94,6 +91,4 @@ class ApiProfileRepository implements ProfileRepository {
     if (data is! Map) throw const FormatException('Invalid profile response');
     return Map<String, Object?>.from(data);
   }
-
-  Object _parse(Object error) => ApiErrorParser.parse(error);
 }

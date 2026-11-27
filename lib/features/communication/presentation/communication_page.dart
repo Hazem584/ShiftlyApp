@@ -22,8 +22,8 @@ class CommunicationPage extends StatelessWidget {
   final Widget? footer;
   final List<Widget>? actions;
   final VoidCallback? onBack;
-  final bool guardSession;
-  final bool localizeTitle;
+  final bool guardSession, localizeTitle;
+
   @override
   Widget build(BuildContext context) {
     final page = CommunicationAppearance(

@@ -5,7 +5,8 @@ import 'package:shiftly/features/attendance/presentation/refresh_attendance_view
 import 'package:shiftly/features/manager_experience/presentation/manager_dialog.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/domain/team_work_repository.dart';
-import 'package:shiftly/features/team_work/presentation/widgets/attendance_period_fields.dart';
+import 'package:shiftly/features/team_work/presentation/dialogs/edit_attendance_day_submit.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/correction_approval_body.dart';
 
 class CorrectionApprovalDialog extends StatefulWidget {
   const CorrectionApprovalDialog({
@@ -29,6 +30,7 @@ class _CorrectionApprovalDialogState extends State<CorrectionApprovalDialog> {
   final _note = TextEditingController();
   bool _busy = false;
   String? _error;
+
   @override
   void dispose() {
     _note.dispose();
@@ -37,24 +39,15 @@ class _CorrectionApprovalDialogState extends State<CorrectionApprovalDialog> {
 
   Future<void> _approve() async {
     if (_busy) return;
-    final duration = _end.difference(_start);
-    if (duration.inMinutes < 1 ||
-        duration > const Duration(hours: 24) ||
-        _end.isAfter(DateTime.now())) {
-      setState(
-        () => _error =
-            'Choose a completed period of up to 24 hours, ending before now.',
-      );
-      return;
-    }
+    final periodErr = validateCompletedAttendancePeriod(_start, _end);
+    if (periodErr != null) return setState(() => _error = periodErr);
     if ((!_start.isAtSameMomentAs(widget.request.requestedIn) ||
             !_end.isAtSameMomentAs(widget.request.requestedOut)) &&
         _note.text.trim().length < 3) {
-      setState(
+      return setState(
         () =>
             _error = 'Explain why the approved times differ from the request.',
       );
-      return;
     }
     setState(() {
       _busy = true;
@@ -89,54 +82,16 @@ class _CorrectionApprovalDialogState extends State<CorrectionApprovalDialog> {
     child: ManagerDialog(
       title: Text(context.tr('Approve attendance and hours')),
       scrollable: true,
-      content: SizedBox(
-        width: 460,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.request.name,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            if (widget.request.isMissingAttendance)
-              Text(
-                '${widget.request.shiftName} · ${widget.request.operationalDate}',
-              ),
-            Text(widget.request.reason),
-            const SizedBox(height: 12),
-            Text(
-              context.tr(
-                'Choose the period to count. Only the approved hours will be recorded.',
-              ),
-            ),
-            AttendancePeriodFields(
-              start: _start,
-              end: _end,
-              timezone: widget.timezone,
-              busy: _busy,
-              onStart: (value) => setState(() => _start = value),
-              onEnd: (value) => setState(() => _end = value),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _note,
-              enabled: !_busy,
-              maxLines: 3,
-              maxLength: 1000,
-              decoration: InputDecoration(
-                labelText: context.tr('Review note'),
-                helperText: context.tr(
-                  'Required when changing the requested times.',
-                ),
-              ),
-            ),
-            if (_error != null)
-              Text(
-                context.tr(_error!),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-          ],
-        ),
+      content: CorrectionApprovalBody(
+        request: widget.request,
+        timezone: widget.timezone,
+        start: _start,
+        end: _end,
+        busy: _busy,
+        noteController: _note,
+        error: _error,
+        onStartChanged: (v) => setState(() => _start = v),
+        onEndChanged: (v) => setState(() => _end = v),
       ),
       actions: [
         TextButton(

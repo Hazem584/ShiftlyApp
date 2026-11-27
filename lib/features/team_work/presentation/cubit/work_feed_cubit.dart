@@ -1,43 +1,27 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/error/api_error_parser.dart';
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
+import 'package:shiftly/features/team_work/presentation/cubit/work_feed_state.dart';
 
-class WorkFeedState<T> {
-  const WorkFeedState({
-    this.items = const [],
-    this.loading = false,
-    this.loadingMore = false,
-    this.total = 0,
-    this.page = 0,
-    this.busyId,
-    this.error,
-    this.notice,
-  });
-  final List<T> items;
-  final bool loading, loadingMore;
-  final int total, page;
-  final String? busyId, error;
-  final String? notice;
-  bool get hasMore => items.length < total;
-}
+export 'work_feed_state.dart';
 
 class WorkFeedCubit<T> extends Cubit<WorkFeedState<T>> {
   WorkFeedCubit(this.loader) : super(WorkFeedState<T>());
   final Future<WorkPage<T>> Function(int page) loader;
   int _revision = 0;
+
   Future<void> load({bool more = false}) async {
     if (more && (state.loadingMore || state.loading || !state.hasMore)) return;
-    final revision = ++_revision;
-    final previous = state;
-    final page = more ? previous.page + 1 : 1;
+    final revision = ++_revision, prev = state;
+    final page = more ? prev.page + 1 : 1;
     emit(
       WorkFeedState(
-        items: previous.items,
-        total: previous.total,
-        page: previous.page,
+        items: prev.items,
+        total: prev.total,
+        page: prev.page,
         loading: !more,
         loadingMore: more,
-        busyId: previous.busyId,
+        busyId: prev.busyId,
       ),
     );
     try {
@@ -45,10 +29,7 @@ class WorkFeedCubit<T> extends Cubit<WorkFeedState<T>> {
       if (isClosed || revision != _revision) return;
       emit(
         WorkFeedState(
-          items: List.unmodifiable([
-            if (more) ...previous.items,
-            ...result.items,
-          ]),
+          items: List.unmodifiable([if (more) ...prev.items, ...result.items]),
           total: result.total,
           page: page,
           busyId: state.busyId,
@@ -59,9 +40,9 @@ class WorkFeedCubit<T> extends Cubit<WorkFeedState<T>> {
       if (!isClosed && revision == _revision) {
         emit(
           WorkFeedState(
-            items: previous.items,
-            total: previous.total,
-            page: previous.page,
+            items: prev.items,
+            total: prev.total,
+            page: prev.page,
             busyId: state.busyId,
             error: ApiErrorParser.parse(error).message,
           ),

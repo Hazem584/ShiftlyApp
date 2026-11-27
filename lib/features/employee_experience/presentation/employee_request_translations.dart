@@ -1,0 +1,32 @@
+const employeeRequestTranslations = <String, String>{
+  'Check-in availability is confirmed for the current occurrence. Refresh My Shifts when its check-in window opens.': 'إتاحة الحضور بتتأكد للوردية الحالية. حدّث صفحة وردياتي لما وقت تسجيل الحضور يبدأ.',
+  'Still confirming your check-in.': 'لسه بنتأكد من تسجيل حضورك.',
+  'Original request saved': 'الطلب الأصلي محفوظ',
+  'Check original request': 'التحقق من الطلب الأصلي',
+  'Copy request reference': 'نسخ مرجع الطلب',
+  'Get help': 'طلب مساعدة',
+  'Your workspace is closed today': 'مساحة العمل مغلقة النهارده',
+  'Today is your day off': 'النهارده يوم راحتك',
+  'All requests': 'كل الطلبات',
+  'Request time off': 'طلب إجازة',
+  'Submit request': 'إرسال الطلب',
+  'Your manager will review this request. It is pending until approved.':
+      'مديرك هيراجع الطلب. الطلب يفضل قيد المراجعة لحد الموافقة عليه.',
+  'Request details': 'تفاصيل الطلب',
+  'Your reason': 'سبب الطلب',
+  'Awaiting manager review': 'في انتظار مراجعة المدير',
+  'Submitted {time}': 'تم الإرسال {time}',
+  'Reviewed': 'تمت المراجعة',
+  'Manager feedback': 'رد المدير',
+  'You can cancel while this request is pending.':
+      'تقدر تلغي الطلب طول ما هو قيد المراجعة.',
+  '{count} days': '{count} أيام',
+  'Recorded times look wrong?': 'المواعيد المسجلة مش صحيحة؟',
+  'Request a correction for manager review.':
+      'اطلب تصحيح المواعيد لمراجعتها من المدير.',
+  'Request correction': 'طلب تصحيح',
+  'My correction history': 'سجل طلبات التصحيح',
+  'Operational date': 'يوم الوردية',
+  'Scheduled': 'الموعد المحدد',
+  'Request correction details': 'تفاصيل طلب التصحيح',
+};

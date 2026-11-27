@@ -1,33 +1,9 @@
-import 'package:shiftly/core/serialization/api_model_parser.dart';
+import 'package:shiftly/features/attendance/data/mock_leave_request_helpers.dart';
 import 'package:shiftly/features/attendance/domain/repositories/leave_request_repository.dart';
-import 'package:shiftly/features/auth/domain/entities/current_user.dart';
-import 'package:shiftly/features/shifts/domain/repositories/shift_repository.dart';
 
 class MockLeaveRequestRepository implements LeaveRequestRepository {
   MockLeaveRequestRepository({this.delay = Duration.zero})
-    : _requests = [
-        _request(
-          id: 'leave-1',
-          employeeId: 'emp-1',
-          name: 'Mariam Hassan',
-          type: LeaveRequestType.annualLeave,
-          reason: 'Family event outside the city.',
-        ),
-        _request(
-          id: 'leave-2',
-          employeeId: 'emp-2',
-          name: 'Omar Khaled',
-          type: LeaveRequestType.earlyLeave,
-          reason: 'Medical appointment at 3:30 PM.',
-        ),
-        _request(
-          id: 'leave-3',
-          employeeId: 'emp-3',
-          name: 'Nour Adel',
-          status: LeaveRequestStatus.approved,
-          reason: 'Personal day.',
-        ),
-      ];
+    : _requests = initialMockLeaveRequests();
 
   final Duration delay;
   final List<LeaveRequestRecord> _requests;
@@ -42,7 +18,7 @@ class MockLeaveRequestRepository implements LeaveRequestRepository {
         .toList(growable: false);
     return LeaveRequestPage(
       data: filtered,
-      pagination: _pagination(query, filtered.length),
+      pagination: mockLeavePagination(query, filtered.length),
     );
   }
 
@@ -52,7 +28,7 @@ class MockLeaveRequestRepository implements LeaveRequestRepository {
     CreateLeaveRequestInput input,
   ) async {
     await _wait();
-    final created = _request(
+    final created = buildMockLeaveRequest(
       id: 'leave-created-${_requests.length}',
       employeeId: 'preview-employee',
       name: 'Preview Employee',
@@ -139,65 +115,14 @@ class MockLeaveRequestRepository implements LeaveRequestRepository {
   }) {
     final index = _requests.indexWhere((request) => request.id == id);
     if (index < 0) throw StateError('Request not found');
-    final current = _requests[index];
-    final updated = LeaveRequestRecord(
-      id: current.id,
-      workspaceId: current.workspaceId,
-      employeeMembershipId: current.employeeMembershipId,
-      type: current.type,
+    final updated = copyMockLeaveRequest(
+      _requests[index],
       status: status,
-      startsAt: current.startsAt,
-      endsAt: current.endsAt,
-      reason: current.reason,
-      reviewedByMembershipId: reviewedAt == null ? null : 'manager-id',
       reviewedAt: reviewedAt,
-      rejectionReason: rejectionReason,
       cancelledAt: cancelledAt,
-      createdAt: current.createdAt,
-      updatedAt: reviewedAt ?? cancelledAt ?? current.updatedAt,
-      employee: current.employee,
+      rejectionReason: rejectionReason,
     );
     _requests[index] = updated;
     return updated;
   }
 }
-
-LeaveRequestRecord _request({
-  required String id,
-  required String employeeId,
-  required String name,
-  required String reason,
-  LeaveRequestType type = LeaveRequestType.other,
-  LeaveRequestStatus status = LeaveRequestStatus.pending,
-  DateTime? startsAt,
-  DateTime? endsAt,
-  String workspaceId = 'preview-workspace',
-}) => LeaveRequestRecord(
-  id: id,
-  workspaceId: workspaceId,
-  employeeMembershipId: employeeId,
-  type: type,
-  status: status,
-  startsAt: startsAt ?? DateTime.utc(2030, 1, 10),
-  endsAt: endsAt ?? DateTime.utc(2030, 1, 11),
-  reason: reason,
-  reviewedAt: status == LeaveRequestStatus.pending
-      ? null
-      : DateTime.utc(2030, 1, 2),
-  createdAt: DateTime.utc(2030, 1, 1),
-  updatedAt: DateTime.utc(2030, 1, 1),
-  employee: ShiftEmployeeSummary(
-    membershipId: employeeId,
-    profileId: 'profile-$employeeId',
-    role: WorkspaceRole.employee,
-    membershipStatus: MembershipStatus.active,
-    fullName: name,
-  ),
-);
-
-ApiPagination _pagination(LeaveRequestQuery query, int total) => ApiPagination(
-  page: query.page,
-  limit: query.limit,
-  total: total,
-  totalPages: total == 0 ? 0 : (total / query.limit).ceil(),
-);

@@ -23,15 +23,15 @@ class DeviceSessionsScope extends StatefulWidget {
 
 class _DeviceSessionsScopeState extends State<DeviceSessionsScope>
     with WidgetsBindingObserver {
-  late final DeviceSessionsRepository _repository;
+  late final _repository = ApiDeviceSessionsRepository(widget.api);
   StreamSubscription<Object?>? _subscription;
   Timer? _timer;
   bool _syncing = false;
   String? _registered;
+
   @override
   void initState() {
     super.initState();
-    _repository = ApiDeviceSessionsRepository(widget.api);
     WidgetsBinding.instance.addObserver(this);
     _subscription = widget.authentication.authStateChanges.listen(
       (_) => unawaited(_sync()),
@@ -57,11 +57,10 @@ class _DeviceSessionsScopeState extends State<DeviceSessionsScope>
       await _repository.registerCurrent();
       _registered = identity;
     } catch (_) {
-      /* Authentication/interceptor handles revocation; metadata can retry. */
     } finally {
       _syncing = false;
-      final current = widget.authentication.currentSession;
-      final next = current?.sessionId ?? current?.accessToken;
+      final cur = widget.authentication.currentSession;
+      final next = cur?.sessionId ?? cur?.accessToken;
       if (mounted && next != null && next != identity && next != _registered) {
         unawaited(_sync());
       }

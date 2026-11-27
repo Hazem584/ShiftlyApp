@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/communication/presentation/communication_appearance.dart';
 import 'package:shiftly/features/profile/domain/repositories/profile_image_picker.dart';
@@ -7,6 +6,9 @@ import 'package:uuid/uuid.dart';
 
 import '../domain/support_models.dart';
 import '../domain/support_repository.dart';
+import 'support_create_actions.dart';
+import 'support_create_attachment_section.dart';
+import 'support_create_fields.dart';
 
 class SupportCreateScreen extends StatefulWidget {
   const SupportCreateScreen({
@@ -32,23 +34,17 @@ class _SupportCreateScreenState extends State<SupportCreateScreen> {
   ProfileImageSelection? _image;
   String? _savedId, _error;
   bool _saving = false;
+
   @override
   void initState() {
     super.initState();
-    _loadContexts();
-  }
-
-  Future<void> _loadContexts() async {
-    try {
-      final values = await widget.repository.contexts(widget.workspaceId);
-      if (mounted) setState(() => _contexts = values);
-    } catch (e) {
-      if (mounted) {
-        setState(
-          () => _error = e is ApiException ? e.message : 'Could not load task and shift choices. You can still report a general problem.',
+    widget.repository
+        .contexts(widget.workspaceId)
+        .then(
+          (v) => mounted ? setState(() => _contexts = v) : null,
+          onError: (Object e) =>
+              mounted ? setState(() => _error = supportContextError(e)) : null,
         );
-      }
-    }
   }
 
   @override
@@ -59,164 +55,66 @@ class _SupportCreateScreenState extends State<SupportCreateScreen> {
   }
 
   Future<void> _pick() async {
-    try {
-      final image = await widget.picker.pickImage();
-      if (!mounted || image == null) return;
-      if (image.bytes.length > 2097152 || image.detectedMimeType == null) {
-        setState(() => _error = 'Choose a JPEG, PNG or WebP image up to 2 MB.');
-        return;
-      }
-      setState(() => _image = image);
-    } catch (_) {
-      if (mounted) setState(() => _error = 'Could not select an image.');
+    final res = await pickSupportAttachment(widget.picker);
+    if (mounted && res != null) {
+      setState(() => res.$2 != null ? _error = res.$2 : _image = res.$1);
     }
   }
 
   Future<void> _save() async {
     if (_saving || !_form.currentState!.validate()) return;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
+    setState(() => (_saving = true, _error = null));
     try {
-      if (_savedId == null) {
-        final ticket = await widget.repository.create(
-          workspaceId: widget.workspaceId,
-          clientId: _clientId,
-          title: _title.text.trim(),
-          description: _description.text.trim(),
-          related: _related,
-        );
-        _savedId = ticket.id;
-      }
-      final image = _image;
-      if (image != null) {
-        await widget.repository.uploadImage(
-          id: _savedId!,
-          bytes: image.bytes,
-          mime: image.detectedMimeType!,
-        );
-      }
-      if (mounted) Navigator.pop(context, _savedId);
+      final id = await submitSupportTicket(
+        repository: widget.repository,
+        workspaceId: widget.workspaceId,
+        clientId: _clientId,
+        title: _title.text.trim(),
+        description: _description.text.trim(),
+        related: _related,
+        image: _image,
+        existingId: _savedId,
+        onTicketCreated: (id) => _savedId = id,
+      );
+      if (mounted) Navigator.pop(context, id);
     } catch (e) {
-      if (mounted) {
-        setState(
-          () => _error = _savedId != null
-              ? 'Your report was saved, but its image was not uploaded. Retry or open the saved report.'
-              : e is ApiException
-              ? e.message
-              : 'Could not submit the support report. Retry safely.',
-        );
-      }
+      if (mounted) setState(() => _error = supportSubmitError(e, _savedId));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) =>
-      CommunicationAppearance(child: Builder(builder: _build));
-  Widget _build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(context.tr('Report a problem'))),
-    body: Form(
-      key: _form,
-      child: ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          TextFormField(
-            controller: _title,
-            enabled: !_saving && _savedId == null,
-            maxLength: 120,
-            decoration: InputDecoration(labelText: context.tr('Problem title')),
-            validator: (v) => (v?.trim().length ?? 0) < 3
-                ? context.tr('Enter a title of at least 3 characters.')
-                : null,
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<SupportContext?>(
-            initialValue: null,
-            isExpanded: true,
-            decoration: InputDecoration(
-              labelText: context.tr('Related task or shift (optional)'),
-            ),
-            items: [
-              DropdownMenuItem(
-                value: null,
-                child: Text(context.tr('General problem')),
+  Widget build(BuildContext context) => CommunicationAppearance(
+    child: Builder(
+      builder: (c) => Scaffold(
+        appBar: AppBar(title: Text(c.tr('Report a problem'))),
+        body: Form(
+          key: _form,
+          child: ListView(
+            padding: const EdgeInsets.all(18),
+            children: [
+              SupportCreateFields(
+                titleController: _title,
+                descriptionController: _description,
+                contexts: _contexts,
+                editable: !_saving && _savedId == null,
+                onRelatedChanged: (v) => setState(() => _related = v),
               ),
-              ..._contexts.map(
-                (v) => DropdownMenuItem(
-                  value: v,
-                  child: Text(
-                    v.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+              const SizedBox(height: 12),
+              SupportCreateAttachmentSection(
+                image: _image,
+                saving: _saving,
+                savedId: _savedId,
+                error: _error,
+                onPick: _pick,
+                onRemoveImage: () => setState(() => _image = null),
+                onSave: _save,
+                onOpenSaved: () => Navigator.pop(c, _savedId),
               ),
             ],
-            onChanged: _saving || _savedId != null
-                ? null
-                : (v) => setState(() => _related = v),
           ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _description,
-            enabled: !_saving && _savedId == null,
-            minLines: 5,
-            maxLines: 10,
-            maxLength: 5000,
-            decoration: InputDecoration(
-              labelText: context.tr('Describe what happened'),
-            ),
-            validator: (v) => (v?.trim().length ?? 0) < 10
-                ? context.tr('Describe the problem in at least 10 characters.')
-                : null,
-          ),
-          const SizedBox(height: 12),
-          if (_image != null) ...[
-            Image.memory(_image!.bytes, height: 220, fit: BoxFit.contain),
-            TextButton(
-              onPressed: _saving ? null : () => setState(() => _image = null),
-              child: Text(context.tr('Remove image')),
-            ),
-          ],
-          OutlinedButton.icon(
-            onPressed: _saving || _savedId != null ? null : _pick,
-            icon: const Icon(Icons.add_photo_alternate_outlined),
-            label: Text(context.tr('Attach an image (optional)')),
-          ),
-          Text(
-            context.tr(
-              'Only you and authorized support staff can view your report and image.',
-            ),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                context.tr(_error!),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            child: Text(
-              context.tr(
-                _saving
-                    ? 'Sending…'
-                    : _savedId != null
-                    ? 'Retry image upload'
-                    : 'Send report',
-              ),
-            ),
-          ),
-          if (_savedId != null)
-            TextButton(
-              onPressed: () => Navigator.pop(context, _savedId),
-              child: Text(context.tr('Open saved report')),
-            ),
-        ],
+        ),
       ),
     ),
   );

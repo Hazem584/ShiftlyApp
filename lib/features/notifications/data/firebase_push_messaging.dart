@@ -1,12 +1,8 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shiftly/features/notifications/data/firebase_push_helpers.dart';
 import 'package:shiftly/features/notifications/domain/entities/push_notice.dart';
 import 'package:shiftly/features/notifications/domain/repositories/push_messaging.dart';
-import 'package:shiftly/features/tasks/data/task_notification_actions.dart';
-
-import 'task_push_notifications.dart';
 
 class FirebasePushMessaging implements PushMessaging {
   bool _ready = false;
@@ -21,14 +17,14 @@ class FirebasePushMessaging implements PushMessaging {
 
   @override
   Stream<PushNotice> get foreground => FirebaseMessaging.onMessage
-      .map((message) => PushNotice.fromData(message.data))
-      .where((notice) => notice != null)
+      .map((m) => PushNotice.fromData(m.data))
+      .where((n) => n != null)
       .cast<PushNotice>();
 
   @override
   Stream<PushNotice> get opened => FirebaseMessaging.onMessageOpenedApp
-      .map((message) => PushNotice.fromData(message.data))
-      .where((notice) => notice != null)
+      .map((m) => PushNotice.fromData(m.data))
+      .where((n) => n != null)
       .cast<PushNotice>();
 
   @override
@@ -39,18 +35,8 @@ class FirebasePushMessaging implements PushMessaging {
   Future<PushPermission> initialize() async {
     if (!_supported) return PushPermission.unsupported;
     try {
-      if (Firebase.apps.isEmpty) await Firebase.initializeApp();
-      await TaskNotificationSetup.initialize(FlutterLocalNotificationsPlugin());
-      FirebaseMessaging.onBackgroundMessage(taskPushBackground);
+      await setupFirebasePushInstance();
       _ready = true;
-      await FirebaseMessaging.instance.setAutoInitEnabled(false);
-      // Foreground notices are shown inside Shiftly, avoiding duplicate alerts.
-      await FirebaseMessaging.instance
-          .setForegroundNotificationPresentationOptions(
-            alert: false,
-            badge: false,
-            sound: false,
-          );
       return await permission();
     } catch (_) {
       _ready = false;
@@ -59,48 +45,25 @@ class FirebasePushMessaging implements PushMessaging {
   }
 
   @override
-  Future<PushPermission> permission({bool request = false}) async {
-    if (!_ready) {
-      return _supported
-          ? PushPermission.unavailable
-          : PushPermission.unsupported;
-    }
-    final settings = request
-        ? await FirebaseMessaging.instance.requestPermission()
-        : await FirebaseMessaging.instance.getNotificationSettings();
-    return switch (settings.authorizationStatus) {
-      AuthorizationStatus.authorized ||
-      AuthorizationStatus.provisional => PushPermission.granted,
-      AuthorizationStatus.denied ||
-      AuthorizationStatus.deniedPermanently => PushPermission.denied,
-      AuthorizationStatus.notDetermined => PushPermission.notDetermined,
-    };
-  }
+  Future<PushPermission> permission({bool request = false}) =>
+      resolveFirebasePushPermission(
+        ready: _ready,
+        supported: _supported,
+        request: request,
+      );
 
   @override
   Future<PushNotice?> initialNotice() async {
     if (!_ready) return null;
-    final message = await FirebaseMessaging.instance.getInitialMessage();
-    return message == null ? null : PushNotice.fromData(message.data);
+    final msg = await FirebaseMessaging.instance.getInitialMessage();
+    return msg == null ? null : PushNotice.fromData(msg.data);
   }
 
   @override
-  Future<String?> token() async {
-    if (!_ready) return null;
-    if (platform == 'IOS' &&
-        await FirebaseMessaging.instance.getAPNSToken() == null) {
-      return null;
-    }
-    await FirebaseMessaging.instance.setAutoInitEnabled(true);
-    return FirebaseMessaging.instance.getToken();
-  }
+  Future<String?> token() => fetchFirebasePushToken(ready: _ready, ios: platform == 'IOS');
 
   @override
-  Future<void> revokeToken() async {
-    if (!_ready) return;
-    await FirebaseMessaging.instance.setAutoInitEnabled(false);
-    await FirebaseMessaging.instance.deleteToken();
-  }
+  Future<void> revokeToken() => revokeFirebasePushToken(ready: _ready);
 
   @override
   Future<void> close() async {}
