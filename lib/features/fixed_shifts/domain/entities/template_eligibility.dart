@@ -1,3 +1,4 @@
+import 'package:shiftly/core/models/workspace_work_location.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/fixed_shift_models.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/schedule_exception.dart';
 
@@ -6,6 +7,7 @@ class TemplateEligibility {
     this.status = 'UNKNOWN',
     this.geofenceMode = 'OFF',
     this.selfieMode = 'OFF',
+    this.workLocations = const [],
     this.dayExceptions = const [],
     this.authorizedOccurrences = const [],
     this.openAttendanceId,
@@ -18,6 +20,7 @@ class TemplateEligibility {
   final String status;
   final String geofenceMode;
   final String selfieMode;
+  final List<WorkspaceWorkLocation> workLocations;
   final List<ScheduleExceptionNotice> dayExceptions;
   final String? openAttendanceId;
   final List<EligibleShiftOccurrence> authorizedOccurrences;

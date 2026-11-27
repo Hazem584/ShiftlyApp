@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:shiftly/core/location/geofence_precheck.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
@@ -20,6 +21,18 @@ Future<FixedShiftMutationResult> submitPendingClockIn(
         : null;
     if (!host.current(scope, generation, revision)) {
       return FixedShiftMutationResult.stale;
+    }
+    if (recovered == null) {
+      final elig = host.state.eligibility;
+      final occ = elig?.authorizedOccurrences
+          .where((o) => o.template.id == pending.templateId)
+          .firstOrNull;
+      validateGeofenceBeforeSelfie(
+        geofenceMode: elig?.geofenceMode ?? 'OFF',
+        location: location,
+        workLocations: elig?.workLocations ?? const [],
+        requiredWorkLocationId: occ?.template.workLocationId,
+      );
     }
     final selfieBase64 = recovered == null ? await host.readSelfie() : null;
     if (!host.current(scope, generation, revision)) {

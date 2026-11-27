@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftly/core/error/api_exception.dart';
 import 'package:shiftly/core/error/failure.dart';
+import 'package:shiftly/core/models/workspace_work_location.dart';
 import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/auth/domain/entities/workspace_role.dart';
@@ -50,9 +51,14 @@ EligibleShiftOccurrence _occurrence() => EligibleShiftOccurrence(
 );
 
 class _GeofenceRepo implements FixedShiftRepository {
-  _GeofenceRepo(this.geofenceMode, {this.selfieMode = 'OFF'});
+  _GeofenceRepo(
+    this.geofenceMode, {
+    this.selfieMode = 'OFF',
+    this.workLocations = const [],
+  });
   final String geofenceMode;
   final String selfieMode;
+  final List<WorkspaceWorkLocation> workLocations;
   AttendanceLocationPoint? lastClockInLocation;
   String? lastSelfieBase64;
   AttendanceLocationPoint? lastClockOutLocation;
@@ -64,6 +70,7 @@ class _GeofenceRepo implements FixedShiftRepository {
         workspaceId: workspaceId,
         geofenceMode: geofenceMode,
         selfieMode: selfieMode,
+        workLocations: workLocations,
         timezone: 'Africa/Cairo',
         evaluatedAt: DateTime.utc(2026, 10, 6, 8),
         status: 'ASSIGNED',
@@ -273,4 +280,47 @@ void main() {
       await cubit.close();
     },
   );
+
+  test('rejects before opening selfie camera when employee is outside work location in ENFORCE mode', () async {
+    var selfieCalls = 0;
+    final repo = _GeofenceRepo(
+      'ENFORCE',
+      selfieMode: 'REQUIRED',
+      workLocations: const [
+        WorkspaceWorkLocation(
+          id: 'loc-1',
+          workspaceId: 'workspace-1',
+          name: 'Cairo HQ',
+          latitude: 30.0444,
+          longitude: 31.2357,
+          radiusMeters: 100,
+        ),
+      ],
+    );
+    final cubit = FlexibleAttendanceCubit(
+      repo,
+      locationReader: ({required requiredForPunch}) async =>
+          const AttendanceLocationPoint(
+            latitude: 30.0600,
+            longitude: 31.2500,
+            accuracyMeters: 10,
+          ),
+      selfieReader: ({required requiredForPunch}) async {
+        selfieCalls++;
+        return 'base64-jpeg-selfie';
+      },
+    )..bindSession(_scope);
+    await cubit.load();
+
+    final res = await cubit.clockIn(_occurrence());
+    expect(res, FixedShiftMutationResult.failure);
+    expect(selfieCalls, 0);
+    expect(repo.lastClockInLocation, isNull);
+    expect(
+      cubit.state.failure?.message,
+      contains('outside the allowed workplace area'),
+    );
+    expect(cubit.state.recoveryBlocked, isFalse);
+    await cubit.close();
+  });
 }

@@ -195,4 +195,15 @@ const arabicShiftsWorkflowTranslations = <String, String>{
   'Chat messages and task notifications': 'إشعارات رسائل الشات والمهام',
   'It may have been deleted or your access may have changed.':
       'قد يكون المحتوى اتحذف أو صلاحيتك اتغيّرت.',
+  'On-site location required': 'يشترط التواجد في موقع العمل',
+  'Workplace location check': 'التحقق من موقع العمل (GPS)',
+  'Workplace on-site location': 'موقع العمل المعتمد',
+  'You must be on-site at the workplace location to clock in.':
+      'لازم تكون متواجد داخل نطاق موقع العمل عشان تسجّل حضورك.',
+  'Front-camera selfie required': 'مطلوب صورة سيلفي بالكاميرا الأمامية',
+  'Front-camera selfie verification': 'التحقق بصورة سيلفي بالكاميرا الأمامية',
+  'Front camera only · Look directly at the camera without sunglasses, mask, or face covering.': 'الكاميرا الأمامية فقط · وجّه وجهك مباشرة للكاميرا بدون نظارة شمسية أو كمامة أو أي غطاء للوجه.',
+  'Check-in blocked': 'تعذّر تسجيل الحضور',
+  'Could not complete check-in. Please verify your location and try again.':
+      'معرفناش نسجّل الحضور. اتأكد من وجودك في موقع العمل وجرّب تاني.',
 };

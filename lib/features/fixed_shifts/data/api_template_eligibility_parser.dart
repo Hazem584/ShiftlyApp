@@ -1,9 +1,11 @@
+import 'package:shiftly/core/models/workspace_work_location.dart';
 import 'package:shiftly/core/serialization/api_model_parser.dart';
 import 'package:shiftly/features/fixed_shifts/domain/entities/schedule_exception.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 
 TemplateEligibility parseTemplateEligibility(Object? data) {
   final json = ApiModelParser.map(data);
+  final workspaceId = ApiModelParser.string(json, 'workspaceId');
   final recommendedJson = ApiModelParser.optionalMap(
     json['recommended'],
     'recommended',
@@ -18,6 +20,17 @@ TemplateEligibility parseTemplateEligibility(Object? data) {
     status: ApiModelParser.optionalString(json['status']) ?? 'UNKNOWN',
     geofenceMode: ApiModelParser.optionalString(json['geofenceMode']) ?? 'OFF',
     selfieMode: ApiModelParser.optionalString(json['selfieMode']) ?? 'OFF',
+    workLocations:
+        (json['workLocations'] == null
+                ? <Object?>[]
+                : ApiModelParser.list(json['workLocations']))
+            .map(
+              (e) => WorkspaceWorkLocation.fromJson(
+                ApiModelParser.map(e),
+                fallbackWorkspaceId: workspaceId,
+              ),
+            )
+            .toList(growable: false),
     openAttendanceId: json['openAttendance'] == null
         ? null
         : ApiModelParser.string(

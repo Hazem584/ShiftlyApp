@@ -6,6 +6,7 @@ import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shifts_cubit.dart';
 
 import 'employee_shift_status_eval.dart';
+import 'employee_shift_verification_tiles.dart';
 import 'employee_tile.dart';
 
 class EmployeeShiftDetailsBody extends StatelessWidget {
@@ -68,6 +69,11 @@ class EmployeeShiftDetailsBody extends StatelessWidget {
           }),
           icon: Icons.timelapse_outlined,
         ),
+        ...buildEmployeeShiftVerificationTiles(
+          context,
+          entry: e,
+          eligibility: state.eligibility,
+        ),
         if (e.scheduleExceptionReason != null) ...[
           const SizedBox(height: 16),
           Text(e.scheduleExceptionReason!),
@@ -82,7 +88,7 @@ class EmployeeShiftDetailsBody extends StatelessWidget {
         if (state.failure != null) ...[
           const SizedBox(height: 12),
           Text(
-            state.failure!.message,
+            context.tr(state.failure!.message),
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
           TextButton(

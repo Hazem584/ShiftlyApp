@@ -59,7 +59,7 @@ Future<FixedShiftMutationResult> handlePendingClockInSubmissionError(
     host.emitState(
       host.state.copyWith(
         clearRecovery: cleared,
-        recoveryBlocked: true,
+        recoveryBlocked: !cleared,
         clearSubmitting: true,
         failure: fixedShiftFailure(error, 'Refresh before another clock-in.'),
       ),
