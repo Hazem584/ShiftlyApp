@@ -48,6 +48,8 @@ Employee parseEmployee(Map<String, Object?> json) => Employee(
     _ => EmployeeRole.unknown,
   },
   avatarUrl: optionalString(json['avatarUrl']),
+  monthlySalary: (json['monthlySalary'] as num?)?.toDouble(),
+  hourlyRate: (json['hourlyRate'] as num?)?.toDouble(),
   createdAt: requiredDate(json, 'createdAt'),
   updatedAt: requiredDate(json, 'updatedAt'),
 );

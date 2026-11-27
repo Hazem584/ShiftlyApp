@@ -65,4 +65,22 @@ abstract interface class TeamWorkRepository {
     bool acknowledge = false,
   });
   Future<List<AnnouncementReader>> readers(String workspaceId, String id);
+  Future<List<AssignedTeamTask>> assignedTasks(
+    String workspaceId, {
+    String? status,
+  }) async => const [];
+  Future<void> createAssignedTask(
+    String workspaceId, {
+    required List<String> assigneeMembershipIds,
+    required String title,
+    String? description,
+    String priority = 'MEDIUM',
+    DateTime? dueAt,
+  }) async {}
+  Future<void> updateAssignedTaskStatus(
+    String workspaceId,
+    String taskId,
+    String status,
+  ) async {}
+  Future<void> deleteAssignedTask(String workspaceId, String taskId) async {}
 }

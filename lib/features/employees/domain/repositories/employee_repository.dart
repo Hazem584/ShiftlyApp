@@ -25,6 +25,15 @@ abstract interface class EmployeeRepository {
     required String membershipId,
     required EmployeeStatusFilter status,
   });
+  Future<Employee> updateCompensation({
+    required String workspaceId,
+    required String membershipId,
+    double? monthlySalary,
+    double? hourlyRate,
+  }) => getWorkspaceEmployee(
+    workspaceId: workspaceId,
+    membershipId: membershipId,
+  );
   List<Shift> get availableShifts;
   List<WorkLocation> get availableLocations;
 }

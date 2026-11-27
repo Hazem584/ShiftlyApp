@@ -69,4 +69,43 @@ class ApiTeamWorkRepository
           )).data,
         ),
       );
+  @override
+  Future<List<AssignedTeamTask>> assignedTasks(
+    String workspaceId, {
+    String? status,
+  }) => fetchAssignedTasks(_dio, workspaceId, status: status);
+  @override
+  Future<void> createAssignedTask(
+    String workspaceId, {
+    required List<String> assigneeMembershipIds,
+    required String title,
+    String? description,
+    String priority = 'MEDIUM',
+    DateTime? dueAt,
+  }) => postWorkRequest('${_base(workspaceId)}/assigned-tasks', {
+    'assigneeMembershipIds': assigneeMembershipIds,
+    'title': title.trim(),
+    if (description != null && description.trim().isNotEmpty)
+      'description': description.trim(),
+    'priority': priority,
+    if (dueAt != null) 'dueAt': dueAt.toUtc().toIso8601String(),
+  });
+  @override
+  Future<void> updateAssignedTaskStatus(
+    String workspaceId,
+    String taskId,
+    String status,
+  ) => runTeamWorkRequest(
+    () => _dio.patch<Object?>(
+      '${_base(workspaceId)}/assigned-tasks/$taskId',
+      data: {'status': status},
+    ),
+  );
+  @override
+  Future<void> deleteAssignedTask(String workspaceId, String taskId) =>
+      runTeamWorkRequest(
+        () => _dio.delete<Object?>(
+          '${_base(workspaceId)}/assigned-tasks/$taskId',
+        ),
+      );
 }

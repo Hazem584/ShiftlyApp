@@ -46,11 +46,13 @@ class DeviceTaskReminders
   }
 
   @override
-  Future<void> cancelBreak() async =>
-      _supported ? _initialize().then((_) => _plugin.cancel(id: 1600000001)) : null;
+  Future<void> cancelBreak() async => _supported
+      ? _initialize().then((_) => _plugin.cancel(id: 1600000001))
+      : null;
   @override
-  Future<void> cancelBreakStart() async =>
-      _supported ? _initialize().then((_) => _plugin.cancel(id: 1600000002)) : null;
+  Future<void> cancelBreakStart() async => _supported
+      ? _initialize().then((_) => _plugin.cancel(id: 1600000002))
+      : null;
   @override
   Future<bool> scheduleBreakStart(DateTime at, {required bool arabic}) async =>
       _supported &&
@@ -95,8 +97,9 @@ class DeviceTaskReminders
           ),
         );
   @override
-  Future<void> clear() async =>
-      _supported ? _initialize().then((_) => clearDeviceTaskAlarms(_plugin)) : null;
+  Future<void> clear() async => _supported
+      ? _initialize().then((_) => clearDeviceTaskAlarms(_plugin))
+      : null;
   @override
   Future<void> cancel(String taskId) async => _supported
       ? cancelDeviceTaskAlarm(_plugin, _preferences, taskId, _initialize)

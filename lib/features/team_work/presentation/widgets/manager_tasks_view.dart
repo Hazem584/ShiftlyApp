@@ -7,6 +7,7 @@ import 'package:shiftly/features/manager_experience/presentation/manager_action_
 import 'package:shiftly/features/team_work/domain/team_work_models.dart';
 import 'package:shiftly/features/team_work/presentation/cubit/work_feed_cubit.dart';
 import 'package:shiftly/features/team_work/presentation/dialogs/review_note_dialog.dart';
+import 'package:shiftly/features/team_work/presentation/widgets/assigned_team_tasks_section.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/manager_task_card.dart';
 import 'package:shiftly/features/team_work/presentation/widgets/work_feed_view.dart';
 
@@ -54,7 +55,13 @@ class ManagerTasksView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => WorkFeedView(
     cubit: cubit,
-    header: const ManagerActionLinks(),
+    header: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const ManagerActionLinks(),
+        AssignedTeamTasksSection(workspaceId: workspaceId, isManager: true),
+      ],
+    ),
     itemBuilder: (context, task, busy) => ManagerTaskCard(
       task: task,
       workspaceId: workspaceId,

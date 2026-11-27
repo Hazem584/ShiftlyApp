@@ -14,6 +14,7 @@ import 'package:shiftly/features/team_work/presentation/dialogs/correction_revie
   'LEAVE' => ('Leave request', Icons.event_busy_outlined),
   'ATTENDANCE' => ('Attendance review', Icons.fact_check_outlined),
   'LATE' => ('Late arrival', Icons.schedule_outlined),
+  'ABSENT' => ('Absent — no check-in', Icons.person_off_outlined),
   'OPEN' => ('Clock-out needs follow-up', Icons.timer_outlined),
   _ => ('Shift needs follow-up', Icons.calendar_month_outlined),
 };
@@ -38,7 +39,8 @@ class ManagerTaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, icon) = managerTaskMeta(task.kind);
     final locale = Localizations.localeOf(context).toString();
-    String fmt(DateTime d) => WorkspaceTime.dateTime(d, timezone, locale: locale);
+    String fmt(DateTime d) =>
+        WorkspaceTime.dateTime(d, timezone, locale: locale);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

@@ -38,6 +38,11 @@ class ExportSheetData {
     'Worked hours',
     'Extra shift hours',
     'Schedule excess hours',
+    'Hourly rate',
+    'Base pay',
+    'Deductions',
+    'Overtime pay',
+    'Net payable',
   ];
 
   static const detailHeaders = [
@@ -67,6 +72,11 @@ class ExportSheetData {
       m.workMinutes / 60,
       m.extraMinutes / 60,
       m.excessMinutes / 60,
+      row.hourlyRate,
+      row.basePay,
+      row.deductions,
+      row.overtimePay,
+      row.netPay,
     ];
   }
 

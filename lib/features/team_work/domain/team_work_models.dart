@@ -36,3 +36,33 @@ class CorrectionRequest {
   String? get operationalDate =>
       occurrenceSnapshot?['operationalDate'] as String?;
 }
+
+class AssignedTeamTask {
+  AssignedTeamTask.fromJson(Map<String, Object?> json)
+    : id = ApiModelParser.string(json, 'id'),
+      assigneeMembershipId = ApiModelParser.string(
+        json,
+        'assigneeMembershipId',
+      ),
+      assigneeName = (json['assigneeName'] as String?) ?? 'Employee',
+      assigneeJobTitle = json['assigneeJobTitle'] as String?,
+      createdByName = (json['createdByName'] as String?) ?? 'Manager',
+      title = ApiModelParser.string(json, 'title'),
+      description = json['description'] as String?,
+      priority = (json['priority'] as String?) ?? 'MEDIUM',
+      status = (json['status'] as String?) ?? 'OPEN',
+      dueAt = workDate(json['dueAt']),
+      completedAt = workDate(json['completedAt']),
+      createdAt = workDate(json['createdAt']) ?? DateTime.now().toUtc();
+
+  final String id,
+      assigneeMembershipId,
+      assigneeName,
+      createdByName,
+      title,
+      priority,
+      status;
+  final String? assigneeJobTitle, description;
+  final DateTime? dueAt, completedAt;
+  final DateTime createdAt;
+}

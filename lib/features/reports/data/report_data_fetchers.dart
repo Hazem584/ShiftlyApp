@@ -83,7 +83,12 @@ Future<List<ReportEmployee>> fetchAllReportEmployees(
     for (final emp in res.data) {
       if (!ids.add(emp.id)) throw ReportPageValidator.changed();
       if (emp.role == EmployeeRole.employee) {
-        employees[emp.id] = ReportEmployee(emp.id, emp.displayName);
+        employees[emp.id] = ReportEmployee(
+          emp.id,
+          emp.displayName,
+          monthlySalary: emp.monthlySalary,
+          hourlyRate: emp.hourlyRate,
+        );
       }
     }
     if (page >= res.totalPages) break;

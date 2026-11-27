@@ -22,6 +22,11 @@ const _summaryColumns = [
   'Worked hours',
   'Extra shift hours',
   'Schedule excess hours',
+  'Hourly rate',
+  'Base pay',
+  'Deductions',
+  'Overtime pay',
+  'Net payable',
 ];
 
 const _detailColumns = [

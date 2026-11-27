@@ -21,14 +21,8 @@ class AttendanceReasonDropdown extends StatelessWidget {
       decoration: InputDecoration(labelText: context.tr(label)),
       items: [
         for (final (code, text) in const [
-          (
-            'FORGOT_TO_RECORD',
-            'I attended but forgot to record attendance',
-          ),
-          (
-            'EXCEPTION',
-            'I have an exception or special circumstance',
-          ),
+          ('FORGOT_TO_RECORD', 'I attended but forgot to record attendance'),
+          ('EXCEPTION', 'I have an exception or special circumstance'),
           ('OTHER', 'Other reason'),
         ])
           DropdownMenuItem(

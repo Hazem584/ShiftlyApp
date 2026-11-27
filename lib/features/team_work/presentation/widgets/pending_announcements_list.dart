@@ -39,9 +39,7 @@ class PendingAnnouncementsList extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  context.tr('Could not update team announcements.'),
-                ),
+                child: Text(context.tr('Could not update team announcements.')),
               ),
               TextButton(
                 onPressed: state.loading ? null : onReload,

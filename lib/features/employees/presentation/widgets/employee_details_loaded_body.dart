@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/core/models/employee.dart';
 import 'package:shiftly/core/theme/app_theme.dart';
+import 'package:shiftly/features/employees/presentation/widgets/employee_compensation_card.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_details_header.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_information_sections.dart';
 import 'package:shiftly/features/employees/presentation/widgets/employee_schedule_cards.dart';
@@ -36,6 +37,13 @@ class EmployeeDetailsLoadedBody extends StatelessWidget {
         const SizedBox(height: AppSpacing.l),
         EmployeeWorkSection(employee: employee),
         const SizedBox(height: AppSpacing.l),
+        EmployeeCompensationCard(
+          employee: employee,
+          workspaceId: workspaceId,
+          membershipId: membershipId,
+          canEdit: active,
+        ),
+        const SizedBox(height: AppSpacing.l),
         ...buildEmployeeScheduleCards(
           context,
           employee: employee,
@@ -54,9 +62,7 @@ class EmployeeDetailsLoadedBody extends StatelessWidget {
               employee: employee,
             ),
             icon: Icon(
-              active
-                  ? Icons.person_off_outlined
-                  : Icons.person_add_alt_rounded,
+              active ? Icons.person_off_outlined : Icons.person_add_alt_rounded,
             ),
             label: Text(
               context.tr(

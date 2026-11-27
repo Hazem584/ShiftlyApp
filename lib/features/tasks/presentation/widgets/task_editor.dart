@@ -33,7 +33,9 @@ class _TaskEditorState extends State<TaskEditor> {
   final _form = GlobalKey<FormState>();
   late final FeatureSessionScope? _scope = context.read<TasksCubit>().scope;
   late final _title = TextEditingController(text: widget.task?.title ?? '');
-  late final _desc = TextEditingController(text: widget.task?.description ?? '');
+  late final _desc = TextEditingController(
+    text: widget.task?.description ?? '',
+  );
   late final _dur = TextEditingController(
     text: '${widget.task?.durationMinutes ?? 25}',
   );

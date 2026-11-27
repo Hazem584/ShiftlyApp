@@ -24,6 +24,8 @@ class Employee extends Equatable {
     this.profileId = '',
     this.avatarUrl,
     this.role = EmployeeRole.employee,
+    this.monthlySalary,
+    this.hourlyRate,
     this.createdAt,
     this.updatedAt,
   });
@@ -41,8 +43,16 @@ class Employee extends Equatable {
   final String profileId;
   final String? avatarUrl;
   final EmployeeRole role;
+  final double? monthlySalary;
+  final double? hourlyRate;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  double effectiveHourlyRate([int standardHours = 176]) =>
+      hourlyRate ??
+      (monthlySalary != null && standardHours > 0
+          ? monthlySalary! / standardHours
+          : 0);
 
   String get displayName => fullName ?? 'Unnamed employee';
   String get displayEmail => email ?? 'Not provided';
@@ -69,6 +79,8 @@ class Employee extends Equatable {
     profileId,
     avatarUrl,
     role,
+    monthlySalary,
+    hourlyRate,
     createdAt,
     updatedAt,
   ];

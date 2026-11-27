@@ -30,11 +30,8 @@ class TaskCard extends StatelessWidget {
         onTap: busy ? null : onOpen,
         onLongPress: busy
             ? null
-            : () => showTaskCardMenu(
-                context,
-                onOpen: onOpen,
-                onDelete: onDelete,
-              ),
+            : () =>
+                  showTaskCardMenu(context, onOpen: onOpen, onDelete: onDelete),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 16, 20, 16),
           child: Row(

@@ -3,10 +3,7 @@ import 'package:day_night_time_picker/day_night_time_picker.dart'
 import 'package:flutter/material.dart';
 import 'package:shiftly/core/localization/app_localizations.dart';
 
-Future<DateTime?> pickTaskCalendarDate(
-  BuildContext context,
-  DateTime initial,
-) {
+Future<DateTime?> pickTaskCalendarDate(BuildContext context, DateTime initial) {
   final now = DateTime.now();
   return showDatePicker(
     context: context,

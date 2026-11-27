@@ -14,7 +14,8 @@ class CorrectionRequestTimesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String time(DateTime v) => formatCorrectionRequestTime(context, v, timezone);
+    String time(DateTime v) =>
+        formatCorrectionRequestTime(context, v, timezone);
     final reqDiff = request.requestedOut.difference(request.requestedIn);
     final labelStyle = Theme.of(context).textTheme.labelLarge;
     return Column(

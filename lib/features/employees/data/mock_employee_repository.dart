@@ -81,6 +81,20 @@ class MockEmployeeRepository implements EmployeeRepository {
   }) async {
     final index = _employees.indexWhere((item) => item.id == membershipId);
     if (index < 0) throw Exception('Unable to load employee');
-    return _employees[index] = copyEmployeeWithStatus(_employees[index], status);
+    return _employees[index] = copyEmployeeWithStatus(
+      _employees[index],
+      status,
+    );
   }
+
+  @override
+  Future<Employee> updateCompensation({
+    required String workspaceId,
+    required String membershipId,
+    double? monthlySalary,
+    double? hourlyRate,
+  }) => getWorkspaceEmployee(
+    workspaceId: workspaceId,
+    membershipId: membershipId,
+  );
 }

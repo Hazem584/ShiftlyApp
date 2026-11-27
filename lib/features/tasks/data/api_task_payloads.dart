@@ -2,9 +2,10 @@ import 'package:shiftly/core/serialization/api_model_parser.dart';
 
 import '../domain/personal_task.dart';
 
-List<PersonalTask> parseTaskItems(Object? value) => ApiModelParser.list(
-  value,
-).map((e) => PersonalTask.fromJson(ApiModelParser.map(e))).toList();
+List<PersonalTask> parseTaskItems(Object? value) =>
+    ApiModelParser.list(value)
+        .map((e) => PersonalTask.fromJson(ApiModelParser.map(e)))
+        .toList();
 
 TaskPage parseTaskPage(Object? raw) {
   final json = ApiModelParser.map(raw);

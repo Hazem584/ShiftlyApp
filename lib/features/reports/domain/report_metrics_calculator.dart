@@ -11,7 +11,11 @@ ReportMetrics calculateEmployeeMetrics(
   var result = const ReportMetrics();
   final days = <String>{};
   for (final r in values) {
-    if (r.dayStatus == 'ABSENT' || r.dayStatus == 'LEAVE') continue;
+    if (r.dayStatus == 'ABSENT') {
+      result += const ReportMetrics(absentDays: 1);
+      continue;
+    }
+    if (r.dayStatus == 'LEAVE') continue;
     switch (r.reviewStatus) {
       case AttendanceReviewStatus.pending:
         result += const ReportMetrics(pending: 1);
@@ -39,6 +43,10 @@ ReportMetrics _approvedRecordMetrics(AttendanceRecordApi r) {
   final scheduled = start != null && end != null
       ? end.difference(start).inMinutes
       : null;
+  final earlyLeave =
+      closed && !extra && end != null && r.clockOutAt!.isBefore(end)
+      ? end.difference(r.clockOutAt!).inMinutes.clamp(0, 720)
+      : 0;
   return ReportMetrics(
     approved: 1,
     open: closed ? 0 : 1,
@@ -46,6 +54,7 @@ ReportMetrics _approvedRecordMetrics(AttendanceRecordApi r) {
         ? 1
         : 0,
     lateMinutes: r.dayStatus == 'PRESENT' ? 0 : r.minutesLate,
+    earlyLeaveMinutes: earlyLeave,
     workMinutes: work,
     extraMinutes: extra ? work : 0,
     excessMinutes: !extra && closed

@@ -6,6 +6,7 @@ import 'package:shiftly/features/reports/domain/attendance_report.dart';
 import 'package:shiftly/features/reports/domain/report_export.dart';
 import 'package:shiftly/features/reports/presentation/attendance_report_totals.dart';
 import 'package:shiftly/features/reports/presentation/attendance_reports_cubit.dart';
+import 'package:shiftly/features/reports/presentation/widgets/report_analytics_card.dart';
 
 List<Widget> buildReportOverviewSection(
   BuildContext context, {
@@ -43,6 +44,8 @@ List<Widget> buildReportOverviewSection(
     Text(
       '${context.tr('Generated at')}: ${WorkspaceTime.dateTime(report.generatedAt, report.timezone, locale: Localizations.localeOf(context).languageCode)}',
     ),
+    const SizedBox(height: 12),
+    ReportAnalyticsCard(report: report, employeeId: state.employeeId),
     const SizedBox(height: 12),
     AttendanceReportTotals(metrics: report.totalsFor(state.employeeId)),
     const SizedBox(height: 12),

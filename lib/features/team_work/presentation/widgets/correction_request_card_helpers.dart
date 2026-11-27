@@ -41,7 +41,8 @@ Widget buildEmployeeCorrectionTile(
   return EmployeeTile(
     icon: Icons.edit_calendar_outlined,
     title: '$dateLabel · $shiftLabel',
-    subtitle: '$status · ${time(request.requestedIn)} → ${time(request.requestedOut)}',
+    subtitle:
+        '$status · ${time(request.requestedIn)} → ${time(request.requestedOut)}',
     onTap: () => Navigator.push(
       context,
       MaterialPageRoute<void>(

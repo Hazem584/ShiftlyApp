@@ -31,7 +31,9 @@ Future<TaskPage> fetchApiTaskPage(
 });
 
 Future<void> postApiTask(Dio dio, Map<String, Object?> payload) =>
-    runTaskApiRequest(() => dio.post<Object?>(personalTasksPath, data: payload));
+    runTaskApiRequest(
+      () => dio.post<Object?>(personalTasksPath, data: payload),
+    );
 
 Future<void> patchApiTask(Dio dio, String id, Map<String, Object?> payload) =>
     runTaskApiRequest(

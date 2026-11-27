@@ -66,6 +66,23 @@ class ApiWorkforceRepository extends ApiWorkforceBase
   });
 
   @override
+  Future<Employee> updateCompensation({
+    required String workspaceId,
+    required String membershipId,
+    double? monthlySalary,
+    double? hourlyRate,
+  }) => request(() async {
+    final url = ApiEndpoints.employee(workspaceId, membershipId);
+    final data = <String, Object?>{
+      'monthlySalary': monthlySalary,
+      'hourlyRate': hourlyRate,
+    };
+    return parseEmployee(
+      asJsonMap((await dio.patch<Object?>(url, data: data)).data),
+    );
+  });
+
+  @override
   Future<List<Employee>> getEmployees({String query = ''}) async =>
       throw UnsupportedError('A workspace scope is required');
 

@@ -102,7 +102,7 @@ class _AttendanceReportsScreenState extends State<AttendanceReportsScreen> {
     );
   }
 
-  void _message(String message) => ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(context.tr(message))));
+  void _message(String message) =>
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.tr(message))));
 }

@@ -47,9 +47,8 @@ Future<bool> togglePersonalTask(BuildContext context, PersonalTask task) async {
   final success = await cubit.toggle(task);
   if (success && context.mounted && cubit.scope == scope) {
     final msg = task.completed ? 'Task reopened' : 'Task complete';
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.tr(msg))));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(context.tr(msg))));
   }
   return success;
 }

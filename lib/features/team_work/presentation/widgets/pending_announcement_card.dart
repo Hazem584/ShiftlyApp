@@ -45,9 +45,8 @@ class PendingAnnouncementCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     announcement.title,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(color: fg),
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(color: fg),
                   ),
                 ),
               ],

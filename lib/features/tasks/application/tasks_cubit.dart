@@ -55,11 +55,13 @@ class TasksCubit extends Cubit<TasksState> {
     emit(const TasksState());
     await widgetSync?.bind(value?.userId);
     if (!_valid(g)) return;
-    _reminderQueue = _reminderQueue.then((_) async {
-      if (_valid(g) && (oldUser != value?.userId || value == null)) {
-        await reminders.clear();
-      }
-    }).catchError((Object _) {});
+    _reminderQueue = _reminderQueue
+        .then((_) async {
+          if (_valid(g) && (oldUser != value?.userId || value == null)) {
+            await reminders.clear();
+          }
+        })
+        .catchError((Object _) {});
     await (value != null ? refresh() : _reminderQueue);
   }
 
@@ -118,8 +120,9 @@ class TasksCubit extends Cubit<TasksState> {
       action: action,
       changedTask: changedTask,
       clearSignature: () => _lastReminderSignature = null,
-      enqueueReminder: (fn) =>
-          _reminderQueue = _reminderQueue.then((_) => fn()).catchError((Object _) {
+      enqueueReminder: (fn) => _reminderQueue = _reminderQueue
+          .then((_) => fn())
+          .catchError((Object _) {
             if (_valid(g)) emit(state.copy(reminderError: true));
           }),
       reminders: reminders,
@@ -152,13 +155,21 @@ class TasksCubit extends Cubit<TasksState> {
     ),
     changedTask: task,
   );
-  Future<bool> toggle(PersonalTask t) =>
-      _mutate((_) => repository.update(t, completed: !t.completed), changedTask: t);
+  Future<bool> toggle(PersonalTask t) => _mutate(
+    (_) => repository.update(t, completed: !t.completed),
+    changedTask: t,
+  );
   Future<bool> remove(PersonalTask t) =>
       _mutate((_) => repository.remove(t), changedTask: t);
   Future<PersonalTask?> resolveTap(String ownerId, String taskId) {
     final g = _generation;
-    return resolveOwnerTaskTap(repository, scope, ownerId, taskId, () => _valid(g));
+    return resolveOwnerTaskTap(
+      repository,
+      scope,
+      ownerId,
+      taskId,
+      () => _valid(g),
+    );
   }
 
   @override

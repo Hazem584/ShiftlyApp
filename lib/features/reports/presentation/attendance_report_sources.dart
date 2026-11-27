@@ -26,6 +26,11 @@ class AttendanceSummarySource extends DataTableSource {
           (m.workMinutes / 60).toStringAsFixed(2),
           (m.extraMinutes / 60).toStringAsFixed(2),
           (m.excessMinutes / 60).toStringAsFixed(2),
+          r.hourlyRate.toStringAsFixed(2),
+          r.basePay.toStringAsFixed(2),
+          r.deductions.toStringAsFixed(2),
+          r.overtimePay.toStringAsFixed(2),
+          r.netPay.toStringAsFixed(2),
         ])
           DataCell(Text('$value')),
       ],

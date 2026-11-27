@@ -65,3 +65,18 @@ Future<WorkPage<TeamAnnouncement>> fetchAnnouncementsPage(
     TeamAnnouncement.fromJson,
   ),
 );
+
+Future<List<AssignedTeamTask>> fetchAssignedTasks(
+  Dio dio,
+  String workspaceId, {
+  String? status,
+}) => runTeamWorkRequest(() async {
+  final res = await dio.get<Object?>(
+    '${teamWorkBasePath(workspaceId)}/assigned-tasks',
+    queryParameters: {'status': ?status},
+  );
+  final list = workMap(res.data)['data'] as List? ?? const [];
+  return list
+      .map((item) => AssignedTeamTask.fromJson(workMap(item)))
+      .toList(growable: false);
+});

@@ -20,7 +20,9 @@ class TaskAdditionalTimes extends StatelessWidget {
   void _set(BuildContext context, DateTime date, {int? index}) {
     if (!date.isAfter(DateTime.now()) ||
         date.isAtSameMomentAs(primary) ||
-        dates.indexed.any((e) => e.$1 != index && e.$2.isAtSameMomentAs(date))) {
+        dates.indexed.any(
+          (e) => e.$1 != index && e.$2.isAtSameMomentAs(date),
+        )) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(context.tr('Choose a different future alarm time.')),
@@ -45,11 +47,7 @@ class TaskAdditionalTimes extends StatelessWidget {
     final initial = index == null ? _nextWeek() : dates[index].toLocal();
     final date = await pickTaskCalendarDate(context, initial);
     if (date == null || !context.mounted) return;
-    final picked = await pickTaskClockTime(
-      context,
-      date,
-      initialTime: initial,
-    );
+    final picked = await pickTaskClockTime(context, date, initialTime: initial);
     if (picked != null && context.mounted) _set(context, picked, index: index);
   }
 
@@ -72,13 +70,17 @@ class TaskAdditionalTimes extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.event_repeat_rounded),
-            title: Text(DateFormat.yMMMd(locale).add_jm().format(date.toLocal())),
+            title: Text(
+              DateFormat.yMMMd(locale).add_jm().format(date.toLocal()),
+            ),
             onTap: enabled ? () => _pick(context, index: i) : null,
             trailing: IconButton(
               key: Key('remove-alarm-$i'),
               tooltip: context.tr('Remove alarm time'),
               icon: const Icon(Icons.close_rounded),
-              onPressed: enabled ? () => onChanged([...dates]..removeAt(i)) : null,
+              onPressed: enabled
+                  ? () => onChanged([...dates]..removeAt(i))
+                  : null,
             ),
           ),
         Wrap(
@@ -87,7 +89,9 @@ class TaskAdditionalTimes extends StatelessWidget {
           children: [
             OutlinedButton.icon(
               key: const Key('add-task-alarm'),
-              onPressed: enabled && dates.length < 49 ? () => _pick(context) : null,
+              onPressed: enabled && dates.length < 49
+                  ? () => _pick(context)
+                  : null,
               icon: const Icon(Icons.add_alarm_rounded),
               label: Text(context.tr('Add alarm time')),
             ),

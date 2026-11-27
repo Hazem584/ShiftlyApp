@@ -19,9 +19,7 @@ class TaskDurationField extends StatelessWidget {
       enabled: !busy,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(
-        labelText: context.tr('Duration · Optional'),
-      ),
+      decoration: InputDecoration(labelText: context.tr('Duration · Optional')),
       validator: (v) {
         if (v == null || v.isEmpty) return null;
         final n = int.tryParse(v);
