@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream;
 
+import '../../domain/entities/chat_inbox_activity.dart';
 import 'connection/stream_client_for.dart';
 import 'connection/stream_connection_state.dart';
 import 'connection/stream_query_channels.dart';
@@ -20,6 +21,15 @@ class StreamChatConnection {
   bool get persist => _state.persist;
   FeatureSessionScope? get scope => _state.scope;
   Stream<stream.Event> get events => _state.events.stream;
+  Stream<ChatInboxActivity> get inboxActivity => _state.inboxActivity.stream;
+  int get generation => _state.generation;
+
+  void publishInboxActivity(int generation, ChatInboxActivity activity) {
+    if (generation == _state.generation && scope != null) {
+      _state.inboxActivity.add(activity);
+    }
+  }
+
   void bind(FeatureSessionScope? next) => _state.bind(next);
   Future<stream.StreamChatClient?> clientFor(String workspaceId) =>
       streamClientFor(_state, workspaceId);
@@ -33,5 +43,6 @@ class StreamChatConnection {
     bind(null);
     await _state.closing;
     await _state.events.close();
+    await _state.inboxActivity.close();
   }
 }

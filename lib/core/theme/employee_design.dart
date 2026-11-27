@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'employee_controls_theme.dart';
+import 'employee_navigation_theme.dart';
+import 'employee_typography.dart';
+
 /// Tokens from the Employee boards in the approved Penpot file.
 class EmployeeDesign extends ThemeExtension<EmployeeDesign> {
   const EmployeeDesign();
@@ -36,40 +40,12 @@ class EmployeeDesign extends ThemeExtension<EmployeeDesign> {
       surfaceContainerLow: canvas,
       surfaceContainerHighest: selected,
     );
-    final text = base.textTheme
-        .apply(
-          fontFamily: arabic ? 'Cairo' : 'InterTight',
-          bodyColor: ink,
-          displayColor: ink,
-        )
-        .copyWith(
-          headlineSmall: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -.8,
-            height: 1.2,
-            color: ink,
-          ),
-          titleLarge: TextStyle(
-            fontSize: 23,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -.4,
-            color: ink,
-          ),
-          titleMedium: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: ink,
-          ),
-          bodyLarge: TextStyle(fontSize: 16, height: 1.45, color: ink),
-          bodyMedium: TextStyle(fontSize: 15, height: 1.45, color: ink),
-          bodySmall: TextStyle(fontSize: 13, height: 1.4, color: muted),
-        )
-        .apply(fontFamily: arabic ? 'Cairo' : 'InterTight');
+    final fontFamily = arabic ? 'Cairo' : 'InterTight';
+    final text = employeeTypography(base.textTheme, ink, muted, fontFamily);
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
     );
-    return base.copyWith(
+    final themed = base.copyWith(
       colorScheme: scheme,
       scaffoldBackgroundColor: canvas,
       textTheme: text,
@@ -85,25 +61,10 @@ class EmployeeDesign extends ThemeExtension<EmployeeDesign> {
         centerTitle: false,
         titleTextStyle: text.titleLarge?.copyWith(
           fontSize: 23,
-          fontFamily: arabic ? 'Cairo' : 'InterTight',
+          fontFamily: fontFamily,
         ),
       ),
-      datePickerTheme: DatePickerThemeData(
-        backgroundColor: surface,
-        headerForegroundColor: ink,
-        dayForegroundColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? scheme.onPrimary
-              : states.contains(WidgetState.disabled)
-              ? muted
-              : ink,
-        ),
-        dayBackgroundColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected) ? primary : null,
-        ),
-        weekdayStyle: TextStyle(color: muted),
-        yearForegroundColor: WidgetStatePropertyAll(ink),
-      ),
+      datePickerTheme: employeeDatePickerTheme(scheme),
       cardTheme: CardThemeData(
         color: surface,
         elevation: 0,
@@ -111,70 +72,7 @@ class EmployeeDesign extends ThemeExtension<EmployeeDesign> {
         shape: shape,
       ),
       dividerTheme: DividerThemeData(color: border, space: 1, thickness: 1),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: scheme.onPrimary,
-          minimumSize: const Size(0, 52),
-          shape: shape,
-          textStyle: TextStyle(
-            fontFamily: arabic ? 'Cairo' : 'InterTight',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: primary,
-          minimumSize: const Size(0, 48),
-          shape: shape,
-          side: BorderSide(color: border),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: primary),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surface,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: selected,
-        height: 80,
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (s) => TextStyle(
-            fontFamily: arabic ? 'Cairo' : 'InterTight',
-            fontSize: 12,
-            fontWeight: s.contains(WidgetState.selected)
-                ? FontWeight.w600
-                : FontWeight.w400,
-            color: s.contains(WidgetState.selected) ? primary : muted,
-          ),
-        ),
-        iconTheme: WidgetStateProperty.resolveWith(
-          (s) => IconThemeData(
-            size: 23,
-            color: s.contains(WidgetState.selected) ? primary : muted,
-          ),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: surface,
-        contentPadding: const EdgeInsets.all(16),
-        labelStyle: TextStyle(color: muted),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: primary, width: 2),
-        ),
-      ),
+      navigationBarTheme: employeeNavigationTheme(scheme, fontFamily),
       dialogTheme: DialogThemeData(
         backgroundColor: surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -187,7 +85,7 @@ class EmployeeDesign extends ThemeExtension<EmployeeDesign> {
         side: BorderSide.none,
         labelStyle: TextStyle(
           color: primary,
-          fontFamily: arabic ? 'Cairo' : 'InterTight',
+          fontFamily: fontFamily,
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
@@ -195,5 +93,6 @@ class EmployeeDesign extends ThemeExtension<EmployeeDesign> {
         shape: const StadiumBorder(),
       ),
     );
+    return employeeControlsTheme(themed, shape, fontFamily);
   }
 }

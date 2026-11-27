@@ -1,11 +1,14 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftly/core/localization/app_localizations.dart';
 import 'package:shiftly/features/chat/presentation/cubit/chat_conversation_cubit.dart';
-import 'package:shiftly/features/chat/presentation/widgets/chat_composer_input.dart';
+
+import 'chat_attachment_picker.dart';
+import 'chat_composer_input.dart';
+import 'chat_composer_retry.dart';
+import 'chat_composer_state_builder.dart';
+import 'chat_composer_toolbar.dart';
+import 'chat_recording_controls.dart';
 
 class ChatMessageComposer extends StatelessWidget {
   const ChatMessageComposer({
@@ -42,216 +45,56 @@ class ChatMessageComposer extends StatelessWidget {
       onShareLocation;
   final Future<void> Function({required bool send}) onFinishRecording;
   @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: ListenableBuilder(
-      listenable: textController,
-      builder: (context, _) =>
-          BlocBuilder<ChatConversationCubit, ChatConversationState>(
-            builder: (context, state) {
-              final effectiveDisabled =
-                  disabled || loadingAccess || state.accessLost;
-              final canSend =
-                  !effectiveDisabled &&
-                  !savingText &&
-                  textController.text.trim().isNotEmpty &&
-                  textController.text.trim().length <= 4000;
-              final colors = Theme.of(context).colorScheme;
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 8, 10),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (hasPreparedMedia)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              context.tr(
-                                'Prepared media was not saved. Retry to keep it.',
-                              ),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: mediaBusy || effectiveDisabled
-                                ? null
-                                : onRetryPrepared,
-                            child: Text(context.tr('Retry')),
-                          ),
-                        ],
-                      ),
-                    if (state.failedText != null)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(context.tr('Message failed to send.')),
-                          ),
-                          TextButton(
-                            onPressed: state.sending
-                                ? null
-                                : context
-                                      .read<ChatConversationCubit>()
-                                      .retrySend,
-                            child: Text(context.tr('Retry')),
-                          ),
-                        ],
-                      ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.surface,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            tooltip: context.tr('Attach'),
-                            onPressed: effectiveDisabled || mediaBusy
-                                ? null
-                                : () async {
-                                    final choice = await showModalBottomSheet<int>(
-                                      context: context,
-                                      showDragHandle: true,
-                                      builder: (c) => SafeArea(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            ListTile(
-                                              title: Text(
-                                                c.tr('Share with the group'),
-                                              ),
-                                              subtitle: Text(
-                                                c.tr('Choose an attachment.'),
-                                              ),
-                                            ),
-                                            for (final (
-                                                  value,
-                                                  label,
-                                                  subtitle,
-                                                  icon,
-                                                )
-                                                in [
-                                                  (
-                                                    0,
-                                                    'Photos',
-                                                    'Choose an image',
-                                                    Icons.image_outlined,
-                                                  ),
-                                                  (
-                                                    1,
-                                                    'Voice message',
-                                                    'Record audio',
-                                                    Icons.mic_none,
-                                                  ),
-                                                  (
-                                                    2,
-                                                    'Location',
-                                                    'Share a location',
-                                                    Icons.location_on_outlined,
-                                                  ),
-                                                  if (onPickDocument != null)
-                                                    (
-                                                      3,
-                                                      'Document',
-                                                      'PDF, Excel, CSV or text',
-                                                      Icons
-                                                          .description_outlined,
-                                                    ),
-                                                ])
-                                              ListTile(
-                                                leading: Icon(icon),
-                                                title: Text(c.tr(label)),
-                                                subtitle: Text(c.tr(subtitle)),
-                                                onTap: () =>
-                                                    Navigator.pop(c, value),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                    if (!context.mounted || choice == null) {
-                                      return;
-                                    }
-                                    if (choice == 0) await onPickImage();
-                                    if (choice == 1) await onStartRecording();
-                                    if (choice == 2) await onShareLocation();
-                                    if (choice == 3 && onPickDocument != null) {
-                                      await onPickDocument!();
-                                    }
-                                  },
-                            icon: Icon(Icons.add, color: colors.primary),
-                          ),
-                          Expanded(
-                            child: ChatComposerInput(
-                              controller: textController,
-                              enabled: !effectiveDisabled,
-                              canSend: canSend,
-                              sendOnEnter: sendOnEnter,
-                              hint: state.accessLost
-                                  ? 'Chat access unavailable.'
-                                  : loadingAccess
-                                  ? 'Loading conversation…'
-                                  : disabled
-                                  ? 'This group is read only'
-                                  : 'Message the group',
-                              onChanged: onTextChanged,
-                              onSend: onSend,
-                            ),
-                          ),
-                          IconButton(
-                            key: const Key('record-voice-message'),
-                            tooltip: context.tr('Record voice message'),
-                            onPressed: effectiveDisabled || mediaBusy
-                                ? null
-                                : onStartRecording,
-                            icon: Icon(
-                              Icons.mic_none_rounded,
-                              color: colors.primary,
-                            ),
-                          ),
-                          IconButton.filled(
-                            key: const Key('send-chat-message'),
-                            tooltip: context.tr('Send'),
-                            style: IconButton.styleFrom(
-                              foregroundColor: colors.onPrimary,
-                              backgroundColor: colors.primary,
-                              disabledForegroundColor: colors.onSurface
-                                  .withValues(alpha: .38),
-                              disabledBackgroundColor: colors.onSurface
-                                  .withValues(alpha: .12),
-                            ),
-                            onPressed: canSend ? onSend : null,
-                            icon: const Icon(Icons.send_rounded),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (recording)
-                      Row(
-                        children: [
-                          IconButton(
-                            tooltip: context.tr('Cancel recording'),
-                            onPressed: () => onFinishRecording(send: false),
-                            icon: const Icon(Icons.delete_outline),
-                          ),
-                          const Icon(Icons.mic, color: Colors.red),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(recordingLabel)),
-                          FilledButton.icon(
-                            onPressed: () => onFinishRecording(send: true),
-                            icon: const Icon(Icons.send),
-                            label: Text(context.tr('Finish recording')),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              );
-            },
+  Widget build(BuildContext context) => ChatComposerStateBuilder(
+    textController: textController,
+    disabled: disabled || loadingAccess,
+    savingText: savingText,
+    builder: (context, state, effectiveDisabled, canSend) {
+      final mediaEnabled = !effectiveDisabled && !mediaBusy;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (hasPreparedMedia)
+            ChatComposerRetry(
+              message: 'Prepared media was not saved. Retry to keep it.',
+              onRetry: mediaEnabled ? onRetryPrepared : null,
+            ),
+          if (state.failedText != null)
+            ChatComposerRetry(
+              message: 'Message failed to send.',
+              onRetry: state.sending
+                  ? null
+                  : context.read<ChatConversationCubit>().retrySend,
+            ),
+          ChatComposerToolbar(
+            onAttach: mediaEnabled
+                ? () => showChatAttachmentPicker(
+                    context,
+                    onPickImage: onPickImage,
+                    onStartRecording: onStartRecording,
+                    onShareLocation: onShareLocation,
+                    onPickDocument: onPickDocument,
+                  )
+                : null,
+            onStartRecording: mediaEnabled ? onStartRecording : null,
+            onSend: canSend ? onSend : null,
+            input: ChatComposerInput(
+              controller: textController,
+              enabled: !effectiveDisabled,
+              canSend: canSend,
+              sendOnEnter: sendOnEnter,
+              hint: chatComposerHint(state.accessLost, loadingAccess, disabled),
+              onChanged: onTextChanged,
+              onSend: onSend,
+            ),
           ),
-    ),
+          if (recording)
+            ChatRecordingControls(
+              recordingLabel: recordingLabel,
+              onFinishRecording: onFinishRecording,
+            ),
+        ],
+      );
+    },
   );
 }

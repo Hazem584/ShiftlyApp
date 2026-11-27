@@ -1,154 +1,41 @@
-import 'dart:async';
-
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftly/core/error/api_exception.dart';
-import 'package:shiftly/core/error/failure.dart';
-import 'package:shiftly/core/session/feature_scope.dart';
-import 'package:shiftly/features/chat/domain/entities/chat_cache_scope.dart';
 import 'package:shiftly/features/chat/domain/entities/chat_models.dart';
-import 'package:shiftly/features/chat/domain/repositories/chat_cache_access.dart';
-import 'package:shiftly/features/chat/domain/repositories/chat_realtime.dart';
-import 'package:shiftly/features/chat/domain/repositories/chat_repository.dart';
-import 'package:shiftly/features/chat/presentation/cubit/chat_group_details_state.dart';
 
-export 'package:shiftly/features/chat/presentation/cubit/chat_group_details_state.dart';
+import 'chat_group_details_loader.dart';
+import 'chat_group_details_mutation_refresh.dart';
+import 'chat_group_details_session.dart';
+import 'chat_group_details_state.dart';
 
-class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
+export 'chat_group_details_state.dart';
+
+class ChatGroupDetailsCubit extends ChatGroupDetailsSession
+    with ChatGroupDetailsLoader, ChatGroupDetailsMutationRefresh {
   ChatGroupDetailsCubit(
-    this._repository, {
-    this.onChanged,
-    this.loadGroup,
-    this.cacheDatabase,
-    this.realtime,
-  }) : super(const ChatGroupDetailsState());
-  final ChatRealtime? realtime;
-  ChatRealtimeSubscription? _subscription;
-  final ChatRepository _repository;
-  final ChatCacheAccess? cacheDatabase;
-  final void Function()? onChanged;
-  final Future<ChatGroup> Function()? loadGroup;
-  FeatureSessionScope? _scope;
-  String? _groupId;
-  var _generation = 0;
-  bool _loading = false;
+    super.repository, {
+    super.onChanged,
+    super.loadGroup,
+    super.cacheDatabase,
+    super.realtime,
+  });
 
-  void bind(
-    FeatureSessionScope scope,
-    String groupId, {
-    ChatGroup? initialGroup,
-  }) {
-    if (_scope == scope && _groupId == groupId) return;
-    unawaited(_subscription?.cancel());
-    final source = realtime;
-    _subscription = source is ChatGroupStateRealtime
-        ? (source as ChatGroupStateRealtime).subscribeToGroupState(
-            groupId,
-            () => unawaited(load()),
-          )
-        : source is ChatLiveRealtime
-        ? source.subscribeToGroup(groupId, () => unawaited(load()))
-        : null;
-    _scope = scope;
-    _groupId = groupId;
-    _generation++;
-    _loading = false;
-    final trusted =
-        initialGroup?.id == groupId &&
-        initialGroup?.workspaceId == scope.workspaceId &&
-        cacheDatabase?.authorized(ChatCacheScope.fromSession(scope, groupId)) ==
-            true;
-    emit(
-      ChatGroupDetailsState(
-        loading: !trusted,
-        group: trusted ? initialGroup : null,
-      ),
+  Future<bool> addMembers(List<String> ids) {
+    if (ids.isEmpty) return Future.value(false);
+    return _mutateMembers(
+      (workspaceId, group) => repository.addMembers(workspaceId, group.id, ids),
+      'Unable to add members.',
     );
-    unawaited(load());
   }
 
-  Future<void> load() async {
-    final scope = _scope;
-    final groupId = _groupId;
-    if (scope == null || groupId == null || _loading) return;
-    _loading = true;
-    final previous = state;
-    final generation = _generation;
-    final cacheRevision = cacheDatabase?.revision;
-    try {
-      final group =
-          await (loadGroup?.call() ??
-              _repository.getGroup(scope.workspaceId, groupId));
-      if (!_current(scope, groupId, generation)) return;
-      if (cacheRevision != cacheDatabase?.revision) return;
-      if (group.workspaceId != scope.workspaceId || group.id != groupId) {
-        throw const FormatException('Invalid chat group response');
-      }
-      emit(ChatGroupDetailsState(loading: false, group: group));
-      cacheDatabase?.grant(
-        ChatCacheScope.fromSession(scope, groupId),
-        archived: group.isArchived,
-      );
-    } catch (error) {
-      if (!_current(scope, groupId, generation)) return;
-      if (error is ApiException &&
-          (error.statusCode == 403 ||
-              (error.statusCode == 404 &&
-                  error.code == 'CHAT_GROUP_NOT_FOUND'))) {
-        await cacheDatabase?.revoke(ChatCacheScope.fromSession(scope, groupId));
-        if (!_current(scope, groupId, generation)) return;
-        emit(
-          ChatGroupDetailsState(
-            loading: false,
-            failure: _failure(error, 'Chat access unavailable.'),
-          ),
-        );
-        return;
-      }
-      emit(
-        ChatGroupDetailsState(
-          loading: false,
-          group: previous.group,
-          failure: _failure(error, 'Unable to load group details.'),
-        ),
-      );
-    } finally {
-      if (_current(scope, groupId, generation)) _loading = false;
-    }
-  }
+  Future<bool> removeMember(String membershipId) => _mutateMembers(
+    (workspaceId, group) =>
+        repository.removeMember(workspaceId, group.id, membershipId),
+    'Unable to remove the member.',
+  );
 
-  Future<bool> addMembers(List<String> ids) async {
-    final scope = _scope;
-    final group = state.group;
-    if (scope == null ||
-        group == null ||
-        !scope.isManager ||
-        group.isArchived ||
-        state.mutating ||
-        ids.isEmpty) {
-      return false;
-    }
-    final generation = _generation;
-    emit(ChatGroupDetailsState(loading: false, group: group, mutating: true));
-    try {
-      await _repository.addMembers(scope.workspaceId, group.id, ids);
-      if (!_current(scope, group.id, generation)) return false;
-      onChanged?.call();
-      return await _refreshAfterMutation(scope, group, generation);
-    } catch (error) {
-      if (!_current(scope, group.id, generation)) return false;
-      emit(
-        ChatGroupDetailsState(
-          loading: false,
-          group: group,
-          failure: _failure(error, 'Unable to add members.'),
-        ),
-      );
-      return false;
-    }
-  }
-
-  Future<bool> removeMember(String membershipId) async {
-    final scope = _scope;
+  Future<bool> _mutateMembers(
+    Future<Object?> Function(String workspaceId, ChatGroup group) apply,
+    String fallback,
+  ) async {
+    final scope = this.scope;
     final group = state.group;
     if (scope == null ||
         group == null ||
@@ -157,74 +44,24 @@ class ChatGroupDetailsCubit extends Cubit<ChatGroupDetailsState> {
         state.mutating) {
       return false;
     }
-    final generation = _generation;
+
+    final generation = this.generation;
     emit(ChatGroupDetailsState(loading: false, group: group, mutating: true));
     try {
-      await _repository.removeMember(scope.workspaceId, group.id, membershipId);
-      if (!_current(scope, group.id, generation)) return false;
+      await apply(scope.workspaceId, group);
+      if (!isCurrent(scope, group.id, generation)) return false;
       onChanged?.call();
-      return await _refreshAfterMutation(scope, group, generation);
+      return await refreshAfterMutation(scope, group, generation);
     } catch (error) {
-      if (!_current(scope, group.id, generation)) return false;
+      if (!isCurrent(scope, group.id, generation)) return false;
       emit(
         ChatGroupDetailsState(
           loading: false,
           group: group,
-          failure: _failure(error, 'Unable to remove the member.'),
+          failure: detailsFailure(error, fallback),
         ),
       );
       return false;
     }
   }
-
-  Future<bool> _refreshAfterMutation(
-    FeatureSessionScope scope,
-    ChatGroup previous,
-    int generation,
-  ) async {
-    try {
-      final updated = await _repository.getGroup(
-        scope.workspaceId,
-        previous.id,
-      );
-      if (!_current(scope, previous.id, generation)) return false;
-      if (updated.workspaceId != scope.workspaceId ||
-          updated.id != previous.id) {
-        throw const FormatException('Invalid chat group response');
-      }
-      emit(ChatGroupDetailsState(loading: false, group: updated));
-      return true;
-    } catch (error) {
-      if (_current(scope, previous.id, generation)) {
-        emit(
-          ChatGroupDetailsState(
-            loading: false,
-            group: previous,
-            failure: _failure(
-              error,
-              'The change was saved, but group details could not be refreshed.',
-            ),
-          ),
-        );
-        return true;
-      }
-      return false;
-    }
-  }
-
-  @override
-  Future<void> close() async {
-    _generation++;
-    _scope = null;
-    await _subscription?.cancel();
-    return super.close();
-  }
-
-  Failure _failure(Object error, String fallback) =>
-      error is ApiException ? error.toFailure() : Failure(message: fallback);
-  bool _current(FeatureSessionScope scope, String groupId, int generation) =>
-      !isClosed &&
-      _scope == scope &&
-      _groupId == groupId &&
-      _generation == generation;
 }

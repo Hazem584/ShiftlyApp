@@ -26,6 +26,8 @@ class ChatScreen extends StatelessWidget {
       );
     }
     final repository = context.read<ChatRepository>();
+    final generation = groups.generation;
+    void refreshInbox() => groups.scheduleInboxRefresh(scope, generation);
     Future<ChatGroup>? groupRequest;
     // Details and history share only an in-flight authorization request.
     // No authorization result is retained across sessions or later refreshes.
@@ -43,7 +45,7 @@ class ChatScreen extends StatelessWidget {
                 repository,
                 realtime: context.read<ChatRealtime>(),
                 loadGroup: loadGroup,
-                onChanged: () => groups.load(refresh: true),
+                onChanged: refreshInbox,
                 cacheDatabase: groups.messageCache?.storage,
               )..bind(
                 scope,
@@ -61,7 +63,7 @@ class ChatScreen extends StatelessWidget {
                   loadGroup: loadGroup,
                   messageCache: groups.messageCache,
                   outbox: groups.outbox,
-                  onChanged: () => groups.load(refresh: true),
+                  onChanged: refreshInbox,
                 )
                 ..bind(scope, groupId)
                 ..syncInboxGroup(

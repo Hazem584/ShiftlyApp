@@ -40,12 +40,17 @@ Future<void> _refreshAfterMutation(
   int generation,
 ) async {
   final request = ++cubit.request, unreadSeq = ++cubit.unreadIssuedSequence;
+  final inboxRevision = cubit.inboxRevision;
   try {
     final res = await Future.wait<Object>([
       cubit.repository.listGroups(scope.workspaceId),
       cubit.repository.unreadCount(scope.workspaceId),
     ]);
     if (!cubit.current(scope, generation, request)) return;
+    if (inboxRevision != cubit.inboxRevision) {
+      await cubit.load(refresh: true);
+      return;
+    }
     final groups = res[0] as List<ChatGroup>;
     if (groups.any((g) => g.workspaceId != scope.workspaceId)) {
       throw const FormatException('Cross-workspace chat response');

@@ -9,7 +9,7 @@ void dispatchStreamMessage(
   void Function(ChatMessage) message,
   void Function() resync,
 ) {
-  if (event.cid != 'shiftly:$groupId') {
+  if ((event.cid ?? event.channel?.cid) != 'shiftly:$groupId') {
     return;
   }
   final value = event.message;

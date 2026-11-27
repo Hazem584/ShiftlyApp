@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shiftly/core/localization/app_localizations.dart';
-import 'package:shiftly/core/offline/read_sync_banner.dart';
-import 'package:shiftly/core/offline/read_sync_state.dart';
-import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/attendance_calendar_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/leave_requests_cubit.dart';
 import 'package:shiftly/features/attendance/presentation/cubit/manager_attendance_cubit.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/attendance_calendar_state.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/attendance_daily_status_panel.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/attendance_tab_selector.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/leave_requests_panel.dart';
-import 'package:shiftly/features/attendance/presentation/widgets/manager_attendance_panel.dart';
+
+import 'attendance_screen_content.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({
@@ -66,75 +59,33 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     ]);
   }
 
+  Future<void> _refresh() => switch (_selectedTab) {
+    0 => _refreshAttendance(),
+    1 => context.read<LeaveRequestsCubit>().load(refresh: true),
+    _ => context.read<AttendanceCalendarCubit>().load(refresh: true),
+  };
+
+  void _selectTab(int tab) {
+    setState(() => _selectedTab = tab);
+    if (tab == 0) {
+      context.read<AttendanceCalendarCubit>().showCurrentMonth();
+    } else if (tab == 2) {
+      context.read<AttendanceCalendarCubit>().open();
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => switch (_selectedTab) {
-            0 => _refreshAttendance(),
-            1 => context.read<LeaveRequestsCubit>().load(refresh: true),
-            _ => context.read<AttendanceCalendarCubit>().load(refresh: true),
-          },
-          child: ListView(
-            key: const Key('attendance-content'),
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 30),
-            children: [
-              ReadSyncBanner(
-                category: ReadCategory.attendance,
-                onRefresh: () => switch (_selectedTab) {
-                  0 => _refreshAttendance(),
-                  1 => context.read<LeaveRequestsCubit>().load(refresh: true),
-                  _ => context.read<AttendanceCalendarCubit>().load(
-                    refresh: true,
-                  ),
-                },
-              ),
-              Text(
-                context.tr(
-                  _selectedTab == 2
-                      ? 'Monthly calendar'
-                      : _selectedTab == 1
-                      ? 'Team requests'
-                      : 'Team records',
-                ),
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                context.tr('Workspace time · {timezone}', {
-                  'timezone': widget.timezone,
-                }),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 20),
-              AttendanceTabSelector(
-                selectedTab: _selectedTab,
-                onSelected: (tab) {
-                  setState(() => _selectedTab = tab);
-                  if (tab == 0) {
-                    context.read<AttendanceCalendarCubit>().showCurrentMonth();
-                  } else if (tab == 2) {
-                    context.read<AttendanceCalendarCubit>().open();
-                  }
-                },
-              ),
-              const SizedBox(height: AppSpacing.l),
-              switch (_selectedTab) {
-                0 => Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AttendanceDailyStatusPanel(timezone: widget.timezone),
-                    ManagerAttendancePanel(timezone: widget.timezone),
-                  ],
-                ),
-                1 => LeaveRequestsPanel(timezone: widget.timezone),
-                _ => const AttendanceCalendarStateView(editable: true),
-              },
-            ],
-          ),
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: AttendanceScreenContent(
+          selectedTab: _selectedTab,
+          timezone: widget.timezone,
+          onRefresh: _refresh,
+          onSelected: _selectTab,
         ),
       ),
-    );
-  }
+    ),
+  );
 }

@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:stream_chat_flutter/stream_chat_flutter.dart' as stream;
 
+import '../../../domain/entities/chat_inbox_activity.dart';
+
 class StreamConnectionState {
   StreamConnectionState(this.api, this.clientFactory, this.persist);
   final Dio api;
@@ -14,6 +16,9 @@ class StreamConnectionState {
   Future<stream.StreamChatClient?>? connecting;
   Future<void> closing = Future.value();
   final events = StreamController<stream.Event>.broadcast();
+  final inboxActivity = StreamController<ChatInboxActivity>.broadcast(
+    sync: true,
+  );
   StreamSubscription<stream.Event>? subscription;
   final watched = <String>{};
   final watching = <String, Future<stream.Channel>>{};

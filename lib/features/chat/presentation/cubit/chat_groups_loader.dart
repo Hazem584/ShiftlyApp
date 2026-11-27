@@ -17,6 +17,7 @@ Future<void> loadChatGroupsList(
   cubit.loadingGroups = true;
   final generation = cubit.generation, request = ++cubit.request;
   final cacheRevision = cubit.messageCache?.storage.revision;
+  final inboxRevision = cubit.inboxRevision;
   final unreadSeq = ++cubit.unreadIssuedSequence, previous = cubit.state;
   cubit.emitState(
     !previous.loading
@@ -35,6 +36,10 @@ Future<void> loadChatGroupsList(
     final groups = await cubit.repository.listGroups(scope.workspaceId);
     if (!cubit.current(scope, generation, request) ||
         cacheRevision != cubit.messageCache?.storage.revision) {
+      return;
+    }
+    if (inboxRevision != cubit.inboxRevision) {
+      cubit.refreshQueued = true;
       return;
     }
     syncChatGroupsCacheAccess(

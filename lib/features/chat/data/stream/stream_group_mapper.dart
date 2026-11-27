@@ -10,7 +10,15 @@ ChatGroup mapStreamGroup(
   int? streamUnreadCount,
 }) {
   final messages =
-      channel.state?.messages.where(isSupportedStreamMessage).toList() ?? [];
+      channel.state?.messages
+          .where(
+            (message) =>
+                !message.state.isSending &&
+                !message.state.isSendingFailed &&
+                isSupportedStreamMessage(message),
+          )
+          .toList() ??
+      [];
   messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
   final reads = channel.state?.read ?? [];
   var latest = base.lastMessage;

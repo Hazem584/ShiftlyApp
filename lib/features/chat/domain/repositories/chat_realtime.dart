@@ -1,5 +1,7 @@
 import 'package:shiftly/features/chat/domain/entities/chat_message.dart';
 
+import '../entities/chat_inbox_activity.dart';
+
 abstract interface class ChatRealtimeSubscription {
   Future<void> cancel();
 }
@@ -31,5 +33,14 @@ abstract interface class ChatGroupStateRealtime {
   ChatRealtimeSubscription subscribeToGroupState(
     String groupId,
     void Function() onChanged,
+  );
+}
+
+abstract interface class ChatInboxRealtime implements ChatLiveRealtime {
+  ChatRealtimeSubscription subscribeToInboxActivity(
+    String workspaceId,
+    String membershipId,
+    void Function(ChatInboxActivity) onActivity,
+    void Function() onResync,
   );
 }

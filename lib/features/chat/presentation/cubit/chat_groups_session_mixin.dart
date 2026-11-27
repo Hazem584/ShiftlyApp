@@ -11,7 +11,7 @@ mixin ChatGroupsSessionMixin on Cubit<ChatGroupsState> {
   Timer? inboxDebounce;
   bool groupsRestored = false;
   FeatureSessionScope? sessionScope;
-  var generation = 0, request = 0, unreadRequest = 0;
+  var generation = 0, request = 0, unreadRequest = 0, inboxRevision = 0;
   var unreadIssuedSequence = 0, unreadAppliedSequence = 0;
   bool loadingGroups = false, refreshQueued = false;
   bool unreadRefreshing = false, unreadRefreshQueued = false;
@@ -31,6 +31,15 @@ mixin ChatGroupsSessionMixin on Cubit<ChatGroupsState> {
     if (!scopeCurrent(s, gen) || sequence < unreadAppliedSequence) return false;
     unreadAppliedSequence = sequence;
     return true;
+  }
+
+  void scheduleInboxRefresh(FeatureSessionScope scope, int generation) {
+    if (!scopeCurrent(scope, generation) || inboxDebounce?.isActive == true) {
+      return;
+    }
+    inboxDebounce = Timer(const Duration(milliseconds: 100), () {
+      if (scopeCurrent(scope, generation)) unawaited(load(refresh: true));
+    });
   }
 
   void finishGroupsLoad(FeatureSessionScope s, int gen) {
