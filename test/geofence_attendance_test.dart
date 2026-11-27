@@ -50,9 +50,11 @@ EligibleShiftOccurrence _occurrence() => EligibleShiftOccurrence(
 );
 
 class _GeofenceRepo implements FixedShiftRepository {
-  _GeofenceRepo(this.geofenceMode);
+  _GeofenceRepo(this.geofenceMode, {this.selfieMode = 'OFF'});
   final String geofenceMode;
+  final String selfieMode;
   AttendanceLocationPoint? lastClockInLocation;
+  String? lastSelfieBase64;
   AttendanceLocationPoint? lastClockOutLocation;
   PendingClockIn? savedPending;
 
@@ -61,6 +63,7 @@ class _GeofenceRepo implements FixedShiftRepository {
       TemplateEligibility(
         workspaceId: workspaceId,
         geofenceMode: geofenceMode,
+        selfieMode: selfieMode,
         timezone: 'Africa/Cairo',
         evaluatedAt: DateTime.utc(2026, 10, 6, 8),
         status: 'ASSIGNED',
@@ -112,8 +115,10 @@ class _GeofenceRepo implements FixedShiftRepository {
     String? assignmentId,
     String? extraAuthorizationId,
     AttendanceLocationPoint? location,
+    String? selfieBase64,
   }) async {
     lastClockInLocation = location;
+    lastSelfieBase64 = selfieBase64;
     return FlexibleAttendance(
       id: 'att-1',
       workspaceId: workspaceId,
@@ -133,6 +138,7 @@ class _GeofenceRepo implements FixedShiftRepository {
       minutesLate: 0,
       clockInGeoStatus: location == null ? null : 'INSIDE',
       clockInDistanceMeters: location == null ? null : 25,
+      hasClockInSelfie: selfieBase64 != null,
       createdAt: DateTime.utc(2026, 10, 6, 8),
       updatedAt: DateTime.utc(2026, 10, 6, 8),
     );
@@ -242,4 +248,29 @@ void main() {
     expect(cubit.state.failure?.message, contains('Allow location permission'));
     await cubit.close();
   });
+
+  test(
+    'captures front-camera selfie and sends base64 when selfieMode is REQUIRED',
+    () async {
+      final repo = _GeofenceRepo('ENFORCE', selfieMode: 'REQUIRED');
+      const point = AttendanceLocationPoint(
+        latitude: 30.0444,
+        longitude: 31.2357,
+      );
+      final cubit = FlexibleAttendanceCubit(
+        repo,
+        locationReader: ({required requiredForPunch}) async => point,
+        selfieReader: ({required requiredForPunch}) async =>
+            'base64-jpeg-selfie',
+      )..bindSession(_scope);
+      await cubit.load();
+
+      final res = await cubit.clockIn(_occurrence());
+      expect(res, FixedShiftMutationResult.success);
+      expect(repo.lastClockInLocation, point);
+      expect(repo.lastSelfieBase64, 'base64-jpeg-selfie');
+      expect(cubit.state.current?.hasClockInSelfie, isTrue);
+      await cubit.close();
+    },
+  );
 }

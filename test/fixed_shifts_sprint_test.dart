@@ -240,6 +240,7 @@ class _FakeRepository implements FixedShiftRepository {
     String? assignmentId,
     String? extraAuthorizationId,
     AttendanceLocationPoint? location,
+    String? selfieBase64,
   }) async {
     clockInIds.add(clientAttendanceId);
     if (clockInIds.length == 1) {
@@ -1730,6 +1731,7 @@ class _ControlledRepository extends _FakeRepository {
     String? assignmentId,
     String? extraAuthorizationId,
     AttendanceLocationPoint? location,
+    String? selfieBase64,
   }) async {
     payloads.add({
       'workspaceId': workspaceId,

@@ -126,4 +126,26 @@ const arabicShiftsWorkflowTranslations = <String, String>{
   'That work location could not be found.': 'ملقيناش مكان الشغل ده.',
   'Add at least one active work location before enforcing geofence.':
       'ضِف مكان شغل نشط واحد على الأقل قبل تفعيل الإلزام.',
+  'Front-camera selfie at clock-in': 'صورة سيلفي بالكاميرا الأمامية عند الحضور',
+  'Optional selfie': 'اختياري',
+  'Required selfie': 'إلزامي',
+  'Selfie verified': 'سيلفي موثّق',
+  'Clock-in verification selfie': 'صورة السيلفي عند تسجيل الحضور',
+  'Could not load selfie photo.': 'معرفناش نحمّل صورة السيلفي.',
+  'Take a front-camera selfie to clock in at this workspace.':
+      'صوّر نفسك سيلفي بالكاميرا الأمامية عشان تسجّل حضورك في مساحة العمل دي.',
+  'Allow camera access and take a front-camera selfie to clock in.':
+      'اسمح بإذن الكاميرا وصوّر سيلفي بالكاميرا الأمامية عشان تسجّل حضورك.',
+  'Could not read the captured selfie photo. Please retry.':
+      'معرفناش نقرا صورة السيلفي. جرّب تصوّر تاني.',
+  'The captured selfie photo is invalid. Please try again.':
+      'صورة السيلفي مش صالحة. جرّب تصوّر تاني.',
+  'The selfie photo is too large. Please try again.':
+      'حجم صورة السيلفي كبير أوي. جرّب تصوّر تاني.',
+  'Location & front-camera selfie will be verified.':
+      'هيتم التحقق من موقعك (GPS) والتقاط سيلفي بالكاميرا الأمامية.',
+  'A front-camera selfie will be captured.':
+      'هيتم فتح الكاميرا الأمامية لالتقاط صورة سيلفي.',
+  'Workplace GPS location will be verified.':
+      'هيتم التحقق من وجودك في موقع الشغل (GPS).',
 };

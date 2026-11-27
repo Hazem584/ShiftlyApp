@@ -41,6 +41,8 @@
 	<string>Shiftly saves chat images to your photos only when you tap Save.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Shiftly uses your microphone only when you record a voice message.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Shiftly uses your front camera when your workspace requires a live selfie at clock-in.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 hiftly uses your location to verify workplace attendance and when you share a location in chat.</string>	<string>S
 	<key>UIApplicationSceneManifest</key>

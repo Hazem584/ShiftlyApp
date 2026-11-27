@@ -4,6 +4,7 @@ import 'package:shiftly/core/theme/app_theme.dart';
 import 'package:shiftly/core/utils/work_duration.dart';
 import 'package:shiftly/core/utils/workspace_time.dart';
 import 'package:shiftly/features/attendance/domain/repositories/attendance_repository.dart';
+import 'package:shiftly/features/attendance/presentation/widgets/attendance_selfie_viewer.dart';
 import 'package:shiftly/features/attendance/presentation/widgets/manager_attendance_template_info.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 
@@ -79,5 +80,10 @@ List<Widget> buildManagerAttendanceRecordInfo(
         }),
       ),
     ],
+    if (record.hasClockInSelfie)
+      AttendanceSelfieViewer(
+        workspaceId: record.workspaceId,
+        attendanceId: record.id,
+      ),
   ];
 }

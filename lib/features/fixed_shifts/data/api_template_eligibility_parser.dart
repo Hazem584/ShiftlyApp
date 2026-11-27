@@ -17,6 +17,7 @@ TemplateEligibility parseTemplateEligibility(Object? data) {
             .toList(),
     status: ApiModelParser.optionalString(json['status']) ?? 'UNKNOWN',
     geofenceMode: ApiModelParser.optionalString(json['geofenceMode']) ?? 'OFF',
+    selfieMode: ApiModelParser.optionalString(json['selfieMode']) ?? 'OFF',
     openAttendanceId: json['openAttendance'] == null
         ? null
         : ApiModelParser.string(

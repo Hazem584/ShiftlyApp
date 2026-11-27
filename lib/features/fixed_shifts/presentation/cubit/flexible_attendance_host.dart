@@ -16,6 +16,7 @@ abstract interface class FlexibleAttendanceHost {
   Future<AttendanceLocationPoint?> readLocation({
     required bool requiredForPunch,
   });
+  Future<String?> readSelfie();
   void emitState(FlexibleAttendanceState state);
   bool current(FeatureSessionScope scope, int generation, int revision);
   int beginMutation();

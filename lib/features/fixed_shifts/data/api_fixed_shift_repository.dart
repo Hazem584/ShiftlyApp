@@ -82,6 +82,7 @@ class ApiFixedShiftRepository extends ApiFixedShiftExtraAndIntentClient {
     String? assignmentId,
     String? extraAuthorizationId,
     AttendanceLocationPoint? location,
+    String? selfieBase64,
   }) => _attendance(
     () => dio.post<Object?>(
       '/attendance/flexible/clock-in',
@@ -92,6 +93,7 @@ class ApiFixedShiftRepository extends ApiFixedShiftExtraAndIntentClient {
         'assignmentId': ?assignmentId,
         'extraAuthorizationId': ?extraAuthorizationId,
         if (location != null) 'location': location.toJson(),
+        'selfieBase64': ?selfieBase64,
       },
     ),
   );

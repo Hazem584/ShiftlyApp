@@ -61,6 +61,7 @@ FlexibleAttendance parseFlexibleAttendance(Map<String, Object?> json) {
     clockOutDistanceMeters: ApiModelParser.optionalInteger(
       json['clockOutDistanceMeters'],
     ),
+    hasClockInSelfie: json['hasClockInSelfie'] == true,
     breakState: json['breakState'] == null
         ? null
         : ShiftBreakState.fromJson(ApiModelParser.map(json['breakState'])),

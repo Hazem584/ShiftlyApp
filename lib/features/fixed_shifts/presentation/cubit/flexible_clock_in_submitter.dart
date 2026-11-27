@@ -21,6 +21,10 @@ Future<FixedShiftMutationResult> submitPendingClockIn(
     if (!host.current(scope, generation, revision)) {
       return FixedShiftMutationResult.stale;
     }
+    final selfieBase64 = recovered == null ? await host.readSelfie() : null;
+    if (!host.current(scope, generation, revision)) {
+      return FixedShiftMutationResult.stale;
+    }
     final canonical =
         recovered ??
         await host.repository.flexibleClockIn(
@@ -30,6 +34,7 @@ Future<FixedShiftMutationResult> submitPendingClockIn(
           assignmentId: pending.assignmentId,
           extraAuthorizationId: pending.extraAuthorizationId,
           location: location,
+          selfieBase64: selfieBase64,
         );
     if (!host.current(scope, generation, revision)) {
       return FixedShiftMutationResult.stale;

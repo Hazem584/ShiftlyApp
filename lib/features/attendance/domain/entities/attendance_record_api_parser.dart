@@ -54,6 +54,7 @@ AttendanceRecordApi parseAttendanceRecordApi(
   clockOutDistanceMeters: ApiModelParser.optionalInteger(
     json['clockOutDistanceMeters'],
   ),
+  hasClockInSelfie: json['hasClockInSelfie'] == true,
   employeeMembershipId: ApiModelParser.string(json, 'employeeMembershipId'),
   clockInAt: ApiModelParser.date(json, 'clockInAt'),
   clockOutAt: ApiModelParser.optionalDate(json['clockOutAt']),

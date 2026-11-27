@@ -41,6 +41,7 @@ class FlexibleAttendance extends Equatable {
     this.clockInDistanceMeters,
     this.clockOutGeoStatus,
     this.clockOutDistanceMeters,
+    this.hasClockInSelfie = false,
   });
 
   final String? occurrenceKind,
@@ -51,6 +52,7 @@ class FlexibleAttendance extends Equatable {
       clockInGeoStatus,
       clockOutGeoStatus;
   final int? clockInDistanceMeters, clockOutDistanceMeters;
+  final bool hasClockInSelfie;
   final String id, workspaceId, employeeMembershipId;
   final AttendanceSource source;
   final String? shiftId,

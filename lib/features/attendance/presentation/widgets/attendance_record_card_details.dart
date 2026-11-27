@@ -107,7 +107,9 @@ Widget buildAttendanceRecordDetailsColumn(
         style: secondary,
       ),
       Text(_durationText(context, record), style: secondary),
-      if (record.clockInGeoStatus != null || record.clockOutGeoStatus != null)
+      if (record.hasClockInSelfie ||
+          record.clockInGeoStatus != null ||
+          record.clockOutGeoStatus != null)
         Text(_geoText(context, record), style: secondary),
     ],
   );
@@ -115,6 +117,7 @@ Widget buildAttendanceRecordDetailsColumn(
 
 String _geoText(BuildContext context, AttendanceRecordApi r) {
   final parts = <String>[
+    if (r.hasClockInSelfie) context.tr('Selfie verified'),
     if (r.clockInGeoStatus != null)
       '${context.tr('In')}: ${context.tr(r.clockInGeoStatus!)}${r.clockInDistanceMeters == null ? '' : ' (${r.clockInDistanceMeters}m)'}',
     if (r.clockOutGeoStatus != null)

@@ -49,6 +49,7 @@ abstract interface class FixedShiftRepository {
     String? assignmentId,
     String? extraAuthorizationId,
     AttendanceLocationPoint? location,
+    String? selfieBase64,
   });
   Future<FlexibleAttendance> flexibleClockOut(
     String attendanceId, {

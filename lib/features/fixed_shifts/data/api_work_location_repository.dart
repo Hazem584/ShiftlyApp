@@ -10,22 +10,32 @@ class ApiWorkLocationRepository implements WorkLocationRepository {
       '/workspaces/$w/work-locations${id == null ? '' : '/$id'}';
 
   @override
-  Future<String> getGeofenceMode(String w) => _run(() async {
+  Future<(String, String)> getWorkspacePolicies(String w) => _run(() async {
     final res = await _dio.get<Object?>('/workspaces/$w');
     final json = ApiModelParser.map(res.data);
-    return ApiModelParser.optionalString(json['geofenceMode']) ?? 'OFF';
+    return (
+      ApiModelParser.optionalString(json['geofenceMode']) ?? 'OFF',
+      ApiModelParser.optionalString(json['selfieMode']) ?? 'OFF',
+    );
   });
 
   @override
-  Future<String> updateGeofenceMode(String w, String mode) => _run(() async {
+  Future<(String, String)> updateWorkspacePolicies(
+    String w, {
+    String? geofenceMode,
+    String? selfieMode,
+  }) => _run(() async {
     final res = await _dio.patch<Object?>(
       '/workspaces/$w/geofence',
-      data: {'geofenceMode': mode},
+      data: {'geofenceMode': ?geofenceMode, 'selfieMode': ?selfieMode},
     );
-    return ApiModelParser.optionalString(
-          ApiModelParser.map(res.data)['geofenceMode'],
-        ) ??
-        mode;
+    final json = ApiModelParser.map(res.data);
+    return (
+      ApiModelParser.optionalString(json['geofenceMode']) ??
+          geofenceMode ??
+          'OFF',
+      ApiModelParser.optionalString(json['selfieMode']) ?? selfieMode ?? 'OFF',
+    );
   });
 
   @override

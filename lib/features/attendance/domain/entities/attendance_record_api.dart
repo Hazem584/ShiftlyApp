@@ -51,6 +51,7 @@ class AttendanceRecordApi extends AttendanceRecordMeta {
     super.clockInLocationName,
     super.clockOutGeoStatus,
     super.clockOutDistanceMeters,
+    super.hasClockInSelfie,
   });
 
   final String id, workspaceId, employeeMembershipId;

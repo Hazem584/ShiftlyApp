@@ -14,6 +14,9 @@ Future<void> confirmFlexibleClockIn(
   String timezone,
 ) async {
   final locale = Localizations.localeOf(context).toString();
+  final eligibility = context.read<FlexibleAttendanceCubit>().state.eligibility;
+  final needsSelfie = eligibility?.selfieMode == 'REQUIRED';
+  final needsGeo = eligibility?.geofenceMode == 'ENFORCE';
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => ManagerDialog(
@@ -51,6 +54,19 @@ Future<void> confirmFlexibleClockIn(
                   : '',
             }),
           ),
+          if (needsGeo || needsSelfie) ...[
+            const SizedBox(height: 8),
+            Text(
+              context.tr(
+                needsGeo && needsSelfie
+                    ? 'Location & front-camera selfie will be verified.'
+                    : needsSelfie
+                    ? 'A front-camera selfie will be captured.'
+                    : 'Workplace GPS location will be verified.',
+              ),
+              style: Theme.of(dialogContext).textTheme.bodySmall,
+            ),
+          ],
         ],
       ),
       actions: [

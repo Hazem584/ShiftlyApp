@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shiftly/core/location/location_reader.dart';
+import 'package:shiftly/core/location/selfie_capture.dart';
 import 'package:shiftly/core/session/feature_scope.dart';
 import 'package:shiftly/features/fixed_shifts/domain/repositories/fixed_shift_repository.dart';
 import 'package:shiftly/features/fixed_shifts/presentation/cubit/fixed_shift_cubit_helpers.dart';
@@ -19,15 +20,18 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
     String Function()? uuid,
     DateTime Function()? now,
     AttendanceLocationReader? locationReader,
+    AttendanceSelfieReader? selfieReader,
   }) : _now = now ?? DateTime.now,
        _uuid = uuid ?? fixedShiftUuid,
        _locationReader = locationReader ?? readDeviceAttendanceLocation,
+       _selfieReader = selfieReader ?? captureFrontCameraSelfieBase64,
        super(const FlexibleAttendanceState());
   final FixedShiftRepository _repository;
   final FutureOr<void> Function()? onAttendanceChanged;
   final String Function() _uuid;
   final DateTime Function() _now;
   final AttendanceLocationReader _locationReader;
+  final AttendanceSelfieReader _selfieReader;
   FeatureSessionScope? _scope;
   int _generation = 0, _revision = 0;
   bool _refreshQueued = false, _busy = false;
@@ -105,6 +109,13 @@ class FlexibleAttendanceCubit extends Cubit<FlexibleAttendanceState>
     return _locationReader(
       requiredForPunch: requiredForPunch && mode == 'ENFORCE',
     );
+  }
+
+  @override
+  Future<String?> readSelfie() async {
+    final mode = state.eligibility?.selfieMode ?? 'OFF';
+    if (mode == 'OFF') return null;
+    return _selfieReader(requiredForPunch: mode == 'REQUIRED');
   }
 
   @override

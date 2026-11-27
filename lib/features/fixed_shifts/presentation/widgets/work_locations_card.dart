@@ -7,11 +7,13 @@ import 'package:shiftly/features/fixed_shifts/domain/repositories/work_location_
 Widget buildWorkLocationsCard({
   required BuildContext context,
   required String mode,
+  required String selfieMode,
   required List<WorkspaceWorkLocation> locations,
   required bool loading,
   required bool busy,
   required String? error,
   required ValueChanged<String> onModeChanged,
+  required ValueChanged<String> onSelfieModeChanged,
   required VoidCallback onAdd,
   required ValueChanged<WorkspaceWorkLocation> onEdit,
   required ValueChanged<WorkspaceWorkLocation> onArchive,
@@ -42,21 +44,35 @@ Widget buildWorkLocationsCard({
           ),
         ),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: [
-            for (final item in const [
-              ('OFF', 'Off'),
-              ('WARN', 'Warn only'),
-              ('ENFORCE', 'Enforce on clock-in'),
-            ])
-              ChoiceChip(
-                key: Key('geofence-mode-${item.$1}'),
-                label: Text(context.tr(item.$2)),
-                selected: mode == item.$1,
-                onSelected: disabled ? null : (_) => onModeChanged(item.$1),
-              ),
+        _chipsRow(
+          context,
+          'geofence-mode',
+          mode,
+          const [
+            ('OFF', 'Off'),
+            ('WARN', 'Warn only'),
+            ('ENFORCE', 'Enforce on clock-in'),
           ],
+          disabled,
+          onModeChanged,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          context.tr('Front-camera selfie at clock-in'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        _chipsRow(
+          context,
+          'selfie-mode',
+          selfieMode,
+          const [
+            ('OFF', 'Off'),
+            ('OPTIONAL', 'Optional selfie'),
+            ('REQUIRED', 'Required selfie'),
+          ],
+          disabled,
+          onSelfieModeChanged,
         ),
         const SizedBox(height: 8),
         Align(
@@ -102,3 +118,23 @@ Widget buildWorkLocationsCard({
     ),
   );
 }
+
+Widget _chipsRow(
+  BuildContext context,
+  String keyPrefix,
+  String selected,
+  List<(String, String)> options,
+  bool disabled,
+  ValueChanged<String> onSelect,
+) => Wrap(
+  spacing: 8,
+  children: [
+    for (final item in options)
+      ChoiceChip(
+        key: Key('$keyPrefix-${item.$1}'),
+        label: Text(context.tr(item.$2)),
+        selected: selected == item.$1,
+        onSelected: disabled ? null : (_) => onSelect(item.$1),
+      ),
+  ],
+);

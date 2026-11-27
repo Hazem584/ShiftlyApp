@@ -94,6 +94,7 @@ class PreviewFixedShiftRepository implements FixedShiftRepository {
     String? assignmentId,
     String? extraAuthorizationId,
     AttendanceLocationPoint? location,
+    String? selfieBase64,
   }) async => _unsupported();
   @override
   Future<FlexibleAttendance> flexibleClockOut(

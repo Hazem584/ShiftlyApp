@@ -4,8 +4,14 @@ export 'package:shiftly/core/models/attendance_location_point.dart';
 export 'package:shiftly/core/models/workspace_work_location.dart';
 
 abstract interface class WorkLocationRepository {
-  Future<String> getGeofenceMode(String workspaceId);
-  Future<String> updateGeofenceMode(String workspaceId, String mode);
+  Future<(String geofenceMode, String selfieMode)> getWorkspacePolicies(
+    String workspaceId,
+  );
+  Future<(String geofenceMode, String selfieMode)> updateWorkspacePolicies(
+    String workspaceId, {
+    String? geofenceMode,
+    String? selfieMode,
+  });
   Future<List<WorkspaceWorkLocation>> list(
     String workspaceId, {
     bool includeArchived = false,

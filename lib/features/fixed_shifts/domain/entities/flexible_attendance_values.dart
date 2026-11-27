@@ -33,6 +33,7 @@ List<Object?> flexibleAttendanceValues(FlexibleAttendance attendance) => [
   attendance.clockInDistanceMeters,
   attendance.clockOutGeoStatus,
   attendance.clockOutDistanceMeters,
+  attendance.hasClockInSelfie,
   attendance.createdAt,
   attendance.updatedAt,
 ];

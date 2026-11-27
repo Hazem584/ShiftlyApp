@@ -68,5 +68,11 @@ String? apiErrorAttendanceMessage(String? code) => switch (code) {
   'WORK_LOCATION_NOT_FOUND' => 'That work location could not be found.',
   'WORK_LOCATION_REQUIRED_FOR_ENFORCE' =>
     'Add at least one active work location before enforcing geofence.',
+  'SELFIE_REQUIRED' =>
+    'Take a front-camera selfie to clock in at this workspace.',
+  'SELFIE_CAMERA_UNAVAILABLE' =>
+    'Allow camera access and take a front-camera selfie to clock in.',
+  'SELFIE_INVALID' => 'The captured selfie photo is invalid. Please try again.',
+  'SELFIE_TOO_LARGE' => 'The selfie photo is too large. Please try again.',
   _ => null,
 };

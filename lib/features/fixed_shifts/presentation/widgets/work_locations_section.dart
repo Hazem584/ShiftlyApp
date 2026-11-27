@@ -24,7 +24,7 @@ class WorkLocationsSection extends StatefulWidget {
 
 class _WorkLocationsSectionState extends State<WorkLocationsSection> {
   List<WorkspaceWorkLocation> _locations = [];
-  String _mode = 'OFF';
+  String _mode = 'OFF', _selfieMode = 'OFF';
   bool _loading = true, _busy = false;
   int _gen = 0;
   String? _error;
@@ -43,12 +43,14 @@ class _WorkLocationsSectionState extends State<WorkLocationsSection> {
     setState(() => (_loading = true, _error = null));
     try {
       final res = await Future.wait([
-        widget.repository.getGeofenceMode(widget.scope.workspaceId),
+        widget.repository.getWorkspacePolicies(widget.scope.workspaceId),
         widget.repository.list(widget.scope.workspaceId),
       ]);
       if (!_alive(g)) return;
+      final policies = res[0] as (String, String);
       setState(() {
-        _mode = res[0] as String;
+        _mode = policies.$1;
+        _selfieMode = policies.$2;
         _locations = res[1] as List<WorkspaceWorkLocation>;
         _loading = false;
       });
@@ -93,15 +95,24 @@ class _WorkLocationsSectionState extends State<WorkLocationsSection> {
   Widget build(BuildContext context) => buildWorkLocationsCard(
     context: context,
     mode: _mode,
+    selfieMode: _selfieMode,
     locations: _locations,
     loading: _loading,
     busy: _busy,
     error: _error,
     onModeChanged: (m) => _runMutation(() async {
-      _mode = await widget.repository.updateGeofenceMode(
+      final p = await widget.repository.updateWorkspacePolicies(
         widget.scope.workspaceId,
-        m,
+        geofenceMode: m,
       );
+      _mode = p.$1;
+    }),
+    onSelfieModeChanged: (m) => _runMutation(() async {
+      final p = await widget.repository.updateWorkspacePolicies(
+        widget.scope.workspaceId,
+        selfieMode: m,
+      );
+      _selfieMode = p.$2;
     }),
     onAdd: _openEditor,
     onEdit: _openEditor,

@@ -28,6 +28,7 @@ abstract class AttendanceRecordMeta extends Equatable {
     this.clockInLocationName,
     this.clockOutGeoStatus,
     this.clockOutDistanceMeters,
+    this.hasClockInSelfie = false,
   });
 
   final String? dayStatus,
@@ -47,6 +48,7 @@ abstract class AttendanceRecordMeta extends Equatable {
       clockInLocationName,
       clockOutGeoStatus;
   final int? clockInDistanceMeters, clockOutDistanceMeters;
+  final bool hasClockInSelfie;
   final Map<String, Object?>? calculation;
   final AttendanceSource source;
   final DateTime? scheduledStartAt, scheduledEndAt;
@@ -80,5 +82,6 @@ abstract class AttendanceRecordMeta extends Equatable {
     clockInLocationName,
     clockOutGeoStatus,
     clockOutDistanceMeters,
+    hasClockInSelfie,
   ];
 }
